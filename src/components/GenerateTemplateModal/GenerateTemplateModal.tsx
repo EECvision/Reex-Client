@@ -44,7 +44,7 @@ const GenerateTemplateModal: React.FC<GenerateTemplateModalProps> = ({
     try {
       const data = await api.generateTemplate({
         moduleName: moduleName.trim().toLowerCase()
-      }, targetDir);
+      }, targetDir, api.getBridgeUrl());
 
       if (!data.success) {
         throw new Error(data.error || "Failed to generate template");

@@ -18,9 +18,9 @@ export const api = {
     // ========================================================================
 
     // 5. Generate Template (Cloud via Scripts)
-    generateTemplate: async (data: any, targetDir: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
+    generateTemplate: async (data: any, targetDir: string, bridgeUrl?: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
         try {
-            const payload = { ...data, targetDir }; // Inject targetDir
+            const payload = { ...data, targetDir, bridgeUrl }; // Inject targetDir and bridgeUrl
             const res = await fetch(`${cloudUrl}/generate-template`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -72,12 +72,12 @@ export const api = {
     },
 
     // 3. Delete Collection (Reset)
-    deleteCollection: async (targetDir: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
+    deleteCollection: async (targetDir: string, bridgeUrl?: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
         try {
             const res = await fetch(`${cloudUrl}/delete-collection`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ targetDir }),
+                body: JSON.stringify({ targetDir, bridgeUrl }), // Pass bridgeUrl
             });
             return res.json();
         } catch (error: any) {
@@ -88,9 +88,9 @@ export const api = {
 
 
     // 4. Delete Item (Cloud via Scripts)
-    deleteItem: async (itemInfo: any, targetDir: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
+    deleteItem: async (itemInfo: any, targetDir: string, bridgeUrl?: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
         try {
-            const payload = { ...itemInfo, targetDir };
+            const payload = { ...itemInfo, targetDir, bridgeUrl }; // Pass bridgeUrl
             const res = await fetch(`${cloudUrl}/delete-item`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -103,19 +103,17 @@ export const api = {
     },
 
     // 6. Update Collection (Cloud via Scripts)
-    updateCollection: async (payload: any, targetDir: string) => {
+    updateCollection: async (payload: any, targetDir: string, bridgeUrl?: string) => {
         // Prepare FormData
         const formData = new FormData();
         if (payload.file) formData.append('file', payload.file);
-        if (payload.fileBuffer) {
-            // Need to handle buffer if strictly needed
-        }
         // Serialization for other fields
         if (payload.modules) formData.append('modules', JSON.stringify(payload.modules));
         if (payload.deletedModules) formData.append('deletedModules', JSON.stringify(payload.deletedModules));
         if (payload.functions) formData.append('functions', typeof payload.functions === 'string' ? payload.functions : JSON.stringify(payload.functions));
         if (payload.fileName) formData.append('fileName', payload.fileName);
         formData.append('targetDir', targetDir);
+        if (bridgeUrl) formData.append('bridgeUrl', bridgeUrl); // Pass bridgeUrl
 
         const res = await fetch(`${cloudUrl}/update-collection`, {
             method: 'POST',

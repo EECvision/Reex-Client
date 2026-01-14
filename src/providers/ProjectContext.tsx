@@ -73,16 +73,16 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         let debounceTimer: NodeJS.Timeout;
 
         eventSource.onopen = () => {
-            console.log("SSE Connected");
+            // console.log("SSE Connected");
         };
 
         const handleUpdate = (event: MessageEvent) => {
             const data = JSON.parse(event.data);
             if (data.type === 'project:updated') {
-                console.log("Project updated, scheduling refresh...");
+                // console.log("Project updated, scheduling refresh...");
                 clearTimeout(debounceTimer);
                 debounceTimer = setTimeout(() => {
-                    console.log("Debounce complete, refreshing project...");
+                    // console.log("Debounce complete, refreshing project...");
                     fetchProjectData(true); // Silent refresh
                 }, 500);
             }

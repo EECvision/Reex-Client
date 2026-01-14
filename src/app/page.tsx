@@ -129,7 +129,7 @@ const App = () => {
 
     try {
       // API Call
-      const data = await api.deleteCollection(projectPath);
+      const data = await api.deleteCollection(projectPath, api.getBridgeUrl());
       if (!data.success) throw new Error(data.error || "Deletion failed");
 
       if (data.taskId) {
@@ -165,7 +165,7 @@ const App = () => {
 
     try {
       // API Call
-      const data = await api.deleteItem(deleteItemInfo, projectPath);
+      const data = await api.deleteItem(deleteItemInfo, projectPath, api.getBridgeUrl());
       if (!data.success) throw new Error(data.error || "Deletion failed");
 
       if (data.taskId) {

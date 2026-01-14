@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import os from "os";
-import { runCommand, getEnvWithOverride, sendEvent } from "@/app/api/utils";
+import { runCommand, getEnvWithOverride, sendEvent, getBridgeUrl } from "@/app/api/utils";
 
 export async function POST(req: NextRequest) {
     const taskId = Date.now().toString();
@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
         const deletedModulesStr = formData.get('deletedModules') as string;
         const functionsStr = formData.get('functions') as string;
         const targetDir = formData.get('targetDir') as string;
+        const bridgeUrlParam = formData.get('bridgeUrl') as string;
 
         const modules = modulesStr ? JSON.parse(modulesStr) : [];
         const deletedModules = deletedModulesStr ? JSON.parse(deletedModulesStr) : [];
@@ -53,15 +54,11 @@ export async function POST(req: NextRequest) {
                 // Bridge URL (Default to localhost:4000 internal network)
                 // In Docker/Podman this might need to be host.docker.internal or similar, 
                 // but for now we assume simple localhost access.
-                const BRIDGE_URL = process.env.BRIDGE_URL || "http://localhost:4000";
-
-                // DEBUG LOG
-                fs.appendFileSync('d:\\Dev\\api-builder\\debug-update.log', `Start Update: ${BRIDGE_URL}\n`);
+                const bridgeUrl = getBridgeUrl(bridgeUrlParam);
 
                 const sendToBridge = async (method: string, endpoint: string, body: any) => {
-                    fs.appendFileSync('d:\\Dev\\api-builder\\debug-update.log', `Sending ${endpoint}...\n`);
                     // Ensure we target /api/fs/write
-                    const res = await fetch(`${BRIDGE_URL}/api/fs/${endpoint}`, {
+                    const res = await fetch(`${bridgeUrl}/api/fs/${endpoint}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(body)
@@ -69,10 +66,8 @@ export async function POST(req: NextRequest) {
                     if (!res.ok) {
                         const err = await res.json();
                         const msg = `Bridge Error (${endpoint}): ${err.message || err.error || res.statusText}`;
-                        fs.appendFileSync('d:\\Dev\\api-builder\\debug-update.log', `${msg}\n`);
                         throw new Error(msg);
                     }
-                    fs.appendFileSync('d:\\Dev\\api-builder\\debug-update.log', `Success ${endpoint}\n`);
                 };
 
                 // 1. Process Deletions
@@ -132,7 +127,7 @@ export async function POST(req: NextRequest) {
                 sendEvent(taskId, 'progress', 'Regenerating index.ts...');
 
                 try {
-                    const listRes = await fetch(`${BRIDGE_URL}/api/fs/list`, {
+                    const listRes = await fetch(`${bridgeUrl}/api/fs/list`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ filePath: 'src/api-services/definitions' })

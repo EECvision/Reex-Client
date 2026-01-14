@@ -9,12 +9,6 @@ export const runCommand = (cmd: string, options: any = {}) => {
     const cwd = options.cwd || process.cwd();
     const env = options.env || process.env;
 
-    // Debug Logging for Env Var Propagation
-    if (cmd.includes('generate-manifest')) {
-        console.log(`[CMD] Running: ${cmd}`);
-        console.log(`[CMD] Env API_TARGET_DIR: ${env.API_TARGET_DIR}`);
-    }
-
     return new Promise<string>((resolve, reject) => {
         exec(cmd, { cwd, env, maxBuffer: 1024 * 1024 * 10 }, (err, stdout, stderr) => {
             if (err) {
@@ -71,6 +65,14 @@ export const getEnvWithOverride = (activeTargetDir?: string) => {
         API_DEFINITIONS_DIR: definitionsDir,
         API_SERVICES_DIR: servicesDir
     };
+};
+
+
+export const DEFAULT_BRIDGE_URL = "http://localhost:4000";
+
+export const getBridgeUrl = (override?: string) => {
+    if (override) return override;
+    return process.env.BRIDGE_URL || DEFAULT_BRIDGE_URL;
 };
 
 export const sendEvent = (id: string, type: string, message: string) => {

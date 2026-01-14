@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useProject } from "../../providers/ProjectContext";
 import GenerateTemplateModal from "../GenerateTemplateModal/GenerateTemplateModal";
 import styles from "./EmptyState.module.css";
 import { Button } from "../ui/Button/Button";
@@ -15,6 +16,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   onImportClick,
 }) => {
   const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const { projectPath } = useProject();
 
   if (hasEndpoints) {
     return (
@@ -86,9 +88,10 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       <GenerateTemplateModal
         isOpen={showGenerateModal}
         onClose={() => setShowGenerateModal(false)}
+        targetDir={projectPath}
         onSuccess={(message) => {
           // Ideally we would trigger a refresh here but for now just close
-          console.log(message);
+          // console.log(message);
           setShowGenerateModal(false);
         }}
       />

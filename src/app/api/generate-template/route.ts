@@ -1,31 +1,145 @@
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
-import { runCommand, getEnvWithOverride, sendEvent } from "@/app/api/utils";
+import { sendEvent, getBridgeUrl } from "@/app/api/utils";
+
+// Helper to send to Bridge
+async function bridgeCall(bridgeUrl: string, endpoint: string, body: any) {
+    const res = await fetch(`${bridgeUrl}/api/fs/${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(`Bridge Error (${endpoint}): ${err.message || err.error || res.statusText}`);
+    }
+    return res.json();
+}
+
+function generateTemplateContent(moduleName: string) {
+    // Capitalize first letter for type names
+    const capitalize = (str: string): string =>
+        str.charAt(0).toUpperCase() + str.slice(1);
+    const TypeName = capitalize(moduleName.replace(/s$/, "")); // Remove trailing 's' for singular
+
+    return `/* eslint-disable @typescript-eslint/no-explicit-any */
+import { BASE_CLIENT } from "../config";
+import { constructQueryParams, handleApiCall } from "../config/utils";
+
+// --- Types ---
+
+interface ${TypeName} {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+}
+
+interface Get${TypeName}sParams {
+  search?: string;
+  limit?: number;
+  page_size?: string;
+  status?: ${TypeName}["status"];
+}
+
+interface Create${TypeName}Payload {
+  email: string;
+  first_name: string;
+  last_name: string;
+  status: ${TypeName}["status"];
+}
+
+interface Update${TypeName}Params {
+  id: string;
+  payload: Partial<Create${TypeName}Payload>;
+}
+
+// --- API Definition --- 
+
+export const ${moduleName}Api = {
+  get_list${TypeName}s: async (
+    params: Get${TypeName}sParams
+  ): Promise<any> => {
+    const queryString = constructQueryParams(params);
+    const url = \`/${moduleName}\${queryString}\`;
+
+    const res = await handleApiCall(
+      () => BASE_CLIENT.get(url),
+      "get_list${TypeName}s"
+    );
+    return res.data;
+  },
+
+  get_${moduleName.slice(0, -1)}Detail: async ({ id } : { id: string }): Promise<any> => {
+    const url = \`/${moduleName}/\${id}\`;
+    const res = await handleApiCall(
+      () => BASE_CLIENT.get(url),
+      "get_${moduleName.slice(0, -1)}Detail"
+    );
+    return res.data;
+  },
+
+  post_create${TypeName}: async (
+    payload: Create${TypeName}Payload
+  ): Promise<any> => {
+    const url = "/${moduleName}";
+    const res = await handleApiCall(
+      () => BASE_CLIENT.post(url, payload),
+      "post_create${TypeName}"
+    );
+    return res.data;
+  },
+
+  put_update${TypeName}: async ({
+    id,
+    payload,
+  }: Update${TypeName}Params): Promise<any> => {
+    const url = \`/${moduleName}/\${id}\`;
+    const res = await handleApiCall(
+      () => BASE_CLIENT.put(url, payload),
+      "put_update${TypeName}"
+    );
+    return res.data;
+  },
+
+  delete_remove${TypeName}: async ({ id } : { id: string }): Promise<any> => {
+    const url = \`/${moduleName}/\${id}\`;
+    await handleApiCall(() => BASE_CLIENT.delete(url), "delete_remove${TypeName}");
+  },
+};
+`;
+}
 
 export async function POST(req: NextRequest) {
     const taskId = Date.now().toString();
     try {
         const body = await req.json();
-        const { moduleName, targetDir } = body; // Read targetDir
+        const { moduleName, bridgeUrl } = body;
 
         if (!moduleName) {
             return NextResponse.json({ success: false, error: "Module name required" }, { status: 400 });
         }
-        // The original regex validation for moduleName is removed as per the instruction's implied replacement.
-        // If the regex validation was still desired, it would need to be explicitly added back.
 
         (async () => {
             sendEvent(taskId, 'start', `Generating template for ${moduleName}...`);
             try {
-                // Pass targetDir to env generator
-                const env = getEnvWithOverride(targetDir);
-                const scriptsDir = path.join(process.cwd(), 'src', 'scripts');
-                const cmd = `npx tsx "${path.join(scriptsDir, 'generate-template.ts')}" "${moduleName}"`;
+                const content = generateTemplateContent(moduleName);
 
-                await runCommand(cmd, { env });
+                // Write to Bridge (src/api-services/definitions/moduleName.ts)
+                // Bridge logic assumes relative path to project root? 
+                // In delete-collection we used 'src/api-services/definitions'.
+                // The Bridge server.js mounts '/fs/write' and uses `path.join(API_TARGET_DIR, filePath)`.
+                // So full relative path is needed.
 
-                sendEvent(taskId, 'progress', 'Template files created. Regenerating types...');
-                await runCommand('npm run gen:types', { env });
+                const filePath = `src/api-services/definitions/${moduleName}.ts`;
+
+                sendEvent(taskId, 'progress', 'Writing template to Bridge...');
+                await bridgeCall(getBridgeUrl(bridgeUrl), 'write', { filePath, content });
+
+                // We do NOT need to manually trigger gen:types because the Bridge WATCHER should pick up the file change
+                // and automatically regenerate hooks and index.ts!
+                // But giving it a moment might be good? 
+                // Actually, let's trust the reactive flow.
 
                 sendEvent(taskId, 'complete', `Template '${moduleName}' generated successfully`);
                 sendEvent('global', 'project:updated', 'Template generated');

@@ -227,7 +227,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
         functions: functionMapObj,
       };
 
-      const res = await api.syncCollection(payload, targetDir);
+      const res = await api.updateCollection(payload, targetDir, api.getBridgeUrl());
       if (!res.success) {
         throw new Error(res.error || "Sync failed");
       }

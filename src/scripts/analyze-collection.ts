@@ -160,21 +160,33 @@ const analyzeCollection = async (specPath: string) => {
         // 1. Generate new code in-memory (Dry Run)
         let newModules: { name: string; content: string }[] = [];
 
+        let rawModules: any[] = [];
+
         if (specData.openapi || specData.swagger) {
             console.log("📋 Detected OpenAPI spec");
-            newModules = await generateOpenApi({
+            rawModules = await generateOpenApi({
                 specData,
                 dryRun: true,
-            });
+            }) as any[];
         } else if (specData.info && specData.item) {
             console.log("📋 Detected Postman collection");
-            newModules = await generatePostman({
+            rawModules = await generatePostman({
                 specData,
                 dryRun: true
-            });
+            }) as any[];
         } else {
             throw new Error("Unknown collection format. Use OpenAPI (json) or Postman Collection v2.1");
         }
+
+        // Normalize to { name, content }
+        newModules = rawModules.map((m: any) => {
+            if (m.filePath) {
+                // FileOperation format
+                const name = path.basename(m.filePath, '.ts');
+                return { name, content: m.content };
+            }
+            return m; // Assume already in correct format
+        });
 
         // 2. Read existing modules
         const existingFiles = fs.existsSync(apiDir)

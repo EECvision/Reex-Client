@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sendEvent } from "@/app/api/utils";
+import { sendEvent, getBridgeUrl } from "@/app/api/utils";
 import { Project, SyntaxKind } from "ts-morph";
 
-const BRIDGE_URL = process.env.BRIDGE_URL || "http://localhost:4000";
-
-async function bridgeCall(endpoint: string, body: any) {
-    const res = await fetch(`${BRIDGE_URL}/api/fs/${endpoint}`, {
+async function bridgeCall(bridgeUrl: string, endpoint: string, body: any) {
+    const res = await fetch(`${bridgeUrl}/api/fs/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
@@ -21,7 +19,7 @@ export async function POST(req: NextRequest) {
     const taskId = Date.now().toString();
     try {
         const body = await req.json();
-        const { type, moduleName, functionName } = body; // targetDir ignore, usage Bridge
+        const { type, moduleName, functionName, bridgeUrl } = body; // targetDir ignore, usage Bridge
 
         (async () => {
             const itemLabel = type === 'module' ? `module '${moduleName}'` : `function '${functionName}'`;
@@ -30,18 +28,18 @@ export async function POST(req: NextRequest) {
             try {
                 if (type === 'module') {
                     // 1. Delete Module File
-                    await bridgeCall('delete', { filePath: `src/api-services/definitions/${moduleName}.ts` });
+                    await bridgeCall(getBridgeUrl(bridgeUrl), 'delete', { filePath: `src/api-services/definitions/${moduleName}.ts` });
 
                     // 2. Delete Types Directory (recursive)
                     // Bridge's delete is recursive by default if it uses fs.rmSync({recursive:true}) or similar
                     // Assuming Bridge delete handles directories
                     try {
-                        await bridgeCall('delete', { filePath: `src/api-services/types/${moduleName}` });
+                        await bridgeCall(getBridgeUrl(bridgeUrl), 'delete', { filePath: `src/api-services/types/${moduleName}` });
                     } catch (ignore) { }
 
                     // 3. Regenerate Index (Reuse logic from update-collection)
                     sendEvent(taskId, 'progress', 'Regenerating index.ts...');
-                    const listRes = await bridgeCall('list', { filePath: 'src/api-services/definitions' });
+                    const listRes = await bridgeCall(getBridgeUrl(bridgeUrl), 'list', { filePath: 'src/api-services/definitions' });
 
                     if (listRes.files && Array.isArray(listRes.files)) {
                         const moduleNames = listRes.files
@@ -57,14 +55,14 @@ export const apiClient = {
 ${moduleNames.map((name: string) => `  ...${name}Api,`).join('\n')}
 };
 `;
-                        await bridgeCall('write', { filePath: 'src/api-services/index.ts', content: indexContent });
+                        await bridgeCall(getBridgeUrl(bridgeUrl), 'write', { filePath: 'src/api-services/index.ts', content: indexContent });
                     }
 
                 } else if (type === 'function') {
                     if (!functionName) throw new Error("Function name required");
 
                     // 1. Read Module File
-                    const readRes = await bridgeCall('read', { filePath: `src/api-services/definitions/${moduleName}.ts` });
+                    const readRes = await bridgeCall(getBridgeUrl(bridgeUrl), 'read', { filePath: `src/api-services/definitions/${moduleName}.ts` });
                     if (!readRes.content) throw new Error(`Could not read module ${moduleName}`);
 
                     // 2. Modify with ts-morph
@@ -94,14 +92,14 @@ ${moduleNames.map((name: string) => `  ...${name}Api,`).join('\n')}
                             // If empty, should we delete module? Legacy said yes.
                             if (initializer.getProperties().length === 0) {
                                 // 1. Delete Files
-                                await bridgeCall('delete', { filePath: `src/api-services/definitions/${moduleName}.ts` });
+                                await bridgeCall(getBridgeUrl(bridgeUrl), 'delete', { filePath: `src/api-services/definitions/${moduleName}.ts` });
                                 try {
-                                    await bridgeCall('delete', { filePath: `src/api-services/types/${moduleName}` });
+                                    await bridgeCall(getBridgeUrl(bridgeUrl), 'delete', { filePath: `src/api-services/types/${moduleName}` });
                                 } catch (ignore) { }
 
                                 // 2. Regenerate Index
                                 sendEvent(taskId, 'progress', 'Module empty. Deleted module and regenerating index...');
-                                const listRes = await bridgeCall('list', { filePath: 'src/api-services/definitions' });
+                                const listRes = await bridgeCall(getBridgeUrl(bridgeUrl), 'list', { filePath: 'src/api-services/definitions' });
 
                                 if (listRes.files && Array.isArray(listRes.files)) {
                                     const moduleNames = listRes.files
@@ -117,19 +115,19 @@ export const apiClient = {
 ${moduleNames.map((name: string) => `  ...${name}Api,`).join('\n')}
 };
 `;
-                                    await bridgeCall('write', { filePath: 'src/api-services/index.ts', content: indexContent });
+                                    await bridgeCall(getBridgeUrl(bridgeUrl), 'write', { filePath: 'src/api-services/index.ts', content: indexContent });
                                 }
 
                             } else {
                                 // Save update
-                                await bridgeCall('write', { filePath: `src/api-services/definitions/${moduleName}.ts`, content: sourceFile.getFullText() });
+                                await bridgeCall(getBridgeUrl(bridgeUrl), 'write', { filePath: `src/api-services/definitions/${moduleName}.ts`, content: sourceFile.getFullText() });
                             }
                         }
                     }
 
                     // 3. Delete Type File
                     try {
-                        await bridgeCall('delete', { filePath: `src/api-services/types/${moduleName}/${functionName}.ts` });
+                        await bridgeCall(getBridgeUrl(bridgeUrl), 'delete', { filePath: `src/api-services/types/${moduleName}/${functionName}.ts` });
                     } catch (ignore) { }
                 }
 

@@ -1,12 +1,11 @@
 import { NextResponse, NextRequest } from "next/server";
 import path from "path";
 import fs from "fs";
-import { runCommand, getEnvWithOverride, sendEvent } from "@/app/api/utils";
+import { runCommand, getEnvWithOverride, sendEvent, getBridgeUrl } from "@/app/api/utils";
 
-const BRIDGE_URL = process.env.BRIDGE_URL || "http://localhost:4000";
-
-async function sendToBridge(method: string, endpoint: string, body: any) {
-    const res = await fetch(`${BRIDGE_URL}/api/fs/${endpoint}`, {
+// Helper to send to Bridge
+async function sendToBridge(bridgeUrl: string, method: string, endpoint: string, body: any) {
+    const res = await fetch(`${bridgeUrl}/api/fs/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
@@ -22,9 +21,12 @@ export async function POST(req: NextRequest) {
 
     // Body is JSON
     let targetDir = null;
+    let bridgeUrl = getBridgeUrl();
+
     try {
         const body = await req.json();
         targetDir = body.targetDir;
+        if (body.bridgeUrl) bridgeUrl = body.bridgeUrl;
     } catch (e) {
         // Body might be empty
     }
@@ -44,9 +46,9 @@ export async function POST(req: NextRequest) {
             for (const p of pathsToDelete) {
                 // We use try-catch inside the loop to allow deleting partials if some don't exist
                 try {
-                    await sendToBridge('POST', 'delete', { filePath: p });
+                    await sendToBridge(bridgeUrl, 'POST', 'delete', { filePath: p });
                 } catch (e) {
-                    console.log(`Deletion of ${p} ignored:`, e);
+                    console.warn(`Deletion of ${p} ignored:`, e);
                 }
             }
 
