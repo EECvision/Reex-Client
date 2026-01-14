@@ -1,15 +1,26 @@
 import { NextResponse } from "next/server";
-import { getApiTargetDir } from "@/app/api/utils";
+import fs from "fs";
+import path from "path";
 // @ts-ignore
-import projectService from "@/services/project-service";
+import { API_MANIFEST_PATH } from "@/paths";
 
 export async function GET() {
-    const apiTargetDir = getApiTargetDir();
     try {
-        const manifest = projectService.generateManifest(apiTargetDir);
+        const jsonPath = API_MANIFEST_PATH.replace('.ts', '.json');
+
+        console.log(`[Manifest API] Reading from: ${jsonPath}`);
+
+        if (!fs.existsSync(jsonPath)) {
+            console.warn(`[Manifest API] File not found: ${jsonPath}`);
+            return NextResponse.json({}, { status: 200 });
+        }
+
+        const content = fs.readFileSync(jsonPath, 'utf8');
+        const manifest = JSON.parse(content);
+
         return NextResponse.json(manifest);
     } catch (error: any) {
-        console.error(error);
+        console.error("Failed to load manifest:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

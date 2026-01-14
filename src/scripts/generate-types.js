@@ -7,6 +7,35 @@ const path = require("path");
 const { API_DEFINITIONS_DIR, API_TYPES_DIR, API_MANIFEST_PATH } = require("../paths");
 
 const manifestPath = API_MANIFEST_PATH;
+
+// Auto-generate manifest if missing
+if (!fs.existsSync(manifestPath)) {
+  console.log("⚠️ Manifest missing, triggering auto-generation...");
+
+  const genModulesScript = path.join(__dirname, "generate-modules.js");
+  const genManifestScript = path.join(__dirname, "generate-manifest.ts");
+
+  try {
+    console.log("▶ Running generate-modules...");
+    require('child_process').execSync(`npx tsx "${genModulesScript}"`, { stdio: 'inherit', env: process.env });
+
+    console.log("▶ Running generate-manifest...");
+    require('child_process').execSync(`npx tsx "${genManifestScript}"`, { stdio: 'inherit', env: process.env });
+
+    if (fs.existsSync(manifestPath)) {
+      console.log("✅ Manifest successfully created.");
+    } else {
+      console.error("❌ Manifest generation reported success but file is STILL missing.");
+    }
+
+  } catch (e) {
+    console.error("❌ Auto-generation failed:", e.message);
+    // Don't exit yet, let the read error happen so we see stack if needed? 
+    // No, better to exit.
+    process.exit(1);
+  }
+}
+
 const tsContent = fs.readFileSync(manifestPath, "utf8");
 
 const transpiled = ts.transpileModule(tsContent, {

@@ -31,7 +31,7 @@ if (!fs.existsSync(apiDir)) {
   console.log(`📁 Created directory: ${apiDir}`);
 }
 
-// Ensure the config directory exists
+// Ensure the config directory exists (Local Tool Config)
 if (!fs.existsSync(apiConfigDir)) {
   fs.mkdirSync(apiConfigDir, { recursive: true });
   console.log(`📁 Created directory: ${apiConfigDir}`);

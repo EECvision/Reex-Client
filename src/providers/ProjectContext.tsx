@@ -40,11 +40,16 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
 
             setProjectPath(realTargetDir);
 
-            // Fetch Data from Cloud, passing the REQUIRED targetDir
+            setProjectPath(realTargetDir);
+
+            // Bridge is Active
+            const bridgeUrl = api.getBridgeUrl();
+
+            // Fetch Data from Bridge directly
             const [manifestData, modulesData, configData] = await Promise.all([
-                api.fetchProjectManifest(realTargetDir),
-                api.fetchProjectModules(realTargetDir),
-                api.fetchProjectConfig(realTargetDir)
+                api.fetchProjectManifest(bridgeUrl),
+                api.fetchProjectModules(bridgeUrl),
+                api.fetchProjectConfig(bridgeUrl)
             ]);
             setManifest(manifestData);
             setModules(modulesData);
@@ -62,8 +67,9 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     useEffect(() => {
         fetchProjectData();
 
-        // Setup SSE for real-time updates
-        const eventSource = api.getEventSource();
+        // Setup SSE for real-time updates from Bridge
+        const bridgeUrl = api.getBridgeUrl();
+        const eventSource = api.getEventSource(bridgeUrl);
         let debounceTimer: NodeJS.Timeout;
 
         eventSource.onopen = () => {

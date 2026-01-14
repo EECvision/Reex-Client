@@ -12,6 +12,7 @@ const getLocalUrl = () => {
 const cloudUrl = "/api";
 
 export const api = {
+    getBridgeUrl: () => getLocalUrl(),
     // ========================================================================
     // CLOUD API (Intelligence)
     // ========================================================================
@@ -135,29 +136,37 @@ export const api = {
         return { success: false, error: "Execution not supported in Cloud Mode" };
     },
 
-    // Event Source for Background Tasks (Cloud)
-    getEventSource: () => {
-        return new EventSource(`${cloudUrl}/events`);
+    // Event Source for Background Tasks (Cloud/Bridge)
+    getEventSource: (baseUrl: string = cloudUrl) => {
+        const url = baseUrl.startsWith('http') ? `${baseUrl}/api/events` : `${baseUrl}/events`;
+        return new EventSource(url);
     },
 
-    // Sync Endpoints (Read Cloud State)
-    fetchProjectManifest: async (targetDir: string) => {
-        const params = new URLSearchParams({ targetDir });
-        const res = await fetch(`${cloudUrl}/project/modules?${params.toString()}`); // Server.js mapped /project/modules to manifest logic
+    // Sync Endpoints (Read Cloud State or Bridge State)
+    fetchProjectManifest: async (baseUrl?: string) => {
+        // If baseUrl provided (Bridge), use it. Else use Cloud (Next Proxy)
+        const root = baseUrl || cloudUrl;
+        const apiPath = baseUrl ? `${baseUrl}/api/project/manifest` : `${root}/project/manifest`;
+
+        const res = await fetch(apiPath);
         if (!res.ok) throw new Error("Failed to fetch manifest");
         return res.json();
     },
 
-    fetchProjectModules: async (targetDir: string) => {
-        const params = new URLSearchParams({ targetDir });
-        const res = await fetch(`${cloudUrl}/project/modules?${params.toString()}`);
+    fetchProjectModules: async (baseUrl?: string) => {
+        const root = baseUrl || cloudUrl;
+        const apiPath = baseUrl ? `${baseUrl}/api/project/modules` : `${root}/project/modules`;
+
+        const res = await fetch(apiPath);
         if (!res.ok) throw new Error("Failed to fetch modules");
         return res.json();
     },
 
-    fetchProjectConfig: async (targetDir: string) => {
-        const params = new URLSearchParams({ targetDir });
-        const res = await fetch(`${cloudUrl}/project/config?${params.toString()}`);
+    fetchProjectConfig: async (baseUrl?: string) => {
+        const root = baseUrl || cloudUrl;
+        const apiPath = baseUrl ? `${baseUrl}/api/project/config` : `${root}/project/config`;
+
+        const res = await fetch(apiPath);
         return res.json();
     },
 
@@ -200,5 +209,9 @@ export const api = {
             body: formData,
         });
         return res.json();
-    }
+    },
+
+    // 9. Watch Project (Reactive)
+    // 9. Watch Project (Reactive) - REMOVED (Relies on Bridge)
+    // watchProject: async (targetDir: string) => { ... }
 };

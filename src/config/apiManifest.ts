@@ -25,4 +25,7 @@ export interface ApiManifest {
   };
 }
 
-export const apiManifest: ApiManifest = {};
+export const apiManifest: ApiManifest = {
+  "watcher_test_module_1768400491229": {},
+  "watcher_test_module_1768400963960": {}
+};

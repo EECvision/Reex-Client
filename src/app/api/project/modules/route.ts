@@ -1,17 +1,28 @@
-import { NextResponse, NextRequest } from "next/server";
-import { getApiTargetDir } from "@/app/api/utils";
+import { NextResponse } from "next/server";
+import fs from "fs";
 // @ts-ignore
-import projectService from "@/services/project-service";
+import { API_MANIFEST_PATH } from "@/paths";
 
-export async function GET(req: NextRequest) {
-    const searchParams = req.nextUrl.searchParams;
-    const targetDir = searchParams.get("targetDir") || undefined;
-    const apiTargetDir = getApiTargetDir(targetDir);
+export async function GET() {
     try {
-        const modules = projectService.getModules(apiTargetDir);
+        const jsonPath = API_MANIFEST_PATH.replace('.ts', '.json');
+
+        if (!fs.existsSync(jsonPath)) {
+            return NextResponse.json({});
+        }
+
+        const content = fs.readFileSync(jsonPath, 'utf8');
+        const manifest = JSON.parse(content);
+
+        // Convert manifest keys to modules map
+        const modules: Record<string, boolean> = {};
+        Object.keys(manifest).forEach(key => {
+            modules[key] = true;
+        });
+
         return NextResponse.json(modules);
     } catch (error: any) {
-        console.error(error);
+        console.error("Failed to load modules:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
