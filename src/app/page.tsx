@@ -518,6 +518,9 @@ const App = () => {
 
           if (activeTaskIdRef.current && String(data.id) === String(activeTaskIdRef.current)) {
             setDeleting(false);
+            setDeletingItem(false);
+            setShowDeleteModal(false);
+            setShowDeleteItemModal(false);
             activeTaskIdRef.current = null;
           }
         } else if (data.type === "project:updated") {

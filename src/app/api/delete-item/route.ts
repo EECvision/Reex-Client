@@ -91,18 +91,35 @@ ${moduleNames.map((name: string) => `  ...${name}Api,`).join('\n')}
                             });
 
                             // If empty, should we delete module? Legacy said yes.
+                            // If empty, should we delete module? Legacy said yes.
                             if (initializer.getProperties().length === 0) {
-                                // Call ourselves recursively to delete module? 
-                                // Or just run module delete logic.
-                                // Simpler to just delete files here.
+                                // 1. Delete Files
                                 await bridgeCall('delete', { filePath: `src/api-services/definitions/${moduleName}.ts` });
-                                await bridgeCall('delete', { filePath: `src/api-services/types/${moduleName}` });
-                                // And regen index logic... 
-                                // Let's force a "Module Deleted" event or just regen index anyway?
-                                // For simplicity, we won't regen index here unless we delete module. 
-                                // A hanging export for empty module is bad?
-                                // Actually, if we delete module, we MUST regen index.
-                                // I'll skip "auto-delete empty module" complexity for this iteration unless critical.
+                                try {
+                                    await bridgeCall('delete', { filePath: `src/api-services/types/${moduleName}` });
+                                } catch (ignore) { }
+
+                                // 2. Regenerate Index
+                                sendEvent(taskId, 'progress', 'Module empty. Deleted module and regenerating index...');
+                                const listRes = await bridgeCall('list', { filePath: 'src/api-services/definitions' });
+
+                                if (listRes.files && Array.isArray(listRes.files)) {
+                                    const moduleNames = listRes.files
+                                        .filter((f: string) => f.endsWith('.ts') && !f.endsWith('.d.ts'))
+                                        .map((f: string) => f.replace('.ts', ''));
+
+                                    const indexContent = `export * from "./config";
+export * from "./config/utils";
+
+${moduleNames.map((name: string) => `import { ${name}Api } from "./definitions/${name}";`).join('\n')}
+
+export const apiClient = {
+${moduleNames.map((name: string) => `  ...${name}Api,`).join('\n')}
+};
+`;
+                                    await bridgeCall('write', { filePath: 'src/api-services/index.ts', content: indexContent });
+                                }
+
                             } else {
                                 // Save update
                                 await bridgeCall('write', { filePath: `src/api-services/definitions/${moduleName}.ts`, content: sourceFile.getFullText() });
