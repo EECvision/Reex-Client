@@ -116,6 +116,9 @@ export async function POST(req: NextRequest) {
 
                 for (const op of operations) {
                     if (op.type === 'write') {
+                        // Skip index.ts generation from the generator since it's incomplete (doesn't know about existing files)
+                        if (op.filePath === 'index.ts') continue;
+
                         // Prepend src/api-services/ if path is relative
                         // The generator returns "definitions/foo.ts" or "index.ts"
                         // Bridge expects path relative to TARGET ROOT
@@ -124,22 +127,42 @@ export async function POST(req: NextRequest) {
                     }
                 }
 
-                // 4. Gen Types (Triggered autonomously by Bridge watcher usually? 
-                //    No, Bridge watcher triggers 'regenerate' which does manifest/hooks.
-                //    Types (via 'npm run gen:types' in CLI) are NOT currently triggered by Bridge?
-                //    Legacy 'generate-modules.js' runs locally.
-                //    If we want complete automation, Bridge should generate types or we skip it for now.
-                //    Wait, 'npm run gen:types' usually runs 'graphql-codegen' or similar? 
-                //    Actually, if this is REST API builder, do we need 'gen:types'?
-                //    The previous code ran: await runCommand('npm run gen:types', { env });
-                //    This implies the User's Project has a 'gen:types' script.
-                //    Bridge does NOT have an arbitrary command runner for security.
-                //    However, our generated code uses typescript interfaces *inline*. 
-                //    There is no external type generation needed for REST modules usually.
-                //    I will comment this out or skip, assuming Bridge handles necessary compilation/indexing.
+                // 4. Regenerate Full Index
+                // Scanning actual files on disk ensures index.ts is always consistent, even after deletions or partial updates.
+                sendEvent(taskId, 'progress', 'Regenerating index.ts...');
 
-                // sendEvent(taskId, 'progress', 'Regenerating type definitions...');
-                // Note: Bridge watcher handles manifest generation which is the equivalent of 'indexing'.
+                try {
+                    const listRes = await fetch(`${BRIDGE_URL}/api/fs/list`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filePath: 'src/api-services/definitions' })
+                    });
+
+                    if (listRes.ok) {
+                        const { files } = await listRes.json();
+                        if (Array.isArray(files)) {
+                            // Filter .ts files and exclude weird ones
+                            const moduleNames = files
+                                .filter((f: string) => f.endsWith('.ts') && !f.endsWith('.d.ts'))
+                                .map((f: string) => f.replace('.ts', ''));
+
+                            const indexContent = `export * from "./config";
+export * from "./config/utils";
+
+${moduleNames.map((name: string) => `import { ${name}Api } from "./definitions/${name}";`).join('\n')}
+
+export const apiClient = {
+${moduleNames.map((name: string) => `  ...${name}Api,`).join('\n')}
+};
+`;
+                            await sendToBridge('POST', 'write', { filePath: 'src/api-services/index.ts', content: indexContent });
+                        }
+                    }
+                } catch (e) {
+                    console.error("Failed to regenerate index via Bridge list:", e);
+                    // Non-fatal? Maybe warning.
+                }
+
 
                 sendEvent(taskId, 'complete', "Collection updated successfully via Bridge");
 
