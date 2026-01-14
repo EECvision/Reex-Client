@@ -3,25 +3,25 @@ import { sendEvent, getBridgeUrl } from "@/app/api/utils";
 
 // Helper to send to Bridge
 async function bridgeCall(bridgeUrl: string, endpoint: string, body: any) {
-    const res = await fetch(`${bridgeUrl}/api/fs/${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-    });
-    if (!res.ok) {
-        const err = await res.json();
-        throw new Error(`Bridge Error (${endpoint}): ${err.message || err.error || res.statusText}`);
-    }
-    return res.json();
+  const res = await fetch(`${bridgeUrl}/api/fs/${endpoint}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(`Bridge Error (${endpoint}): ${err.message || err.error || res.statusText}`);
+  }
+  return res.json();
 }
 
 function generateTemplateContent(moduleName: string) {
-    // Capitalize first letter for type names
-    const capitalize = (str: string): string =>
-        str.charAt(0).toUpperCase() + str.slice(1);
-    const TypeName = capitalize(moduleName.replace(/s$/, "")); // Remove trailing 's' for singular
+  // Capitalize first letter for type names
+  const capitalize = (str: string): string =>
+    str.charAt(0).toUpperCase() + str.slice(1);
+  const TypeName = capitalize(moduleName.replace(/s$/, "")); // Remove trailing 's' for singular
 
-    return `/* eslint-disable @typescript-eslint/no-explicit-any */
+  return `/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BASE_CLIENT } from "../config";
 import { constructQueryParams, handleApiCall } from "../config/utils";
 
@@ -111,46 +111,42 @@ export const ${moduleName}Api = {
 }
 
 export async function POST(req: NextRequest) {
-    const taskId = Date.now().toString();
-    try {
-        const body = await req.json();
-        const { moduleName, bridgeUrl } = body;
+  const taskId = Date.now().toString();
+  try {
+    const body = await req.json();
+    const { moduleName, bridgeUrl } = body;
 
-        if (!moduleName) {
-            return NextResponse.json({ success: false, error: "Module name required" }, { status: 400 });
-        }
-
-        (async () => {
-            sendEvent(taskId, 'start', `Generating template for ${moduleName}...`);
-            try {
-                const content = generateTemplateContent(moduleName);
-
-                // Write to Bridge (src/api-services/definitions/moduleName.ts)
-                // Bridge logic assumes relative path to project root? 
-                // In delete-collection we used 'src/api-services/definitions'.
-                // The Bridge server.js mounts '/fs/write' and uses `path.join(API_TARGET_DIR, filePath)`.
-                // So full relative path is needed.
-
-                const filePath = `src/api-services/definitions/${moduleName}.ts`;
-
-                sendEvent(taskId, 'progress', 'Writing template to Bridge...');
-                await bridgeCall(getBridgeUrl(bridgeUrl), 'write', { filePath, content });
-
-                // We do NOT need to manually trigger gen:types because the Bridge WATCHER should pick up the file change
-                // and automatically regenerate hooks and index.ts!
-                // But giving it a moment might be good? 
-                // Actually, let's trust the reactive flow.
-
-                sendEvent(taskId, 'complete', `Template '${moduleName}' generated successfully`);
-                sendEvent('global', 'project:updated', 'Template generated');
-            } catch (err: any) {
-                console.error("Template generation error:", err);
-                sendEvent(taskId, 'error', `Generation failed: ${err.toString()}`);
-            }
-        })();
-
-        return NextResponse.json({ success: true, message: `Template generation started`, taskId });
-    } catch (e: any) {
-        return NextResponse.json({ success: false, error: e.toString() }, { status: 500 });
+    if (!moduleName) {
+      return NextResponse.json({ success: false, error: "Module name required" }, { status: 400 });
     }
+
+    (async () => {
+      sendEvent(taskId, 'start', `Generating template for ${moduleName}...`);
+      try {
+        const content = generateTemplateContent(moduleName);
+
+        // Write to Bridge (src/api-services/definitions/moduleName.ts)
+        // Bridge logic assumes relative path to project root? 
+        // In delete-collection we used 'src/api-services/definitions'.
+        // The Bridge server.js mounts '/fs/write' and uses `path.join(API_TARGET_DIR, filePath)`.
+        // So full relative path is needed.
+
+        const filePath = `src/api-services/definitions/${moduleName}.ts`;
+
+        sendEvent(taskId, 'progress', 'Writing template to Bridge...');
+        await bridgeCall(getBridgeUrl(bridgeUrl), 'write', { filePath, content });
+
+        // 2. Trigger global update
+        sendEvent(taskId, 'complete', `Template '${moduleName}' generated successfully`);
+        sendEvent('global', 'project:updated', 'Template generated');
+      } catch (err: any) {
+        console.error("Template generation error:", err);
+        sendEvent(taskId, 'error', `Generation failed: ${err.toString()}`);
+      }
+    })();
+
+    return NextResponse.json({ success: true, message: `Template generation started`, taskId });
+  } catch (e: any) {
+    return NextResponse.json({ success: false, error: e.toString() }, { status: 500 });
+  }
 }

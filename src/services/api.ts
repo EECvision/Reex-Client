@@ -88,9 +88,9 @@ export const api = {
 
 
     // 4. Delete Item (Cloud via Scripts)
-    deleteItem: async (itemInfo: any, targetDir: string, bridgeUrl?: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
+    deleteItem: async (itemInfo: any, targetDir: string, bridgeUrl?: string, taskId?: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
         try {
-            const payload = { ...itemInfo, targetDir, bridgeUrl }; // Pass bridgeUrl
+            const payload = { ...itemInfo, targetDir, bridgeUrl, taskId }; // Pass bridgeUrl and taskId
             const res = await fetch(`${cloudUrl}/delete-item`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

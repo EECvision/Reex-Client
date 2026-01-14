@@ -164,13 +164,20 @@ const App = () => {
     setDeletingItem(true);
 
     try {
+      // Generate taskId on client to avoid race condition (SSE arriving before response)
+      const taskId = Date.now().toString();
+      activeTaskIdRef.current = taskId;
+
       // API Call
-      const data = await api.deleteItem(deleteItemInfo, projectPath, api.getBridgeUrl());
-      if (!data.success) throw new Error(data.error || "Deletion failed");
+      const data = await api.deleteItem(deleteItemInfo, projectPath, api.getBridgeUrl(), taskId);
+      if (!data.success) {
+        activeTaskIdRef.current = null; // Clear if failed immediately
+        throw new Error(data.error || "Deletion failed");
+      }
 
       if (data.taskId) {
         // Async task started. Keep modal open.
-        activeTaskIdRef.current = data.taskId;
+        // activeTaskIdRef.current is already set.
         // SSE 'complete' event will close the modal
       } else {
         // Fallback for sync response

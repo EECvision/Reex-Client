@@ -123,40 +123,8 @@ export async function POST(req: NextRequest) {
                 }
 
                 // 4. Regenerate Full Index
-                // Scanning actual files on disk ensures index.ts is always consistent, even after deletions or partial updates.
-                sendEvent(taskId, 'progress', 'Regenerating index.ts...');
-
-                try {
-                    const listRes = await fetch(`${bridgeUrl}/api/fs/list`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ filePath: 'src/api-services/definitions' })
-                    });
-
-                    if (listRes.ok) {
-                        const { files } = await listRes.json();
-                        if (Array.isArray(files)) {
-                            // Filter .ts files and exclude weird ones
-                            const moduleNames = files
-                                .filter((f: string) => f.endsWith('.ts') && !f.endsWith('.d.ts'))
-                                .map((f: string) => f.replace('.ts', ''));
-
-                            const indexContent = `export * from "./config";
-export * from "./config/utils";
-
-${moduleNames.map((name: string) => `import { ${name}Api } from "./definitions/${name}";`).join('\n')}
-
-export const apiClient = {
-${moduleNames.map((name: string) => `  ...${name}Api,`).join('\n')}
-};
-`;
-                            await sendToBridge('POST', 'write', { filePath: 'src/api-services/index.ts', content: indexContent });
-                        }
-                    }
-                } catch (e) {
-                    console.error("Failed to regenerate index via Bridge list:", e);
-                    // Non-fatal? Maybe warning.
-                }
+                // Now handled by Bridge Watcher automatically.
+                sendEvent(taskId, 'progress', 'Waiting for Bridge regeneration...');
 
 
                 sendEvent(taskId, 'complete', "Collection updated successfully via Bridge");

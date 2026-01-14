@@ -16,10 +16,12 @@ async function bridgeCall(bridgeUrl: string, endpoint: string, body: any) {
 }
 
 export async function POST(req: NextRequest) {
-    const taskId = Date.now().toString();
     try {
         const body = await req.json();
-        const { type, moduleName, functionName, bridgeUrl } = body; // targetDir ignore, usage Bridge
+        const { type, moduleName, functionName, bridgeUrl, taskId: clientTaskId } = body; // targetDir ignore, usage Bridge
+
+        // Use client provided taskId to prevent race conditions, or fallback to server generated
+        const taskId = clientTaskId || Date.now().toString();
 
         (async () => {
             const itemLabel = type === 'module' ? `module '${moduleName}'` : `function '${functionName}'`;
@@ -38,25 +40,7 @@ export async function POST(req: NextRequest) {
                     } catch (ignore) { }
 
                     // 3. Regenerate Index (Reuse logic from update-collection)
-                    sendEvent(taskId, 'progress', 'Regenerating index.ts...');
-                    const listRes = await bridgeCall(getBridgeUrl(bridgeUrl), 'list', { filePath: 'src/api-services/definitions' });
-
-                    if (listRes.files && Array.isArray(listRes.files)) {
-                        const moduleNames = listRes.files
-                            .filter((f: string) => f.endsWith('.ts') && !f.endsWith('.d.ts'))
-                            .map((f: string) => f.replace('.ts', ''));
-
-                        const indexContent = `export * from "./config";
-export * from "./config/utils";
-
-${moduleNames.map((name: string) => `import { ${name}Api } from "./definitions/${name}";`).join('\n')}
-
-export const apiClient = {
-${moduleNames.map((name: string) => `  ...${name}Api,`).join('\n')}
-};
-`;
-                        await bridgeCall(getBridgeUrl(bridgeUrl), 'write', { filePath: 'src/api-services/index.ts', content: indexContent });
-                    }
+                    sendEvent(taskId, 'progress', 'Updates propagated to Bridge...');
 
                 } else if (type === 'function') {
                     if (!functionName) throw new Error("Function name required");
@@ -98,25 +82,7 @@ ${moduleNames.map((name: string) => `  ...${name}Api,`).join('\n')}
                                 } catch (ignore) { }
 
                                 // 2. Regenerate Index
-                                sendEvent(taskId, 'progress', 'Module empty. Deleted module and regenerating index...');
-                                const listRes = await bridgeCall(getBridgeUrl(bridgeUrl), 'list', { filePath: 'src/api-services/definitions' });
-
-                                if (listRes.files && Array.isArray(listRes.files)) {
-                                    const moduleNames = listRes.files
-                                        .filter((f: string) => f.endsWith('.ts') && !f.endsWith('.d.ts'))
-                                        .map((f: string) => f.replace('.ts', ''));
-
-                                    const indexContent = `export * from "./config";
-export * from "./config/utils";
-
-${moduleNames.map((name: string) => `import { ${name}Api } from "./definitions/${name}";`).join('\n')}
-
-export const apiClient = {
-${moduleNames.map((name: string) => `  ...${name}Api,`).join('\n')}
-};
-`;
-                                    await bridgeCall(getBridgeUrl(bridgeUrl), 'write', { filePath: 'src/api-services/index.ts', content: indexContent });
-                                }
+                                sendEvent(taskId, 'progress', 'Module empty. Deleted module, Bridge will regen index...');
 
                             } else {
                                 // Save update

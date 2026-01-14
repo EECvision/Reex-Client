@@ -507,86 +507,6 @@ ${functionDefinitions.join("\n")}
   return generatedModules;
 };
 
-// --- File Operations ---
-
-const updateIndex = (
-  generatedFiles: string[],
-  indexPath: string
-) => {
-  if (generatedFiles.length === 0) return;
-
-  let indexContent = "";
-
-  if (fs.existsSync(indexPath)) {
-    indexContent = fs.readFileSync(indexPath, "utf8");
-  } else {
-    indexContent = `export * from "./config";\nexport * from "./config/utils";\n\n`;
-  }
-
-  const lines = indexContent.split("\n");
-  const newImports: string[] = [];
-  const newExports: string[] = [];
-
-  generatedFiles.forEach((moduleName) => {
-    const importStatement = `import { ${moduleName}Api } from "./definitions/${moduleName}";`;
-    if (!indexContent.includes(importStatement)) {
-      newImports.push(importStatement);
-      newExports.push(`  ...${moduleName}Api,`);
-    }
-  });
-
-  if (newImports.length > 0) {
-    let importInsertIndex = -1;
-    for (let i = 0; i < lines.length; i++) {
-      if (lines[i].trim() === "// Export all apis") {
-        importInsertIndex = i;
-        break;
-      }
-      if (lines[i].trim().startsWith("import")) {
-        importInsertIndex = i + 1;
-      }
-    }
-
-    if (importInsertIndex === -1) {
-      importInsertIndex =
-        lines.findIndex((l) => l.includes("export const apiClient")) || 0;
-    }
-
-    lines.splice(importInsertIndex, 0, ...newImports, "");
-
-    const apiClientRegex = /export const apiClient = \{([^}]*)\};/;
-    const updatedContent = lines.join("\n");
-    const match = updatedContent.match(apiClientRegex);
-
-    if (match) {
-      let currentExports = match[1].trim();
-      currentExports = currentExports.replace(/,+/g, ",").replace(/,\s*$/, "");
-
-      let finalExports;
-      if (currentExports === "") {
-        finalExports = `\n${newExports.join("\n")}\n`;
-      } else {
-        finalExports = `${currentExports},\n${newExports.join("\n")}\n`;
-      }
-
-      const finalContent = updatedContent.replace(
-        apiClientRegex,
-        `export const apiClient = {${finalExports}};`
-      );
-      fs.writeFileSync(indexPath, finalContent);
-    } else {
-      lines.push("");
-      lines.push("// Export all apis");
-      lines.push("");
-      lines.push("export const apiClient = {");
-      lines.push(...newExports);
-      lines.push("};");
-      fs.writeFileSync(indexPath, lines.join("\n"));
-    }
-    console.log(`✓ Updated index.ts`);
-  }
-};
-
 // --- Main Entry ---
 
 export const generatePostman = async (options: GeneratorOptions): Promise<ModuleContent[] | FileOperation[]> => {
@@ -618,22 +538,8 @@ export const generatePostman = async (options: GeneratorOptions): Promise<Module
       });
     });
 
-    // Generate index.ts in-memory
-    const moduleNames = modules.map(m => m.name);
-    const indexContent = `export * from "./config";
-export * from "./config/utils";
-
-${moduleNames.map(name => `import { ${name}Api } from "./definitions/${name}";`).join('\n')}
-
-export const apiClient = {
-${moduleNames.map(name => `  ...${name}Api,`).join('\n')}
-};
-`;
-    operations.push({
-      type: 'write',
-      filePath: 'index.ts',
-      content: indexContent
-    });
+    // Index.ts is now managed by the Bridge watcher automatically.
+    // We do NOT need to generate it here.
 
     return operations;
   }
@@ -737,10 +643,8 @@ ${moduleNames.map(name => `  ...${name}Api,`).join('\n')}
       }
     });
 
-    updateIndex(
-      modules.map((m) => m.name),
-      path.join(apiServicesDir, "index.ts")
-    );
+    // updateIndex is now redundant as Bridge watcher handles it.
+    console.log(`✓ Modules generated. Bridge will update index.ts.`);
   }
 
   return modules;

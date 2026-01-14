@@ -529,86 +529,6 @@ ${functionDefinitions.join("\n")}
   return generatedModules;
 };
 
-// --- File Operations ---
-
-const updateIndex = (
-  generatedFiles: string[],
-  indexPath: string,
-  mode: "append" | "overwrite" = "append" // Should we keep old exports?
-) => {
-  if (generatedFiles.length === 0) return;
-
-  let indexContent = "";
-
-  if (fs.existsSync(indexPath)) {
-    indexContent = fs.readFileSync(indexPath, "utf8");
-  } else {
-    indexContent = `export * from "./config";\nexport * from "./config/utils";\n\n`;
-  }
-
-  const lines = indexContent.split("\n");
-  const newImports: string[] = [];
-  const newExports: string[] = [];
-
-  generatedFiles.forEach((moduleName) => {
-    const importStatement = `import { ${moduleName}Api } from "./definitions/${moduleName}";`;
-    if (!indexContent.includes(importStatement)) {
-      newImports.push(importStatement);
-      newExports.push(`  ...${moduleName}Api,`);
-    }
-  });
-
-  if (newImports.length > 0) {
-    let importInsertIndex = -1;
-    for (let i = 0; i < lines.length; i++) {
-      if (lines[i].trim() === "// Export all apis") {
-        importInsertIndex = i;
-        break;
-      }
-      if (lines[i].trim().startsWith("import")) {
-        importInsertIndex = i + 1;
-      }
-    }
-
-    if (importInsertIndex === -1) {
-      importInsertIndex =
-        lines.findIndex((l) => l.includes("export const apiClient")) || 0;
-    }
-
-    lines.splice(importInsertIndex, 0, ...newImports, "");
-
-    const apiClientRegex = /export const apiClient = \{([^}]*)\};/;
-    const updatedContent = lines.join("\n");
-    const match = updatedContent.match(apiClientRegex);
-
-    if (match) {
-      let currentExports = match[1].trim();
-      currentExports = currentExports.replace(/,+/g, ",").replace(/,\s*$/, "");
-
-      let finalExports;
-      if (currentExports === "") {
-        finalExports = `\n${newExports.join("\n")}\n`;
-      } else {
-        finalExports = `${currentExports},\n${newExports.join("\n")}\n`;
-      }
-
-      const finalContent = updatedContent.replace(
-        apiClientRegex,
-        `export const apiClient = {${finalExports}};`
-      );
-      fs.writeFileSync(indexPath, finalContent);
-    } else {
-      lines.push("");
-      lines.push("// Export all apis");
-      lines.push("");
-      lines.push("export const apiClient = {");
-      lines.push(...newExports);
-      lines.push("};");
-      fs.writeFileSync(indexPath, lines.join("\n"));
-    }
-  }
-};
-
 // --- Main Entry ---
 
 export const generateOpenApi = async (options: GeneratorOptions): Promise<ModuleContent[] | FileOperation[]> => {
@@ -650,39 +570,6 @@ export const generateOpenApi = async (options: GeneratorOptions): Promise<Module
         content: mod.content
       });
     });
-
-    // TODO: Handle index.ts generation in returnContent mode?
-    // For now, simpler to let caller handle index regeneration if needed, or compute it here.
-    // Let's match existing logic: We need to compute index content.
-
-    // BUT, updateIndex reads from disk. In-memory updateIndex is complex.
-    // Assuming the Client will receive these ops and send them to Bridge, and Bridge will trigger regen.
-    // If Bridge triggers regen, it might handle index.ts? 
-    // Wait, Bridge scaffolding logic builds config, but does generateManifest build index.ts?
-    // No, `generate-modules.js` built index.ts.
-    // The current script `generate-openapi-collection.ts` builds `index.ts`.
-    // If we rely on Bridge watcher, does IT update index.ts? 
-    // Bridge `server.js` calls `projectService.generateManifest` then `hookService`. 
-    // It DOES NOT currently generate `src/api-services/index.ts`.
-    // So we MUST generate `index.ts` content here and include it in ops.
-
-    // Generating index.ts in-memory:
-    const moduleNames = modules.map(m => m.name);
-    const indexContent = `export * from "./config";
-export * from "./config/utils";
-
-${moduleNames.map(name => `import { ${name}Api } from "./definitions/${name}";`).join('\n')}
-
-export const apiClient = {
-${moduleNames.map(name => `  ...${name}Api,`).join('\n')}
-};
-`;
-    operations.push({
-      type: 'write',
-      filePath: 'index.ts',
-      content: indexContent
-    });
-
     return operations;
   }
 
@@ -804,10 +691,8 @@ ${moduleNames.map(name => `  ...${name}Api,`).join('\n')}
     });
 
     // Update index.ts
-    updateIndex(
-      modules.map((m) => m.name),
-      path.join(apiServicesDir, "index.ts")
-    );
+    // updateIndex is now redundant as Bridge watcher handles it.
+    console.log(`✓ Modules generated. Bridge will update index.ts.`);
     console.log(`✓ Updated index.ts`);
   }
 
