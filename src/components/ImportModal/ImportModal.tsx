@@ -12,7 +12,8 @@ interface ImportModalProps {
   onSuccess: (message: string) => void;
   onUpdateStarted?: (taskId: string) => void;
   isEmptyWorkspace?: boolean;
-  targetDir: string; // REQUIRED
+  targetDir: string;
+  taskComplete?: boolean; // New prop
 }
 
 type CollectionType = "openapi" | "postman" | "unknown";
@@ -24,14 +25,16 @@ interface DiffResult {
   functions?: FunctionDiff[];
 }
 
+// ...
+
 const ImportModal: React.FC<ImportModalProps> = ({
   isOpen,
   onClose,
   initialFile,
-  // onSuccess, // Unused
   onUpdateStarted,
   isEmptyWorkspace = false,
-  targetDir // REQUIRED
+  targetDir,
+  taskComplete = false
 }) => {
   const [step, setStep] = useState<Step>("upload");
   const [dragActive, setDragActive] = useState(false);
@@ -59,13 +62,10 @@ const ImportModal: React.FC<ImportModalProps> = ({
   const [diffFunction, setDiffFunction] = useState<FunctionDiff | null>(null);
 
   useEffect(() => {
-    if (isOpen && initialFile) {
-      setSelectedFile(initialFile);
-      detectCollectionType(initialFile).then((type) => {
-        setCollectionType(type);
-      });
+    if (taskComplete && step === "updating") {
+      setStep("success");
     }
-  }, [isOpen, initialFile]);
+  }, [taskComplete, step]);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -151,7 +151,6 @@ const ImportModal: React.FC<ImportModalProps> = ({
     setStep("analyzing");
 
     try {
-      // const arrayBuffer = await selectedFile.arrayBuffer(); // No longer needed for API
       const res = await api.analyzeCollection(selectedFile, selectedFile.name, targetDir);
 
       const data = res; // IPC returns the data structure directly
@@ -203,9 +202,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
     setStep("updating");
 
     try {
-      // const arrayBuffer = await selectedFile.arrayBuffer();
-
-      // Convert Map to Object for JSON serialization
+      // ... same preparation logic
       const functionMapObj: Record<string, string[]> = {};
       selectedFunctions.forEach((value, key) => {
         if (value.size > 0) {
@@ -213,7 +210,6 @@ const ImportModal: React.FC<ImportModalProps> = ({
         }
       });
 
-      // Calculate Deleted Modules: Existing modules (not "new") that are NOT selected
       const deletedModules = diffs
         .filter(
           (d) =>
@@ -236,21 +232,20 @@ const ImportModal: React.FC<ImportModalProps> = ({
         throw new Error(res.error || "Sync failed");
       }
 
-      // onSuccess(res.message || "Sync started. Updating types...");
       if (onUpdateStarted && res.taskId) {
         onUpdateStarted(res.taskId);
       }
 
-      setStep("success");
-      setTimeout(() => {
-        handleClose();
-      }, 1500);
+      // Do NOT set success or close here. Wait for taskComplete prop.
+      // step remains "updating"
+
     } catch (err) {
       console.error(err);
       alert(`Sync failed: ${(err as Error).message}`);
       setStep("review");
     }
   };
+  // ...
 
   const toggleModule = (moduleName: string, diff?: DiffResult) => {
     const isSelected = selectedModules.has(moduleName);
@@ -647,6 +642,12 @@ const ImportModal: React.FC<ImportModalProps> = ({
                   Update Selected
                 </Button>
               </div>
+            )}
+
+            {step === "success" && (
+              <Button onClick={handleClose} variant="primary">
+                Done
+              </Button>
             )}
           </div>
         </div>

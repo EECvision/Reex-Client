@@ -42,6 +42,7 @@ const App = () => {
   const [interfacePreview, setInterfacePreview] = useState<string | null>(null);
   const [savingInterface, setSavingInterface] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [importTaskComplete, setImportTaskComplete] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -482,16 +483,22 @@ const App = () => {
 
           // remove double toast
 
-          // Check if this completion is for our active delete task
           // data.id comes as string or number from JSON.parse
           if (activeTaskIdRef.current && String(data.id) === String(activeTaskIdRef.current)) {
-            setDeleting(false);
-            setDeletingItem(false); // Reset item deleting state
-            setShowDeleteModal(false);
-            setShowDeleteItemModal(false); // Close item delete modal
-            setShowImportModal(false);
-            setShowGenerateModal(false);
-            activeTaskIdRef.current = null;
+            // Check if we are in Import Mode
+            if (showImportModal) {
+              setImportTaskComplete(true);
+              activeTaskIdRef.current = null;
+              // Do NOT close modal yet
+            } else {
+              setDeleting(false);
+              setDeletingItem(false); // Reset item deleting state
+              setShowDeleteModal(false);
+              setShowDeleteItemModal(false); // Close item delete modal
+              setShowGenerateModal(false);
+              setShowImportModal(false); // Fallback
+              activeTaskIdRef.current = null;
+            }
 
             // Suppress toast for "Collection updated" (Sync), "Successfully deleted", and "Type generation complete"
             // Show for "Template generated" etc.
@@ -593,14 +600,17 @@ const App = () => {
             onClose={() => {
               setShowImportModal(false);
               setImportFile(null);
+              setImportTaskComplete(false); // Reset on close
             }}
             initialFile={importFile}
-            onSuccess={(msg) => showToast("success", msg)}
+            // onSuccess={(msg) => showToast("success", msg)} // Handled internally now
+            onSuccess={() => { }}
             isEmptyWorkspace={!hasEndpoints}
             onUpdateStarted={(taskId) => {
               activeTaskIdRef.current = taskId;
             }}
             targetDir={projectPath}
+            taskComplete={importTaskComplete}
           />
         )}
 
