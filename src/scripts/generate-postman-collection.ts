@@ -12,6 +12,13 @@ interface GeneratorOptions {
   dryRun?: boolean;
   filterModules?: string[];
   filterFunctions?: Map<string, string[]>;
+  returnContent?: boolean;
+}
+
+export interface FileOperation {
+  type: 'write' | 'delete';
+  filePath: string;
+  content?: string;
 }
 
 interface ModuleContent {
@@ -582,7 +589,7 @@ const updateIndex = (
 
 // --- Main Entry ---
 
-export const generatePostman = async (options: GeneratorOptions) => {
+export const generatePostman = async (options: GeneratorOptions): Promise<ModuleContent[] | FileOperation[]> => {
   const { specPath, specData, outputDir, dryRun, filterModules, filterFunctions } = options;
 
   let data = specData;
@@ -599,6 +606,37 @@ export const generatePostman = async (options: GeneratorOptions) => {
 
   const processedModules = processPostmanCollection(data);
   const modules = generateModuleContent(processedModules, filterModules);
+
+  if (options.returnContent) {
+    const operations: FileOperation[] = [];
+
+    modules.forEach(mod => {
+      operations.push({
+        type: 'write',
+        filePath: path.join('definitions', `${mod.name}.ts`),
+        content: mod.content
+      });
+    });
+
+    // Generate index.ts in-memory
+    const moduleNames = modules.map(m => m.name);
+    const indexContent = `export * from "./config";
+export * from "./config/utils";
+
+${moduleNames.map(name => `import { ${name}Api } from "./definitions/${name}";`).join('\n')}
+
+export const apiClient = {
+${moduleNames.map(name => `  ...${name}Api,`).join('\n')}
+};
+`;
+    operations.push({
+      type: 'write',
+      filePath: 'index.ts',
+      content: indexContent
+    });
+
+    return operations;
+  }
 
   if (!dryRun && outputDir) {
     const apiDir = path.resolve(outputDir, "definitions");

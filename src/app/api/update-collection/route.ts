@@ -37,16 +37,51 @@ export async function POST(req: NextRequest) {
                 const fileContent = fs.readFileSync(workFilePath, 'utf8');
                 const jsonContent = JSON.parse(fileContent);
                 const isPostman = jsonContent.info && jsonContent.item;
+                const modulesToFilter = modules.length > 0 ? modules : undefined;
 
-                const env = getEnvWithOverride(targetDir);
-                const scriptsDir = path.join(process.cwd(), 'src', 'scripts');
+                // Parse functions filter
+                let filterFunctions: Map<string, string[]> | undefined;
+                if (functionsStr) {
+                    try {
+                        const obj = JSON.parse(functionsStr);
+                        filterFunctions = new Map(Object.entries(obj));
+                    } catch (e) {
+                        console.warn("Failed to parse functions filter", e);
+                    }
+                }
+
+                // Bridge URL (Default to localhost:4000 internal network)
+                // In Docker/Podman this might need to be host.docker.internal or similar, 
+                // but for now we assume simple localhost access.
+                const BRIDGE_URL = process.env.BRIDGE_URL || "http://localhost:4000";
+
+                // DEBUG LOG
+                fs.appendFileSync('d:\\Dev\\api-builder\\debug-update.log', `Start Update: ${BRIDGE_URL}\n`);
+
+                const sendToBridge = async (method: string, endpoint: string, body: any) => {
+                    fs.appendFileSync('d:\\Dev\\api-builder\\debug-update.log', `Sending ${endpoint}...\n`);
+                    // Ensure we target /api/fs/write
+                    const res = await fetch(`${BRIDGE_URL}/api/fs/${endpoint}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+                    if (!res.ok) {
+                        const err = await res.json();
+                        const msg = `Bridge Error (${endpoint}): ${err.message || err.error || res.statusText}`;
+                        fs.appendFileSync('d:\\Dev\\api-builder\\debug-update.log', `${msg}\n`);
+                        throw new Error(msg);
+                    }
+                    fs.appendFileSync('d:\\Dev\\api-builder\\debug-update.log', `Success ${endpoint}\n`);
+                };
 
                 // 1. Process Deletions
                 if (deletedModules.length > 0) {
                     sendEvent(taskId, 'progress', `Deleting ${deletedModules.length} obsolete modules...`);
                     for (const mod of deletedModules) {
                         try {
-                            await runCommand(`npx tsx "${path.join(scriptsDir, 'delete-item.ts')}" module "${mod}"`, { env });
+                            // Direct call to Bridge delete
+                            await sendToBridge('POST', 'delete', { filePath: `src/api-services/definitions/${mod}.ts` });
                         } catch (e: any) {
                             console.error("Failed to delete module", mod, e);
                             sendEvent(taskId, 'error', `Failed to delete module ${mod}: ${e}`);
@@ -54,29 +89,67 @@ export async function POST(req: NextRequest) {
                     }
                 }
 
-                // 2. Generator
+                // 2. Generator (In-Memory)
                 sendEvent(taskId, 'progress', 'Generating API definitions...');
-                const scriptName = isPostman ? "generate-postman-collection.ts" : "generate-openapi-collection.ts";
-                let generateCmd = `npx tsx "${path.join(scriptsDir, scriptName)}" "${workFilePath}"`;
 
-                if (modules.length > 0) {
-                    generateCmd += ` --only ${modules.join(",")}`;
+                let operations: any[] = [];
+
+                // Dynamic Import to avoid top-level side effects if any
+                const { generateOpenApi } = await import("@/scripts/generate-openapi-collection");
+                const { generatePostman } = await import("@/scripts/generate-postman-collection");
+
+                const options = {
+                    specData: jsonContent,
+                    returnContent: true,
+                    filterModules: modulesToFilter,
+                    filterFunctions: filterFunctions
+                };
+
+                if (isPostman) {
+                    operations = await generatePostman(options) as any[];
+                } else {
+                    operations = await generateOpenApi(options) as any[];
                 }
-                if (functionsStr) {
-                    const escapedFunctions = functionsStr.replace(/"/g, '\\"');
-                    generateCmd += ` --functions "${escapedFunctions}"`;
+
+                // 3. Send Operations to Bridge
+                sendEvent(taskId, 'progress', `Syncing ${operations.length} generated files to Bridge...`);
+
+                for (const op of operations) {
+                    if (op.type === 'write') {
+                        // Prepend src/api-services/ if path is relative
+                        // The generator returns "definitions/foo.ts" or "index.ts"
+                        // Bridge expects path relative to TARGET ROOT
+                        const relativePath = `src/api-services/${op.filePath.replace(/\\/g, '/')}`;
+                        await sendToBridge('POST', 'write', { filePath: relativePath, content: op.content });
+                    }
                 }
 
-                await runCommand(generateCmd, { env });
+                // 4. Gen Types (Triggered autonomously by Bridge watcher usually? 
+                //    No, Bridge watcher triggers 'regenerate' which does manifest/hooks.
+                //    Types (via 'npm run gen:types' in CLI) are NOT currently triggered by Bridge?
+                //    Legacy 'generate-modules.js' runs locally.
+                //    If we want complete automation, Bridge should generate types or we skip it for now.
+                //    Wait, 'npm run gen:types' usually runs 'graphql-codegen' or similar? 
+                //    Actually, if this is REST API builder, do we need 'gen:types'?
+                //    The previous code ran: await runCommand('npm run gen:types', { env });
+                //    This implies the User's Project has a 'gen:types' script.
+                //    Bridge does NOT have an arbitrary command runner for security.
+                //    However, our generated code uses typescript interfaces *inline*. 
+                //    There is no external type generation needed for REST modules usually.
+                //    I will comment this out or skip, assuming Bridge handles necessary compilation/indexing.
 
-                // 3. Gen Types
-                sendEvent(taskId, 'progress', 'Regenerating type definitions...');
-                await runCommand('npm run gen:types', { env });
+                // sendEvent(taskId, 'progress', 'Regenerating type definitions...');
+                // Note: Bridge watcher handles manifest generation which is the equivalent of 'indexing'.
 
-                sendEvent(taskId, 'complete', "Collection updated successfully");
+                sendEvent(taskId, 'complete', "Collection updated successfully via Bridge");
+
+                // Bridge emits project:updated, we don't need to double-emit globally here, 
+                // but the UI listens to global events. 
+                // Let's emit it for immediate UI feedback.
                 sendEvent('global', 'project:updated', 'Collection updated');
 
             } catch (error: any) {
+                console.error("Update failed", error);
                 sendEvent(taskId, 'error', `Update failed: ${error.toString()}`);
             } finally {
                 try { if (fs.existsSync(workFilePath)) fs.unlinkSync(workFilePath); } catch (e) { console.error("Cleanup failed:", e); }

@@ -13,6 +13,13 @@ interface GeneratorOptions {
   dryRun?: boolean;
   filterModules?: string[]; // If provided, only process these modules
   filterFunctions?: Map<string, string[]>; // If provided, only update these functions in the modules
+  returnContent?: boolean; // If true, returns file operations instead of writing to disk
+}
+
+export interface FileOperation {
+  type: 'write' | 'delete';
+  filePath: string;
+  content?: string;
 }
 
 
@@ -604,7 +611,7 @@ const updateIndex = (
 
 // --- Main Entry ---
 
-export const generateOpenApi = async (options: GeneratorOptions) => {
+export const generateOpenApi = async (options: GeneratorOptions): Promise<ModuleContent[] | FileOperation[]> => {
   const { specPath, specData, outputDir, dryRun, filterModules, filterFunctions } = options;
 
   let data = specData;
@@ -631,6 +638,53 @@ export const generateOpenApi = async (options: GeneratorOptions) => {
 
   const processedModules = processOpenAPI(data);
   const modules = generateModuleContent(processedModules, filterModules);
+
+  if (options.returnContent) {
+    const operations: FileOperation[] = [];
+
+    // Modules
+    modules.forEach(mod => {
+      operations.push({
+        type: 'write',
+        filePath: path.join('definitions', `${mod.name}.ts`),
+        content: mod.content
+      });
+    });
+
+    // TODO: Handle index.ts generation in returnContent mode?
+    // For now, simpler to let caller handle index regeneration if needed, or compute it here.
+    // Let's match existing logic: We need to compute index content.
+
+    // BUT, updateIndex reads from disk. In-memory updateIndex is complex.
+    // Assuming the Client will receive these ops and send them to Bridge, and Bridge will trigger regen.
+    // If Bridge triggers regen, it might handle index.ts? 
+    // Wait, Bridge scaffolding logic builds config, but does generateManifest build index.ts?
+    // No, `generate-modules.js` built index.ts.
+    // The current script `generate-openapi-collection.ts` builds `index.ts`.
+    // If we rely on Bridge watcher, does IT update index.ts? 
+    // Bridge `server.js` calls `projectService.generateManifest` then `hookService`. 
+    // It DOES NOT currently generate `src/api-services/index.ts`.
+    // So we MUST generate `index.ts` content here and include it in ops.
+
+    // Generating index.ts in-memory:
+    const moduleNames = modules.map(m => m.name);
+    const indexContent = `export * from "./config";
+export * from "./config/utils";
+
+${moduleNames.map(name => `import { ${name}Api } from "./definitions/${name}";`).join('\n')}
+
+export const apiClient = {
+${moduleNames.map(name => `  ...${name}Api,`).join('\n')}
+};
+`;
+    operations.push({
+      type: 'write',
+      filePath: 'index.ts',
+      content: indexContent
+    });
+
+    return operations;
+  }
 
   if (!dryRun && outputDir) {
     // Ensure directories exist
