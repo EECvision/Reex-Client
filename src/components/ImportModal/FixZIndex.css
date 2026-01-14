@@ -1,0 +1,9 @@
+.diffOverlay {
+    z-index: 2000 !important;
+}
+
+.diffModal {
+    z-index: 2001 !important;
+    box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.5);
+    /* Force shadow overlay visual */
+}

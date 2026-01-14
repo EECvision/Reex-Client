@@ -1,0 +1,23 @@
+export interface EndpointArg {
+    name: string;
+    isOptional: boolean;
+    isObject?: boolean;
+    properties?: {
+        name: string;
+        isOptional: boolean;
+    }[];
+}
+
+export interface EndpointInfo {
+    apiKey: string;
+    fnName: string;
+    args: EndpointArg[];
+}
+
+export type Methods = "ALL" | "GET" | "POST" | "DELETE" | "PATCH";
+
+export interface ToastItem {
+    id: number;
+    type: "success" | "error";
+    message: string;
+}

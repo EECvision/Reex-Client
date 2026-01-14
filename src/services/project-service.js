@@ -1,0 +1,258 @@
+const fs = require("fs");
+const path = require("path");
+const { Project, SyntaxKind } = require("ts-morph");
+
+class ProjectService {
+    constructor() {
+        this.project = null;
+    }
+
+    /**
+     * Generates the API manifest from the target directory.
+     * @param {string} targetDir - The directory containing API definitions.
+     * @returns {Object} The generated manifest object.
+     */
+    generateManifest(targetDir) {
+        if (!fs.existsSync(targetDir)) {
+            console.warn(`[ProjectService] Warning: Target directory not found: ${targetDir}`);
+            return {};
+        }
+
+        this.project = new Project({
+            compilerOptions: {
+                allowJs: true,
+                declaration: true,
+                emitDeclarationOnly: true,
+            },
+            skipAddingFilesFromTsConfig: true,
+        });
+
+        const files = fs.readdirSync(targetDir).filter((f) => f.endsWith(".ts"));
+        const apiManifest = {};
+
+        for (const file of files) {
+            const moduleName = file.replace(".ts", "");
+            const filePath = path.join(targetDir, file);
+            const sourceFile = this.project.addSourceFileAtPath(filePath);
+            const moduleExports = {};
+            const exports = sourceFile.getExportedDeclarations();
+            let count = 0;
+
+            for (const [exportName, declarations] of exports) {
+                for (const declaration of declarations) {
+                    const kind = declaration.getKind();
+
+                    // Helper to extract metadata from function body
+                    const extractMetadata = (funcNode) => {
+                        let client = "UNKNOWN_CLIENT";
+                        let url = "";
+
+                        // Look for: const url = "/path";
+                        const variableStatements = funcNode.getBody().getDescendantsOfKind(SyntaxKind.VariableStatement);
+                        for (const stmt of variableStatements) {
+                            const decl = stmt.getDeclarations()[0];
+                            if (decl.getName() === "url") {
+                                const init = decl.getInitializer();
+                                if (init) {
+                                    if (init.getKind() === SyntaxKind.StringLiteral || init.getKind() === SyntaxKind.NoSubstitutionTemplateLiteral) {
+                                        url = init.getLiteralValue();
+                                    } else if (init.getKind() === SyntaxKind.TemplateExpression) {
+                                        // Handle `path${query}` -> extract "path"
+                                        // The head contains the text before the first substitution
+                                        url = init.getHead().getLiteralText();
+                                    }
+                                }
+                            }
+                        }
+
+                        // Look for: handleApiCall(() => CLIENT.method(url), ...)
+                        const callExprs = funcNode.getBody().getDescendantsOfKind(SyntaxKind.CallExpression);
+                        for (const call of callExprs) {
+                            if (call.getExpression().getText() === "handleApiCall") {
+                                // First arg is arrow function: () => CLIENT.method(...)
+                                const firstArg = call.getArguments()[0];
+                                if (firstArg && (firstArg.getKind() === SyntaxKind.ArrowFunction || firstArg.getKind() === SyntaxKind.FunctionExpression)) {
+                                    const innerCall = firstArg.getBody(); // CLIENT.method(url)
+                                    if (innerCall.getKind() === SyntaxKind.CallExpression) {
+                                        const expr = innerCall.getExpression(); // CLIENT.method (PropertyAccessExpression)
+                                        if (expr.getKind() === SyntaxKind.PropertyAccessExpression) {
+                                            client = expr.getExpression().getText(); // CLIENT
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        return { client, url };
+                    };
+
+
+                    if (kind === SyntaxKind.VariableDeclaration) {
+                        const initializer = declaration.getInitializer();
+                        if (initializer && initializer.getKind() === SyntaxKind.ObjectLiteralExpression) {
+                            const properties = initializer.getProperties();
+                            for (const property of properties) {
+                                if (property.getKind() === SyntaxKind.PropertyAssignment) {
+                                    const methodName = property.getName();
+                                    const init = property.getInitializer();
+                                    if (init && (init.getKind() === SyntaxKind.ArrowFunction || init.getKind() === SyntaxKind.FunctionExpression)) {
+                                        const params = init.getParameters().map(p => this.getParameterDetails(p, sourceFile));
+                                        const metadata = extractMetadata(init);
+                                        moduleExports[methodName] = { args: params, ...metadata };
+                                        count++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (count) {
+                apiManifest[moduleName] = moduleExports;
+            }
+        }
+
+        return apiManifest;
+    }
+
+    /**
+     * Reads the project config to get BaseURLs.
+     * @param {string} configDir - Path to src/api-services/config
+     */
+    getProjectConfig(configDir) {
+        if (!fs.existsSync(configDir)) return {};
+        const filePath = path.join(configDir, "index.ts");
+        if (!fs.existsSync(filePath)) return {};
+
+        const project = new Project({ skipAddingFilesFromTsConfig: true });
+        const sourceFile = project.addSourceFileAtPath(filePath);
+        const config = { clients: {} };
+
+        // 1. Get baseURL
+        const baseURLDecl = sourceFile.getVariableDeclaration("baseURL");
+        if (baseURLDecl) {
+            const init = baseURLDecl.getInitializer();
+            // Handle: import.meta.env.V || "http..."
+            if (init.getKind() === SyntaxKind.BinaryExpression) {
+                config.baseURL = init.getRight().getText().replace(/"/g, '');
+            } else if (init.getKind() === SyntaxKind.StringLiteral) {
+                config.baseURL = init.getLiteralValue();
+            }
+        }
+
+        // 2. Get Clients and their baseURLs
+        const exports = sourceFile.getExportedDeclarations();
+        for (const [name, declarations] of exports) {
+            if (name.endsWith("_CLIENT") || name === "BASE_CLIENT") {
+                // Inspect the axios.create({ baseURL: ... })
+                const decl = declarations[0]; // VariableDeclaration
+                if (decl.getKind() === SyntaxKind.VariableDeclaration) {
+                    const initializer = decl.getInitializer(); // CallExpression axios.create()
+                    if (initializer && initializer.getKind() === SyntaxKind.CallExpression) {
+                        const arg = initializer.getArguments()[0]; // ObjectLiteral
+                        if (arg && arg.getKind() === SyntaxKind.ObjectLiteralExpression) {
+                            const baseURLProp = arg.getProperty("baseURL");
+                            if (baseURLProp && baseURLProp.getKind() === SyntaxKind.PropertyAssignment) {
+                                let urlVal = baseURLProp.getInitializer().getText();
+                                // Evaluate "baseURL + '/v1'" -> we can't easily eval, but we can return the raw string or try to simplistically resolve it.
+                                // e.g. "baseURL + "/v1""
+                                if (urlVal.startsWith("baseURL +")) {
+                                    const suffix = urlVal.split('+')[1].trim().replace(/"/g, '').replace(/'/g, '');
+                                    config.clients[name] = (config.baseURL || "") + suffix;
+                                } else if (urlVal === "baseURL") {
+                                    config.clients[name] = config.baseURL;
+                                } else {
+                                    config.clients[name] = urlVal.replace(/"/g, '');
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return config;
+    }
+
+    getParameterDetails(param, sourceFile) {
+        const name = param.getName();
+        const isOptional = param.isOptional();
+        const typeNode = param.getTypeNode();
+        const expanded = this.expandTypeRecursively(typeNode, sourceFile);
+
+        if (expanded) return { name, isOptional, ...expanded };
+        return { name, isOptional };
+    }
+
+    expandTypeRecursively(typeNode, sourceFile) {
+        if (!typeNode) return null;
+
+        const kind = typeNode.getKind();
+
+        if (kind === SyntaxKind.TypeLiteral) {
+            return {
+                isObject: true,
+                properties: typeNode.getProperties().map((prop) => {
+                    const name = prop.getName();
+                    const optional = prop.hasQuestionToken?.() || false;
+                    const propTypeNode = prop.getTypeNode();
+                    const nested = this.expandTypeRecursively(propTypeNode, sourceFile);
+                    if (nested) return { name, isOptional: optional, ...nested };
+                    return { name, isOptional: optional, type: prop.getType().getText() };
+                }),
+            };
+        }
+
+        if (kind === SyntaxKind.TypeReference) {
+            const typeName = typeNode.getTypeName().getText();
+            const declaration =
+                sourceFile.getInterfaces().find((i) => i.getName() === typeName) ||
+                sourceFile.getTypeAliases().find((t) => t.getName() === typeName);
+
+            if (!declaration) return { type: typeName };
+
+            let props = [];
+            if (declaration.getKind() === SyntaxKind.InterfaceDeclaration) {
+                props = declaration.getProperties();
+            } else if (declaration.getKind() === SyntaxKind.TypeAliasDeclaration) {
+                const tn = declaration.getTypeNode();
+                if (tn && tn.getProperties) props = tn.getProperties();
+            }
+
+            return {
+                isObject: true,
+                properties: props.map((prop) => {
+                    const name = prop.getName();
+                    const optional = prop.hasQuestionToken?.() || prop.isOptional?.() || false;
+                    const propTypeNode = prop.getTypeNode();
+                    const nested = this.expandTypeRecursively(propTypeNode, sourceFile);
+                    if (nested) return { name, isOptional: optional, ...nested };
+                    return { name, isOptional: optional, type: prop.getType().getText() };
+                }),
+            };
+        }
+
+        return null; // For simple types, we don't return structure, just undefined implies simple type handling by caller or fallback
+    }
+
+    /**
+     * Enumerates modules in the target directory
+     * @param {string} targetDir
+     */
+    getModules(targetDir) {
+        if (!fs.existsSync(targetDir)) return {};
+        const files = fs.readdirSync(targetDir).filter((f) => f.endsWith(".ts"));
+        const modules = {};
+        files.forEach(f => {
+            const name = f.replace(".ts", "");
+            // We could try to require key exports, but for listing, just existence is mostly enough
+            // But existing logic imports definitions.
+            // For now, let's just return filenames as keys.
+            // The frontend expects apiModules to be { [key]: ... }
+            // Since we can't easily send functions over JSON, we'll just send { keys }
+            modules[name] = true;
+        });
+        return modules;
+    }
+}
+
+module.exports = new ProjectService();

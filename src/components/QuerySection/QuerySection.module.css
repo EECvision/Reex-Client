@@ -1,0 +1,73 @@
+.querySection {
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.queryTitle {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.noParams {
+  padding: 2rem;
+  text-align: center;
+  color: #999;
+  font-size: 0.875rem;
+  background-color: #fafafa;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  margin: 0 0 1.5rem 0;
+}
+
+.paramList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.paramField {
+  display: flex;
+  flex-direction: column;
+}
+
+.paramLabel {
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.required {
+  color: #f44336;
+  margin-left: 0.25rem;
+}
+
+.optional {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: #999;
+  font-weight: 400;
+}
+
+.paramInput {
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #fff;
+  transition: border-color 0.15s;
+  outline: none;
+}
+
+.paramInput:focus {
+  border-color: #0070f3;
+}
+
+.submitButton {
+  width: 100%;
+}

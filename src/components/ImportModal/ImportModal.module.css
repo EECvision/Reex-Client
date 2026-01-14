@@ -1,0 +1,453 @@
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.modal {
+  background-color: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 650px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+}
+
+/* Header */
+.header {
+  padding: 1.25rem 1.75rem;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  letter-spacing: -0.01em;
+}
+
+.closeButton {
+  /* Allow Button component to handle layout, just override positioning/size if needed */
+  padding: 0;
+  width: 32px;
+  height: 32px;
+}
+
+/* Body */
+.body {
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+  background-color: #fff;
+}
+
+/* Drop Zone */
+.dropZone {
+  margin: 2rem;
+  padding: 3rem;
+  border: 2px dashed #e5e7eb;
+  border-radius: 12px;
+  background-color: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 260px;
+}
+
+.dropZone:hover {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+.dropZoneActive {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+  transform: scale(1.01);
+}
+
+.input {
+  display: none;
+}
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+  pointer-events: none;
+  color: #6b7280;
+}
+
+.placeholder span {
+  color: #3b82f6;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.fileInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  pointer-events: none;
+  width: 100%;
+}
+
+.fileDetails {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.fileName {
+  font-weight: 600;
+  color: #111827;
+  font-size: 1rem;
+  background-color: #fff;
+  padding: 8px 16px;
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+}
+
+.fileSize {
+  font-size: 0.8125rem;
+  color: #9ca3af;
+  margin-top: -4px;
+}
+
+/* Review List */
+.reviewList {
+  display: flex;
+  flex-direction: column;
+}
+
+.reviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.75rem;
+  border-bottom: 1px solid #f3f4f6;
+  background-color: #fff;
+  font-size: 0.875rem;
+  color: #6b7280;
+  /* Lighter color for hierarchy */
+  font-weight: 500;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.headerCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 99px;
+  margin-left: 8px;
+}
+
+.filterActions {
+  display: flex;
+  gap: 1rem;
+}
+
+/* removed textBtn */
+
+.moduleGrid {
+  padding: 1rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background-color: #f9fafb;
+}
+
+/* Module Item */
+.moduleWrapper {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: white;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s;
+}
+
+.moduleWrapper:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.moduleMainRow {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 16px;
+  cursor: pointer;
+}
+
+.moduleMainRow:hover {
+  background-color: #f9fafb;
+}
+
+.chevronWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-right: 8px;
+  color: #6b7280;
+  border-radius: 6px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.chevronWrapper:hover {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+/* Folder Removed */
+
+.moduleName {
+  font-weight: 500;
+  color: #374151;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  margin-right: 12px;
+}
+
+.truncateText {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.functionCountBadge {
+  font-size: 11px;
+  color: #9ca3af;
+  background-color: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 99px;
+  /* Pill shape */
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+.moduleCheckboxWrapper {
+  display: flex;
+  align-items: center;
+  margin-right: 2px;
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+  border-radius: 4px;
+}
+
+/* Function List within Module */
+.functionList {
+  background-color: #f9fafb;
+  border-top: 1px solid #f3f4f6;
+  padding: 0.5rem 0;
+}
+
+.functionItem {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem 0.5rem 3.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  color: #4b5563;
+  transition: background 0.15s;
+}
+
+.functionItem:hover {
+  background-color: #eff6ff;
+  color: #1f2937;
+}
+
+.functionItem input {
+  margin-right: 0.75rem;
+  accent-color: #3b82f6;
+}
+
+.functionName {
+  flex: 1;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  padding-right: 8px;
+}
+
+/* Badges CSS Implementation */
+.statusBadge {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05) inset;
+}
+
+.statusNew {
+  background-color: #d1fae5;
+  color: #047857;
+}
+
+.statusModified {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+
+.statusDeleted {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.statusUnchanged {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  box-shadow: none;
+  border: 1px solid #e5e7eb;
+}
+
+.statusDisabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.viewChangesBtn {
+  background: white;
+  border: 1px solid #e5e7eb;
+  color: #374151;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 10px;
+  font-weight: 500;
+  transition: all 0.15s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.viewChangesBtn:hover {
+  border-color: #d1d5db;
+  background-color: #f9fafb;
+}
+
+/* Footer */
+.footer {
+  padding: 1.25rem 1.75rem;
+  background-color: #fff;
+  border-top: 1px solid #f3f4f6;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+/* Loading */
+.footerActions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(59, 130, 246, 0.1);
+  border-radius: 50%;
+  border-top-color: #3b82f6;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 1.5rem;
+}
+
+/* Diff Modal styles extracted to DiffModal.module.css */
+
+.successText {
+  color: #10b981;
+  font-weight: 600;
+  font-size: 1.1rem;
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
