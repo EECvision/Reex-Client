@@ -17,16 +17,16 @@ async function sendToBridge(bridgeUrl: string, method: string, endpoint: string,
 }
 
 export async function POST(req: NextRequest) {
-    const taskId = Date.now().toString();
-
     // Body is JSON
     let targetDir = null;
     let bridgeUrl = getBridgeUrl();
+    let taskId = Date.now().toString();
 
     try {
         const body = await req.json();
         targetDir = body.targetDir;
         if (body.bridgeUrl) bridgeUrl = body.bridgeUrl;
+        if (body.taskId) taskId = body.taskId;
     } catch (e) {
         // Body might be empty
     }

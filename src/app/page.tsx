@@ -128,13 +128,20 @@ const App = () => {
     setError(null);
 
     try {
+      // Generate taskId on client to avoid race condition
+      const taskId = Date.now().toString();
+      activeTaskIdRef.current = taskId;
+
       // API Call
-      const data = await api.deleteCollection(projectPath, api.getBridgeUrl());
-      if (!data.success) throw new Error(data.error || "Deletion failed");
+      const data = await api.deleteCollection(projectPath, api.getBridgeUrl(), taskId);
+      if (!data.success) {
+        activeTaskIdRef.current = null;
+        throw new Error(data.error || "Deletion failed");
+      }
 
       if (data.taskId) {
         // Async task started. Keep modal open and deleting=true.
-        activeTaskIdRef.current = data.taskId;
+        // activeTaskIdRef.current is already set.
       } else {
         // Fallback if no taskId returned
         showToast("success", "Collection deleted!");

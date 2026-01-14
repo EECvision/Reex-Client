@@ -227,14 +227,19 @@ const ImportModal: React.FC<ImportModalProps> = ({
         functions: functionMapObj,
       };
 
-      const res = await api.updateCollection(payload, targetDir, api.getBridgeUrl());
+      const taskId = Date.now().toString();
+      if (onUpdateStarted) {
+        onUpdateStarted(taskId);
+      }
+
+      const res = await api.updateCollection(payload, targetDir, api.getBridgeUrl(), taskId);
       if (!res.success) {
         throw new Error(res.error || "Sync failed");
       }
 
-      if (onUpdateStarted && res.taskId) {
-        onUpdateStarted(res.taskId);
-      }
+      // if (onUpdateStarted && res.taskId) { // Already called
+      //   onUpdateStarted(res.taskId);
+      // }
 
       // Do NOT set success or close here. Wait for taskComplete prop.
       // step remains "updating"

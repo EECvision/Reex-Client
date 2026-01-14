@@ -111,10 +111,12 @@ export const ${moduleName}Api = {
 }
 
 export async function POST(req: NextRequest) {
-  const taskId = Date.now().toString();
   try {
     const body = await req.json();
-    const { moduleName, bridgeUrl } = body;
+    const { moduleName, bridgeUrl, taskId: clientTaskId } = body;
+
+    // Use client provided taskId to prevent race conditions
+    const taskId = clientTaskId || Date.now().toString();
 
     if (!moduleName) {
       return NextResponse.json({ success: false, error: "Module name required" }, { status: 400 });

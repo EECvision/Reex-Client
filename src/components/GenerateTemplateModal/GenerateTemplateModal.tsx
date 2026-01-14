@@ -42,9 +42,15 @@ const GenerateTemplateModal: React.FC<GenerateTemplateModalProps> = ({
     setError(null);
 
     try {
+      // Generate taskId on client to avoid race condition
+      const taskId = Date.now().toString();
+
+      // Notify parent immediately so it can start listening BEFORE the request
+      if (onTaskStarted) onTaskStarted(taskId);
+
       const data = await api.generateTemplate({
         moduleName: moduleName.trim().toLowerCase()
-      }, targetDir, api.getBridgeUrl());
+      }, targetDir, api.getBridgeUrl(), taskId);
 
       if (!data.success) {
         throw new Error(data.error || "Failed to generate template");
@@ -53,7 +59,7 @@ const GenerateTemplateModal: React.FC<GenerateTemplateModalProps> = ({
       // onSuccess(data.message || "Template generation started!"); // REMOVED as per user request
 
       if (data.taskId && onTaskStarted) {
-        onTaskStarted(data.taskId);
+        // onTaskStarted(data.taskId); // Already called before request
         // Task started: Keep modal open and "generating" state active
         // Do NOT close. Do NOT setGeneratig(false).
         return;

@@ -5,7 +5,7 @@ import os from "os";
 import { runCommand, getEnvWithOverride, sendEvent, getBridgeUrl } from "@/app/api/utils";
 
 export async function POST(req: NextRequest) {
-    const taskId = Date.now().toString();
+    // const taskId = Date.now().toString(); // Moved to inside try block
     const uploadsDir = path.join(os.tmpdir(), 'api-builder-uploads');
     let filePath: string | null = null;
 
@@ -17,6 +17,10 @@ export async function POST(req: NextRequest) {
         const functionsStr = formData.get('functions') as string;
         const targetDir = formData.get('targetDir') as string;
         const bridgeUrlParam = formData.get('bridgeUrl') as string;
+        const clientTaskId = formData.get('taskId') as string;
+
+        // Use client provided taskId to prevent race conditions
+        const taskId = clientTaskId || Date.now().toString();
 
         const modules = modulesStr ? JSON.parse(modulesStr) : [];
         const deletedModules = deletedModulesStr ? JSON.parse(deletedModulesStr) : [];

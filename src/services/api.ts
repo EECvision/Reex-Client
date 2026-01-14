@@ -18,9 +18,9 @@ export const api = {
     // ========================================================================
 
     // 5. Generate Template (Cloud via Scripts)
-    generateTemplate: async (data: any, targetDir: string, bridgeUrl?: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
+    generateTemplate: async (data: any, targetDir: string, bridgeUrl?: string, taskId?: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
         try {
-            const payload = { ...data, targetDir, bridgeUrl }; // Inject targetDir and bridgeUrl
+            const payload = { ...data, targetDir, bridgeUrl, taskId }; // Inject targetDir, bridgeUrl, taskId
             const res = await fetch(`${cloudUrl}/generate-template`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -72,12 +72,12 @@ export const api = {
     },
 
     // 3. Delete Collection (Reset)
-    deleteCollection: async (targetDir: string, bridgeUrl?: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
+    deleteCollection: async (targetDir: string, bridgeUrl?: string, taskId?: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
         try {
             const res = await fetch(`${cloudUrl}/delete-collection`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ targetDir, bridgeUrl }), // Pass bridgeUrl
+                body: JSON.stringify({ targetDir, bridgeUrl, taskId }), // Pass bridgeUrl, taskId
             });
             return res.json();
         } catch (error: any) {
@@ -103,7 +103,7 @@ export const api = {
     },
 
     // 6. Update Collection (Cloud via Scripts)
-    updateCollection: async (payload: any, targetDir: string, bridgeUrl?: string) => {
+    updateCollection: async (payload: any, targetDir: string, bridgeUrl?: string, taskId?: string) => {
         // Prepare FormData
         const formData = new FormData();
         if (payload.file) formData.append('file', payload.file);
@@ -114,6 +114,7 @@ export const api = {
         if (payload.fileName) formData.append('fileName', payload.fileName);
         formData.append('targetDir', targetDir);
         if (bridgeUrl) formData.append('bridgeUrl', bridgeUrl); // Pass bridgeUrl
+        if (taskId) formData.append('taskId', taskId);
 
         const res = await fetch(`${cloudUrl}/update-collection`, {
             method: 'POST',
