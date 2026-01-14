@@ -33,13 +33,16 @@ export async function POST(req: NextRequest) {
                     await bridgeCall(getBridgeUrl(bridgeUrl), 'delete', { filePath: `src/api-services/definitions/${moduleName}.ts` });
 
                     // 2. Delete Types Directory (recursive)
-                    // Bridge's delete is recursive by default if it uses fs.rmSync({recursive:true}) or similar
-                    // Assuming Bridge delete handles directories
                     try {
                         await bridgeCall(getBridgeUrl(bridgeUrl), 'delete', { filePath: `src/api-services/types/${moduleName}` });
                     } catch (ignore) { }
 
-                    // 3. Regenerate Index (Reuse logic from update-collection)
+                    // 3. Delete Generated Hooks
+                    try {
+                        await bridgeCall(getBridgeUrl(bridgeUrl), 'delete', { filePath: `src/api-services/generated/${moduleName}.ts` });
+                    } catch (ignore) { }
+
+                    // 4. Regenerate Index (Bridge Helper will handle this via watcher)
                     sendEvent(taskId, 'progress', 'Updates propagated to Bridge...');
 
                 } else if (type === 'function') {
@@ -65,20 +68,20 @@ export async function POST(req: NextRequest) {
                             const interfaces = sourceFile.getInterfaces();
                             interfaces.forEach(iface => {
                                 if (iface.getName().toLowerCase().includes(functionName.toLowerCase())) {
-                                    // Basic check, might be too aggressive? 
-                                    // Legacy script: "if ifaceName.includes(functionName.toLowerCase())"
-                                    // We'll stick to legacy logic
                                     iface.remove();
                                 }
                             });
 
-                            // If empty, should we delete module? Legacy said yes.
                             // If empty, should we delete module? Legacy said yes.
                             if (initializer.getProperties().length === 0) {
                                 // 1. Delete Files
                                 await bridgeCall(getBridgeUrl(bridgeUrl), 'delete', { filePath: `src/api-services/definitions/${moduleName}.ts` });
                                 try {
                                     await bridgeCall(getBridgeUrl(bridgeUrl), 'delete', { filePath: `src/api-services/types/${moduleName}` });
+                                } catch (ignore) { }
+
+                                try {
+                                    await bridgeCall(getBridgeUrl(bridgeUrl), 'delete', { filePath: `src/api-services/generated/${moduleName}.ts` });
                                 } catch (ignore) { }
 
                                 // 2. Regenerate Index
