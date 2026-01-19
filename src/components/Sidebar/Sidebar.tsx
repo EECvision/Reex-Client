@@ -105,10 +105,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                       ? styles.fileActive
                       : ""
                       }`}
+                    onClick={() => onSelectEndpoint(endpoint)}
                   >
                     <div
                       className={styles.fileInfo}
-                      onClick={() => onSelectEndpoint(endpoint)}
                     >
                       <span className={`${styles.methodDot} ${styles[endpoint.fnName.split('_')[0].toLowerCase()] || styles.defaultMethod}`}></span>
                       <span className={styles.fileName}>{endpoint.fnName}</span>

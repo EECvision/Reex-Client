@@ -128,11 +128,48 @@ export const api = {
         return { success: false, error: "Not implemented" };
     },
 
-    // 8. Execute Function (Proxy)
-    executeFunction: async (apiKey: string, fnName: string, args: any[]) => {
-        // Execute on LOCAL (where the db/services allow)
-        // Not supported in Dumb Bridge currently.
-        return { success: false, error: "Execution not supported in Cloud Mode" };
+    // 8. Execute Function (Direct Frontend)
+    executeRequest: async (config: { url: string; method: string; data?: any; headers?: any }) => {
+        try {
+            const { url, method, data, headers } = config;
+            // Use axios or fetch. We'll use fetch for simplicity/native support or axios if installed.
+            // Based on index.ts scaffolds, axios is used. But here we can use fetch or axios.
+            // Let's use fetch for fewer deps here, or check if axios is imported?
+            // "api.ts" doesn't import axios. Let's use fetch.
+
+            const options: RequestInit = {
+                method: method.toUpperCase(),
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...headers
+                },
+            };
+
+            if (data && method.toUpperCase() !== 'GET' && method.toUpperCase() !== 'HEAD') {
+                options.body = JSON.stringify(data);
+            }
+
+            const res = await fetch(url, options);
+
+            // Try to parse JSON
+            let responseData;
+            const contentType = res.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                responseData = await res.json();
+            } else {
+                responseData = await res.text();
+            }
+
+            if (!res.ok) {
+                const errorMessage = responseData?.message || responseData?.msg || (typeof responseData === 'object' ? JSON.stringify(responseData) : responseData) || `Error ${res.status}`;
+                return { success: false, error: errorMessage };
+            }
+
+            return { success: true, data: responseData };
+        } catch (e: any) {
+            console.error("Execution Failed:", e);
+            return { success: false, error: e.message || String(e) };
+        }
     },
 
     // Event Source for Background Tasks (Cloud/Bridge)

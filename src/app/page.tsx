@@ -220,6 +220,8 @@ const App = () => {
           apiKey: apiKey as ApiKey,
           fnName: fnName,
           args: methodDef.args || [],
+          url: methodDef.url,
+          method: methodDef.method,
         });
       }
     }
@@ -268,67 +270,119 @@ const App = () => {
       const key = `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}`;
       const currentParams = params[key] || {};
 
-      // Re-introduce args calculation even if not executing, to show we processed them
-      let args: any[] = [];
+      // 1. Prepare Arguments Map
+      const argsMap: Record<string, any> = {};
 
+      // Flatten params for easy lookup if using object args
       if (
         selectedEndpoint.args.length === 1 &&
         selectedEndpoint.args[0].isObject &&
         Array.isArray(selectedEndpoint.args[0].properties)
       ) {
-        const payload: Record<string, any> = {};
         const props = selectedEndpoint.args[0].properties;
-
         for (const prop of props) {
           const value = currentParams[prop.name];
           if (value !== undefined && value !== "") {
-            payload[prop.name] = value;
+            argsMap[prop.name] = value;
           } else if (!prop.isOptional) {
             throw new Error(`Missing required field: ${prop.name}`);
           }
         }
-
-        args = [payload];
       } else {
-        args = selectedEndpoint.args.map((arg) => {
+        // Standard args
+        selectedEndpoint.args.forEach(arg => {
           const value = currentParams[arg.name];
-          if (value === undefined || value === "") {
-            if (!arg.isOptional)
-              throw new Error(`Missing required param: ${arg.name}`);
+          if (value !== undefined && value !== "") {
+            argsMap[arg.name] = value;
+          } else if (!arg.isOptional) {
+            throw new Error(`Missing required param: ${arg.name}`);
           }
-          return value;
         });
       }
-      /* 
-      // Execution Disabled in Dynamic Mode
-      const _module = apiModules[selectedEndpoint.apiKey];
-      const fn = _module[selectedEndpoint.fnName as keyof typeof _module] as (
-          ...args: any[]
-      ) => Promise<any>;
-      const res = await fn(...args); 
-      */
 
-      // Real Execution via Server Proxy
-      const execRes: any = await api.executeFunction(selectedEndpoint.apiKey, selectedEndpoint.fnName, args);
+      // 2. Construct URL & Method
+      const method = selectedEndpoint.method || "GET"; // Fallback (should be in manifest)
+
+      let clientBase = "";
+      if (projectConfig) {
+        // Identify client from manifest? We need to look it up again or store it.
+        // For now, fallback to baseURL. 
+        // Ideally, EndpointInfo should have 'client' too. 
+        // But usually we can find it via apiKey mapping if we had it.
+        // Let's rely on global baseURL if generic, or check manifest at runtime if needed.
+        // Actually, `getComputedUrl` attempts to find client.
+        const endpointDef = apiManifest?.[selectedEndpoint.apiKey]?.[selectedEndpoint.fnName];
+        const clientName = endpointDef?.client || "BASE_CLIENT";
+        clientBase = projectConfig.clients?.[clientName] || projectConfig.baseURL || "http://localhost:3000/api";
+      }
+
+      let urlTemplate = selectedEndpoint.url || "";
+      // Replace path vars: ${varName}
+      // We need to match ${param}
+      let finalUrl = urlTemplate;
+      const consumedParams = new Set<string>();
+
+      const pathVars = finalUrl.match(/\${([^}]+)}/g);
+      if (pathVars) {
+        pathVars.forEach(pv => {
+          const varName = pv.replace("${", "").replace("}", "");
+          if (argsMap[varName] !== undefined) {
+            finalUrl = finalUrl.replace(pv, String(argsMap[varName]));
+            consumedParams.add(varName);
+          } else {
+            throw new Error(`Missing path parameter: ${varName}`);
+          }
+        });
+      }
+
+      // 3. Prepare Payload / Query
+      const remainingData: Record<string, any> = {};
+      Object.keys(argsMap).forEach(k => {
+        if (!consumedParams.has(k)) {
+          remainingData[k] = argsMap[k];
+        }
+      });
+
+      // Construct Full URL
+      // Ensure no double slashes
+      const cleanBase = clientBase.replace(/\/$/, "");
+      const cleanPath = finalUrl.startsWith("/") ? finalUrl : `/${finalUrl}`;
+      const fullUrl = `${cleanBase}${cleanPath}`;
+
+      // 4. Send Request via api.executeRequest
+      // If GET/DELETE, append remaining as query (api.executeRequest doesn't do this automatically for us completely?)
+      // Wait, api.ts said it takes `data`.
+      // If GET, we should append to URL.
+
+      let requestUrl = fullUrl;
+      let requestData: Record<string, any> | undefined = remainingData;
+
+      if (method.toUpperCase() === 'GET' || method.toUpperCase() === 'DELETE') {
+        const cleanParams: Record<string, string> = {};
+        Object.entries(remainingData).forEach(([k, v]) => {
+          if (v !== undefined && v !== null) {
+            cleanParams[k] = String(v);
+          }
+        });
+        const qs = new URLSearchParams(cleanParams).toString();
+        if (qs) {
+          requestUrl += `?${qs}`;
+        }
+        requestData = undefined; // No body
+      }
+
+      const execRes: any = await api.executeRequest({
+        url: requestUrl,
+        method,
+        data: requestData
+      });
 
       if (!execRes.success) {
         throw new Error(execRes.error || "Execution failed");
       }
 
-      // The result is in execRes.data
-      // It might be the direct response data or axios wrapped. 
-      // My ExecutionService returns `result` directly if successful.
       const res = execRes.data;
-      const payload = res?.data?.data ?? res?.data ?? res;
-
-      if (
-        res.error ||
-        res?.success === false ||
-        res?.data?.success === false ||
-        payload?.success === false
-      ) {
-        throw new Error(payload?.msg || payload?.message || "Request failed");
-      }
+      const payload = res?.data ?? res;
 
       setResult(payload);
 
@@ -339,7 +393,6 @@ const App = () => {
             data: payload,
             fnName: selectedEndpoint.fnName,
           });
-          // If not implemented, it will just fail silently or error
           if (previewData && previewData.success) {
             setInterfacePreview((previewData as any).interfaceString);
           }
@@ -354,6 +407,7 @@ const App = () => {
       setLoading(false);
     }
   };
+
 
   const toggleFolder = (apiKey: string) => {
     setExpandedFolders((prev) => {

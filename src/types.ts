@@ -12,6 +12,8 @@ export interface EndpointInfo {
     apiKey: string;
     fnName: string;
     args: EndpointArg[];
+    url?: string;
+    method?: string;
 }
 
 export type Methods = "ALL" | "GET" | "POST" | "DELETE" | "PATCH";
