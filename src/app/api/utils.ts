@@ -3,7 +3,12 @@ import path from "path";
 import { promisify } from "util";
 import EventEmitter from "events";
 
-export const eventEmitter = new EventEmitter();
+// Use a global variable to persist the EventEmitter across module reloads in development
+const globalForEvents = global as unknown as { eventEmitter: EventEmitter };
+
+export const eventEmitter = globalForEvents.eventEmitter || new EventEmitter();
+
+if (process.env.NODE_ENV !== 'production') globalForEvents.eventEmitter = eventEmitter;
 
 export const runCommand = (cmd: string, options: any = {}) => {
     const cwd = options.cwd || process.cwd();

@@ -69,6 +69,31 @@ const App = () => {
 
   // Track background task for delete collection
   const activeTaskIdRef = useRef<string | null>(null);
+  const [activeTaskMessage, setActiveTaskMessage] = useState<string>("");
+
+  // Restore task state on mount (handle HMR/Reload)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedTaskId = localStorage.getItem("active_import_task");
+      if (savedTaskId) {
+        console.log("Restoring active import task:", savedTaskId);
+        activeTaskIdRef.current = savedTaskId;
+        setShowImportModal(true);
+      }
+    }
+  }, []);
+
+  const saveTaskState = (taskId: string) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("active_import_task", taskId);
+    }
+  };
+
+  const clearTaskState = () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("active_import_task");
+    }
+  };
 
   const showToast = (type: "success" | "error", message: string) => {
     const id = Date.now();
@@ -531,6 +556,10 @@ const App = () => {
           const serverId = data.id ? parseInt(data.id) : 0;
           const cleanMsg = formatMessage(data.message);
 
+          if (activeTaskIdRef.current && String(data.id) === String(activeTaskIdRef.current)) {
+            setActiveTaskMessage(data.message);
+          }
+
           setBackgroundTasks(prev => {
             if (serverId && prev.find(t => t.id === serverId)) {
               return prev.map(t => t.id === serverId ? { ...t, message: cleanMsg } : t);
@@ -557,6 +586,7 @@ const App = () => {
             if (showImportModal) {
               setImportTaskComplete(true);
               activeTaskIdRef.current = null;
+              clearTaskState(); // Clear persistence
               // Do NOT close modal yet
             } else {
               setDeleting(false);
@@ -566,6 +596,7 @@ const App = () => {
               setShowGenerateModal(false);
               setShowImportModal(false); // Fallback
               activeTaskIdRef.current = null;
+              clearTaskState(); // Ensure cleared
             }
 
             // Suppress toast for "Collection updated" (Sync), "Successfully deleted", and "Type generation complete"
@@ -596,7 +627,9 @@ const App = () => {
             setDeletingItem(false);
             setShowDeleteModal(false);
             setShowDeleteItemModal(false);
+            setShowDeleteItemModal(false);
             activeTaskIdRef.current = null;
+            clearTaskState();
           }
         } else if (data.type === "project:updated") {
           // Reload data without full page reload
@@ -669,6 +702,7 @@ const App = () => {
               setShowImportModal(false);
               setImportFile(null);
               setImportTaskComplete(false); // Reset on close
+              clearTaskState();
             }}
             initialFile={importFile}
             // onSuccess={(msg) => showToast("success", msg)} // Handled internally now
@@ -676,9 +710,12 @@ const App = () => {
             isEmptyWorkspace={!hasEndpoints}
             onUpdateStarted={(taskId) => {
               activeTaskIdRef.current = taskId;
+              saveTaskState(taskId);
             }}
             targetDir={projectPath}
             taskComplete={importTaskComplete}
+            progressMessage={activeTaskMessage}
+            resumeTaskId={activeTaskIdRef.current}
           />
         )}
 

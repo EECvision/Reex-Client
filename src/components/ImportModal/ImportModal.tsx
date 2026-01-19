@@ -13,7 +13,9 @@ interface ImportModalProps {
   onUpdateStarted?: (taskId: string) => void;
   isEmptyWorkspace?: boolean;
   targetDir: string;
-  taskComplete?: boolean; // New prop
+  taskComplete?: boolean;
+  progressMessage?: string;
+  resumeTaskId?: string | null;
 }
 
 type CollectionType = "openapi" | "postman" | "unknown";
@@ -34,7 +36,9 @@ const ImportModal: React.FC<ImportModalProps> = ({
   onUpdateStarted,
   isEmptyWorkspace = false,
   targetDir,
-  taskComplete = false
+  taskComplete = false,
+  progressMessage,
+  resumeTaskId
 }) => {
   const [step, setStep] = useState<Step>("upload");
   const [dragActive, setDragActive] = useState(false);
@@ -60,6 +64,13 @@ const ImportModal: React.FC<ImportModalProps> = ({
 
   // Diff Modal State
   const [diffFunction, setDiffFunction] = useState<FunctionDiff | null>(null);
+
+  // Resume effect
+  useEffect(() => {
+    if (resumeTaskId && step === 'upload') {
+      setStep('updating');
+    }
+  }, [resumeTaskId]);
 
   useEffect(() => {
     if (taskComplete && step === "updating") {
@@ -609,7 +620,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
             {step === "updating" && (
               <div className={styles.loadingState}>
                 <div className={styles.spinner}></div>
-                <p>Applying changes...</p>
+                <p>{progressMessage || "Applying changes..."}</p>
               </div>
             )}
 
