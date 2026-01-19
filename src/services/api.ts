@@ -124,8 +124,16 @@ export const api = {
     },
 
     saveTypes: async (data: any) => {
-        // Logic to save types to file.
-        return { success: false, error: "Not implemented" };
+        try {
+            const res = await fetch(`${cloudUrl}/save-types`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+            return res.json();
+        } catch (error: any) {
+            return { success: false, error: error.message || String(error) };
+        }
     },
 
     // 8. Execute Function (Direct Frontend)

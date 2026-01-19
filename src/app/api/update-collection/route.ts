@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import os from "os";
-import { runCommand, getEnvWithOverride, sendEvent, getBridgeUrl } from "@/app/api/utils";
+import { sendEvent, getBridgeUrl } from "@/app/api/utils";
 
 export async function POST(req: NextRequest) {
     // const taskId = Date.now().toString(); // Moved to inside try block

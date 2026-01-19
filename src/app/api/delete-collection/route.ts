@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import path from "path";
 import fs from "fs";
-import { runCommand, getEnvWithOverride, sendEvent, getBridgeUrl } from "@/app/api/utils";
+import { sendEvent, getBridgeUrl } from "@/app/api/utils";
 
 // Helper to send to Bridge
 async function sendToBridge(bridgeUrl: string, method: string, endpoint: string, body: any) {

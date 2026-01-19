@@ -1,44 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
-import fs from "fs";
-import { getApiTargetDir } from "@/app/api/utils";
+import { getBridgeUrl } from "@/app/api/utils";
 // @ts-ignore
 import typeGenerator from "@/services/type-generator";
 
 export async function POST(req: NextRequest) {
-    const apiTargetDir = getApiTargetDir();
     try {
         const body = await req.json();
         const { apiKey, fnName, data } = body;
 
-        const apiServicesDir = path.dirname(apiTargetDir);
-        const typesBaseDir = path.join(apiServicesDir, 'types');
-        const targetTypeDir = path.join(typesBaseDir, apiKey);
-
-        if (!fs.existsSync(targetTypeDir)) {
-            fs.mkdirSync(targetTypeDir, { recursive: true });
-        }
-
+        // Generate interface name logic
         const baseName = fnName.replace(/^[a-z]+_/, '').replace(/_./g, (x: string) => x[1].toUpperCase()).replace(/^[a-z]/, (x: string) => x.toUpperCase());
         const interfaceName = `${baseName}Response`;
-
-        const typePath = path.join(targetTypeDir, `${fnName}.ts`);
 
         // Generate content
         const typeContent = typeGenerator.generateInterface(interfaceName, data);
 
-        // Check for disable flag
-        if (fs.existsSync(typePath)) {
-            const existingContent = fs.readFileSync(typePath, "utf-8");
-            if (existingContent.includes("/* sync-type-disable */")) {
-                return NextResponse.json({
-                    success: true,
-                    message: `Skipped updating ${fnName}.ts (/* sync-type-disable */ found).`
-                });
-            }
-        }
+        // Path logic (relative to project root for Bridge)
+        // src/api-services/types/API_KEY/FN_NAME.ts
+        const relativePath = `src/api-services/types/${apiKey}/${fnName}.ts`;
 
-        fs.writeFileSync(typePath, typeContent, 'utf-8');
+        // Get Bridge URL
+        const bridgeUrl = getBridgeUrl();
+
+        // Send to Bridge
+        const res = await fetch(`${bridgeUrl}/api/fs/write`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                filePath: relativePath,
+                content: typeContent
+            })
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(`Bridge Write Error: ${err.message || err.error || res.statusText}`);
+        }
 
         return NextResponse.json({ success: true, message: `Types saved to ${apiKey}/${fnName}.ts` });
     } catch (e: any) {
