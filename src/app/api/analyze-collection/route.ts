@@ -1,44 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
-import fs from "fs";
-import os from "os";
-import { runCommand, getEnvWithOverride } from "@/app/api/utils";
+// Direct import of the refactored script
+import { analyze } from "@/scripts/analyze-collection";
 
 export async function POST(req: NextRequest) {
-    let filePath: string | null = null;
     try {
         const formData = await req.formData();
         const file = formData.get('file') as File;
+        const existingModulesJson = formData.get('existingModules') as string;
 
         if (!file) throw new Error("No file provided");
 
+        // Read file content as string
         const buffer = Buffer.from(await file.arrayBuffer());
-        const fileName = file.name || "unknown";
+        const specContent = buffer.toString('utf-8');
 
-        const uploadsDir = path.join(os.tmpdir(), 'api-builder-uploads');
-        if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+        // Parse existing modules (passed from Bridge)
+        const existingModules = new Map<string, string>();
+        if (existingModulesJson) {
+            try {
+                const modulesObj = JSON.parse(existingModulesJson);
+                Object.entries(modulesObj).forEach(([k, v]) => existingModules.set(k, v as string));
+            } catch (e) {
+                console.warn("Failed to parse existingModules", e);
+            }
+        }
 
-        filePath = path.join(uploadsDir, `${Date.now()}_analysis_${fileName}`);
-        fs.writeFileSync(filePath, buffer);
+        // Run analysis directly (In-Memory)
+        const data = await analyze(specContent, existingModules);
 
-        const env = getEnvWithOverride();
-        const scriptsDir = path.join(process.cwd(), 'src', 'scripts');
-        const cmd = `npx tsx "${path.join(scriptsDir, 'analyze-collection.ts')}" "${filePath}"`;
-
-        const output = await runCommand(cmd, { env });
-
-        const jsonStart = output.indexOf('[');
-        const jsonEnd = output.lastIndexOf(']');
-        if (jsonStart === -1 || jsonEnd === -1) throw new Error("Invalid output from analysis script");
-
-        const data = JSON.parse(output.substring(jsonStart, jsonEnd + 1));
         return NextResponse.json({ success: true, data });
 
     } catch (error: any) {
+        console.error("Analysis Error:", error);
         return NextResponse.json({ success: false, error: error.toString() }, { status: 500 });
-    } finally {
-        if (filePath && fs.existsSync(filePath)) {
-            try { fs.unlinkSync(filePath); } catch (e) { console.error("Cleanup failed:", e); }
-        }
     }
 }

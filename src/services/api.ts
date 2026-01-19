@@ -39,6 +39,18 @@ export const api = {
         if (fileName) formData.append('fileName', fileName);
         formData.append('targetDir', targetDir);
 
+        // Fetch existing definitions from Bridge (if connected)
+        try {
+            const bridgeUrl = getLocalUrl();
+            const res = await fetch(`${bridgeUrl}/api/project/definitions`);
+            if (res.ok) {
+                const definitions = await res.json();
+                formData.append('existingModules', JSON.stringify(definitions));
+            }
+        } catch (e) {
+            console.warn("Could not fetch existing definitions from Bridge:", e);
+        }
+
         const res = await fetch(`${cloudUrl}/analyze-collection`, {
             method: 'POST',
             body: formData,

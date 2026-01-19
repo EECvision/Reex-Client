@@ -145,17 +145,10 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
     return functions;
 };
 
-const analyzeCollection = async (specPath: string) => {
+// Exportable main function
+export const analyze = async (specContent: string, existingModules: Map<string, string> = new Map()) => {
     try {
-        const apiDir = API_DEFINITIONS_DIR;
-
-        // Read file to detect type
-        if (!fs.existsSync(specPath)) {
-            throw new Error(`File not found: ${specPath}`);
-        }
-
-        const fileContent = fs.readFileSync(specPath, 'utf-8');
-        const specData = JSON.parse(fileContent);
+        const specData = JSON.parse(specContent);
 
         // 1. Generate new code in-memory (Dry Run)
         let newModules: { name: string; content: string }[] = [];
@@ -163,13 +156,13 @@ const analyzeCollection = async (specPath: string) => {
         let rawModules: any[] = [];
 
         if (specData.openapi || specData.swagger) {
-            console.log("📋 Detected OpenAPI spec");
+            // console.log("📋 Detected OpenAPI spec");
             rawModules = await generateOpenApi({
                 specData,
                 dryRun: true,
             }) as any[];
         } else if (specData.info && specData.item) {
-            console.log("📋 Detected Postman collection");
+            // console.log("📋 Detected Postman collection");
             rawModules = await generatePostman({
                 specData,
                 dryRun: true
@@ -186,18 +179,6 @@ const analyzeCollection = async (specPath: string) => {
                 return { name, content: m.content };
             }
             return m; // Assume already in correct format
-        });
-
-        // 2. Read existing modules
-        const existingFiles = fs.existsSync(apiDir)
-            ? fs.readdirSync(apiDir).filter((f) => f.endsWith(".ts"))
-            : [];
-        const existingModules = new Map<string, string>();
-
-        existingFiles.forEach((file) => {
-            const name = file.replace(".ts", "");
-            const content = fs.readFileSync(path.join(apiDir, file), "utf8");
-            existingModules.set(name, content);
         });
 
         // 3. Compare and Analyze
@@ -336,16 +317,17 @@ const analyzeCollection = async (specPath: string) => {
             analysis.push({ module: name, status: "deleted" });
         });
 
-        // Output result
-        console.log(JSON.stringify(analysis, null, 2));
+        // Return result
+        return analysis;
 
     } catch (error) {
         console.error("Analysis failed:", error);
-        process.exit(1);
+        throw error;
     }
 };
 
-// CLI Entry
+// Legacy CLI Entry (Keep for backward compat or local testing if needed)
+// Uses API_DEFINITIONS_DIR from process if available
 if (require.main === module) {
     const args = process.argv.slice(2);
     if (args.length === 0) {
@@ -353,5 +335,19 @@ if (require.main === module) {
         process.exit(1);
     }
 
-    analyzeCollection(args[0]);
+    // Simulate reading existing files from disk for CLI usage
+    const apiDir = API_DEFINITIONS_DIR;
+    const existingModules = new Map<string, string>();
+    if (fs.existsSync(apiDir)) {
+        fs.readdirSync(apiDir).filter((f) => f.endsWith(".ts")).forEach((file) => {
+            const name = file.replace(".ts", "");
+            const content = fs.readFileSync(path.join(apiDir, file), "utf8");
+            existingModules.set(name, content);
+        });
+    }
+
+    // Read spec file
+    const specContent = fs.readFileSync(args[0], 'utf-8');
+
+    analyze(specContent, existingModules).then(res => console.log(JSON.stringify(res, null, 2)));
 }
