@@ -544,7 +544,29 @@ const App = () => {
 
   // Listen for background events from Server via SSE
   useEffect(() => {
-    const eventSource = api.getEventSource();
+    // Note: Use getBridgeUrl to handle custom port?
+    // However, getEventSource inside api.ts defaults to cloudUrl if no param provided.
+    // We should explicitly use the bridge url if we are in local mode?
+    // Or just rely on the proxy?
+    // User is running 'next dev' on 3000. 'api-npm-client' on 4000.
+    // If we use 'cloudUrl' (relative /api), it hits Next.js API routes.
+    // Next.js API routes proxy to Bridge? NO.
+    // We must connect DIRECTLY to Bridge for SSE if we want Watcher events?
+    // Wait, 'api.ts' has 'getEventSource' which takes baseUrl.
+    // Let's use api.getBridgeUrl() to be safe.
+
+    const bridgeUrl = api.getBridgeUrl();
+    console.log("[SSE] Connecting to:", bridgeUrl);
+    const eventSource = api.getEventSource(bridgeUrl);
+
+    eventSource.onopen = () => {
+      console.log("[SSE] Connected to Bridge");
+      showToast("success", "Connected to local bridge");
+    };
+
+    eventSource.onerror = (err) => {
+      console.error("[SSE] Connection Error:", err);
+    };
 
     eventSource.onmessage = (event) => {
       try {
@@ -644,6 +666,8 @@ const App = () => {
           refreshProject(true);
         } else if (data.type === "project:sync-start") {
           // Immediate feedback for external file changes
+          console.log("[SSE] Sync Started Event:", data);
+          showToast("success", "Syncing changes..."); // Explicit toast for visibility
           const serverId = data.id ? parseInt(data.id) : Date.now();
           setBackgroundTasks((prev) => {
             if (prev.find(t => t.id === serverId)) return prev;
