@@ -124,7 +124,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         variant="ghost"
                         size="sm"
                       >
-                        <Trash2 size={12} />
+                        <Trash2 size={12} color="#ef4444" />
                       </Button>
                     )}
                   </div>

@@ -19,25 +19,14 @@ export async function POST(req: NextRequest) {
         // src/api-services/types/API_KEY/FN_NAME.ts
         const relativePath = `src/api-services/types/${apiKey}/${fnName}.ts`;
 
-        // Get Bridge URL
-        const bridgeUrl = getBridgeUrl();
-
-        // Send to Bridge
-        const res = await fetch(`${bridgeUrl}/api/fs/write`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+        return NextResponse.json({
+            success: true,
+            operation: {
+                type: 'write',
                 filePath: relativePath,
                 content: typeContent
-            })
+            }
         });
-
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(`Bridge Write Error: ${err.message || err.error || res.statusText}`);
-        }
-
-        return NextResponse.json({ success: true, message: `Types saved to ${apiKey}/${fnName}.ts` });
     } catch (e: any) {
         console.error("Save types error:", e);
         return NextResponse.json({ success: false, error: e.toString() }, { status: 500 });

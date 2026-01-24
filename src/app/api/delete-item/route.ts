@@ -2,114 +2,65 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendEvent, getBridgeUrl } from "@/app/api/utils";
 import { Project, SyntaxKind } from "ts-morph";
 
-async function bridgeCall(bridgeUrl: string, endpoint: string, body: any) {
-    const res = await fetch(`${bridgeUrl}/api/fs/${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-    });
-    if (!res.ok) {
-        const err = await res.json();
-        throw new Error(`Bridge Error (${endpoint}): ${err.message || err.error || res.statusText}`);
-    }
-    return res.json();
-}
-
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { type, moduleName, functionName, bridgeUrl, taskId: clientTaskId } = body; // targetDir ignore, usage Bridge
+        const { type, moduleName, functionName, existingContent } = body;
 
-        // Use client provided taskId to prevent race conditions, or fallback to server generated
-        const taskId = clientTaskId || Date.now().toString();
+        const operations: any[] = [];
 
-        (async () => {
-            const itemLabel = type === 'module' ? `module '${moduleName}'` : `function '${functionName}'`;
-            sendEvent(taskId, 'start', `Deleting ${itemLabel}...`);
+        if (type === 'module') {
+            // 1. Delete Module File
+            operations.push({ type: 'delete', filePath: `src/api-services/definitions/${moduleName}.ts` });
+            operations.push({ type: 'delete', filePath: `src/api-services/types/${moduleName}` });
+            operations.push({ type: 'delete', filePath: `src/api-services/generated/${moduleName}.ts` });
 
-            try {
-                if (type === 'module') {
-                    // 1. Delete Module File
-                    await bridgeCall(getBridgeUrl(bridgeUrl), 'delete', { filePath: `src/api-services/definitions/${moduleName}.ts` });
+        } else if (type === 'function') {
+            if (!functionName) throw new Error("Function name required");
+            if (!existingContent) throw new Error("Existing content required for function deletion");
 
-                    // 2. Delete Types Directory (recursive)
-                    try {
-                        await bridgeCall(getBridgeUrl(bridgeUrl), 'delete', { filePath: `src/api-services/types/${moduleName}` });
-                    } catch (ignore) { }
+            // 2. Modify with ts-morph
+            const project = new Project();
+            const sourceFile = project.createSourceFile(`${moduleName}.ts`, existingContent);
 
-                    // 3. Delete Generated Hooks
-                    try {
-                        await bridgeCall(getBridgeUrl(bridgeUrl), 'delete', { filePath: `src/api-services/generated/${moduleName}.ts` });
-                    } catch (ignore) { }
-
-                    // 4. Regenerate Index (Bridge Helper will handle this via watcher)
-                    sendEvent(taskId, 'progress', 'Updates propagated to Bridge...');
-
-                } else if (type === 'function') {
-                    if (!functionName) throw new Error("Function name required");
-
-                    // 1. Read Module File
-                    const readRes = await bridgeCall(getBridgeUrl(bridgeUrl), 'read', { filePath: `src/api-services/definitions/${moduleName}.ts` });
-                    if (!readRes.content) throw new Error(`Could not read module ${moduleName}`);
-
-                    // 2. Modify with ts-morph
-                    const project = new Project();
-                    const sourceFile = project.createSourceFile(`${moduleName}.ts`, readRes.content);
-
-                    const variableDecl = sourceFile.getVariableDeclaration(`${moduleName}Api`);
-                    if (variableDecl) {
-                        const initializer = variableDecl.getInitializerIfKind(SyntaxKind.ObjectLiteralExpression);
-                        if (initializer) {
-                            const prop = initializer.getProperty(functionName);
-                            if (prop) {
-                                prop.remove();
-                            }
-                            // Also remove interface if present (naive match)
-                            const interfaces = sourceFile.getInterfaces();
-                            interfaces.forEach(iface => {
-                                if (iface.getName().toLowerCase().includes(functionName.toLowerCase())) {
-                                    iface.remove();
-                                }
-                            });
-
-                            // If empty, should we delete module? Legacy said yes.
-                            if (initializer.getProperties().length === 0) {
-                                // 1. Delete Files
-                                await bridgeCall(getBridgeUrl(bridgeUrl), 'delete', { filePath: `src/api-services/definitions/${moduleName}.ts` });
-                                try {
-                                    await bridgeCall(getBridgeUrl(bridgeUrl), 'delete', { filePath: `src/api-services/types/${moduleName}` });
-                                } catch (ignore) { }
-
-                                try {
-                                    await bridgeCall(getBridgeUrl(bridgeUrl), 'delete', { filePath: `src/api-services/generated/${moduleName}.ts` });
-                                } catch (ignore) { }
-
-                                // 2. Regenerate Index
-                                sendEvent(taskId, 'progress', 'Module empty. Deleted module, Bridge will regen index...');
-
-                            } else {
-                                // Save update
-                                await bridgeCall(getBridgeUrl(bridgeUrl), 'write', { filePath: `src/api-services/definitions/${moduleName}.ts`, content: sourceFile.getFullText() });
-                            }
-                        }
+            const variableDecl = sourceFile.getVariableDeclaration(`${moduleName}Api`);
+            if (variableDecl) {
+                const initializer = variableDecl.getInitializerIfKind(SyntaxKind.ObjectLiteralExpression);
+                if (initializer) {
+                    const prop = initializer.getProperty(functionName);
+                    if (prop) {
+                        prop.remove();
                     }
+                    // Also remove interface if present (naive match)
+                    const interfaces = sourceFile.getInterfaces();
+                    interfaces.forEach(iface => {
+                        if (iface.getName().toLowerCase().includes(functionName.toLowerCase())) {
+                            iface.remove();
+                        }
+                    });
 
-                    // 3. Delete Type File
-                    try {
-                        await bridgeCall(getBridgeUrl(bridgeUrl), 'delete', { filePath: `src/api-services/types/${moduleName}/${functionName}.ts` });
-                    } catch (ignore) { }
+                    // If empty, delete module
+                    if (initializer.getProperties().length === 0) {
+                        operations.push({ type: 'delete', filePath: `src/api-services/definitions/${moduleName}.ts` });
+                        operations.push({ type: 'delete', filePath: `src/api-services/types/${moduleName}` });
+                        operations.push({ type: 'delete', filePath: `src/api-services/generated/${moduleName}.ts` });
+                    } else {
+                        // Save update
+                        operations.push({
+                            type: 'write',
+                            filePath: `src/api-services/definitions/${moduleName}.ts`,
+                            content: sourceFile.getFullText()
+                        });
+                        // Delete specific type file for function
+                        operations.push({ type: 'delete', filePath: `src/api-services/types/${moduleName}/${functionName}.ts` });
+                    }
                 }
-
-                sendEvent(taskId, 'complete', `Successfully deleted ${itemLabel}`);
-                sendEvent('global', 'project:updated', 'Item deleted');
-
-            } catch (error: any) {
-                console.error("Delete Item Failed:", error);
-                sendEvent(taskId, 'error', `Failed to delete ${itemLabel}: ${error.toString()}`);
+            } else {
+                throw new Error("Could not find API declaration in module");
             }
-        })();
+        }
 
-        return NextResponse.json({ success: true, message: 'Deletion started', taskId });
+        return NextResponse.json({ success: true, operations });
 
     } catch (e: any) {
         return NextResponse.json({ success: false, error: e.toString() }, { status: 500 });

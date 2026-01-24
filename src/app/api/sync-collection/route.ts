@@ -27,61 +27,74 @@ export async function POST(req: NextRequest) {
         filePath = path.join(uploadsDir, `${Date.now()}_sync_${fileName}`);
         fs.writeFileSync(filePath, buffer);
 
-        const workFilePath = filePath;
+        // Read & Parse Content
+        const fileContent = fs.readFileSync(filePath, 'utf8');
+        const jsonContent = JSON.parse(fileContent);
+        const isPostman = jsonContent.info && jsonContent.item;
 
-        (async () => {
-            sendEvent(taskId, 'start', 'Syncing collection...');
-            try {
-                const fileContent = fs.readFileSync(workFilePath, 'utf8');
-                const jsonContent = JSON.parse(fileContent);
-                const isPostman = jsonContent.info && jsonContent.item;
+        const options = {
+            specData: jsonContent,
+            returnContent: true, // IMPORTANT: Force return operations, don't write
+            filterModules: modules.length > 0 ? modules : undefined,
+            // functionsStr parsing logic omitted but could be added if needed for sync (sync usually full)
+        };
 
-                const env = getEnvWithOverride(targetDir);
-                const scriptsDir = path.join(process.cwd(), 'src', 'scripts');
+        let operations: any[] = [];
 
-                if (deletedModules.length > 0) {
-                    sendEvent(taskId, 'progress', `Deleting ${deletedModules.length} obsolete modules...`);
-                    for (const mod of deletedModules) {
-                        try {
-                            await runCommand(`npx tsx "${path.join(scriptsDir, 'delete-item.ts')}" module "${mod}"`, { env });
-                        } catch (e: any) {
-                            console.error("Failed to delete module", mod, e);
-                            sendEvent(taskId, 'error', `Failed to delete module ${mod}: ${e}`);
-                        }
-                    }
-                }
-
-                sendEvent(taskId, 'progress', 'Generating API definitions in target...');
-                const scriptName = isPostman ? "generate-postman-collection.ts" : "generate-openapi-collection.ts";
-                let generateCmd = `npx tsx "${path.join(scriptsDir, scriptName)}" "${workFilePath}"`;
-
-                if (modules.length > 0) {
-                    generateCmd += ` --only ${modules.join(",")}`;
-                }
-                if (functionsStr) {
-                    const escapedFunctions = functionsStr.replace(/"/g, '\\"');
-                    generateCmd += ` --functions "${escapedFunctions}"`;
-                }
-
-                await runCommand(generateCmd, { env });
-
-                sendEvent(taskId, 'progress', 'Regenerating type definitions in target...');
-                await runCommand('npm run gen:types', { env });
-
-                sendEvent(taskId, 'complete', "Collection synced successfully");
-                sendEvent('global', 'project:updated', 'Collection synced');
-
-            } catch (error: any) {
-                sendEvent(taskId, 'error', `Sync failed: ${error.toString()}`);
-            } finally {
-                try { if (fs.existsSync(workFilePath)) fs.unlinkSync(workFilePath); } catch (e) { console.error("Cleanup failed:", e); }
+        // 1. Deletions
+        if (deletedModules.length > 0) {
+            // We can't use runCommand('delete-item.ts').
+            // We just instruct client to delete.
+            // But delete-item does recursive delete.
+            // We can simulate that instruction or just simple file deletes.
+            // Given sync usually implies full modules...
+            for (const mod of deletedModules) {
+                operations.push({ type: 'delete', filePath: `src/api-services/definitions/${mod}.ts` });
+                // Best effort on others, client usually handles recursive if smart, or we explicit list:
+                operations.push({ type: 'delete', filePath: `src/api-services/types/${mod}` });
+                operations.push({ type: 'delete', filePath: `src/api-services/generated/${mod}.ts` });
             }
-        })();
+        }
 
-        return NextResponse.json({ success: true, message: "Sync started", taskId });
+        // 2. Generation
+        // Dynamic Import
+        const { generateOpenApi } = await import("@/scripts/generate-openapi-collection");
+        const { generatePostman } = await import("@/scripts/generate-postman-collection");
 
-    } catch (e: any) {
-        if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
-        return NextResponse.json({ success: false, error: e.toString() }, { status: 500 });
+        let genOps: any[] = [];
+        if (isPostman) {
+            genOps = await generatePostman(options) as any[];
+        } else {
+            genOps = await generateOpenApi(options) as any[];
+        }
+
+        operations = [...operations, ...genOps];
+
+        // Post-process operations to ensure correct paths
+        operations = operations.map(op => {
+            if (op.type === 'write' && !op.filePath.startsWith('src/api-services')) {
+                return { ...op, filePath: `src/api-services/${op.filePath}` };
+            }
+            return op;
+        });
+
+        // 3. Types Generation
+        // Previously: npm run gen:types. This is hard to replicate 1:1 without shell.
+        // However, the client is running a watcher that usually runs `npm run gen:types` or similar?
+        // Or we rely on the bridge watcher to detect writes and regen?
+        // The Bridge `index.js` watcher triggers `node generate-types.js`!
+        // So simply writing the definition files (via operations) will trigger the Bridge watcher
+        // which will run `generate-types.js` locally on the user's machine!
+        // So we don't need to explicit run it here.
+
+        // Cleanup
+        try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch (e) { }
+
+        return NextResponse.json({ success: true, operations });
+
+    } catch (error: any) {
+        console.error("Sync failed", error);
+        if (filePath && fs.existsSync(filePath)) try { fs.unlinkSync(filePath); } catch (e) { }
+        return NextResponse.json({ success: false, error: error.toString() }, { status: 500 });
     }
 }

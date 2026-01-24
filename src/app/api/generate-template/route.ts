@@ -122,32 +122,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Module name required" }, { status: 400 });
     }
 
-    (async () => {
-      sendEvent(taskId, 'start', `Generating template for ${moduleName}...`);
-      try {
-        const content = generateTemplateContent(moduleName);
+    const content = generateTemplateContent(moduleName);
+    const filePath = `src/api-services/definitions/${moduleName}.ts`;
 
-        // Write to Bridge (src/api-services/definitions/moduleName.ts)
-        // Bridge logic assumes relative path to project root? 
-        // In delete-collection we used 'src/api-services/definitions'.
-        // The Bridge server.js mounts '/fs/write' and uses `path.join(API_TARGET_DIR, filePath)`.
-        // So full relative path is needed.
-
-        const filePath = `src/api-services/definitions/${moduleName}.ts`;
-
-        sendEvent(taskId, 'progress', 'Writing template to Bridge...');
-        await bridgeCall(getBridgeUrl(bridgeUrl), 'write', { filePath, content });
-
-        // 2. Trigger global update
-        sendEvent(taskId, 'complete', `Template '${moduleName}' generated successfully`);
-        sendEvent('global', 'project:updated', 'Template generated');
-      } catch (err: any) {
-        console.error("Template generation error:", err);
-        sendEvent(taskId, 'error', `Generation failed: ${err.toString()}`);
+    return NextResponse.json({
+      success: true,
+      operation: {
+        type: 'write',
+        filePath,
+        content
       }
-    })();
+    });
 
-    return NextResponse.json({ success: true, message: `Template generation started`, taskId });
   } catch (e: any) {
     return NextResponse.json({ success: false, error: e.toString() }, { status: 500 });
   }

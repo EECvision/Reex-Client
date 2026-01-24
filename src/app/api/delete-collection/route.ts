@@ -32,45 +32,24 @@ export async function POST(req: NextRequest) {
     }
 
     // Start async task
-    (async () => {
-        sendEvent(taskId, 'start', 'Resetting collection...');
-        try {
-            // 1. Delete Remote Files via Bridge
-            const pathsToDelete = [
-                'src/api-services/definitions',
-                'src/api-services/types',
-                'src/api-services/generated', // Also clear generated hooks
-                'src/api-services/index.ts'
-            ];
+    // On Vercel, we can't reliably fire-and-forget long tasks if we return immediately.
+    // However, calculation is fast. 
+    // We will return the instructions to the client.
 
-            for (const p of pathsToDelete) {
-                // We use try-catch inside the loop to allow deleting partials if some don't exist
-                try {
-                    await sendToBridge(bridgeUrl, 'POST', 'delete', { filePath: p });
-                } catch (e) {
-                    console.warn(`Deletion of ${p} ignored:`, e);
-                }
-            }
+    const pathsToDelete = [
+        'src/api-services/definitions',
+        'src/api-services/types',
+        'src/api-services/generated',
+        'src/api-services/index.ts'
+    ];
 
-            // 2. Reset Local apiModules.ts
-            // We can use direct fs here because api-next-server owns this file
-            const localApiModulesPath = path.join(process.cwd(), 'src/config/apiModules.ts');
-            if (fs.existsSync(localApiModulesPath)) {
-                const emptyContent = `// This file is auto-generated. Do not edit manually.
+    // Note: We cannot reset local 'src/config/apiModules.ts' on Vercel ephemeral FS reliably.
+    // Ideally the app should be dynamic enough not to need it, or the Client should sync it?
+    // For now, we omit the local write as it's futile on Vercel.
 
-export const apiModules = {};
-`;
-                fs.writeFileSync(localApiModulesPath, emptyContent);
-            }
-
-            sendEvent(taskId, 'complete', 'Collection reset complete');
-            sendEvent('global', 'project:updated', 'Collection reset complete');
-
-        } catch (err: any) {
-            console.error("Delete Collection Failed:", err);
-            sendEvent(taskId, 'error', `Deletion failed: ${err}`);
-        }
-    })();
-
-    return NextResponse.json({ success: true, message: 'Collection deletion started', taskId });
+    return NextResponse.json({
+        success: true,
+        message: 'Collection reset instructions generated',
+        operations: pathsToDelete.map(p => ({ type: 'delete', filePath: p }))
+    });
 }

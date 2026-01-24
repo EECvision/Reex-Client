@@ -38,7 +38,8 @@ const ImportModal: React.FC<ImportModalProps> = ({
   targetDir,
   taskComplete = false,
   progressMessage,
-  resumeTaskId
+  resumeTaskId,
+  onSuccess // Added missing prop
 }) => {
   const [step, setStep] = useState<Step>("upload");
   const [dragActive, setDragActive] = useState(false);
@@ -64,6 +65,14 @@ const ImportModal: React.FC<ImportModalProps> = ({
 
   // Diff Modal State
   const [diffFunction, setDiffFunction] = useState<FunctionDiff | null>(null);
+
+  // Initialize from props
+  useEffect(() => {
+    if (initialFile) {
+      setSelectedFile(initialFile);
+      detectCollectionType(initialFile).then(type => setCollectionType(type));
+    }
+  }, [initialFile]);
 
   // Resume effect
   useEffect(() => {
@@ -243,17 +252,21 @@ const ImportModal: React.FC<ImportModalProps> = ({
         onUpdateStarted(taskId);
       }
 
+      // Request operations payload instead of server-side sync
+      // We pass 'returnOperations' = true via formData implicitly in api.updateCollection if we modify it, 
+      // or we just handle the new response structure which contains 'operations'.
+
       const res = await api.updateCollection(payload, targetDir, api.getBridgeUrl(), taskId);
+
       if (!res.success) {
         throw new Error(res.error || "Sync failed");
       }
 
-      // if (onUpdateStarted && res.taskId) { // Already called
-      //   onUpdateStarted(res.taskId);
-      // }
+      // Operations are now handled automatically by api.ts (handleOperationResponse)
+      // The bridge watcher will catch the file updates and trigger a project reload.
 
-      // Do NOT set success or close here. Wait for taskComplete prop.
-      // step remains "updating"
+      setStep("success");
+      if (onSuccess) onSuccess("Collection updated successfully!");
 
     } catch (err) {
       console.error(err);

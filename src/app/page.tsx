@@ -172,6 +172,7 @@ const App = () => {
         showToast("success", "Collection deleted!");
         setShowDeleteModal(false);
         setDeleting(false);
+        activeTaskIdRef.current = null; // Ensure clear
         refreshProject(true);
       }
     } catch (err: any) {
@@ -216,6 +217,8 @@ const App = () => {
         showToast("success", data.message || "Item deleted");
         setShowDeleteItemModal(false);
         setDeleteItemInfo(null);
+        setDeletingItem(false); // Fix: Reset loading state
+        activeTaskIdRef.current = null; // Ensure clear
         refreshProject(true);
       }
     } catch (err: any) {
@@ -702,6 +705,7 @@ const App = () => {
               setShowImportModal(false);
               setImportFile(null);
               setImportTaskComplete(false); // Reset on close
+              activeTaskIdRef.current = null; // Fix: Clear task ID so it doesn't resume incorrectly next time
               clearTaskState();
             }}
             initialFile={importFile}
