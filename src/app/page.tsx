@@ -358,7 +358,9 @@ const App = () => {
             finalUrl = finalUrl.replace(pv, String(argsMap[varName]));
             consumedParams.add(varName);
           } else {
-            throw new Error(`Missing path parameter: ${varName}`);
+            // Fix: Treat missing params as dynamic placeholders (like ${queryString})
+            // Remove them from path, allowing standard query param appending to work.
+            finalUrl = finalUrl.replace(pv, "");
           }
         });
       }
