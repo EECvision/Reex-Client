@@ -637,8 +637,18 @@ const App = () => {
             clearTaskState();
           }
         } else if (data.type === "project:updated") {
+          // Clear generic "Syncing" tasks
+          setBackgroundTasks(prev => prev.filter(t => t.title !== "Syncing changes..."));
           // Reload data without full page reload
+          showToast("success", "Project synced");
           refreshProject(true);
+        } else if (data.type === "project:sync-start") {
+          // Immediate feedback for external file changes
+          const serverId = data.id ? parseInt(data.id) : Date.now();
+          setBackgroundTasks((prev) => {
+            if (prev.find(t => t.id === serverId)) return prev;
+            return [...prev, { id: serverId, title: "Syncing changes...", message: "Processing..." }];
+          });
         }
       } catch (e) {
         console.error("Error parsing event:", e);
