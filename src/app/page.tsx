@@ -666,8 +666,6 @@ const App = () => {
           refreshProject(true);
         } else if (data.type === "project:sync-start") {
           // Immediate feedback for external file changes
-          console.log("[SSE] Sync Started Event:", data);
-          showToast("success", "Syncing changes..."); // Explicit toast for visibility
           const serverId = data.id ? parseInt(data.id) : Date.now();
           setBackgroundTasks((prev) => {
             if (prev.find(t => t.id === serverId)) return prev;
@@ -790,7 +788,11 @@ const App = () => {
           showGenerateModal &&
           <GenerateTemplateModal
             isOpen={showGenerateModal}
-            onClose={() => setShowGenerateModal(false)}
+            onClose={() => {
+              setShowGenerateModal(false);
+              activeTaskIdRef.current = null;
+              clearTaskState();
+            }}
             onSuccess={(msg) => showToast("success", msg)}
             onTaskStarted={(taskId) => {
               activeTaskIdRef.current = taskId;

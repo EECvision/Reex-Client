@@ -104,6 +104,14 @@ const Navbar: React.FC<NavbarProps> = ({
   return (
     <nav className={styles.navbar}>
       <div className={styles.leftSection}>
+        <div className={styles.methodBadge} style={{ color: "#6b7280", backgroundColor: "#f3f4f6", borderColor: "#e5e7eb" }}>
+          PROJECT
+        </div>
+        <div className={styles.urlDisplay} title={projectPath}>
+          <span className={styles.urlText} style={{ marginRight: '1rem', fontWeight: 600 }}>
+            {formatProjectPath(projectPath)}
+          </span>
+        </div>
         {selectedEndpoint ? (
           <>
             <div className={styles.methodBadge} style={{ color: methodColor, backgroundColor: `${methodColor}15`, borderColor: `${methodColor}30` }}>
@@ -115,16 +123,6 @@ const Navbar: React.FC<NavbarProps> = ({
           </>
         ) : (
           <>
-            {/* Show Project Path if no endpoint selected */}
-            <div className={styles.methodBadge} style={{ color: "#6b7280", backgroundColor: "#f3f4f6", borderColor: "#e5e7eb" }}>
-              PROJECT
-            </div>
-            <div className={styles.urlDisplay} title={projectPath}>
-              <span className={styles.urlText} style={{ marginRight: '1rem', fontWeight: 600 }}>
-                {formatProjectPath(projectPath)}
-              </span>
-            </div>
-
             {hasCollection && ( // Only show BASE URL if collection exists
               <>
                 <div className={styles.methodBadge} style={{ color: "#6b7280", backgroundColor: "#f3f4f6", borderColor: "#e5e7eb" }}>
