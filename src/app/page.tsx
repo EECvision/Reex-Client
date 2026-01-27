@@ -135,7 +135,10 @@ const App = () => {
           }}
           hasCollection={hasEndpoints}
           onDeleteClick={() => setShowDeleteModal(true)}
-          onFetchUrl={handleFetchUrl}
+          onFetchUrl={(url) => {
+            resetImportTask();
+            handleFetchUrl(url);
+          }}
           isFetching={fetchingUrl}
           onGenerateClick={() => setShowGenerateModal(true)}
           baseURL={projectConfig?.baseURL}
