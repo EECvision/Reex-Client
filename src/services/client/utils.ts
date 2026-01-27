@@ -12,7 +12,7 @@ export const handleOperationResponse = async (res: Response) => {
     let data;
     try {
         data = await res.json();
-    } catch (e) {
+    } catch {
         return { success: false, error: "Invalid JSON response" };
     }
 

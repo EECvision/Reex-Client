@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // scripts/generate-openapi-collection.ts
 
 import * as fs from "fs";

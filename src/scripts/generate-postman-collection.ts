@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // scripts/generate-postman-collection.ts
 import * as fs from "fs";
 import * as path from "path";
