@@ -1,80 +1,10 @@
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(5px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-
-.modal {
-  background-color: #fff;
-  border-radius: 16px;
-  width: 100%;
-  max-width: 650px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  display: flex;
-  flex-direction: column;
-  max-height: 85vh;
-}
-
-/* Header */
-.header {
-  padding: 1.25rem 1.75rem;
-  border-bottom: 1px solid #f3f4f6;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #fff;
-}
-
-.title {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #111827;
-  letter-spacing: -0.01em;
-}
-
-.closeButton {
-  /* Allow Button component to handle layout, just override positioning/size if needed */
-  padding: 0;
-  width: 32px;
-  height: 32px;
-}
-
-/* Body */
+/* Body (Container for internal content) */
 .body {
   padding: 0;
-  overflow-y: auto;
-  flex: 1;
-  background-color: #fff;
+  overflow-y: hidden;
+  /* Scroll handled by Modal component wrapper or sub-elements if needed */
+  display: flex;
+  flex-direction: column;
 }
 
 /* Drop Zone */
@@ -395,15 +325,7 @@
   background-color: #f9fafb;
 }
 
-/* Footer */
-.footer {
-  padding: 1.25rem 1.75rem;
-  background-color: #fff;
-  border-top: 1px solid #f3f4f6;
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-}
+/* Footer handled by Modal */
 
 /* Loading */
 .footerActions {

@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.5rem;
+  padding: 0 1rem;
   background-color: #fff;
   border-bottom: 1px solid #e5e7eb;
 }
@@ -18,48 +18,33 @@
   min-width: 0;
 }
 
-.methodBadge {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 0 10px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  border: 1px solid transparent;
-  min-width: 50px;
-  text-align: center;
+.boldText {
+  font-weight: 600;
 }
 
-.urlDisplay {
+.projectContainer {
   display: flex;
   align-items: center;
-  height: 28px;
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
+  gap: 8px;
+  padding: 6px 8px;
   border-radius: 6px;
-  padding: 0 12px;
-  width: fit-content;
-  max-width: 600px;
-  font-family: 'JetBrains Mono', monospace;
-  /* Assuming monospace font exists or fallback */
-  font-size: 13px;
   color: #374151;
-  overflow: hidden;
-  white-space: nowrap;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+  user-select: none;
+  cursor: default;
+  border: 1px solid transparent;
 }
 
-.urlMethod {
-  color: #6b7280;
-  margin-right: 8px;
-  font-weight: 500;
-  text-transform: uppercase;
+.projectContainer:hover {
+  background-color: #f3f4f6;
+  border-color: #e5e7eb;
 }
 
-.urlText {
-  overflow: hidden;
-  text-overflow: ellipsis;
+.projectIcon {
+  color: #9ca3af;
 }
 
 .rightSection {

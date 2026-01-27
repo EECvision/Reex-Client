@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import { api } from "../../services/api";
 import styles from "./GenerateTemplateModal.module.css";
 import { Button } from "../ui/Button/Button";
+import { Modal } from "../ui/Modal/Modal";
 import { useProject } from "../../providers/ProjectContext";
 
 interface GenerateTemplateModalProps {
@@ -91,77 +92,61 @@ const GenerateTemplateModal: React.FC<GenerateTemplateModalProps> = ({
     }
   };
 
-  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Disabled overlay click for now as per previous logic (marked as 'return' in prev code)
-    return;
-    /*
-    if (e.target === e.currentTarget && !generating) {
-      handleClose();
-    }
-    */
-  };
+  const footerContent = (
+    <>
+      <Button
+        onClick={handleClose}
+        variant="secondary"
+        disabled={generating}
+      >
+        Cancel
+      </Button>
+      <Button
+        onClick={handleGenerate}
+        disabled={generating || !moduleName.trim()}
+        isLoading={generating}
+        variant="primary"
+      >
+        Generate
+      </Button>
+    </>
+  );
 
   return (
-    <>
-      <div className={styles.overlay} onClick={handleOverlayClick}>
-        <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-          <div className={styles.header}>
-            <h2 className={styles.title}>Generate API Template</h2>
-            <Button
-              onClick={handleClose}
-              variant="ghost"
-              disabled={generating}
-              size="sm"
-            >
-              ✕
-            </Button>
-          </div>
-
-          <div className={styles.content}>
-            <label className={styles.label}>
-              Module Name
-              <span className={styles.hint}>
-                {" "}
-                (e.g., users, products, orders)
-              </span>
-            </label>
-            <input
-              type="text"
-              value={moduleName}
-              onChange={(e) => setModuleName(e.target.value)}
-              placeholder="Enter module name..."
-              className={styles.input}
-              disabled={generating}
-              autoFocus
-              onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
-            />
-            {error && <p className={styles.error}>{error}</p>}
-            <p className={styles.description}>
-              This will generate a TypeScript module with GET, POST, PUT, and
-              DELETE operations.
-            </p>
-          </div>
-
-          <div className={styles.footer}>
-            <Button
-              onClick={handleClose}
-              variant="secondary"
-              disabled={generating}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleGenerate}
-              disabled={generating || !moduleName.trim()}
-              isLoading={generating}
-              variant="primary"
-            >
-              Generate
-            </Button>
-          </div>
-        </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Generate API Template"
+      size="md"
+      footer={footerContent}
+      closeOnOverlayClick={!generating}
+      showCloseButton={!generating}
+    >
+      <div className={styles.content}>
+        <label className={styles.label}>
+          Module Name
+          <span className={styles.hint}>
+            {" "}
+            (e.g., users, products, orders)
+          </span>
+        </label>
+        <input
+          type="text"
+          value={moduleName}
+          onChange={(e) => setModuleName(e.target.value)}
+          placeholder="Enter module name..."
+          className={styles.input}
+          disabled={generating}
+          autoFocus
+          onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
+        />
+        {error && <p className={styles.error}>{error}</p>}
+        <p className={styles.description}>
+          This will generate a TypeScript module with GET, POST, PUT, and
+          DELETE operations.
+        </p>
       </div>
-    </>
+    </Modal>
   );
 };
 

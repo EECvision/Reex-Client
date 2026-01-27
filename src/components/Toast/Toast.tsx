@@ -1,6 +1,7 @@
 import React from "react";
 import styles from "./Toast.module.css";
 import { Button } from "../ui/Button/Button";
+import { XIcon } from "lucide-react";
 
 interface Toast {
   id: number;
@@ -57,7 +58,7 @@ const Toast: React.FC<ToastProps> = ({ toasts, onDismiss }) => {
             size="sm"
             className={styles.toastClose}
           >
-            ✕
+            <XIcon size={16} />
           </Button>
         </div>
       ))}

@@ -1,23 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
-import { useProject } from "../../providers/ProjectContext";
-import GenerateTemplateModal from "../GenerateTemplateModal/GenerateTemplateModal";
+import React from "react";
 import styles from "./EmptyState.module.css";
 import { Button } from "../ui/Button/Button";
+import { BookIcon, BookOpen, Folder, Plus } from "lucide-react";
+import Logo from "../Logo/Logo";
 
 interface EmptyStateProps {
   hasEndpoints: boolean;
   onImportClick: () => void;
+  onGenerateClick?: () => void;
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({
   hasEndpoints,
   onImportClick,
+  onGenerateClick,
 }) => {
-  const [showGenerateModal, setShowGenerateModal] = useState(false);
-  const { projectPath } = useProject();
-
   if (hasEndpoints) {
     return (
       <div className={styles.emptyState}>
@@ -31,70 +30,47 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   }
 
   return (
-    <div className={styles.emptyState}>
-      <div className={styles.emptyIconLarge}></div>
-      <h2 className={styles.emptyTitle}>Get Started</h2>
-      <p className={styles.emptyDescription}>
-        Import your API collection or generate modules using the CLI to begin
-        testing your endpoints
-      </p>
-
-      <div className={styles.optionsContainer}>
-        <div className={styles.optionCard}>
-          <div className={styles.optionIcon}>📦</div>
-          <h3 className={styles.optionTitle}>Import Collection</h3>
-          <p className={styles.optionDescription}>
-            Upload a Postman collection JSON file to automatically generate API
-            modules
-          </p>
-          <Button onClick={onImportClick} variant="primary">
-            Import Collection
-          </Button>
-        </div>
-
-        <div className={styles.divider}>
-          <span className={styles.dividerText}>OR</span>
-        </div>
-
-        <div className={styles.optionCard}>
-          <div className={styles.optionIcon}>⚡</div>
-          <h3 className={styles.optionTitle}>Generate Template</h3>
-          <p className={styles.optionDescription}>
-            Create a new API module template with CRUD operations for quick
-            prototyping
-          </p>
-          <Button
-            onClick={() => setShowGenerateModal(true)}
-            variant="primary"
-          >
-            Generate Template
-          </Button>
-        </div>
+    <div className={styles.container}>
+      {/* Logo & Branding */}
+      <div className={styles.header}>
+        <Logo size="lg" />
       </div>
 
-      <div className={styles.helpSection}>
-        <p className={styles.helpText}>
-          Need help?{" "}
-          <a
-            href="#"
-            className={styles.helpLink}
-            onClick={(e) => e.preventDefault()}
+      {/* Primary Actions */}
+      <div className={styles.actions}>
+        <Button
+          variant="primary"
+          onClick={onImportClick}
+          className={styles.primaryBtn}
+          leftIcon={
+            <Folder size={16} />
+          }
+        >
+          Import Collection
+        </Button>
+
+        <div className={styles.secondaryActions}>
+          {onGenerateClick && (
+            <Button
+              variant="secondary"
+              onClick={onGenerateClick}
+              className={styles.secondaryBtn}
+            >
+              <Plus size={16} /> Generate Template
+            </Button>
+          )}
+          <Button
+            variant="secondary"
+            onClick={() => window.open("https://docs.reexapi.com", "_blank")}
+            className={styles.secondaryBtn}
+            leftIcon={
+              <BookOpen size={16} />
+            }
           >
             View Documentation
-          </a>
-        </p>
+          </Button>
+        </div>
       </div>
-
-      <GenerateTemplateModal
-        isOpen={showGenerateModal}
-        onClose={() => setShowGenerateModal(false)}
-        targetDir={projectPath}
-        onSuccess={(message) => {
-          // Ideally we would trigger a refresh here but for now just close
-          // console.log(message);
-          setShowGenerateModal(false);
-        }}
-      />
     </div>
   );
 };

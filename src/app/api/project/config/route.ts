@@ -1,8 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import path from "path";
 import { getApiTargetDir } from "@/app/api/utils";
-// @ts-ignore
-import projectService from "@/services/project-service";
+import projectService from "@/services/ProjectService";
 
 export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;

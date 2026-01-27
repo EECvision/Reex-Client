@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiTargetDir } from "@/app/api/utils";
-// @ts-ignore
-import executionService from "@/services/execution-service";
+import executionService from "@/services/ExecutionService";
 
 export async function POST(req: NextRequest) {
     const apiTargetDir = getApiTargetDir();

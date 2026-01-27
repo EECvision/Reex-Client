@@ -1,7 +1,8 @@
 import React, { useRef, useEffect } from "react";
 import styles from "./Navbar.module.css";
 import { Button } from "../ui/Button/Button";
-import { ChevronDown, Download, Plus, Trash2, FileText, Loader2 } from "lucide-react";
+import { ChevronDown, Download, Plus, Trash2, FileText, Loader2, Folder } from "lucide-react";
+import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
 
 interface NavbarProps {
   selectedEndpoint: {
@@ -15,9 +16,7 @@ interface NavbarProps {
   isFetching: boolean;
   onGenerateClick?: () => void;
   baseURL?: string;
-  computedUrl?: string;
-  method?: string;
-  projectPath?: string; // New prop
+  projectPath?: string;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -29,8 +28,6 @@ const Navbar: React.FC<NavbarProps> = ({
   isFetching,
   onGenerateClick,
   baseURL,
-  computedUrl,
-  method,
   projectPath,
 }) => {
   const [url, setUrl] = React.useState(() => localStorage.getItem("docs_url") || "");
@@ -76,27 +73,14 @@ const Navbar: React.FC<NavbarProps> = ({
     if (error) setError("");
   }
 
-  const getMethodColor = (m?: string) => {
-    if (m === "BASE") return "#6b7280";
-    switch (m?.toUpperCase()) {
-      case "GET": return "#3b82f6";
-      case "POST": return "#10b981";
-      case "PUT": return "#f59e0b";
-      case "DELETE": return "#ef4444";
-      case "PATCH": return "#8b5cf6";
-      default: return "#6b7280";
-    }
-  };
-
-  const methodColor = getMethodColor(method);
-
   // Helper to format project path
   const formatProjectPath = (path?: string) => {
     if (!path) return "No Project";
     // Get last 2 parts of path for brevity
     const parts = path.split(/[\\/]/);
     if (parts.length > 2) {
-      return `.../${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
+      return `${parts[parts.length - 1]}`;
+      // return `.../${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
     }
     return path;
   };
@@ -104,42 +88,17 @@ const Navbar: React.FC<NavbarProps> = ({
   return (
     <nav className={styles.navbar}>
       <div className={styles.leftSection}>
-        <div className={styles.methodBadge} style={{ color: "#6b7280", backgroundColor: "#f3f4f6", borderColor: "#e5e7eb" }}>
-          PROJECT
+        {/* Project Context - Unique Design */}
+        <div className={styles.projectContainer} title={projectPath}>
+          <Folder size={18} className={styles.projectIcon} strokeWidth={2} />
+          <span>{formatProjectPath(projectPath)}</span>
         </div>
-        <div className={styles.urlDisplay} title={projectPath}>
-          <span className={styles.urlText} style={{ marginRight: '1rem', fontWeight: 600 }}>
-            {formatProjectPath(projectPath)}
-          </span>
-        </div>
-        {selectedEndpoint ? (
-          <>
-            <div className={styles.methodBadge} style={{ color: methodColor, backgroundColor: `${methodColor}15`, borderColor: `${methodColor}30` }}>
-              {method}
-            </div>
-            <div className={styles.urlDisplay}>
-              <span className={styles.urlText}>{computedUrl}</span>
-            </div>
-          </>
-        ) : (
-          <>
-            {hasCollection && ( // Only show BASE URL if collection exists
-              <>
-                <div className={styles.methodBadge} style={{ color: "#6b7280", backgroundColor: "#f3f4f6", borderColor: "#e5e7eb" }}>
-                  BASE
-                </div>
-                <div className={styles.urlDisplay}>
-                  <span className={styles.urlText} style={{ color: "#6b7280" }}>{baseURL || "No Base URL"}</span>
-                </div>
-              </>
-            )}
 
-            {!hasCollection && (
-              <div className={styles.urlDisplay}>
-                <span className={styles.urlText} style={{ color: "#9ca3af", fontStyle: 'italic' }}>No Base URL</span>
-              </div>
-            )}
-          </>
+        {hasCollection && baseURL && (
+          <BadgeGroup
+            label="BASE"
+            value={baseURL || "No Base URL"}
+          />
         )}
       </div>
 
@@ -154,7 +113,6 @@ const Navbar: React.FC<NavbarProps> = ({
           >
             Fetch
           </Button>
-
 
           {isFetchOpen && (
             <div className={styles.fetchPopover}>
@@ -177,7 +135,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 disabled={!url || isFetching}
                 isLoading={isFetching}
                 variant="primary"
-                className={styles.popoverFetchBtn} // Keep class if needed for width/overrides
+                className={styles.popoverFetchBtn}
               >
                 Fetch
               </Button>

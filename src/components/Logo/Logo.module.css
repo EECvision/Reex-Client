@@ -1,0 +1,93 @@
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logoIcon {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.logoInner {
+    background-color: white;
+    border-radius: 2px;
+    opacity: 0.9;
+}
+
+.brandName {
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: -0.5px;
+    line-height: 1;
+}
+
+.brandAccent {
+    color: #3b82f6;
+    font-weight: 800;
+}
+
+/* Sizes */
+.sm {
+    gap: 8px;
+}
+
+.sm .logoIcon {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+}
+
+.sm .logoInner {
+    width: 6px;
+    height: 6px;
+    border-radius: 1.5px;
+}
+
+.sm .brandName {
+    font-size: 14px;
+}
+
+.md {
+    gap: 10px;
+}
+
+.md .logoIcon {
+    width: 24px;
+    height: 24px;
+}
+
+.md .logoInner {
+    width: 8px;
+    height: 8px;
+}
+
+.md .brandName {
+    font-size: 16px;
+}
+
+.lg {
+    gap: 12px;
+    flex-direction: column;
+}
+
+.lg .logoIcon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.lg .logoInner {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+}
+
+.lg .brandName {
+    font-size: 24px;
+}

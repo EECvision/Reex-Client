@@ -1,0 +1,42 @@
+.group {
+    display: flex;
+    align-items: stretch;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    width: fit-content;
+    flex-shrink: 0;
+    /* Prevent shrinking in flex containers */
+    box-sizing: border-box;
+    line-height: 1.5;
+}
+
+.label {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 50px;
+    text-align: center;
+}
+
+.value {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    background-color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #374151;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.valueText {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

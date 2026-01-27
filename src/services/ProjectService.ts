@@ -1,18 +1,61 @@
-const fs = require("fs");
-const path = require("path");
-const { Project, SyntaxKind } = require("ts-morph");
+
+import fs from "fs";
+import path from "path";
+import {
+    Project,
+    SyntaxKind,
+    SourceFile,
+    VariableDeclaration,
+    FunctionExpression,
+    ArrowFunction,
+    TypeNode,
+    ParameterDeclaration,
+    ObjectLiteralExpression,
+    PropertyAssignment,
+    StringLiteral,
+    NoSubstitutionTemplateLiteral,
+    TemplateExpression,
+    CallExpression,
+    PropertyAccessExpression,
+    TypeLiteralNode,
+    InterfaceDeclaration,
+    TypeAliasDeclaration
+} from "ts-morph";
+
+interface EndpointMetadata {
+    client: string;
+    url: string;
+}
+
+interface EndpointArg {
+    name: string;
+    isOptional: boolean;
+    type?: string;
+    isObject?: boolean;
+    properties?: any[]; // Recursive type
+}
+
+interface ModuleExports {
+    [key: string]: {
+        args: EndpointArg[];
+        client: string;
+        url: string;
+    }
+}
 
 class ProjectService {
+    private project: Project | null;
+
     constructor() {
         this.project = null;
     }
 
     /**
      * Generates the API manifest from the target directory.
-     * @param {string} targetDir - The directory containing API definitions.
-     * @returns {Object} The generated manifest object.
+     * @param targetDir - The directory containing API definitions.
+     * @returns The generated manifest object.
      */
-    generateManifest(targetDir) {
+    generateManifest(targetDir: string): Record<string, ModuleExports> {
         if (!fs.existsSync(targetDir)) {
             console.warn(`[ProjectService] Warning: Target directory not found: ${targetDir}`);
             return {};
@@ -28,22 +71,23 @@ class ProjectService {
         });
 
         const files = fs.readdirSync(targetDir).filter((f) => f.endsWith(".ts"));
-        const apiManifest = {};
+        const apiManifest: Record<string, ModuleExports> = {};
 
         for (const file of files) {
             const moduleName = file.replace(".ts", "");
             const filePath = path.join(targetDir, file);
-            const sourceFile = this.project.addSourceFileAtPath(filePath);
-            const moduleExports = {};
+            if (!this.project) continue;
+            const sourceFile: SourceFile = this.project.addSourceFileAtPath(filePath);
+            const moduleExports: ModuleExports = {};
             const exports = sourceFile.getExportedDeclarations();
             let count = 0;
 
-            for (const [exportName, declarations] of exports) {
+            for (const [_, declarations] of exports) {
                 for (const declaration of declarations) {
                     const kind = declaration.getKind();
 
                     // Helper to extract metadata from function body
-                    const extractMetadata = (funcNode) => {
+                    const extractMetadata = (funcNode: ArrowFunction | FunctionExpression): EndpointMetadata => {
                         let client = "UNKNOWN_CLIENT";
                         let url = "";
 
@@ -55,11 +99,10 @@ class ProjectService {
                                 const init = decl.getInitializer();
                                 if (init) {
                                     if (init.getKind() === SyntaxKind.StringLiteral || init.getKind() === SyntaxKind.NoSubstitutionTemplateLiteral) {
-                                        url = init.getLiteralValue();
+                                        url = (init as StringLiteral | NoSubstitutionTemplateLiteral).getLiteralValue();
                                     } else if (init.getKind() === SyntaxKind.TemplateExpression) {
                                         // Handle `path${query}` -> extract "path"
-                                        // The head contains the text before the first substitution
-                                        url = init.getHead().getLiteralText();
+                                        url = (init as TemplateExpression).getHead().getLiteralText();
                                     }
                                 }
                             }
@@ -72,11 +115,11 @@ class ProjectService {
                                 // First arg is arrow function: () => CLIENT.method(...)
                                 const firstArg = call.getArguments()[0];
                                 if (firstArg && (firstArg.getKind() === SyntaxKind.ArrowFunction || firstArg.getKind() === SyntaxKind.FunctionExpression)) {
-                                    const innerCall = firstArg.getBody(); // CLIENT.method(url)
+                                    const innerCall = (firstArg as ArrowFunction).getBody(); // CLIENT.method(url)
                                     if (innerCall.getKind() === SyntaxKind.CallExpression) {
-                                        const expr = innerCall.getExpression(); // CLIENT.method (PropertyAccessExpression)
+                                        const expr = (innerCall as CallExpression).getExpression(); // CLIENT.method (PropertyAccessExpression)
                                         if (expr.getKind() === SyntaxKind.PropertyAccessExpression) {
-                                            client = expr.getExpression().getText(); // CLIENT
+                                            client = (expr as PropertyAccessExpression).getExpression().getText(); // CLIENT
                                         }
                                     }
                                 }
@@ -87,16 +130,17 @@ class ProjectService {
 
 
                     if (kind === SyntaxKind.VariableDeclaration) {
-                        const initializer = declaration.getInitializer();
+                        const initializer = (declaration as VariableDeclaration).getInitializer();
                         if (initializer && initializer.getKind() === SyntaxKind.ObjectLiteralExpression) {
-                            const properties = initializer.getProperties();
+                            const properties = (initializer as ObjectLiteralExpression).getProperties();
                             for (const property of properties) {
                                 if (property.getKind() === SyntaxKind.PropertyAssignment) {
-                                    const methodName = property.getName();
-                                    const init = property.getInitializer();
+                                    const methodName = (property as PropertyAssignment).getName();
+                                    const init = (property as PropertyAssignment).getInitializer();
                                     if (init && (init.getKind() === SyntaxKind.ArrowFunction || init.getKind() === SyntaxKind.FunctionExpression)) {
-                                        const params = init.getParameters().map(p => this.getParameterDetails(p, sourceFile));
-                                        const metadata = extractMetadata(init);
+                                        const funcInit = init as ArrowFunction | FunctionExpression;
+                                        const params = funcInit.getParameters().map((p) => this.getParameterDetails(p, sourceFile));
+                                        const metadata = extractMetadata(funcInit);
                                         moduleExports[methodName] = { args: params, ...metadata };
                                         count++;
                                     }
@@ -117,26 +161,26 @@ class ProjectService {
 
     /**
      * Reads the project config to get BaseURLs.
-     * @param {string} configDir - Path to src/api-services/config
+     * @param configDir - Path to src/api-services/config
      */
-    getProjectConfig(configDir) {
+    getProjectConfig(configDir: string): any {
         if (!fs.existsSync(configDir)) return {};
         const filePath = path.join(configDir, "index.ts");
         if (!fs.existsSync(filePath)) return {};
 
         const project = new Project({ skipAddingFilesFromTsConfig: true });
         const sourceFile = project.addSourceFileAtPath(filePath);
-        const config = { clients: {} };
+        const config: any = { clients: {} };
 
         // 1. Get baseURL
         const baseURLDecl = sourceFile.getVariableDeclaration("baseURL");
         if (baseURLDecl) {
             const init = baseURLDecl.getInitializer();
             // Handle: import.meta.env.V || "http..."
-            if (init.getKind() === SyntaxKind.BinaryExpression) {
-                config.baseURL = init.getRight().getText().replace(/"/g, '');
-            } else if (init.getKind() === SyntaxKind.StringLiteral) {
-                config.baseURL = init.getLiteralValue();
+            if (init && init.getKind() === SyntaxKind.BinaryExpression) {
+                config.baseURL = (init as any).getRight().getText().replace(/"/g, '');
+            } else if (init && init.getKind() === SyntaxKind.StringLiteral) {
+                config.baseURL = (init as StringLiteral).getLiteralValue();
             }
         }
 
@@ -147,13 +191,15 @@ class ProjectService {
                 // Inspect the axios.create({ baseURL: ... })
                 const decl = declarations[0]; // VariableDeclaration
                 if (decl.getKind() === SyntaxKind.VariableDeclaration) {
-                    const initializer = decl.getInitializer(); // CallExpression axios.create()
+                    const initializer = (decl as VariableDeclaration).getInitializer(); // CallExpression axios.create()
                     if (initializer && initializer.getKind() === SyntaxKind.CallExpression) {
-                        const arg = initializer.getArguments()[0]; // ObjectLiteral
+                        const arg = (initializer as CallExpression).getArguments()[0]; // ObjectLiteral
                         if (arg && arg.getKind() === SyntaxKind.ObjectLiteralExpression) {
-                            const baseURLProp = arg.getProperty("baseURL");
+                            const baseURLProp = (arg as ObjectLiteralExpression).getProperty("baseURL");
                             if (baseURLProp && baseURLProp.getKind() === SyntaxKind.PropertyAssignment) {
-                                let urlVal = baseURLProp.getInitializer().getText();
+                                const initializer = (baseURLProp as PropertyAssignment).getInitializer();
+                                if (!initializer) continue;
+                                let urlVal = initializer.getText();
                                 // Evaluate "baseURL + '/v1'" -> we can't easily eval, but we can return the raw string or try to simplistically resolve it.
                                 // e.g. "baseURL + "/v1""
                                 if (urlVal.startsWith("baseURL +")) {
@@ -173,7 +219,7 @@ class ProjectService {
         return config;
     }
 
-    getParameterDetails(param, sourceFile) {
+    getParameterDetails(param: ParameterDeclaration, sourceFile: SourceFile): EndpointArg {
         const name = param.getName();
         const isOptional = param.isOptional();
         const typeNode = param.getTypeNode();
@@ -183,17 +229,18 @@ class ProjectService {
         return { name, isOptional };
     }
 
-    expandTypeRecursively(typeNode, sourceFile) {
+    expandTypeRecursively(typeNode: TypeNode | undefined, sourceFile: SourceFile): any {
         if (!typeNode) return null;
 
         const kind = typeNode.getKind();
 
         if (kind === SyntaxKind.TypeLiteral) {
+            const props = (typeNode as TypeLiteralNode).getProperties();
             return {
                 isObject: true,
-                properties: typeNode.getProperties().map((prop) => {
+                properties: props.map((prop) => {
                     const name = prop.getName();
-                    const optional = prop.hasQuestionToken?.() || false;
+                    const optional = prop.hasQuestionToken();
                     const propTypeNode = prop.getTypeNode();
                     const nested = this.expandTypeRecursively(propTypeNode, sourceFile);
                     if (nested) return { name, isOptional: optional, ...nested };
@@ -203,26 +250,28 @@ class ProjectService {
         }
 
         if (kind === SyntaxKind.TypeReference) {
-            const typeName = typeNode.getTypeName().getText();
+            const typeName = (typeNode as any).getTypeName().getText();
             const declaration =
                 sourceFile.getInterfaces().find((i) => i.getName() === typeName) ||
                 sourceFile.getTypeAliases().find((t) => t.getName() === typeName);
 
             if (!declaration) return { type: typeName };
 
-            let props = [];
+            let props: any[] = [];
             if (declaration.getKind() === SyntaxKind.InterfaceDeclaration) {
-                props = declaration.getProperties();
+                props = (declaration as InterfaceDeclaration).getProperties();
             } else if (declaration.getKind() === SyntaxKind.TypeAliasDeclaration) {
-                const tn = declaration.getTypeNode();
-                if (tn && tn.getProperties) props = tn.getProperties();
+                const tn = (declaration as TypeAliasDeclaration).getTypeNode();
+                if (tn && tn.getKind() === SyntaxKind.TypeLiteral) {
+                    props = (tn as TypeLiteralNode).getProperties();
+                }
             }
 
             return {
                 isObject: true,
                 properties: props.map((prop) => {
                     const name = prop.getName();
-                    const optional = prop.hasQuestionToken?.() || prop.isOptional?.() || false;
+                    const optional = prop.hasQuestionToken();
                     const propTypeNode = prop.getTypeNode();
                     const nested = this.expandTypeRecursively(propTypeNode, sourceFile);
                     if (nested) return { name, isOptional: optional, ...nested };
@@ -231,28 +280,23 @@ class ProjectService {
             };
         }
 
-        return null; // For simple types, we don't return structure, just undefined implies simple type handling by caller or fallback
+        return null;
     }
 
     /**
      * Enumerates modules in the target directory
-     * @param {string} targetDir
      */
-    getModules(targetDir) {
+    getModules(targetDir: string): Record<string, boolean> {
         if (!fs.existsSync(targetDir)) return {};
         const files = fs.readdirSync(targetDir).filter((f) => f.endsWith(".ts"));
-        const modules = {};
+        const modules: Record<string, boolean> = {};
         files.forEach(f => {
             const name = f.replace(".ts", "");
-            // We could try to require key exports, but for listing, just existence is mostly enough
-            // But existing logic imports definitions.
-            // For now, let's just return filenames as keys.
-            // The frontend expects apiModules to be { [key]: ... }
-            // Since we can't easily send functions over JSON, we'll just send { keys }
             modules[name] = true;
         });
         return modules;
     }
 }
 
-module.exports = new ProjectService();
+const projectService = new ProjectService();
+export default projectService;

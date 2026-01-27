@@ -4,6 +4,7 @@ import { EndpointInfo, Methods } from "@/types";
 import { Folder, Trash2, ChevronRight, ChevronDown } from "lucide-react";
 import { Button } from "../ui/Button/Button";
 import { Select } from "../ui/Select/Select";
+import Logo from "../Logo/Logo";
 
 const METHOD_OPTIONS = [
   { value: "ALL", label: "ALL METHODS" },
@@ -43,10 +44,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     <aside className={styles.sidebar}>
       <div className={styles.header}>
         <div className={styles.brand}>
-          <div className={styles.logoIcon}>
-            <div className={styles.logoInner}></div>
-          </div>
-          <span className={styles.brandName}>Reex<span className={styles.brandAccent}>API</span></span>
+          <Logo />
         </div>
       </div>
 

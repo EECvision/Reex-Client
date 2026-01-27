@@ -1,22 +1,21 @@
 
-const fs = require('fs');
-const path = require('path');
-const { exec } = require('child_process');
+import fs from 'fs';
+import path from 'path';
+import { exec, ExecOptions } from 'child_process';
+
+interface ExecutionResult {
+    success?: boolean;
+    data?: any;
+    rawOutput?: string;
+}
 
 class ExecutionService {
 
-    async executeFunction(targetDir, apiKey, fnName, args = []) {
+    async executeFunction(targetDir: string, apiKey: string, fnName: string, args: any[] = []): Promise<ExecutionResult> {
         // targetDir is .../src/api-services/definitions
-        // We want to run from project root ideally, or at least somewhere where imports work.
-        // If we put script in api-services/definitions/temp.ts, imports like "../config" work.
 
         const scriptPath = path.join(targetDir, `temp_exec_${Date.now()}.js`);
         const moduleName = apiKey; // 'users', 'auth' etc.
-
-        // Construct the script
-        // Note: We need to handle default export vs named export.
-        // generate-modules says: export const {Name}Api = ...
-        // So we import { {Name}Api } from "./{name}";
 
         const varName = `${moduleName}Api`;
 
@@ -52,7 +51,7 @@ const { ${varName} } = require('./${moduleName}');
 
             // Run with ts-node in CJS mode
             // We force commonjs module output via ENV to avoid shell quoting issues.
-            const env = {
+            const env: NodeJS.ProcessEnv = {
                 ...process.env,
                 TS_NODE_COMPILER_OPTIONS: JSON.stringify({ module: "commonjs", noEmit: false }),
                 TS_NODE_TRANSPILE_ONLY: "true",
@@ -84,7 +83,7 @@ const { ${varName} } = require('./${moduleName}');
         }
     }
 
-    runCommand(cmd, options) {
+    runCommand(cmd: string, options: ExecOptions): Promise<string> {
         return new Promise((resolve, reject) => {
             exec(cmd, options, (err, stdout, stderr) => {
                 if (err) {
@@ -93,10 +92,11 @@ const { ${varName} } = require('./${moduleName}');
                     // If ts-node failed (compile error), stderr has it.
                     return reject(stderr || err.message);
                 }
-                resolve(stdout);
+                resolve(stdout as string);
             });
         });
     }
 }
 
-module.exports = new ExecutionService();
+const executionService = new ExecutionService();
+export default executionService;
