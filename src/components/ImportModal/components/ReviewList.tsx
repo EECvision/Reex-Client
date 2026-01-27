@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from '../ImportModal.module.css';
+import styles from './ReviewList.module.css';
 import { Button } from '../../ui/Button/Button';
 import { DiffResult } from '../importTypes';
 import ModuleItem from './ModuleItem';
@@ -16,6 +16,8 @@ interface ReviewListProps {
     onToggleFunction: (module: string, func: string) => void;
     onToggleExpand: (module: string) => void;
     onViewChanges: (func: FunctionDiff) => void;
+    forceOverwriteFunctions: Set<string>;
+    onToggleForceOverwrite: (module: string, func: string) => void;
 }
 
 const ReviewList: React.FC<ReviewListProps> = ({
@@ -28,7 +30,9 @@ const ReviewList: React.FC<ReviewListProps> = ({
     onToggleModule,
     onToggleFunction,
     onToggleExpand,
-    onViewChanges
+    onViewChanges,
+    forceOverwriteFunctions,
+    onToggleForceOverwrite
 }) => {
     return (
         <div className={styles.reviewList}>
@@ -66,6 +70,8 @@ const ReviewList: React.FC<ReviewListProps> = ({
                         onToggleFunction={onToggleFunction}
                         onToggleExpand={onToggleExpand}
                         onViewChanges={onViewChanges}
+                        forceOverwriteFunctions={forceOverwriteFunctions}
+                        onToggleForceOverwrite={onToggleForceOverwrite}
                     />
                 ))}
             </div>

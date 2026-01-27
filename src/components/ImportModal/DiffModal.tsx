@@ -115,8 +115,8 @@ const CustomDiffViewer = ({
                         </div>
                         <div
                             className={`${styles.diffContent} ${row.rightType !== "normal" && row.rightType !== "diffEmpty"
-                                    ? styles[row.rightType]
-                                    : ""
+                                ? styles[row.rightType]
+                                : ""
                                 } ${row.rightType === "diffEmpty" ? styles.diffEmpty : ""}`}
                         >
                             {row.rightContent || (row.rightType === "diffEmpty" ? "" : " ")}
@@ -129,8 +129,8 @@ const CustomDiffViewer = ({
                         </div>
                         <div
                             className={`${styles.diffContent} ${row.leftType !== "normal" && row.leftType !== "diffEmpty"
-                                    ? styles[row.leftType]
-                                    : ""
+                                ? styles[row.leftType]
+                                : ""
                                 } ${row.leftType === "diffEmpty" ? styles.diffEmpty : ""}`}
                         >
                             {row.leftContent || (row.leftType === "diffEmpty" ? "" : " ")}

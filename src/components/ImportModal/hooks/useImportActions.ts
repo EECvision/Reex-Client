@@ -10,6 +10,7 @@ interface UseImportActionsProps {
     setDiffs: (diffs: DiffResult[]) => void;
     setSelectedModules: (modules: Set<string>) => void;
     setSelectedFunctions: (funcs: Map<string, Set<string>>) => void;
+    forceOverwriteFunctions: Set<string>;
 }
 
 export const useImportActions = ({
@@ -19,7 +20,8 @@ export const useImportActions = ({
     onSuccess,
     setDiffs,
     setSelectedModules,
-    setSelectedFunctions
+    setSelectedFunctions,
+    forceOverwriteFunctions
 }: UseImportActionsProps) => {
     const [step, setStep] = useState<ImportStep>("upload");
 
@@ -87,12 +89,28 @@ export const useImportActions = ({
                 )
                 .map((d) => d.module);
 
+            // Fetch existing definitions for preservation
+            let existingModules = {};
+            try {
+                existingModules = await api.fetchProjectDefinitions(api.getBridgeUrl());
+            } catch (e) {
+                console.warn("Failed to fetch existing definitions for merge:", e);
+            }
+
+            try {
+                existingModules = await api.fetchProjectDefinitions(api.getBridgeUrl());
+            } catch (e) {
+                console.warn("Failed to fetch existing definitions for merge:", e);
+            }
+
             const payload = {
                 file: selectedFile,
                 fileName: selectedFile.name,
                 modules: Array.from(selectedModules),
                 deletedModules,
                 functions: functionMapObj,
+                forceOverwrite: Array.from(forceOverwriteFunctions),
+                existingModules
             };
 
             const taskId = Date.now().toString();

@@ -70,7 +70,9 @@ const ImportModal: React.FC<ImportModalProps> = ({
     selectAll,
     deselectAll,
     setSelectedModules,
-    setSelectedFunctions
+    setSelectedFunctions,
+    forceOverwriteFunctions,
+    toggleForceOverwrite
   } = useDiffSelection();
 
   const {
@@ -85,7 +87,8 @@ const ImportModal: React.FC<ImportModalProps> = ({
     onSuccess,
     setDiffs,
     setSelectedModules,
-    setSelectedFunctions
+    setSelectedFunctions,
+    forceOverwriteFunctions
   });
 
   // Effect: Initialize from props
@@ -219,6 +222,8 @@ const ImportModal: React.FC<ImportModalProps> = ({
               onToggleFunction={toggleFunction}
               onToggleExpand={toggleExpand}
               onViewChanges={setDiffFunction}
+              forceOverwriteFunctions={forceOverwriteFunctions}
+              onToggleForceOverwrite={toggleForceOverwrite}
             />
           )}
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from '../ImportModal.module.css';
+import styles from './StatusBadge.module.css';
 
 interface StatusBadgeProps {
     status: string;
@@ -21,7 +21,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, onClick }) => {
     }
     if (status === "deleted") {
         className = styles.statusDeleted;
-        label = "Deleted";
+        label = "Not Found";
     }
     if (status === "disabled") {
         className = styles.statusDisabled;

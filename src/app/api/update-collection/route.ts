@@ -18,11 +18,25 @@ export async function POST(req: NextRequest) {
         const modulesStr = formData.get('modules') as string;
         const deletedModulesStr = formData.get('deletedModules') as string;
         const functionsStr = formData.get('functions') as string;
+        const forceOverwriteStr = formData.get('forceOverwrite') as string;
+        const existingModulesStr = formData.get('existingModules') as string;
         const returnOperations = formData.get('returnOperations') === 'true'; // New flag
 
         // Parse inputs
         const modules = modulesStr ? JSON.parse(modulesStr) : [];
         const deletedModules = deletedModulesStr ? JSON.parse(deletedModulesStr) : [];
+        const forceOverwrite = forceOverwriteStr ? JSON.parse(forceOverwriteStr) : [];
+
+        // Parse Existing Modules Map
+        let existingFilesMap: Map<string, string> | undefined;
+        if (existingModulesStr) {
+            try {
+                const obj = JSON.parse(existingModulesStr);
+                existingFilesMap = new Map(Object.entries(obj));
+            } catch (e) {
+                console.warn("Failed to parse existingModules map", e);
+            }
+        }
 
         // Parse functions filter
         let filterFunctions: Map<string, string[]> | undefined;
@@ -52,7 +66,9 @@ export async function POST(req: NextRequest) {
             specData: jsonContent,
             returnContent: true,
             filterModules: modules.length > 0 ? modules : undefined,
-            filterFunctions: filterFunctions
+            filterFunctions: filterFunctions,
+            forceOverwrite: forceOverwrite,
+            existingFiles: existingFilesMap
         };
 
         // Generate Operations (Synchronous wait)

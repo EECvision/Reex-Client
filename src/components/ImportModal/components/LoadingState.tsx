@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from '../ImportModal.module.css';
+import styles from './LoadingState.module.css';
 
 interface LoadingStateProps {
     message: string;
@@ -10,7 +10,7 @@ const LoadingState: React.FC<LoadingStateProps> = ({ message, isSuccess = false 
     if (isSuccess) {
         return (
             <div className={styles.loadingState}>
-                <p className={styles.successText}>✨ {message}</p>
+                <p className={styles.successText}>{message}</p>
             </div>
         );
     }

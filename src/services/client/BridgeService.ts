@@ -89,4 +89,13 @@ export const BridgeService = {
         const res = await fetch(apiPath);
         return res.json();
     },
+
+    fetchProjectDefinitions: async (baseUrl?: string) => {
+        const root = baseUrl || cloudUrl;
+        const apiPath = baseUrl ? `${baseUrl}/api/project/definitions` : `${root}/project/definitions`;
+
+        const res = await fetch(apiPath);
+        if (!res.ok) throw new Error("Failed to fetch definitions");
+        return res.json();
+    },
 };

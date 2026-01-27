@@ -1,0 +1,40 @@
+/* Badges CSS Implementation */
+.statusBadge {
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05) inset;
+}
+
+.statusNew {
+    background-color: #d1fae5;
+    color: #047857;
+}
+
+.statusModified {
+    background-color: #fef3c7;
+    color: #b45309;
+}
+
+.statusDeleted {
+    background-color: #fee2e2;
+    color: #b91c1c;
+}
+
+.statusUnchanged {
+    background-color: #f3f4f6;
+    color: #6b7280;
+    box-shadow: none;
+    border: 1px solid #e5e7eb;
+}
+
+.statusDisabled {
+    background-color: #f3f4f6;
+    color: #9ca3af;
+    text-decoration: line-through;
+}

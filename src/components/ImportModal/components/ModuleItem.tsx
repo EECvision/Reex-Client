@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import styles from '../ImportModal.module.css';
+import styles from './ModuleItem.module.css';
 import { DiffResult } from '../importTypes';
 import StatusBadge from './StatusBadge';
 import { Button } from '../../ui/Button/Button';
@@ -15,6 +15,8 @@ interface ModuleItemProps {
     onToggleFunction: (module: string, func: string) => void;
     onToggleExpand: (module: string) => void;
     onViewChanges: (func: FunctionDiff) => void;
+    forceOverwriteFunctions: Set<string>;
+    onToggleForceOverwrite: (module: string, func: string) => void;
 }
 
 const ModuleItem: React.FC<ModuleItemProps> = ({
@@ -25,12 +27,14 @@ const ModuleItem: React.FC<ModuleItemProps> = ({
     onToggleModule,
     onToggleFunction,
     onToggleExpand,
-    onViewChanges
+    onViewChanges,
+    forceOverwriteFunctions,
+    onToggleForceOverwrite
 }) => {
     return (
         <div className={styles.moduleWrapper}>
             <div
-                className={`${styles.moduleItem} ${isSelected ? styles.selected : ""}`}
+                className={`${isSelected ? styles.selected : ""}`}
             >
                 <div
                     className={styles.moduleMainRow}
@@ -82,17 +86,27 @@ const ModuleItem: React.FC<ModuleItemProps> = ({
                             </span>
                             <StatusBadge status={f.status} />
                             {f.status === "modified" && (
-                                <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onViewChanges(f);
-                                    }}
-                                    className={styles.viewChangesBtn}
-                                >
-                                    View Changes
-                                </Button>
+                                <div className={styles.overwriteAction}>
+                                    <label className={styles.overwriteLabel} onClick={(e) => e.stopPropagation()}>
+                                        <input
+                                            type="checkbox"
+                                            checked={forceOverwriteFunctions.has(`${diff.module}.${f.name}`)}
+                                            onChange={() => onToggleForceOverwrite(diff.module, f.name)}
+                                        />
+                                        <span className={styles.overwriteText}>Overwrite</span>
+                                    </label>
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onViewChanges(f);
+                                        }}
+                                        className={styles.viewChangesBtn}
+                                    >
+                                        View Changes
+                                    </Button>
+                                </div>
                             )}
                         </label>
                     ))}

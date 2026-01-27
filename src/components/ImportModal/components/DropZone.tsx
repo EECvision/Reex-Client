@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from '../ImportModal.module.css';
+import styles from './DropZone.module.css';
 import { CollectionType } from '../importTypes';
 
 interface DropZoneProps {

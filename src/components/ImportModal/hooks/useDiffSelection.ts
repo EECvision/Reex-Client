@@ -11,6 +11,19 @@ export const useDiffSelection = () => {
     // Expanded modules in UI
     const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
 
+    // Force Overwrite functions: Set<"moduleName.functionName">
+    const [forceOverwriteFunctions, setForceOverwriteFunctions] = useState<Set<string>>(new Set());
+
+    const toggleForceOverwrite = (moduleName: string, functionName: string) => {
+        const key = `${moduleName}.${functionName}`;
+        setForceOverwriteFunctions((prev) => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
+    };
+
     const toggleModule = (moduleName: string, diff?: DiffResult) => {
         const isSelected = selectedModules.has(moduleName);
 
@@ -90,6 +103,7 @@ export const useDiffSelection = () => {
         setSelectedModules(new Set());
         setSelectedFunctions(new Map());
         setExpandedModules(new Set());
+        setForceOverwriteFunctions(new Set());
     };
 
     const selectAll = (diffs: DiffResult[]) => {
@@ -130,6 +144,8 @@ export const useDiffSelection = () => {
         deselectAll,
         setSelectedModules,
         setSelectedFunctions,
-        setExpandedModules
+        setExpandedModules,
+        forceOverwriteFunctions,
+        toggleForceOverwrite
     };
 };

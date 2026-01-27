@@ -252,9 +252,9 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
                                     const formattedNew = await formatCode(newBody);
 
                                     // Safety check: if formatted versions are identical, mark as unchanged
-                                    // This handles cases where normalize() sees a change but prettier makes them identical (rare but possible)
                                     if (formattedOld === formattedNew) {
                                         functionDiffs.push({ name, status: "unchanged" });
+                                        processedExisting.add(name);
                                     } else {
                                         functionDiffs.push({
                                             name,
@@ -262,8 +262,8 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
                                             oldContent: formattedOld,
                                             newContent: formattedNew
                                         });
+                                        processedExisting.add(name);
                                     }
-                                    processedExisting.add(name);
                                 } else {
                                     functionDiffs.push({ name, status: "unchanged" });
                                     processedExisting.add(name);
@@ -285,6 +285,19 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
 
                         if (functionDiffs.length > 0) {
                             result.functions = functionDiffs;
+
+                            // INTELLIGENT STATUS UPDATE:
+                            // If we have function diffs, check if ANY are actually modified/new/deleted
+                            // If all are "unchanged" or "disabled", then the module is effectively unchanged
+                            const hasRealChanges = functionDiffs.some(f =>
+                                ["new", "modified", "deleted"].includes(f.status)
+                            );
+
+                            if (!hasRealChanges) {
+                                result.status = "unchanged";
+                            } else {
+                                result.status = "modified";
+                            }
                         }
                     } else {
                         // For unchanged modules, still list the functions so user can see them

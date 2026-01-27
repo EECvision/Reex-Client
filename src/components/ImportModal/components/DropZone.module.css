@@ -1,0 +1,109 @@
+.dropZone {
+    margin: 2rem;
+    padding: 3rem;
+    border: 2px dashed #e5e7eb;
+    border-radius: 12px;
+    background-color: #f9fafb;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 260px;
+}
+
+.dropZone:hover {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.dropZoneActive {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+    transform: scale(1.01);
+}
+
+.dropZoneSelected {
+    border-color: #3b82f6;
+    background-color: #f0fdf4;
+}
+
+.input {
+    display: none;
+}
+
+.placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+    pointer-events: none;
+    color: #6b7280;
+}
+
+.placeholder span {
+    color: #3b82f6;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.fileInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    pointer-events: none;
+    width: 100%;
+}
+
+.fileDetails {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.fileName {
+    font-weight: 600;
+    color: #111827;
+    font-size: 1rem;
+    background-color: #fff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+}
+
+.fileSize {
+    font-size: 0.8125rem;
+    color: #9ca3af;
+    margin-top: -4px;
+}
+
+/* Badge Styles (Missing in original, adding based on usage) */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badgeOpenApi {
+    background-color: #ecfdf5;
+    color: #059669;
+}
+
+.badgePostman {
+    background-color: #fff7ed;
+    color: #ea580c;
+}
+
+.badgeUnsupported {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
