@@ -57,9 +57,30 @@ export interface StandardFunctionDefinition {
 export interface StandardModuleDefinition {
     name: string;
     functions: StandardFunctionDefinition[];
+    proposedClient?: { name: string; path: string };
 }
 
 // --- String Helpers ---
+
+export const getCommonPrefix = (paths: string[]): string => {
+    if (paths.length === 0) return "";
+    const splitPaths = paths.map(p => p.split('/').filter(Boolean));
+    const firstPath = splitPaths[0];
+    let common = [];
+
+    for (let i = 0; i < firstPath.length; i++) {
+        const segment = firstPath[i];
+        if (segment.startsWith('{') || segment.startsWith(':')) break; // Stop at variable
+        if (splitPaths.every(p => p[i] === segment)) {
+            common.push(segment);
+        } else {
+            break;
+        }
+    }
+
+    if (common.length === 0) return "";
+    return "/" + common.join("/");
+};
 
 export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 

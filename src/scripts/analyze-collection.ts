@@ -151,19 +151,16 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
         const specData = JSON.parse(specContent);
 
         // 1. Generate new code in-memory (Dry Run)
-        let newModules: { name: string; content: string }[] = [];
-
+        // rawModules now contains proposedClient info
         let rawModules: any[] = [];
 
         if (specData.openapi || specData.swagger) {
-            // console.log("📋 Detected OpenAPI spec");
             rawModules = await generateOpenApi({
                 specData,
                 dryRun: true,
                 clientMappings
             }) as any[];
         } else if (specData.info && specData.item) {
-            // console.log("📋 Detected Postman collection");
             rawModules = await generatePostman({
                 specData,
                 dryRun: true,
@@ -173,14 +170,24 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
             throw new Error("Unknown collection format. Use OpenAPI (json) or Postman Collection v2.1");
         }
 
+        // Aggregate Proposed Clients
+        const proposedClients: Record<string, string> = {};
+        rawModules.forEach((m: any) => {
+            if (m.proposedClient) {
+                // If multiple modules propose same client, ensure paths match or handle conflict?
+                // Assuming consistent prefix logic, they should match.
+                // We'll trust the last one or just overwrite.
+                proposedClients[m.proposedClient.name] = m.proposedClient.path;
+            }
+        });
+
         // Normalize to { name, content }
-        newModules = rawModules.map((m: any) => {
+        const newModules = rawModules.map((m: any) => {
             if (m.filePath) {
-                // FileOperation format
                 const name = path.basename(m.filePath, '.ts');
                 return { name, content: m.content };
             }
-            return m; // Assume already in correct format
+            return { name: m.name, content: m.content };
         });
 
         // 3. Compare and Analyze
@@ -333,7 +340,7 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
         });
 
         // Return result
-        return analysis;
+        return { diffs: analysis, proposedClients };
 
     } catch (error) {
         console.error("Analysis failed:", error);

@@ -75,12 +75,57 @@ export async function POST(req: NextRequest) {
         let operations: any[] = [];
 
         // 0. Prepend Deletions (if any)
+        // 0. Prepend Deletions (if any)
         if (deletedModules.length > 0) {
             for (const mod of deletedModules) {
                 operations.push({ type: 'delete', filePath: `src/api-services/definitions/${mod}.ts` });
                 // Also try to delete generated types/files if known, similar to sync-collection
                 operations.push({ type: 'delete', filePath: `src/api-services/types/${mod}` });
                 operations.push({ type: 'delete', filePath: `src/api-services/generated/${mod}.ts` });
+            }
+        }
+
+        // 0.5 Update Config with Proposed Clients
+        const proposedClientsStr = formData.get('proposedClients') as string;
+        const proposedClients = proposedClientsStr ? JSON.parse(proposedClientsStr) : {};
+        const targetDir = formData.get('targetDir') as string;
+
+        if (targetDir && Object.keys(proposedClients).length > 0) {
+            try {
+                // We attempt to read the local file. If this is running in a container without access, this will fail.
+                // Assuming local dev setup where api-next-server has access to targetDir.
+                const configPath = path.join(targetDir, 'src', 'api-services', 'config', 'index.ts');
+                let configContent = "";
+
+                if (fs.existsSync(configPath)) {
+                    configContent = fs.readFileSync(configPath, 'utf8');
+                } else {
+                    // Scaffold if missing
+                    configContent = `/* eslint-disable @typescript-eslint/no-explicit-any */\nimport { createClient } from "./utils";\n\nexport const BASE_CLIENT = createClient();\n`;
+                }
+
+                let modified = false;
+
+                Object.entries(proposedClients).forEach(([name, clientPath]) => {
+                    // Check if already exported
+                    // Robust check: strict export const NAME =
+                    if (!configContent.match(new RegExp(`export\\s+const\\s+${name}\\s+=`))) {
+                        // Simple append
+                        if (!configContent.endsWith('\n')) configContent += '\n';
+                        configContent += `export const ${name} = createClient("${clientPath as string}");\n`;
+                        modified = true;
+                    }
+                });
+
+                if (modified || !fs.existsSync(configPath)) {
+                    operations.push({
+                        type: 'write',
+                        filePath: 'src/api-services/config/index.ts',
+                        content: configContent
+                    });
+                }
+            } catch (e) {
+                console.warn("Failed to update config/index.ts with proposed clients", e);
             }
         }
 

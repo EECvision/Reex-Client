@@ -24,6 +24,7 @@ export const useImportActions = ({
     forceOverwriteFunctions
 }: UseImportActionsProps) => {
     const [step, setStep] = useState<ImportStep>("upload");
+    const [proposedClients, setProposedClients] = useState<Record<string, string> | undefined>(undefined);
 
     const startAnalysis = async (clientMappings?: Record<string, string>) => {
         if (!selectedFile) return;
@@ -35,13 +36,26 @@ export const useImportActions = ({
 
             if (!res.success) throw new Error(res.error || "Analysis failed");
 
-            setDiffs(data.data);
+            const responseData = data.data;
+            // Handle both legacy (array) and new (object) response formats
+            let diffs: DiffResult[];
+            let proposedClients: Record<string, string> | undefined;
+
+            if (Array.isArray(responseData)) {
+                diffs = responseData;
+            } else {
+                diffs = responseData.diffs;
+                proposedClients = responseData.proposedClients;
+            }
+
+            setDiffs(diffs);
+            setProposedClients(proposedClients);
 
             // Auto-select logic
             const newModules = new Set<string>();
             const newFunctions = new Map<string, Set<string>>();
 
-            data.data.forEach((d: DiffResult) => {
+            diffs.forEach((d: DiffResult) => {
                 newModules.add(d.module);
                 if (d.functions && d.functions.length > 0) {
                     const funcs = new Set<string>();
@@ -54,7 +68,7 @@ export const useImportActions = ({
                 }
             });
 
-            data.data.forEach((d: DiffResult) => {
+            diffs.forEach((d: DiffResult) => {
                 if (d.status === "disabled") newModules.delete(d.module);
             });
 
@@ -110,7 +124,8 @@ export const useImportActions = ({
                 deletedModules,
                 functions: functionMapObj,
                 forceOverwrite: Array.from(forceOverwriteFunctions),
-                existingModules
+                existingModules,
+                proposedClients
             };
 
             const taskId = Date.now().toString();

@@ -12,7 +12,8 @@ import {
   StandardModuleDefinition,
   StandardFunctionDefinition,
   generateStandardModuleContent,
-  resolveClientAndPath
+  resolveClientAndPath,
+  getCommonPrefix
 } from "./generator-utils";
 
 // --- Helpers ---
@@ -123,9 +124,58 @@ const mapToStandardIR = (
       generatedFunctions.add(functionName);
     });
 
+    // Auto-Client Proposal
+    const paths = functions.map(f => f.path);
+    // We need the RAW paths for prefix calculation? 
+    // Actually, `functions` has the trimmed path if `resolveClientAndPath` matched.
+    // But potential new clients rely on the UNTRIMMED path relative to server root.
+    // `resolveClientAndPath` returns `clientName` as undefined if no match.
+    // So we should check if we can propose a client for functions WITHOUT a clientName.
+
+    // Group functions by existing client or undefined
+    const unassignedFunctions = functions.filter(f => !f.clientName);
+
+    let proposedClient: { name: string; path: string } | undefined;
+
+    if (unassignedFunctions.length > 0) {
+      // We need original paths for these? 
+      // `item.path` in the loop above was used.
+      // But here we only have `StandardFunctionDefinition`. 
+      // `StandardFunctionDefinition.path` IS the final path to be used in code. 
+      // If client is undefined, it's the full path.
+      // So we can use it for prefix detection.
+
+      const unassignedPaths = unassignedFunctions.map(f => f.path);
+      const commonPrefix = getCommonPrefix(unassignedPaths);
+
+      // Heuristic: Prefix must be at least 2 chars and not just "/"
+      if (commonPrefix && commonPrefix.length > 1 && commonPrefix !== "/") {
+        // Generate Candidate Name
+        // e.g. /v1/users -> V1_USERS_CLIENT? 
+        // e.g. /v1 -> V1_CLIENT
+        const nameParts = commonPrefix.split('/').filter(Boolean);
+        // Sanitize: replace non-alphanumeric chars (like -) with _
+        const sanitizedParts = nameParts.map(p => p.replace(/[^a-zA-Z0-9]/g, '_'));
+        const candidateName = sanitizedParts.join('_').toUpperCase() + "_CLIENT";
+
+        proposedClient = { name: candidateName, path: commonPrefix };
+
+        // Apply to functions immediately (assuming it will be created)
+        unassignedFunctions.forEach(f => {
+          f.clientName = candidateName;
+          // Trim the prefix from the function path
+          if (f.path.startsWith(commonPrefix)) {
+            f.path = f.path.slice(commonPrefix.length);
+            if (!f.path.startsWith('/')) f.path = '/' + f.path;
+          }
+        });
+      }
+    }
+
     standardModules.push({
       name: moduleName,
-      functions
+      functions,
+      proposedClient
     });
   });
 

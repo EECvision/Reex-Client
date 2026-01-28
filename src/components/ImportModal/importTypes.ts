@@ -9,3 +9,7 @@ export interface DiffResult {
     status: "new" | "modified" | "deleted" | "unchanged" | "disabled";
     functions?: FunctionDiff[];
 }
+export interface AnalysisResponse {
+    diffs: DiffResult[];
+    proposedClients?: Record<string, string>;
+}

@@ -118,6 +118,7 @@ export const CloudService = {
         if (payload.functions) formData.append('functions', typeof payload.functions === 'string' ? payload.functions : JSON.stringify(payload.functions));
         if (payload.forceOverwrite) formData.append('forceOverwrite', JSON.stringify(payload.forceOverwrite));
         if (payload.existingModules) formData.append('existingModules', JSON.stringify(payload.existingModules));
+        if (payload.proposedClients) formData.append('proposedClients', JSON.stringify(payload.proposedClients));
         if (payload.fileName) formData.append('fileName', payload.fileName);
         formData.append('targetDir', targetDir);
         if (bridgeUrl) formData.append('bridgeUrl', bridgeUrl);

@@ -13,7 +13,8 @@ import {
   generateStandardModuleContent,
   normalizeApiUrl,
   extractPostmanPathParams,
-  resolveClientAndPath
+  resolveClientAndPath,
+  getCommonPrefix
 } from "./generator-utils";
 
 // --- Main Processing ---
@@ -107,9 +108,36 @@ const mapToStandardIR = (
       generatedFunctions.add(functionName);
     });
 
+    // Auto-Client Proposal
+    const unassignedFunctions = functions.filter(f => !f.clientName);
+    let proposedClient: { name: string; path: string } | undefined;
+
+    if (unassignedFunctions.length > 0) {
+      const unassignedPaths = unassignedFunctions.map(f => f.path);
+      const commonPrefix = getCommonPrefix(unassignedPaths);
+
+      if (commonPrefix && commonPrefix.length > 1 && commonPrefix !== "/") {
+        const nameParts = commonPrefix.split('/').filter(Boolean);
+        // Sanitize: replace non-alphanumeric chars (like -) with _
+        const sanitizedParts = nameParts.map(p => p.replace(/[^a-zA-Z0-9]/g, '_'));
+        const candidateName = sanitizedParts.join('_').toUpperCase() + "_CLIENT";
+
+        proposedClient = { name: candidateName, path: commonPrefix };
+
+        unassignedFunctions.forEach(f => {
+          f.clientName = candidateName;
+          if (f.path.startsWith(commonPrefix)) {
+            f.path = f.path.slice(commonPrefix.length);
+            if (!f.path.startsWith('/')) f.path = '/' + f.path;
+          }
+        });
+      }
+    }
+
     standardModules.push({
       name: moduleName,
-      functions
+      functions,
+      proposedClient
     });
   });
 
