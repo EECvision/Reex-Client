@@ -41,6 +41,22 @@ export interface SignatureConfig {
     hasQueryParams: boolean;
 }
 
+export interface StandardFunctionDefinition {
+    name: string;
+    method: 'get' | 'post' | 'put' | 'delete' | 'patch';
+    path: string; // pre-normalized path with ${param} syntax
+    description?: string;
+    pathParams: string[];
+    queryParams?: GenericParam[];
+    bodySchema?: any; // Raw JSON (Postman) or OpenAPI Schema
+    isPostman?: boolean;
+}
+
+export interface StandardModuleDefinition {
+    name: string;
+    functions: StandardFunctionDefinition[];
+}
+
 // --- String Helpers ---
 
 export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -86,6 +102,7 @@ export const normalizeApiUrl = (url: string) => {
     return url
         .replace(/^https?:\/\/[^\/]+/, "")
         .replace(/^{{[^}]+}}/, "")
+        .replace(/^\/api\/v\d+/, "")
         .replace(/\/$/, "");
 };
 
@@ -401,6 +418,228 @@ export const processAndMergeModules = (
     });
 
     return operations;
+};
+
+// --- Unified Generator Logic ---
+
+export const generateStandardModuleContent = (
+    modules: StandardModuleDefinition[],
+    specData?: any // Optional, mostly for OpenAPI ref resolution
+): ModuleContent[] => {
+    const generatedModules: ModuleContent[] = [];
+
+    modules.forEach((mod) => {
+        const moduleName = mod.name;
+        const typeDefinitions: string[] = [];
+        const functionDefinitions: string[] = [];
+        const generatedFunctions = new Set<string>();
+        const generatedTypes = new Set<string>();
+
+        mod.functions.forEach((func) => {
+            if (generatedFunctions.has(func.name)) return;
+
+            const entityRequestName = toPascalCase(func.name.replace(/^(get|post|put|delete|patch)_/, ""));
+            let hasPayloadType = false;
+            const needsPayload = ["post", "put", "patch"].includes(func.method);
+
+            // 1. Generate Types (Payload)
+            if (needsPayload && func.bodySchema) {
+                let bodyType = "";
+                const typeName = entityRequestName + "Payload";
+
+                if (func.isPostman) {
+                    bodyType = generateTypesFromPostmanBody(func.bodySchema, entityRequestName);
+                } else {
+                    bodyType = generateTypesFromOpenAPISchema(
+                        func.bodySchema,
+                        entityRequestName,
+                        "Payload",
+                        specData
+                    );
+                }
+
+                if (bodyType && !generatedTypes.has(typeName)) {
+                    typeDefinitions.push(bodyType);
+                    generatedTypes.add(typeName);
+                    hasPayloadType = true;
+                }
+            }
+
+            // 2. Generate Types (Query Params)
+            if (func.queryParams && func.queryParams.length > 0) {
+                const typeName = entityRequestName + "Params";
+                const queryType = generateInterfaceDefinition(typeName, func.queryParams);
+                if (queryType && !generatedTypes.has(typeName)) {
+                    typeDefinitions.push(queryType);
+                    generatedTypes.add(typeName);
+                }
+            }
+
+            // 3. Generate Function Signature
+            const signature = generateFunctionSignature({
+                functionName: func.name,
+                entityName: entityRequestName,
+                pathParams: func.pathParams,
+                hasPayload: hasPayloadType,
+                hasQueryParams: !!(func.queryParams && func.queryParams.length > 0)
+            });
+
+            // 4. Generate Function Body
+            // Path is already normalized to ${param} syntax
+            const body = generateAxiosCallBody(
+                func.method,
+                func.name,
+                func.path, // Pre-normalized path
+                hasPayloadType,
+                !!(func.queryParams && func.queryParams.length > 0)
+            );
+
+            generatedFunctions.add(func.name);
+            functionDefinitions.push(`${signature}\n${body}\n`);
+        });
+
+        generatedModules.push({
+            name: moduleName,
+            content: generateModuleTemplate(moduleName, typeDefinitions, functionDefinitions)
+        });
+    });
+
+    return generatedModules;
+};
+
+// --- OpenAPI Specific Helpers ---
+
+export const resolveSchema = (schema: any, spec: any): any => {
+    if (!schema) return null;
+    if (schema.$ref) {
+        const refPath = schema.$ref.replace(/^#\//, "").split("/");
+        let resolved = spec;
+        for (const segment of refPath) {
+            resolved = resolved?.[segment];
+            if (!resolved) return null;
+        }
+        return resolved;
+    }
+    return schema;
+};
+
+export const convertOpenAPITypeToTS = (schema: any, spec?: any): string => {
+    if (!schema) return "any";
+    const resolvedSchema = spec ? resolveSchema(schema, spec) : schema;
+    if (!resolvedSchema) return "any";
+
+    // 1. Handle Enums
+    if (resolvedSchema.enum) {
+        return resolvedSchema.enum.map((v: any) => typeof v === 'string' ? `'${v}'` : v).join(' | ');
+    }
+
+    // 2. Handle Union Types (oneOf/anyOf)
+    if (resolvedSchema.oneOf || resolvedSchema.anyOf) {
+        const variants = resolvedSchema.oneOf || resolvedSchema.anyOf;
+        return variants.map((v: any) => convertOpenAPITypeToTS(v, spec)).join(' | ');
+    }
+
+    if (resolvedSchema.type === "string") return "string";
+    if (resolvedSchema.type === "number" || resolvedSchema.type === "integer") return "number";
+    if (resolvedSchema.type === "boolean") return "boolean";
+    if (resolvedSchema.type === "array") {
+        const itemType = convertOpenAPITypeToTS(resolvedSchema.items, spec);
+        return `${itemType}[]`;
+    }
+    if (resolvedSchema.type === "object") {
+        if (resolvedSchema.properties) {
+            const fields = Object.entries(resolvedSchema.properties).map(
+                ([key, prop]: [string, any]) => {
+                    const required = resolvedSchema.required?.includes(key);
+                    const type = convertOpenAPITypeToTS(prop, spec);
+                    return `  ${sanitizePropertyName(key)}${required ? "" : "?"}: ${type};`;
+                }
+            );
+            return `{\n${fields.join("\n")}\n}`;
+        }
+        return "Record<string, any>";
+    }
+    return "any";
+};
+
+export const generateTypesFromOpenAPISchema = (
+    schema: any,
+    entityName: string,
+    suffix: string,
+    spec: any
+): string => {
+    if (!schema) return "";
+    const resolvedSchema = resolveSchema(schema, spec);
+    if (!resolvedSchema || !resolvedSchema.properties) return "";
+
+    const fields: string[] = [];
+    const required = resolvedSchema.required || [];
+
+    Object.entries(resolvedSchema.properties).forEach(
+        ([key, prop]: [string, any]) => {
+            const isRequired = required.includes(key);
+            const type = convertOpenAPITypeToTS(prop, spec);
+            const optional = isRequired ? "" : "?";
+            const description = prop.description ? ` // ${prop.description}` : "";
+            fields.push(`  ${sanitizePropertyName(key)}${optional}: ${type};${description}`);
+        }
+    );
+
+    if (fields.length === 0) return "";
+    return `
+interface ${entityName}${suffix} {
+${fields.join("\n")}
+}
+`;
+};
+
+// --- Postman Specific Helpers ---
+
+export const extractPostmanPathParams = (url: string): string[] => {
+    const matches = url.match(/:([a-zA-Z_][a-zA-Z0-9_]*)/g);
+    return matches ? matches.map((m) => m.slice(1)) : [];
+};
+
+export const inferTypeFromExample = (value: any): string => {
+    if (value === null || value === undefined) return "any";
+    if (typeof value === "string") return "string";
+    if (typeof value === "number") return "number";
+    if (typeof value === "boolean") return "boolean";
+    if (Array.isArray(value)) return value.length > 0 ? `${inferTypeFromExample(value[0])}[]` : "any[]";
+    if (typeof value === "object") return "Record<string, any>";
+    return "any";
+};
+
+export const generateTypesFromPostmanBody = (body: any, entityName: string): string => {
+    if (!body || !body.raw) return "";
+
+    let parsed;
+    try {
+        parsed = JSON.parse(body.raw);
+    } catch (e) {
+        try {
+            // Fallback: simple comment stripping to try and rescue invalid JSON
+            let cleanJson = body.raw.replace(/\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
+            cleanJson = cleanJson.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
+            parsed = JSON.parse(cleanJson);
+        } catch (e2) {
+            return "";
+        }
+    }
+
+    const fields: string[] = [];
+    Object.entries(parsed).forEach(([key, value]) => {
+        const type = inferTypeFromExample(value);
+        const optional = value === null || value === undefined ? "?" : "";
+        fields.push(`  ${sanitizePropertyName(key)}${optional}: ${type};`);
+    });
+
+    if (fields.length === 0) return "";
+    return `
+interface ${entityName}Payload {
+${fields.join("\n")}
+}
+`;
 };
 
 // --- CLI Runner (Shared Entry Point) ---
