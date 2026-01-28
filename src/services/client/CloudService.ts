@@ -16,11 +16,12 @@ export const CloudService = {
         }
     },
 
-    analyzeCollection: async (file: File, fileName: string | undefined, targetDir: string) => {
+    analyzeCollection: async (file: File, fileName: string | undefined, targetDir: string, clientMappings?: Record<string, string>) => {
         const formData = new FormData();
         formData.append('file', file);
         if (fileName) formData.append('fileName', fileName);
         formData.append('targetDir', targetDir);
+        if (clientMappings) formData.append('clientMappings', JSON.stringify(clientMappings));
 
         try {
             const bridgeUrl = getLocalUrl();

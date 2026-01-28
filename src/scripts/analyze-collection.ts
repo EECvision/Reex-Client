@@ -146,7 +146,7 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
 };
 
 // Exportable main function
-export const analyze = async (specContent: string, existingModules: Map<string, string> = new Map()) => {
+export const analyze = async (specContent: string, existingModules: Map<string, string> = new Map(), clientMappings?: Record<string, string>) => {
     try {
         const specData = JSON.parse(specContent);
 
@@ -160,12 +160,14 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
             rawModules = await generateOpenApi({
                 specData,
                 dryRun: true,
+                clientMappings
             }) as any[];
         } else if (specData.info && specData.item) {
             // console.log("📋 Detected Postman collection");
             rawModules = await generatePostman({
                 specData,
-                dryRun: true
+                dryRun: true,
+                clientMappings
             }) as any[];
         } else {
             throw new Error("Unknown collection format. Use OpenAPI (json) or Postman Collection v2.1");

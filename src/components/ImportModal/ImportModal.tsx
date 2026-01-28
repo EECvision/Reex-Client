@@ -26,6 +26,7 @@ interface ImportModalProps {
   taskComplete?: boolean;
   progressMessage?: string;
   resumeTaskId?: string | null;
+  clientMappings?: Record<string, string>;
 }
 
 const ImportModal: React.FC<ImportModalProps> = ({
@@ -38,7 +39,8 @@ const ImportModal: React.FC<ImportModalProps> = ({
   taskComplete = false,
   progressMessage,
   resumeTaskId,
-  onSuccess
+  onSuccess,
+  clientMappings
 }) => {
   // State for Diffs
   const [diffs, setDiffs] = useState<DiffResult[]>([]);
@@ -132,7 +134,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
     <>
       {step === "upload" && (
         <Button
-          onClick={startAnalysis}
+          onClick={() => startAnalysis(clientMappings)}
           disabled={!selectedFile || collectionType === "unknown"}
           variant="primary"
         >

@@ -25,6 +25,7 @@ export interface GeneratorOptions {
     forceOverwrite?: string[];
     returnContent?: boolean;
     existingFiles?: Map<string, string>;
+    clientMappings?: Record<string, string>;
 }
 
 export interface GenericParam {
@@ -50,6 +51,7 @@ export interface StandardFunctionDefinition {
     queryParams?: GenericParam[];
     bodySchema?: any; // Raw JSON (Postman) or OpenAPI Schema
     isPostman?: boolean;
+    clientName?: string; // e.g. "AUTH_CLIENT"
 }
 
 export interface StandardModuleDefinition {
@@ -276,7 +278,8 @@ export const generateAxiosCallBody = (
     functionName: string,
     urlVariableRaw: string,
     hasBody: boolean,
-    hasQueryParams: boolean
+    hasQueryParams: boolean,
+    clientName: string = "BASE_CLIENT"
 ): string => {
     const methodLower = method.toLowerCase();
     const lines: string[] = [];
@@ -291,10 +294,10 @@ export const generateAxiosCallBody = (
     const payloadArg = (hasBody && ['post', 'put', 'patch'].includes(methodLower)) ? ", payload" : "";
 
     if (methodLower === 'delete') {
-        lines.push(`    const res = await handleApiCall(() => BASE_CLIENT.delete(url), "${functionName}");`);
+        lines.push(`    const res = await handleApiCall(() => ${clientName}.delete(url), "${functionName}");`);
         lines.push(`    if (res.error) throw res.error;`);
     } else {
-        lines.push(`    const res = await handleApiCall(() => BASE_CLIENT.${methodLower}(url${payloadArg}), "${functionName}");`);
+        lines.push(`    const res = await handleApiCall(() => ${clientName}.${methodLower}(url${payloadArg}), "${functionName}");`);
         lines.push(`    if (res.error) throw res.error;`);
         lines.push(`    return res.data;`);
     }
@@ -312,8 +315,23 @@ export const generateModuleTemplate = (
     const utilsImports = ["handleApiCall"];
     if (usesQueryParams) utilsImports.unshift("constructQueryParams");
 
+    // Collect all used clients (hacky regex or better pass usedClients in)
+    // For now, let's just infer from function body or pass it in.
+    // Actually, looking at generateStandardModuleContent, we can do better.
+    // BUT to keep signature simple, let's just scrape the function definitions.
+    const potentialClients = new Set<string>();
+    functionDefinitions.forEach(def => {
+        const match = def.match(/handleApiCall\(\(\) => ([a-zA-Z0-9_]+)\./);
+        if (match && match[1]) potentialClients.add(match[1]);
+    });
+
+    // Default to BASE_CLIENT if nothing found (shouldn't happen with new logic)
+    if (potentialClients.size === 0) potentialClients.add("BASE_CLIENT");
+    const clientImports = Array.from(potentialClients).sort().join(", ");
+
+
     return `/* eslint-disable @typescript-eslint/no-explicit-any */
-import { BASE_CLIENT } from "../config";
+import { ${clientImports} } from "../config";
 import { ${utilsImports.join(", ")} } from "../config/utils";
 
 // --- Types ---
@@ -493,7 +511,8 @@ export const generateStandardModuleContent = (
                 func.name,
                 func.path, // Pre-normalized path
                 hasPayloadType,
-                !!(func.queryParams && func.queryParams.length > 0)
+                !!(func.queryParams && func.queryParams.length > 0),
+                func.clientName
             );
 
             generatedFunctions.add(func.name);
@@ -523,6 +542,52 @@ export const resolveSchema = (schema: any, spec: any): any => {
         return resolved;
     }
     return schema;
+};
+
+export const resolveClientAndPath = (
+    pathToCheck: string,
+    pathForSubstitution: string,
+    clientMappings?: Record<string, string>
+): { clientName?: string; path: string } => {
+    if (!clientMappings) return { clientName: undefined, path: pathForSubstitution };
+
+    let bestMatch = "";
+    let bestClient = "";
+
+    Object.entries(clientMappings).forEach(([prefix, clientName]) => {
+        // prefix is the PATH PREFIX (e.g. /api/auth)
+        // clientName is the CLIENT NAME (e.g. AUTH_CLIENT)
+
+        // Handle root slash consistency
+        const cleanPrefix = prefix === "/" ? "" : prefix.replace(/\/$/, "");
+        const checkPath = pathToCheck.startsWith("/") ? pathToCheck : "/" + pathToCheck;
+        const checkPrefix = cleanPrefix.startsWith("/") ? cleanPrefix : "/" + cleanPrefix;
+
+        if (checkPath.startsWith(checkPrefix)) {
+            if (checkPrefix.length > bestMatch.length) {
+                bestMatch = checkPrefix;
+                bestClient = clientName;
+            }
+        }
+    });
+
+    if (bestClient) {
+        // Strip prefix from the substitution path
+        const cleanPrefix = bestMatch === "/" ? "" : bestMatch.replace(/\/$/, "");
+        const normalizedSubPath = pathForSubstitution.startsWith("/") ? pathForSubstitution : "/" + pathForSubstitution;
+        const normalizedPrefix = cleanPrefix.startsWith("/") ? cleanPrefix : "/" + cleanPrefix;
+
+        if (normalizedSubPath.startsWith(normalizedPrefix)) {
+            const trimmed = normalizedSubPath.slice(normalizedPrefix.length);
+            return {
+                clientName: bestClient,
+                path: trimmed.startsWith("/") ? trimmed : "/" + trimmed
+            };
+        }
+        return { clientName: bestClient, path: pathForSubstitution };
+    }
+
+    return { clientName: undefined, path: pathForSubstitution };
 };
 
 export const convertOpenAPITypeToTS = (schema: any, spec?: any): string => {

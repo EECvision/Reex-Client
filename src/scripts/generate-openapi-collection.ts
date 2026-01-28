@@ -11,7 +11,8 @@ import {
   GenericParam,
   StandardModuleDefinition,
   StandardFunctionDefinition,
-  generateStandardModuleContent
+  generateStandardModuleContent,
+  resolveClientAndPath
 } from "./generator-utils";
 
 // --- Helpers ---
@@ -49,7 +50,8 @@ export const processOpenAPI = (spec: any) => {
 
 const mapToStandardIR = (
   processedModules: Map<string, any[]>,
-  filterModules?: string[]
+  filterModules?: string[],
+  clientMappings?: Record<string, string>
 ): StandardModuleDefinition[] => {
   const standardModules: StandardModuleDefinition[] = [];
 
@@ -103,15 +105,19 @@ const mapToStandardIR = (
       // Body Schema
       const bodySchema = operation.requestBody?.content?.["application/json"]?.schema;
 
+      // Resolve Client and Adjust Path
+      const { clientName, path: finalPath } = resolveClientAndPath(path, normalizedPath, clientMappings);
+
       functions.push({
         name: functionName,
         method: method.toLowerCase() as any,
-        path: normalizedPath, // Pre-normalized to ${param} syntax
+        path: finalPath, // Pre-normalized to ${param} syntax
         description: operation.summary || operation.description,
         pathParams,
         queryParams,
         bodySchema,
-        isPostman: false
+        isPostman: false,
+        clientName
       });
 
       generatedFunctions.add(functionName);
@@ -140,7 +146,7 @@ export const generateOpenApi = async (options: GeneratorOptions): Promise<Module
   console.log(`📋 OpenAPI Version: ${data.openapi || data.swagger}`);
 
   const processed = processOpenAPI(data);
-  const standardModules = mapToStandardIR(processed, options.filterModules);
+  const standardModules = mapToStandardIR(processed, options.filterModules, options.clientMappings);
   const modules = generateStandardModuleContent(standardModules, data); // Pass data for Ref resolution
   const operations = processAndMergeModules(modules, options);
 

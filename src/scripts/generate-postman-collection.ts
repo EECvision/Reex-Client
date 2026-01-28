@@ -12,7 +12,8 @@ import {
   StandardFunctionDefinition,
   generateStandardModuleContent,
   normalizeApiUrl,
-  extractPostmanPathParams
+  extractPostmanPathParams,
+  resolveClientAndPath
 } from "./generator-utils";
 
 // --- Main Processing ---
@@ -36,7 +37,8 @@ export const processPostmanCollection = (collectionData: any) => {
 
 const mapToStandardIR = (
   processedModules: Map<string, any[]>,
-  filterModules?: string[]
+  filterModules?: string[],
+  clientMappings?: Record<string, string>
 ): StandardModuleDefinition[] => {
   const standardModules: StandardModuleDefinition[] = [];
 
@@ -87,15 +89,19 @@ const mapToStandardIR = (
       // Body Schema (Example/Raw)
       const bodySchema = (request.body && request.body.raw) ? { raw: request.body.raw } : undefined;
 
+      // Resolve Client and Adjust Path
+      const { clientName, path: finalPath } = resolveClientAndPath(finalUrl, normalizedPath, clientMappings);
+
       functions.push({
         name: functionName,
         method: method as any,
-        path: normalizedPath, // Pre-normalized
+        path: finalPath, // Pre-normalized
         description: request.description,
         pathParams,
         queryParams: genericQueryParams,
         bodySchema,
-        isPostman: true
+        isPostman: true,
+        clientName
       });
 
       generatedFunctions.add(functionName);
@@ -121,7 +127,7 @@ export const generatePostman = async (options: GeneratorOptions): Promise<Module
   if (!data) throw new Error("No collection data provided");
 
   const processed = processPostmanCollection(data);
-  const standardModules = mapToStandardIR(processed, options.filterModules);
+  const standardModules = mapToStandardIR(processed, options.filterModules, options.clientMappings);
   const modules = generateStandardModuleContent(standardModules);
   const operations = processAndMergeModules(modules, options);
 

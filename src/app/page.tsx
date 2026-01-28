@@ -62,6 +62,18 @@ const App = () => {
     registerTaskId // Link async ops to sync tracker
   });
 
+  // Auth Token State
+  const [authToken, setAuthToken] = useState<string>("");
+
+  useEffect(() => {
+    const savedToken = localStorage.getItem("auth_token");
+    if (savedToken) setAuthToken(savedToken);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("auth_token", authToken);
+  }, [authToken]);
+
   const {
     selectedEndpoint,
     selectEndpoint,
@@ -81,7 +93,8 @@ const App = () => {
   } = useEndpointExecution({
     projectConfig,
     apiManifest,
-    showToast
+    showToast,
+    authToken // Pass token to hook
   });
 
   // Reset selected endpoint if manifest becomes empty
@@ -143,6 +156,8 @@ const App = () => {
           onGenerateClick={() => setShowGenerateModal(true)}
           baseURL={projectConfig?.baseURL}
           projectPath={projectPath}
+          authToken={authToken}
+          onAuthTokenChange={setAuthToken}
         />
 
         {showImportModal && (
@@ -161,6 +176,7 @@ const App = () => {
             taskComplete={importTaskComplete}
             progressMessage={activeTaskMessage}
             resumeTaskId={activeTaskId}
+            clientMappings={projectConfig?.clientPrefixes}
           />
         )}
 

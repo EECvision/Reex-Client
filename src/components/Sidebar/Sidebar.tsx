@@ -107,6 +107,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   >
                     <div
                       className={styles.fileInfo}
+                      title={`${endpoint.fnName}${endpoint.url ? `\n${endpoint.url}` : ""}`}
                     >
                       <span className={`${styles.methodDot} ${styles[endpoint.fnName.split('_')[0].toLowerCase()] || styles.defaultMethod}`}></span>
                       <span className={styles.fileName}>{endpoint.fnName}</span>

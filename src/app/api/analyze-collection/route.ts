@@ -7,6 +7,7 @@ export async function POST(req: NextRequest) {
         const formData = await req.formData();
         const file = formData.get('file') as File;
         const existingModulesJson = formData.get('existingModules') as string;
+        const clientMappingsJson = formData.get('clientMappings') as string;
 
         if (!file) throw new Error("No file provided");
 
@@ -14,7 +15,7 @@ export async function POST(req: NextRequest) {
         const buffer = Buffer.from(await file.arrayBuffer());
         const specContent = buffer.toString('utf-8');
 
-        // Parse existing modules (passed from Bridge)
+        // Parse existing modules
         const existingModules = new Map<string, string>();
         if (existingModulesJson) {
             try {
@@ -25,8 +26,18 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Run analysis directly (In-Memory)
-        const data = await analyze(specContent, existingModules);
+        // Parse client mappings
+        let clientMappings: Record<string, string> | undefined;
+        if (clientMappingsJson) {
+            try {
+                clientMappings = JSON.parse(clientMappingsJson);
+            } catch (e) {
+                console.warn("Failed to parse clientMappings", e);
+            }
+        }
+
+        // Run analysis
+        const data = await analyze(specContent, existingModules, clientMappings);
 
         return NextResponse.json({ success: true, data });
 

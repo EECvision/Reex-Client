@@ -7,6 +7,7 @@ interface UseEndpointExecutionProps {
     projectConfig: any;
     apiManifest: any;
     showToast: (type: "success" | "error", message: string) => void;
+    authToken?: string;
 }
 
 type ParamsState = {
@@ -15,7 +16,7 @@ type ParamsState = {
     };
 };
 
-export const useEndpointExecution = ({ projectConfig, apiManifest, showToast }: UseEndpointExecutionProps) => {
+export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, authToken }: UseEndpointExecutionProps) => {
     const [selectedEndpoint, setSelectedEndpoint] = useState<EndpointInfo | null>(null);
     const [params, setParams] = useState<ParamsState>({});
     const [result, setResult] = useState<any>(null);
@@ -101,22 +102,22 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast }: 
             }
 
             // 2. Construct URL & Method
-            const method = selectedEndpoint.method || "GET";
+            const endpointDef = apiManifest?.[selectedEndpoint.apiKey]?.[selectedEndpoint.fnName];
+            const method = endpointDef?.method || selectedEndpoint.method || "GET";
 
             let clientBase = "";
             if (projectConfig) {
-                const endpointDef = apiManifest?.[selectedEndpoint.apiKey]?.[selectedEndpoint.fnName];
                 const clientName = endpointDef?.client || "BASE_CLIENT";
                 clientBase = projectConfig.clients?.[clientName] || projectConfig.baseURL || "http://localhost:3000/api";
             }
 
-            let urlTemplate = selectedEndpoint.url || "";
+            let urlTemplate = endpointDef?.url || selectedEndpoint.url || "";
             let finalUrl = urlTemplate;
             const consumedParams = new Set<string>();
 
             const pathVars = finalUrl.match(/\${([^}]+)}/g);
             if (pathVars) {
-                pathVars.forEach(pv => {
+                pathVars.forEach((pv: string) => {
                     const varName = pv.replace("${", "").replace("}", "");
                     if (argsMap[varName] !== undefined) {
                         finalUrl = finalUrl.replace(pv, String(argsMap[varName]));
@@ -159,7 +160,8 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast }: 
             const execRes: any = await api.executeRequest({
                 url: requestUrl,
                 method,
-                data: requestData
+                data: requestData,
+                headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : undefined
             });
 
             if (!execRes.success) {

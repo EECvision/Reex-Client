@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import styles from "./Navbar.module.css";
 import { Button } from "../ui/Button/Button";
-import { ChevronDown, Download, Plus, Trash2, FileText, Loader2, Folder } from "lucide-react";
+import { ChevronDown, Download, Plus, Trash2, FileText, Loader2, Folder, Lock, X } from "lucide-react";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
 
 interface NavbarProps {
@@ -17,6 +17,8 @@ interface NavbarProps {
   onGenerateClick?: () => void;
   baseURL?: string;
   projectPath?: string;
+  authToken?: string;
+  onAuthTokenChange?: (token: string) => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -29,11 +31,15 @@ const Navbar: React.FC<NavbarProps> = ({
   onGenerateClick,
   baseURL,
   projectPath,
+  authToken,
+  onAuthTokenChange
 }) => {
   const [url, setUrl] = React.useState(() => localStorage.getItem("docs_url") || "");
   const [isFetchOpen, setIsFetchOpen] = React.useState(false);
+  const [isAuthOpen, setIsAuthOpen] = React.useState(false);
   const [error, setError] = React.useState("");
   const fetchContainerRef = useRef<HTMLDivElement>(null);
+  const authContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     localStorage.setItem("docs_url", url);
@@ -43,6 +49,9 @@ const Navbar: React.FC<NavbarProps> = ({
     const handleClickOutside = (event: MouseEvent) => {
       if (fetchContainerRef.current && !fetchContainerRef.current.contains(event.target as Node)) {
         setIsFetchOpen(false);
+      }
+      if (authContainerRef.current && !authContainerRef.current.contains(event.target as Node)) {
+        setIsAuthOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -80,7 +89,6 @@ const Navbar: React.FC<NavbarProps> = ({
     const parts = path.split(/[\\/]/);
     if (parts.length > 2) {
       return `${parts[parts.length - 1]}`;
-      // return `.../${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
     }
     return path;
   };
@@ -103,12 +111,59 @@ const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       <div className={styles.rightSection}>
+        {/* Auth Action */}
+        {onAuthTokenChange && (
+          <div className={styles.actionGroup} ref={authContainerRef}>
+            <Button
+              variant="ghost"
+              onClick={() => setIsAuthOpen(!isAuthOpen)}
+              leftIcon={<Lock size={16} color={authToken ? "#10b981" : undefined} />}
+              title={authToken ? "Token Set" : "Set Auth Token"}
+            >
+              Auth
+            </Button>
+
+            {isAuthOpen && (
+              <div className={styles.fetchPopover} style={{ right: 0, width: '300px' }}>
+                <div className={styles.popoverHeader}>AUTHORIZATION (BEARER)</div>
+                <div className={styles.popoverInputWrapper} style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    placeholder="Enter Bearer token..."
+                    className={styles.popoverInput}
+                    value={authToken || ""}
+                    onChange={(e) => onAuthTokenChange(e.target.value)}
+                    autoFocus
+                    style={{ paddingRight: '24px' }}
+                  />
+                  {authToken && (
+                    <X
+                      size={14}
+                      color="#9ca3af"
+                      style={{
+                        position: 'absolute',
+                        right: '8px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => onAuthTokenChange("")}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className={styles.separator}></div>
+
         {/* Fetch Action */}
         <div className={styles.actionGroup} ref={fetchContainerRef}>
           <Button
             variant="ghost"
             onClick={() => setIsFetchOpen(!isFetchOpen)}
-            leftIcon={isFetching ? <Loader2 size={16} className={styles.spin} /> : <FileText size={16} />}
+            leftIcon={isFetching ? <Loader2 size={16} className={styles.spin} /> : <FileText size={16} color={url ? "#10b981" : undefined} />}
             rightIcon={<ChevronDown size={16} />}
           >
             Fetch
@@ -142,8 +197,6 @@ const Navbar: React.FC<NavbarProps> = ({
             </div>
           )}
         </div>
-
-        <div className={styles.separator}></div>
 
         <Button variant="ghost" onClick={onImportClick} leftIcon={<Download size={16} />}>
           Import

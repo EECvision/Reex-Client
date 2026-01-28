@@ -25,12 +25,12 @@ export const useImportActions = ({
 }: UseImportActionsProps) => {
     const [step, setStep] = useState<ImportStep>("upload");
 
-    const startAnalysis = async () => {
+    const startAnalysis = async (clientMappings?: Record<string, string>) => {
         if (!selectedFile) return;
         setStep("analyzing");
 
         try {
-            const res = await api.analyzeCollection(selectedFile, selectedFile.name, targetDir);
+            const res = await api.analyzeCollection(selectedFile, selectedFile.name, targetDir, clientMappings);
             const data = res;
 
             if (!res.success) throw new Error(res.error || "Analysis failed");

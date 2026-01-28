@@ -36,6 +36,7 @@
   user-select: none;
   cursor: default;
   border: 1px solid transparent;
+  flex: 0 0 auto;
 }
 
 .projectContainer:hover {
@@ -169,4 +170,12 @@
 
 .spin {
   animation: spin 1s linear infinite;
+}
+
+.authActive {
+  color: #10b981;
+}
+
+.authActive:hover {
+  background-color: #ecfdf5;
 }
