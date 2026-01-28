@@ -339,28 +339,4 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
     }
 };
 
-// Legacy CLI Entry (Keep for backward compat or local testing if needed)
-// Uses API_DEFINITIONS_DIR from process if available
-if (require.main === module) {
-    const args = process.argv.slice(2);
-    if (args.length === 0) {
-        console.error("Usage: ts-node analyze-collection.ts path/to/spec.json");
-        process.exit(1);
-    }
 
-    // Simulate reading existing files from disk for CLI usage
-    const apiDir = API_DEFINITIONS_DIR;
-    const existingModules = new Map<string, string>();
-    if (fs.existsSync(apiDir)) {
-        fs.readdirSync(apiDir).filter((f) => f.endsWith(".ts")).forEach((file) => {
-            const name = file.replace(".ts", "");
-            const content = fs.readFileSync(path.join(apiDir, file), "utf8");
-            existingModules.set(name, content);
-        });
-    }
-
-    // Read spec file
-    const specContent = fs.readFileSync(args[0], 'utf-8');
-
-    analyze(specContent, existingModules).then(res => console.log(JSON.stringify(res, null, 2)));
-}

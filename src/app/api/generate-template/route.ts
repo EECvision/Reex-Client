@@ -67,6 +67,7 @@ export const ${moduleName}Api = {
       () => BASE_CLIENT.get(url),
       "get_list${TypeName}s"
     );
+    if (res.error) throw res.error;
     return res.data;
   },
 
@@ -76,6 +77,7 @@ export const ${moduleName}Api = {
       () => BASE_CLIENT.get(url),
       "get_${moduleName.slice(0, -1)}Detail"
     );
+    if (res.error) throw res.error;
     return res.data;
   },
 
@@ -87,6 +89,7 @@ export const ${moduleName}Api = {
       () => BASE_CLIENT.post(url, payload),
       "post_create${TypeName}"
     );
+    if (res.error) throw res.error;
     return res.data;
   },
 
@@ -99,12 +102,14 @@ export const ${moduleName}Api = {
       () => BASE_CLIENT.put(url, payload),
       "put_update${TypeName}"
     );
+    if (res.error) throw res.error;
     return res.data;
   },
 
   delete_remove${TypeName}: async ({ id } : { id: string }): Promise<any> => {
     const url = \`/${moduleName}/\${id}\`;
-    await handleApiCall(() => BASE_CLIENT.delete(url), "delete_remove${TypeName}");
+    const res = await handleApiCall(() => BASE_CLIENT.delete(url), "delete_remove${TypeName}");
+    if (res.error) throw res.error;
   },
 };
 `;

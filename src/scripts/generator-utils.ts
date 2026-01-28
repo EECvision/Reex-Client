@@ -291,9 +291,11 @@ export const generateAxiosCallBody = (
     const payloadArg = (hasBody && ['post', 'put', 'patch'].includes(methodLower)) ? ", payload" : "";
 
     if (methodLower === 'delete') {
-        lines.push(`    await handleApiCall(() => BASE_CLIENT.delete(url), "${functionName}");`);
+        lines.push(`    const res = await handleApiCall(() => BASE_CLIENT.delete(url), "${functionName}");`);
+        lines.push(`    if (res.error) throw res.error;`);
     } else {
         lines.push(`    const res = await handleApiCall(() => BASE_CLIENT.${methodLower}(url${payloadArg}), "${functionName}");`);
+        lines.push(`    if (res.error) throw res.error;`);
         lines.push(`    return res.data;`);
     }
 
