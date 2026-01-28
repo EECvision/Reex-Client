@@ -63,8 +63,20 @@ export const sanitizeModuleName = (name: string) => {
     return toCamelCase(name).replace(/[^a-zA-Z0-9]/g, "");
 };
 
+const RESERVED_KEYWORDS = new Set([
+    "abstract", "await", "boolean", "break", "byte", "case", "catch", "char",
+    "class", "const", "continue", "debugger", "default", "delete", "do",
+    "double", "else", "enum", "export", "extends", "false", "final", "finally",
+    "float", "for", "function", "goto", "if", "implements", "import", "in",
+    "instanceof", "int", "interface", "let", "long", "native", "new", "null",
+    "package", "private", "protected", "public", "return", "short", "static",
+    "super", "switch", "synchronized", "this", "throw", "throws", "transient",
+    "true", "try", "typeof", "var", "void", "volatile", "while", "with", "yield"
+]);
+
 export const sanitizePropertyName = (name: string) => {
-    if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(name)) {
+    // Check if valid identifier AND not a reserved keyword
+    if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(name) && !RESERVED_KEYWORDS.has(name)) {
         return name;
     }
     return `'${name}'`;
@@ -365,6 +377,13 @@ export const processAndMergeModules = (
                 if (!remainingCode.includes(iface.getName())) iface.remove();
             });
         }
+
+        // Format the file using ts-morph's internal formatter
+        sourceFile.formatText({
+            indentSize: 2,
+            convertTabsToSpaces: true,
+            ensureNewLineAtEndOfFile: true,
+        });
 
         const finalContent = sourceFile.getFullText();
 

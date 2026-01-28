@@ -45,6 +45,17 @@ const convertOpenAPITypeToTS = (schema: any, spec?: any): string => {
   const resolvedSchema = spec ? resolveSchema(schema, spec) : schema;
   if (!resolvedSchema) return "any";
 
+  // 1. Handle Enums
+  if (resolvedSchema.enum) {
+    return resolvedSchema.enum.map((v: any) => typeof v === 'string' ? `'${v}'` : v).join(' | ');
+  }
+
+  // 2. Handle Union Types (oneOf/anyOf)
+  if (resolvedSchema.oneOf || resolvedSchema.anyOf) {
+    const variants = resolvedSchema.oneOf || resolvedSchema.anyOf;
+    return variants.map((v: any) => convertOpenAPITypeToTS(v, spec)).join(' | ');
+  }
+
   if (resolvedSchema.type === "string") return "string";
   if (resolvedSchema.type === "number" || resolvedSchema.type === "integer") return "number";
   if (resolvedSchema.type === "boolean") return "boolean";
