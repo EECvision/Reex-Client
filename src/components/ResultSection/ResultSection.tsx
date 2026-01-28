@@ -2,6 +2,7 @@
 import React from "react";
 import styles from "./ResultSection.module.css";
 import { Button } from "../ui/Button/Button";
+import { XIcon } from "lucide-react";
 
 interface ResultSectionProps {
   error: string | null;
@@ -27,7 +28,7 @@ const ResultSection: React.FC<ResultSectionProps> = ({
       <h2 className={styles.resultsTitle}>Results</h2>
       {error && (
         <div className={styles.errorBox}>
-          <strong className={styles.errorTitle}>✗ Error</strong>
+          <strong className={styles.errorTitle}><XIcon size={20} /> Error</strong>
           <pre className={styles.errorText}>{error}</pre>
         </div>
       )}
