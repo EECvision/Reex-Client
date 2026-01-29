@@ -103,6 +103,30 @@ export const sanitizeModuleName = (name: string) => {
     return toCamelCase(name).replace(/[^a-zA-Z0-9]/g, "");
 };
 
+export const calculateFunctionName = (method: string, operationId: string): string => {
+    if (!operationId) return "";
+
+    // Aggressively clean operationId to avoid "get_getSomething"
+    let cleaned = operationId.replace(/^(get|post|put|delete|patch|options|head)[_\s-]*/i, "");
+
+    // Also remove the specific method if not covered
+    const prefix = method.toLowerCase();
+    cleaned = cleaned.replace(new RegExp(`^${prefix}[_\\s-]*`, 'i'), "");
+
+    let suffix = toCamelCase(cleaned);
+
+    // Final check if suffix still starts with the prefix
+    if (suffix.toLowerCase().startsWith(prefix)) {
+        const unprefixed = suffix.slice(prefix.length);
+        if (unprefixed && /[a-zA-Z0-9]/.test(unprefixed)) {
+            suffix = toCamelCase(unprefixed);
+        }
+    }
+
+    if (!suffix) suffix = "root";
+    return `${prefix}_${suffix}`;
+};
+
 const RESERVED_KEYWORDS = new Set([
     "abstract", "await", "boolean", "break", "byte", "case", "catch", "char",
     "class", "const", "continue", "debugger", "default", "delete", "do",

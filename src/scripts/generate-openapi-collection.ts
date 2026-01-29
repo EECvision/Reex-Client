@@ -14,7 +14,8 @@ import {
   generateStandardModuleContent,
   resolveClientAndPath,
   getCommonPrefix,
-  proposeClientForFunctions
+  proposeClientForFunctions,
+  calculateFunctionName
 } from "./generator-utils";
 
 // --- Helpers ---
@@ -69,24 +70,9 @@ const mapToStandardIR = (
       // Determine Function Name
       const prefix = method.toLowerCase();
       let functionName = "";
-      if (operationId) {
-        // Aggressively clean operationId
-        // Remove 'get_', 'post_', etc. from the start, case-insensitive
-        const cleaned = operationId.replace(new RegExp(`^(${prefix}|${method})[_\\s-]*`, 'i'), "");
-        const suffix = toCamelCase(cleaned);
 
-        // Prevent "get_getUsers" or "get_gETUsers"
-        if (suffix.toLowerCase().startsWith(prefix)) {
-          // Suffix still starts with method (e.g. gETUsers) - likely quirky casing
-          const unprefixed = suffix.slice(prefix.length);
-          // Ensure we don't leave an empty string if it was JUST "get"
-          functionName = `${prefix}_${toCamelCase(unprefixed || cleaned)}`;
-          // If unprefixed is empty, usage of 'cleaned' acts as fallback, but effectively we want 'get_root' or similar if empty.
-          if (!unprefixed) functionName = `${prefix}_root`;
-          else functionName = `${prefix}_${toCamelCase(unprefixed)}`;
-        } else {
-          functionName = `${prefix}_${suffix}`;
-        }
+      if (operationId) {
+        functionName = calculateFunctionName(method, operationId);
       } else {
         const cleanPath = path
           .replace(/\{[^}]+\}/g, "")

@@ -15,7 +15,8 @@ import {
   extractPostmanPathParams,
   resolveClientAndPath,
   getCommonPrefix,
-  proposeClientForFunctions
+  proposeClientForFunctions,
+  calculateFunctionName
 } from "./generator-utils";
 
 // --- Main Processing ---
@@ -56,7 +57,8 @@ const mapToStandardIR = (
 
       const requestName = item.name;
       const method = request.method.toLowerCase();
-      const functionName = `${method}_${toCamelCase(requestName.replace(/\s+/g, "_"))}`;
+      // Aggressively clean requestName to avoid "get_getSomething"
+      const functionName = calculateFunctionName(method, requestName);
 
       if (generatedFunctions.has(functionName)) return;
 
