@@ -169,7 +169,8 @@ const App = () => {
               resetImportTask();
             }}
             initialFile={importFile}
-            onSuccess={() => { }}
+            onSuccess={(msg) => showToast("success", msg || "Collection imported successfully")}
+            onError={(msg) => showToast("error", msg)}
             isEmptyWorkspace={!hasEndpoints}
             onUpdateStarted={registerTaskId}
             targetDir={projectPath}

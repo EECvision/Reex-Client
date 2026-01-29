@@ -18,8 +18,29 @@ export const CloudService = {
 
     analyzeCollection: async (file: File, fileName: string | undefined, targetDir: string, clientMappings?: Record<string, string>) => {
         const formData = new FormData();
-        formData.append('file', file);
-        if (fileName) formData.append('fileName', fileName);
+
+        try {
+            // Compress the file to bypass 4.5MB Vercel Body Limit
+            // JSON compresses very well (90%+ reduction)
+            if (typeof CompressionStream !== 'undefined') {
+                const stream = file.stream().pipeThrough(new CompressionStream('gzip'));
+                const compressedBlob = await new Response(stream).blob();
+
+                // Append with .gz extension so server knows to decompress
+                const safeName = fileName || file.name;
+                const finalName = safeName.endsWith('.gz') ? safeName : `${safeName}.gz`;
+
+                formData.append('file', compressedBlob, finalName);
+            } else {
+                // Fallback for very old browsers (unlikely in this stack)
+                formData.append('file', file);
+            }
+        } catch (e) {
+            console.warn("Compression failed, falling back to raw upload", e);
+            formData.append('file', file);
+        }
+
+        if (fileName && !formData.has('file')) formData.append('fileName', fileName); // Only if not already handled
         formData.append('targetDir', targetDir);
         if (clientMappings) formData.append('clientMappings', JSON.stringify(clientMappings));
 

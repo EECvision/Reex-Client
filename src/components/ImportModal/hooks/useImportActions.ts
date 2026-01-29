@@ -11,6 +11,7 @@ interface UseImportActionsProps {
     setSelectedModules: (modules: Set<string>) => void;
     setSelectedFunctions: (funcs: Map<string, Set<string>>) => void;
     forceOverwriteFunctions: Set<string>;
+    onError: (message: string) => void;
 }
 
 export const useImportActions = ({
@@ -18,6 +19,7 @@ export const useImportActions = ({
     targetDir,
     onUpdateStarted,
     onSuccess,
+    onError,
     setDiffs,
     setSelectedModules,
     setSelectedFunctions,
@@ -79,10 +81,11 @@ export const useImportActions = ({
             setStep("review");
         } catch (err) {
             console.error(err);
-            alert(`Analysis failed: ${(err as Error).message}`);
+            onError(`Analysis failed: ${(err as Error).message}`);
             setStep("upload");
         }
     };
+
 
     const handleUpdate = async (diffs: DiffResult[], selectedModules: Set<string>, selectedFunctions: Map<string, Set<string>>) => {
         if (!selectedFile) return;
@@ -196,11 +199,11 @@ export const useImportActions = ({
             }
 
             setStep("success");
-            if (onSuccess) onSuccess("Collection updated successfully!");
+            // if (onSuccess) onSuccess("Collection updated successfully!");
 
         } catch (err) {
             console.error(err);
-            alert(`Sync failed: ${(err as Error).message}`);
+            onError(`Sync failed: ${(err as Error).message}`);
             setStep("review");
         }
     };

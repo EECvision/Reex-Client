@@ -27,7 +27,9 @@ interface ImportModalProps {
   progressMessage?: string;
   resumeTaskId?: string | null;
   clientMappings?: Record<string, string>;
+  onError: (message: string) => void;
 }
+
 
 const ImportModal: React.FC<ImportModalProps> = ({
   isOpen,
@@ -40,7 +42,9 @@ const ImportModal: React.FC<ImportModalProps> = ({
   progressMessage,
   resumeTaskId,
   onSuccess,
-  clientMappings
+
+  clientMappings,
+  onError
 }) => {
   // State for Diffs
   const [diffs, setDiffs] = useState<DiffResult[]>([]);
@@ -59,7 +63,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
     handleChange,
     resetFile,
     setFile // Exposed process logic
-  } = useFileHandler();
+  } = useFileHandler(undefined, onError);
 
   const {
     selectedModules,
@@ -87,6 +91,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
     targetDir,
     onUpdateStarted,
     onSuccess,
+    onError,
     setDiffs,
     setSelectedModules,
     setSelectedFunctions,

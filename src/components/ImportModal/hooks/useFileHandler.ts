@@ -1,11 +1,13 @@
 import { useState, useRef, DragEvent } from 'react';
 import { CollectionType } from '../importTypes';
 
-export const useFileHandler = (onFileSelected?: (file: File) => void) => {
+export const useFileHandler = (onFileSelected?: (file: File) => void, onError?: (msg: string) => void) => {
     const [dragActive, setDragActive] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [collectionType, setCollectionType] = useState<CollectionType>("unknown");
     const inputRef = useRef<HTMLInputElement>(null);
+
+
 
     const detectCollectionType = async (file: File): Promise<CollectionType> => {
         return new Promise((resolve) => {
@@ -49,7 +51,7 @@ export const useFileHandler = (onFileSelected?: (file: File) => void) => {
             if (file.type === "application/json") {
                 await processFile(file);
             } else {
-                alert("Please upload a JSON file");
+                if (onError) onError("Please upload a JSON file");
             }
         }
     };

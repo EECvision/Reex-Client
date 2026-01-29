@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { unzipSync, gunzipSync } from "zlib";
 // Direct import of the refactored script
 import { analyze } from "@/scripts/analyze-collection";
 
@@ -13,7 +14,21 @@ export async function POST(req: NextRequest) {
 
         // Read file content as string
         const buffer = Buffer.from(await file.arrayBuffer());
-        const specContent = buffer.toString('utf-8');
+
+        // Decompress if Gzipped (Magic Number: 1f 8b)
+        // or if filename ends with .gz
+        const isGzip = file.name.endsWith('.gz') || (buffer[0] === 0x1f && buffer[1] === 0x8b);
+
+        let contentBuffer = buffer;
+        if (isGzip) {
+            try {
+                contentBuffer = gunzipSync(buffer);
+            } catch (e) {
+                console.warn("Decompression failed, trying raw...", e);
+            }
+        }
+
+        const specContent = contentBuffer.toString('utf-8');
 
         // Parse existing modules
         const existingModules = new Map<string, string>();
