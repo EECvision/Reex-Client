@@ -40,6 +40,14 @@ const Navbar: React.FC<NavbarProps> = ({
   const [error, setError] = React.useState("");
   const fetchContainerRef = useRef<HTMLDivElement>(null);
   const authContainerRef = useRef<HTMLDivElement>(null);
+  const [draftToken, setDraftToken] = React.useState(authToken || "");
+
+  // Sync draft token when dropdown opens or prop changes
+  useEffect(() => {
+    if (isAuthOpen) {
+      setDraftToken(authToken || "");
+    }
+  }, [isAuthOpen, authToken]);
 
   useEffect(() => {
     localStorage.setItem("docs_url", url);
@@ -118,39 +126,44 @@ const Navbar: React.FC<NavbarProps> = ({
               variant="ghost"
               onClick={() => setIsAuthOpen(!isAuthOpen)}
               leftIcon={<Lock size={16} color={authToken ? "#10b981" : undefined} />}
-              title={authToken ? "Token Set" : "Set Auth Token"}
+              title={authToken ? "" : "Set Auth Token"}
             >
               Auth
             </Button>
 
             {isAuthOpen && (
-              <div className={styles.fetchPopover} style={{ right: 0, width: '300px' }}>
+              <div className={styles.fetchPopover} style={{ width: '300px' }}>
                 <div className={styles.popoverHeader}>AUTHORIZATION (BEARER)</div>
                 <div className={styles.popoverInputWrapper} style={{ position: 'relative' }}>
                   <input
                     type="text"
-                    placeholder="Enter Bearer token..."
+                    placeholder="Enter token from auth/signin"
                     className={styles.popoverInput}
-                    value={authToken || ""}
-                    onChange={(e) => onAuthTokenChange(e.target.value)}
+                    value={draftToken}
+                    onChange={(e) => setDraftToken(e.target.value)}
                     autoFocus
-                    style={{ paddingRight: '24px' }}
                   />
-                  {authToken && (
-                    <X
-                      size={14}
-                      color="#9ca3af"
-                      style={{
-                        position: 'absolute',
-                        right: '8px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => onAuthTokenChange("")}
-                    />
-                  )}
                 </div>
+                <Button
+                  onClick={() => {
+                    if (authToken && draftToken === authToken) {
+                      // Clear / Logout matches current state
+                      onAuthTokenChange("");
+                      setDraftToken("");
+                      setIsAuthOpen(false);
+                    } else {
+                      // Authorize (Save)
+                      if (!draftToken.trim()) return; // Double check
+                      onAuthTokenChange(draftToken);
+                      setIsAuthOpen(false);
+                    }
+                  }}
+                  variant={authToken && draftToken === authToken ? "danger" : "primary"}
+                  disabled={!authToken && !draftToken.trim() || (!!authToken && draftToken !== authToken && !draftToken.trim())}
+                  style={{ marginTop: '0px', width: '100%' }}
+                >
+                  {authToken && draftToken === authToken ? "Clear" : "Authorize"}
+                </Button>
               </div>
             )}
           </div>

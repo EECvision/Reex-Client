@@ -126,7 +126,6 @@ export const normalizeApiUrl = (url: string) => {
     return url
         .replace(/^https?:\/\/[^\/]+/, "")
         .replace(/^{{[^}]+}}/, "")
-        .replace(/^\/api\/v\d+/, "")
         .replace(/\/$/, "");
 };
 
@@ -149,15 +148,25 @@ export const extractBaseUrl = (data: any): string | undefined => {
     if (data.info && data.item) {
         // Try to find in variables
         if (data.variable && Array.isArray(data.variable)) {
+            const BASE_URL_KEYS = new Set([
+                "baseurl",
+                "base_url",
+                "url",
+                "apiurl",
+                "api_url",
+                "endpoint",
+                "apiendpoint",
+                "api_endpoint",
+                "host",
+            ]);
+
             const baseUrlVar = data.variable.find((v: any) =>
-                !v.disabled && (
-                    v.key === 'baseUrl' ||
-                    v.key === 'base_url' ||
-                    v.key === 'BASE_URL' ||
-                    v.key === 'url'
-                )
+                !v.disabled &&
+                typeof v.key === "string" &&
+                BASE_URL_KEYS.has(v.key.toLowerCase())
             );
-            if (baseUrlVar && baseUrlVar.value) {
+
+            if (baseUrlVar?.value) {
                 return baseUrlVar.value;
             }
         }

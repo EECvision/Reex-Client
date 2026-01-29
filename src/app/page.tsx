@@ -71,7 +71,11 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("auth_token", authToken);
+    if (authToken) {
+      localStorage.setItem("auth_token", authToken);
+    } else {
+      localStorage.removeItem("auth_token");
+    }
   }, [authToken]);
 
   const {
