@@ -119,6 +119,7 @@ export const CloudService = {
         if (payload.forceOverwrite) formData.append('forceOverwrite', JSON.stringify(payload.forceOverwrite));
         if (payload.existingModules) formData.append('existingModules', JSON.stringify(payload.existingModules));
         if (payload.proposedClients) formData.append('proposedClients', JSON.stringify(payload.proposedClients));
+        if (payload.baseUrl) formData.append('baseUrl', payload.baseUrl);
         if (payload.fileName) formData.append('fileName', payload.fileName);
         formData.append('targetDir', targetDir);
         if (bridgeUrl) formData.append('bridgeUrl', bridgeUrl);
@@ -129,7 +130,8 @@ export const CloudService = {
             method: 'POST',
             body: formData,
         });
-        return handleOperationResponse(res);
+        // We handle operations manually in the UI to ensure correct order (Config -> Files -> Sync)
+        return res.json();
     },
 
     saveTypes: async (data: any) => {

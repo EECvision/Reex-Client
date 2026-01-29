@@ -6,6 +6,7 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const { url } = body;
 
+
         const response = await axios.get(url, {
             timeout: 30000,
             headers: {
@@ -14,7 +15,21 @@ export async function POST(req: NextRequest) {
             }
         });
 
-        return NextResponse.json(response.data);
+        const data = response.data;
+
+        // If OpenAPI spec has no servers, inject one from the source URL
+        if ((data.openapi || data.swagger) && !data.servers && !data.host) {
+            try {
+                const sourceUrl = new URL(url);
+                const baseUrl = `${sourceUrl.protocol}//${sourceUrl.host}`;
+                console.log(`[FETCH-URL] Injecting servers array with baseURL: ${baseUrl}`);
+                data.servers = [{ url: baseUrl }];
+            } catch (e) {
+                console.warn(`[FETCH-URL] Could not parse source URL for servers injection:`, e);
+            }
+        }
+
+        return NextResponse.json(data);
 
     } catch (error: any) {
         console.error(`[SERVER] Fetch error:`, error.message);

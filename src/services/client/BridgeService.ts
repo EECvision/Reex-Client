@@ -12,6 +12,25 @@ export const BridgeService = {
         return res.json();
     },
 
+    updateProjectConfig: async (config: { baseUrl?: string; clients?: Record<string, string> }) => {
+        const url = getLocalUrl();
+        const res = await fetch(`${url}/api/project/config/update`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(config)
+        });
+        return res.json();
+    },
+
+    syncProjectClients: async () => {
+        const url = getLocalUrl();
+        const res = await fetch(`${url}/api/project/config/sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        return res.json();
+    },
+
     fetchBridgeStatus: async () => {
         try {
             const res = await fetch(`${getLocalUrl()}/api/health`);

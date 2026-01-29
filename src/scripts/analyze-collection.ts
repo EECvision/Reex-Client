@@ -7,6 +7,7 @@ import { Project, SyntaxKind, PropertyAssignment } from "ts-morph";
 const { API_DEFINITIONS_DIR } = require("../paths");
 import { generateOpenApi } from "./generate-openapi-collection";
 import { generatePostman } from "./generate-postman-collection";
+import { extractBaseUrl } from "./generator-utils";
 
 interface FunctionDiff {
     name: string;
@@ -149,6 +150,8 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
 export const analyze = async (specContent: string, existingModules: Map<string, string> = new Map(), clientMappings?: Record<string, string>) => {
     try {
         const specData = JSON.parse(specContent);
+        const baseUrl = extractBaseUrl(specData);
+        console.log("[ANALYZE] Extracted baseURL from spec:", baseUrl);
 
         // 1. Generate new code in-memory (Dry Run)
         // rawModules now contains proposedClient info
@@ -174,9 +177,6 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
         const proposedClients: Record<string, string> = {};
         rawModules.forEach((m: any) => {
             if (m.proposedClient) {
-                // If multiple modules propose same client, ensure paths match or handle conflict?
-                // Assuming consistent prefix logic, they should match.
-                // We'll trust the last one or just overwrite.
                 proposedClients[m.proposedClient.name] = m.proposedClient.path;
             }
         });
@@ -340,7 +340,7 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
         });
 
         // Return result
-        return { diffs: analysis, proposedClients };
+        return { diffs: analysis, proposedClients, baseUrl };
 
     } catch (error) {
         console.error("Analysis failed:", error);

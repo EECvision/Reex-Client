@@ -25,6 +25,7 @@ export const useImportActions = ({
 }: UseImportActionsProps) => {
     const [step, setStep] = useState<ImportStep>("upload");
     const [proposedClients, setProposedClients] = useState<Record<string, string> | undefined>(undefined);
+    const [baseUrl, setBaseUrl] = useState<string | undefined>(undefined);
 
     const startAnalysis = async (clientMappings?: Record<string, string>) => {
         if (!selectedFile) return;
@@ -46,6 +47,7 @@ export const useImportActions = ({
             } else {
                 diffs = responseData.diffs;
                 proposedClients = responseData.proposedClients;
+                setBaseUrl(responseData.baseUrl);
             }
 
             setDiffs(diffs);
@@ -125,7 +127,8 @@ export const useImportActions = ({
                 functions: functionMapObj,
                 forceOverwrite: Array.from(forceOverwriteFunctions),
                 existingModules,
-                proposedClients
+                proposedClients,
+                baseUrl
             };
 
             const taskId = Date.now().toString();
@@ -137,6 +140,59 @@ export const useImportActions = ({
 
             if (!res.success) {
                 throw new Error(res.error || "Sync failed");
+            }
+
+            // 1. Update Config (Bridge-Driven)
+            const { proposedBaseUrl, proposedClients: responseProposedClients, operations } = res.data || res;
+
+            // Prefer response proposed clients if available, else fall back to state
+            const finalClients = responseProposedClients || proposedClients;
+            const finalBaseUrl = proposedBaseUrl || baseUrl;
+
+            if (finalBaseUrl || (finalClients && Object.keys(finalClients).length > 0)) {
+                try {
+                    await api.updateProjectConfig({
+                        baseUrl: finalBaseUrl,
+                        clients: finalClients
+                    });
+                } catch (e) {
+                    console.error("Config update failed:", e);
+                    // Non-fatal, proceed to write definitions if possible
+                }
+            }
+
+            // 2. Execute File Operations (Definitions)
+            // Manual handling to ensure definitions are written AFTER config update
+            const bridgeUrl = api.getBridgeUrl();
+
+            if (operations && Array.isArray(operations)) {
+                for (const op of operations) {
+                    try {
+                        if (op.type === 'write') {
+                            await fetch(`${bridgeUrl}/api/fs/write`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ filePath: op.filePath, content: op.content })
+                            });
+                        } else if (op.type === 'delete') {
+                            await fetch(`${bridgeUrl}/api/fs/delete`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ filePath: op.filePath })
+                            });
+                        }
+                    } catch (e) {
+                        console.error(`Operation failed: ${op.type} ${op.filePath}`, e);
+                        // Continue? Yes, partial success is better than full stop
+                    }
+                }
+            }
+
+            // 3. Sync/Prune Clients (Post-Update)
+            try {
+                await api.syncProjectClients();
+            } catch (e) {
+                console.warn("Client sync/prune failed:", e);
             }
 
             setStep("success");

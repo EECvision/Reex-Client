@@ -85,49 +85,13 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // 0.5 Update Config with Proposed Clients
+        // 0.5 Helper: Prepare Proposed Clients (Do NOT write here, just return)
         const proposedClientsStr = formData.get('proposedClients') as string;
         const proposedClients = proposedClientsStr ? JSON.parse(proposedClientsStr) : {};
-        const targetDir = formData.get('targetDir') as string;
 
-        if (targetDir && Object.keys(proposedClients).length > 0) {
-            try {
-                // We attempt to read the local file. If this is running in a container without access, this will fail.
-                // Assuming local dev setup where api-next-server has access to targetDir.
-                const configPath = path.join(targetDir, 'src', 'api-services', 'config', 'index.ts');
-                let configContent = "";
-
-                if (fs.existsSync(configPath)) {
-                    configContent = fs.readFileSync(configPath, 'utf8');
-                } else {
-                    // Scaffold if missing
-                    configContent = `/* eslint-disable @typescript-eslint/no-explicit-any */\nimport { createClient } from "./utils";\n\nexport const BASE_CLIENT = createClient();\n`;
-                }
-
-                let modified = false;
-
-                Object.entries(proposedClients).forEach(([name, clientPath]) => {
-                    // Check if already exported
-                    // Robust check: strict export const NAME =
-                    if (!configContent.match(new RegExp(`export\\s+const\\s+${name}\\s+=`))) {
-                        // Simple append
-                        if (!configContent.endsWith('\n')) configContent += '\n';
-                        configContent += `export const ${name} = createClient("${clientPath as string}");\n`;
-                        modified = true;
-                    }
-                });
-
-                if (modified || !fs.existsSync(configPath)) {
-                    operations.push({
-                        type: 'write',
-                        filePath: 'src/api-services/config/index.ts',
-                        content: configContent
-                    });
-                }
-            } catch (e) {
-                console.warn("Failed to update config/index.ts with proposed clients", e);
-            }
-        }
+        // 0.6 Helper: Extract Base URL (Do NOT write here, just return)
+        const baseUrl = formData.get('baseUrl') as string;
+        console.log("[UPDATE-COLLECTION] Received baseUrl:", baseUrl);
 
         if (isPostman) {
             const genOps = await generatePostman(options) as any[];
@@ -145,31 +109,23 @@ export async function POST(req: NextRequest) {
             return op;
         });
 
+        // Filter OUT any operations attempting to write to config/clients.ts or config/core.ts
+        // (Just in case the generator scripts tried to sneak them in, though currently they don't seem to)
+        operations = operations.filter(op =>
+            !op.filePath.endsWith('config/clients.ts') &&
+            !op.filePath.endsWith('config/core.ts')
+        );
+
         // Clean up file immediately
         try { fs.unlinkSync(filePath); } catch (e) { }
         filePath = null;
 
-        // If client requested operations (Cloud Mode), return them!
-        if (returnOperations) {
-            return NextResponse.json({
-                success: true,
-                operations, // Now includes deletions
-                deletedModules // Kept for legacy compatibility if needed
-            });
-        }
-
-        // Legacy / Local Mode (Server Writes) - Kept for backward compat if needed, 
-        // but ideally we switch fully. For now, let's allow it if returnOperations is missing.
-        // ... (Existing logic omitted for brevity, but effective replacement handles cleanup)
-
-        // Actually, let's enforce returnOperations for consistency if we update the client.
-        // But to be safe, if not requested, just return them anyway or error?
-        // Let's just return them. The client can ignore if it doesn't know what to do (but it will).
-
         return NextResponse.json({
             success: true,
             operations,
-            deletedModules
+            deletedModules,
+            proposedBaseUrl: baseUrl,
+            proposedClients
         });
 
     } catch (error: any) {

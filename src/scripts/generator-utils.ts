@@ -13,6 +13,7 @@ export interface FileOperation {
 export interface ModuleContent {
     name: string;
     content: string;
+    proposedClient?: { name: string; path: string };
 }
 
 export interface GeneratorOptions {
@@ -70,7 +71,7 @@ export const getCommonPrefix = (paths: string[]): string => {
 
     for (let i = 0; i < firstPath.length; i++) {
         const segment = firstPath[i];
-        if (segment.startsWith('{') || segment.startsWith(':')) break; // Stop at variable
+        if (segment.startsWith('{') || segment.startsWith(':') || segment.startsWith('$')) break; // Stop at variable
         if (splitPaths.every(p => p[i] === segment)) {
             common.push(segment);
         } else {
@@ -127,6 +128,64 @@ export const normalizeApiUrl = (url: string) => {
         .replace(/^{{[^}]+}}/, "")
         .replace(/^\/api\/v\d+/, "")
         .replace(/\/$/, "");
+};
+
+export const extractBaseUrl = (data: any): string | undefined => {
+    if (!data) return undefined;
+
+    // OpenAPI 3
+    if (data.servers && Array.isArray(data.servers) && data.servers.length > 0) {
+        return data.servers[0].url;
+    }
+
+    // Swagger 2
+    if (data.host) {
+        const scheme = (data.schemes && data.schemes[0]) || 'https';
+        const result = `${scheme}://${data.host}${data.basePath || ''}`;
+        return result;
+    }
+
+    // Postman
+    if (data.info && data.item) {
+        // Try to find in variables
+        if (data.variable && Array.isArray(data.variable)) {
+            const baseUrlVar = data.variable.find((v: any) =>
+                !v.disabled && (
+                    v.key === 'baseUrl' ||
+                    v.key === 'base_url' ||
+                    v.key === 'BASE_URL' ||
+                    v.key === 'url'
+                )
+            );
+            if (baseUrlVar && baseUrlVar.value) {
+                return baseUrlVar.value;
+            }
+        }
+
+        // Fallback: check first item request url
+        let candidate: string | undefined;
+        const findUrl = (items: any[]) => {
+            for (const item of items) {
+                if (item.request?.url?.raw) {
+                    candidate = item.request.url.raw;
+                    return true;
+                }
+                if (item.item && findUrl(item.item)) return true;
+            }
+            return false;
+        };
+        if (findUrl(data.item) && candidate) {
+            // Extract base from full URL if possible
+            try {
+                const u = new URL(candidate);
+                const result = `${u.protocol}//${u.host}`;
+                return result;
+            } catch (e) {
+                return undefined;
+            }
+        }
+    }
+    return undefined;
 };
 
 // --- AST / Analysis Helpers ---
@@ -542,7 +601,8 @@ export const generateStandardModuleContent = (
 
         generatedModules.push({
             name: moduleName,
-            content: generateModuleTemplate(moduleName, typeDefinitions, functionDefinitions)
+            content: generateModuleTemplate(moduleName, typeDefinitions, functionDefinitions),
+            proposedClient: mod.proposedClient
         });
     });
 
@@ -729,6 +789,38 @@ ${fields.join("\n")}
 }
 `;
 };
+
+// --- Shared Logic ---
+
+export const proposeClientForFunctions = (functions: StandardFunctionDefinition[]): { name: string; path: string } | undefined => {
+    const unassignedFunctions = functions.filter(f => !f.clientName);
+    if (unassignedFunctions.length === 0) return undefined;
+
+    const unassignedPaths = unassignedFunctions.map(f => f.path);
+    const commonPrefix = getCommonPrefix(unassignedPaths);
+
+    // Heuristic: Prefix must be at least 2 chars and not just "/"
+    if (commonPrefix && commonPrefix.length > 1 && commonPrefix !== "/") {
+        const nameParts = commonPrefix.split('/').filter(Boolean);
+        // Sanitize: replace non-alphanumeric chars (like -) with _
+        const sanitizedParts = nameParts.map(p => p.replace(/[^a-zA-Z0-9]/g, '_'));
+        const candidateName = sanitizedParts.join('_').toUpperCase() + "_CLIENT";
+
+        // Apply to functions immediately
+        unassignedFunctions.forEach(f => {
+            f.clientName = candidateName;
+            // Trim the prefix from the function path
+            if (f.path.startsWith(commonPrefix)) {
+                f.path = f.path.slice(commonPrefix.length);
+                if (!f.path.startsWith('/')) f.path = '/' + f.path;
+            }
+        });
+
+        return { name: candidateName, path: commonPrefix };
+    }
+    return undefined;
+};
+
 
 // --- CLI Runner (Shared Entry Point) ---
 
