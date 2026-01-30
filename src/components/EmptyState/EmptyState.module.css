@@ -6,10 +6,24 @@
   height: 100vh;
   width: 100%;
   padding: 2rem;
-  /* Light background */
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
   color: #111827;
-  /* Dark text */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle background pattern */
+.container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 /* Header Section */
@@ -17,13 +31,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 2.5rem;
+  margin-bottom: 3rem;
+  position: relative;
+  z-index: 1;
 }
 
 .logo {
   margin-bottom: 1rem;
   color: #111827;
-  /* Dark logo for light mode */
 }
 
 .appName {
@@ -40,24 +55,35 @@
   flex-direction: column;
   gap: 1rem;
   width: 100%;
-  max-width: 480px;
+  max-width: 420px;
   margin-bottom: 3rem;
+  position: relative;
+  z-index: 1;
 }
 
 .primaryBtn {
   width: 100%;
-  padding: 1.4rem;
-  /* Accessible Blue */
+  padding: 1.125rem 1.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 0.95rem;
+  border-radius: 12px;
+  font-size: 0.9375rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
-  gap: 0.5rem;
+  transition: all 0.2s ease;
+  gap: 0.625rem;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25), 0 2px 6px rgba(59, 130, 246, 0.15);
 }
 
+.primaryBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3), 0 3px 8px rgba(59, 130, 246, 0.2);
+}
+
+.primaryBtn:active {
+  transform: translateY(0);
+}
 
 .btnIcon {
   font-size: 1.1rem;
@@ -65,13 +91,33 @@
 
 .secondaryActions {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
   width: 100%;
 }
 
 .secondaryBtn {
   flex: 1;
-  padding: 1.4rem 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.secondaryBtn:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 /* Fallback for 'No Endpoint Selected' when sidebar is active */
@@ -81,24 +127,41 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #6b7280;
+  padding: 3rem;
+  color: #64748b;
   text-align: center;
 }
 
 .emptyIcon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  opacity: 0.5;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-radius: 20px;
+  margin-bottom: 1.5rem;
+  font-size: 2.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .emptyTitle {
   font-size: 1.25rem;
-  font-weight: 500;
-  color: #111827;
-  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.75rem 0;
 }
 
 .emptyText {
-  font-size: 0.9rem;
-  color: #6b7280;
+  font-size: 0.9375rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.6;
+  max-width: 280px;
+}
+
+/* Hover animations for empty state */
+.emptyState:hover .emptyIcon {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
 }

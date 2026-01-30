@@ -81,6 +81,7 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
                             </div>
                         )}
                     </div>
+                    <br />
                     <QuerySection
                         selectedEndpoint={selectedEndpoint}
                         currentParams={currentParams}
