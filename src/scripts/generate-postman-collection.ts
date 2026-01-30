@@ -3,7 +3,6 @@ import {
   FileOperation,
   ModuleContent,
   GeneratorOptions,
-  toCamelCase,
   sanitizeModuleName,
   processAndMergeModules,
   runGeneratorCLI,

@@ -85,13 +85,21 @@ export const getCommonPrefix = (paths: string[]): string => {
 
 export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+// Robust toCamelCase implementation
 export const toCamelCase = (str: string) => {
+    if (!str) return "";
     return str
-        .replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) =>
-            index === 0 ? word.toLowerCase() : word.toUpperCase()
-        )
-        .replace(/\s+/g, "")
-        .replace(/[^a-zA-Z0-9]/g, "");
+        // Split by non-alphanumeric chars, or by camelCase/PascalCase boundaries
+        // 1. [^a-zA-Z0-9]+ : separator characters
+        // 2. (?<=[a-z])(?=[A-Z]) : camelCase boundary (lower -> Upper)
+        // 3. (?<=[A-Z])(?=[A-Z][a-z]) : Upper -> UpperLower (e.g. HTMLParser -> HTML, Parser)
+        .split(/[^a-zA-Z0-9]+|(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])/g)
+        .filter(Boolean)
+        .map((word, index) => {
+            const lower = word.toLowerCase();
+            return index === 0 ? lower : lower.charAt(0).toUpperCase() + lower.slice(1);
+        })
+        .join("");
 };
 
 export const toPascalCase = (str: string) => {
@@ -106,25 +114,34 @@ export const sanitizeModuleName = (name: string) => {
 export const calculateFunctionName = (method: string, operationId: string): string => {
     if (!operationId) return "";
 
-    // Aggressively clean operationId to avoid "get_getSomething"
-    let cleaned = operationId.replace(/^(get|post|put|delete|patch|options|head)[_\s-]*/i, "");
+    const methodLower = method.toLowerCase();
 
-    // Also remove the specific method if not covered
-    const prefix = method.toLowerCase();
-    cleaned = cleaned.replace(new RegExp(`^${prefix}[_\\s-]*`, 'i'), "");
+    let cleaned = operationId
+        // Remove leading HTTP method if present in different formats:
+        // 1. "GET " (with space) - REST format
+        .replace(/^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)\s+/i, "")
+        // 2. "getApi", "postApi", etc. - camelCase format with method prefix
+        .replace(/^(get|post|put|delete|patch|options|head)(?=Api)/i, "")
+        // Remove "api/vX/" or "api/" prefix (REST paths)
+        .replace(/^api\/v\d+\//i, "")
+        .replace(/^api\//i, "")
+        // Remove "ApiV1", "ApiV2", "Api" at the start when followed by uppercase
+        .replace(/^Api(?:V\d+)?(?=[A-Z])/i, "")
+        // Remove everything before and including _api_v\d+_ (for snake_case format)
+        .replace(/^.*?_api_v\d+_/i, "")
+        // Remove trailing HTTP verb only if preceded by underscore (snake_case convention)
+        .replace(/_(get|post|put|delete|patch|options|head)$/i, "")
+        // Replace path separators and delimiters with spaces
+        .replace(/[/_-]+/g, " ")
+        // Remove curly braces from path parameters
+        .replace(/[{}]/g, "")
+        // Clean up extra whitespace
+        .replace(/\s+/g, " ")
+        .trim();
 
-    let suffix = toCamelCase(cleaned);
+    const camelCased = toCamelCase(cleaned);
 
-    // Final check if suffix still starts with the prefix
-    if (suffix.toLowerCase().startsWith(prefix)) {
-        const unprefixed = suffix.slice(prefix.length);
-        if (unprefixed && /[a-zA-Z0-9]/.test(unprefixed)) {
-            suffix = toCamelCase(unprefixed);
-        }
-    }
-
-    if (!suffix) suffix = "root";
-    return `${prefix}_${suffix}`;
+    return `${methodLower}_${camelCased || "root"}`;
 };
 
 const RESERVED_KEYWORDS = new Set([
