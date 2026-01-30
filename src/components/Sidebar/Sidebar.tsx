@@ -1,7 +1,7 @@
 import React, { SetStateAction } from "react";
 import styles from "./Sidebar.module.css";
 import { EndpointInfo, Methods } from "@/types";
-import { Folder, Trash2, ChevronRight, ChevronDown } from "lucide-react";
+import { Folder, Trash2, ChevronRight, ChevronDown, Lock } from "lucide-react";
 import { Button } from "../ui/Button/Button";
 import { Select } from "../ui/Select/Select";
 import Logo from "../Logo/Logo";
@@ -110,7 +110,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                       title={`${endpoint.fnName}${endpoint.url ? `\n${endpoint.url}` : ""}`}
                     >
                       <span className={`${styles.methodDot} ${styles[endpoint.fnName.split('_')[0].toLowerCase()] || styles.defaultMethod}`}></span>
+
                       <span className={styles.fileName}>{endpoint.fnName}</span>
+                      {endpoint.requiresAuth && (
+                        <Lock size={12} className={styles.authIcon} />
+                      )}
                     </div>
                     {onDeleteFunction && (
                       <Button

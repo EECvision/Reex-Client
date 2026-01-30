@@ -95,6 +95,11 @@ const mapToStandardIR = (
       // Resolve Client and Adjust Path
       const { clientName, path: finalPath } = resolveClientAndPath(finalUrl, normalizedPath, clientMappings);
 
+      // Auth (Postman)
+      // If request.auth exists and is not type 'noauth', we assume auth is required.
+      // Note: This misses inherited auth from parents, which is complex to resolve in this flat structure.
+      const requiresAuth = !!(request.auth && request.auth.type !== 'noauth');
+
       functions.push({
         name: functionName,
         method: method as any,
@@ -104,7 +109,8 @@ const mapToStandardIR = (
         queryParams: genericQueryParams,
         bodySchema,
         isPostman: true,
-        clientName
+        clientName,
+        requiresAuth
       });
 
       generatedFunctions.add(functionName);

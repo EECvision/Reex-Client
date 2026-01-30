@@ -53,6 +53,7 @@ export interface StandardFunctionDefinition {
     bodySchema?: any; // Raw JSON (Postman) or OpenAPI Schema
     isPostman?: boolean;
     clientName?: string; // e.g. "AUTH_CLIENT"
+    requiresAuth?: boolean;
 }
 
 export interface StandardModuleDefinition {
@@ -646,7 +647,10 @@ export const generateStandardModuleContent = (
             );
 
             generatedFunctions.add(func.name);
-            functionDefinitions.push(`${signature}\n${body}\n`);
+
+            // Prepend @auth JSDoc if requiresAuth is true
+            const authComment = func.requiresAuth ? "  /** @auth */\n" : "";
+            functionDefinitions.push(`${authComment}${signature}\n${body}\n`);
         });
 
         generatedModules.push({

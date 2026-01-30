@@ -5,6 +5,7 @@ import EmptyState from "../EmptyState/EmptyState";
 import styles from "./WorkspaceView.module.css";
 import { EndpointInfo } from "@/types";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
+import { Lock } from "lucide-react";
 
 interface WorkspaceViewProps {
     selectedEndpoint: EndpointInfo | null;
@@ -66,12 +67,20 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
         <div className={styles.workspace}>
             {selectedEndpoint ? (
                 <>
-                    <BadgeGroup
-                        label={method || ""}
-                        value={computedUrl || ""}
-                        color={methodColor}
-                        style={{ height: '32px' }}
-                    />
+                    <div className={styles.badgeRow}>
+                        <BadgeGroup
+                            label={method || ""}
+                            value={computedUrl || ""}
+                            color={methodColor}
+                            style={{ height: '32px' }}
+                        />
+                        {selectedEndpoint.requiresAuth && (
+                            <div className={styles.authRequired} title="Requires Authentication">
+                                <Lock size={16} />
+                                <span>Auth Required</span>
+                            </div>
+                        )}
+                    </div>
                     <QuerySection
                         selectedEndpoint={selectedEndpoint}
                         currentParams={currentParams}

@@ -50,3 +50,20 @@
     text-overflow: ellipsis;
     user-select: text;
 }
+
+/* Badge Row with Auth Indicator */
+.badgeRow {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+.authRequired {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #ef4444;
+    font-size: 12px;
+    font-weight: 500;
+}

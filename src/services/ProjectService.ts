@@ -25,6 +25,7 @@ import {
 interface EndpointMetadata {
     client: string;
     url: string;
+    requiresAuth?: boolean;
 }
 
 interface EndpointArg {
@@ -40,6 +41,7 @@ interface ModuleExports {
         args: EndpointArg[];
         client: string;
         url: string;
+        requiresAuth?: boolean;
     }
 }
 
@@ -125,7 +127,17 @@ class ProjectService {
                                 }
                             }
                         }
-                        return { client, url };
+
+                        // Check for JSDoc @auth
+                        let requiresAuth = false;
+                        const jsDocs = funcNode.getJsDocs();
+                        for (const doc of jsDocs) {
+                            if (doc.getText().includes("@auth")) {
+                                requiresAuth = true;
+                            }
+                        }
+
+                        return { client, url, requiresAuth };
                     };
 
 
@@ -140,8 +152,22 @@ class ProjectService {
                                     if (init && (init.getKind() === SyntaxKind.ArrowFunction || init.getKind() === SyntaxKind.FunctionExpression)) {
                                         const funcInit = init as ArrowFunction | FunctionExpression;
                                         const params = funcInit.getParameters().map((p) => this.getParameterDetails(p, sourceFile));
+
                                         const metadata = extractMetadata(funcInit);
-                                        moduleExports[methodName] = { args: params, ...metadata };
+
+                                        // Check for @auth in leading comments on the PropertyAssignment
+                                        let requiresAuth = false;
+                                        const fullText = sourceFile.getFullText();
+                                        const leadingComments = property.getLeadingCommentRanges();
+                                        for (const comment of leadingComments) {
+                                            const commentText = fullText.substring(comment.getPos(), comment.getEnd());
+                                            if (commentText.includes("@auth")) {
+                                                requiresAuth = true;
+                                                break;
+                                            }
+                                        }
+
+                                        moduleExports[methodName] = { args: params, ...metadata, requiresAuth };
                                         count++;
                                     }
                                 }

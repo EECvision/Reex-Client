@@ -212,3 +212,10 @@
   word-break: break-all;
   line-height: 1.4;
 }
+
+/* Auth Lock Icon */
+.authIcon {
+  margin-left: 4px;
+  flex-shrink: 0;
+  color: #9ca3af;
+}

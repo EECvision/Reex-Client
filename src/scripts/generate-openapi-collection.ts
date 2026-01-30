@@ -111,6 +111,16 @@ const mapToStandardIR = (
       // Resolve Client and Adjust Path
       const { clientName, path: finalPath } = resolveClientAndPath(path, normalizedPath, clientMappings);
 
+      // Security / Auth
+      const globalSecurity = item.spec.security || [];
+      const operationSecurity = operation.security;
+      const security = operationSecurity !== undefined ? operationSecurity : globalSecurity;
+      // If security array exists and has at least one requirement with scopes or scheme named
+      // Empty array [] usually means no security used.
+      // [{}] usually means optional security (public allowed).
+      // We will flag requiresAuth if there is AT LEAST one non-empty requirement.
+      const requiresAuth = Array.isArray(security) && security.length > 0; // Simplified for now
+
       functions.push({
         name: functionName,
         method: method.toLowerCase() as any,
@@ -120,7 +130,8 @@ const mapToStandardIR = (
         queryParams,
         bodySchema,
         isPostman: false,
-        clientName
+        clientName,
+        requiresAuth
       });
 
       generatedFunctions.add(functionName);

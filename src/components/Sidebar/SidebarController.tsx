@@ -58,6 +58,7 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
                     args: methodDef.args || [],
                     url: methodDef.url,
                     method: methodDef.method,
+                    requiresAuth: methodDef.requiresAuth,
                 });
             }
         }
