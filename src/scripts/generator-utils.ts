@@ -54,6 +54,7 @@ export interface StandardFunctionDefinition {
     isPostman?: boolean;
     clientName?: string; // e.g. "AUTH_CLIENT"
     requiresAuth?: boolean;
+    contentType?: string; // e.g. 'application/json' or 'multipart/form-data'
 }
 
 export interface StandardModuleDefinition {
@@ -648,9 +649,17 @@ export const generateStandardModuleContent = (
 
             generatedFunctions.add(func.name);
 
-            // Prepend @auth JSDoc if requiresAuth is true
-            const authComment = func.requiresAuth ? "  /** @auth */\n" : "";
-            functionDefinitions.push(`${authComment}${signature}\n${body}\n`);
+            // Build JSDoc comments
+            const jsdocParts: string[] = [];
+            if (func.requiresAuth) jsdocParts.push("@auth");
+            if (func.contentType && func.contentType !== 'application/json') {
+                jsdocParts.push(`@contentType ${func.contentType}`);
+            }
+
+            const jsdocComment = jsdocParts.length > 0
+                ? `  /** ${jsdocParts.join(' ')} */\n`
+                : "";
+            functionDefinitions.push(`${jsdocComment}${signature}\n${body}\n`);
         });
 
         generatedModules.push({

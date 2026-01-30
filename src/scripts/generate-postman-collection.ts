@@ -92,6 +92,14 @@ const mapToStandardIR = (
       // Body Schema (Example/Raw)
       const bodySchema = (request.body && request.body.raw) ? { raw: request.body.raw } : undefined;
 
+      // Content Type from body mode
+      let contentType = 'application/json'; // default
+      if (request.body?.mode === 'formdata') {
+        contentType = 'multipart/form-data';
+      } else if (request.body?.mode === 'urlencoded') {
+        contentType = 'application/x-www-form-urlencoded';
+      }
+
       // Resolve Client and Adjust Path
       const { clientName, path: finalPath } = resolveClientAndPath(finalUrl, normalizedPath, clientMappings);
 
@@ -110,7 +118,8 @@ const mapToStandardIR = (
         bodySchema,
         isPostman: true,
         clientName,
-        requiresAuth
+        requiresAuth,
+        contentType
       });
 
       generatedFunctions.add(functionName);

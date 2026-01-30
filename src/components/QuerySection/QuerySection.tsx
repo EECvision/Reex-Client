@@ -17,6 +17,7 @@ interface EndpointInfo {
   apiKey: string;
   fnName: string;
   args: EndpointArg[];
+  contentType?: string;
 }
 
 interface QuerySectionProps {
@@ -24,7 +25,7 @@ interface QuerySectionProps {
   currentParams: Record<string, any>;
   loading: boolean;
   isSubmitDisabled: boolean;
-  onParamChange: (paramName: string, value: string) => void;
+  onParamChange: (paramName: string, value: any) => void;
   onSubmit: () => void;
 }
 
@@ -36,9 +37,48 @@ const QuerySection: React.FC<QuerySectionProps> = ({
   onParamChange,
   onSubmit,
 }) => {
+  const isMultipart = selectedEndpoint.contentType === 'multipart/form-data';
+
+  const handleFileChange = (paramName: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onParamChange(paramName, file);
+    }
+  };
+
+  const isFileParam = (name: string) => {
+    // Common file parameter names
+    const fileNames = ['file', 'image', 'photo', 'attachment', 'document', 'upload', 'avatar', 'icon'];
+    return isMultipart && fileNames.some(fn => name.toLowerCase().includes(fn));
+  };
+
+  const renderInput = (name: string, isOptional: boolean) => {
+    if (isFileParam(name)) {
+      return (
+        <input
+          type="file"
+          onChange={(e) => handleFileChange(name, e)}
+          className={styles.paramInput}
+        />
+      );
+    }
+    return (
+      <input
+        type="text"
+        value={currentParams[name] ?? ""}
+        onChange={(e) => onParamChange(name, e.target.value)}
+        className={styles.paramInput}
+        placeholder={isOptional ? "Optional" : "Required"}
+      />
+    );
+  };
+
   return (
     <div className={styles.querySection}>
-      <h2 className={styles.queryTitle}>Query Parameters</h2>
+      <h2 className={styles.queryTitle}>
+        Query Parameters
+        {isMultipart && <span className={styles.multipartBadge}>multipart/form-data</span>}
+      </h2>
       {selectedEndpoint.args.length === 0 ? (
         <p className={styles.noParams}>No parameters required</p>
       ) : (
@@ -56,13 +96,7 @@ const QuerySection: React.FC<QuerySectionProps> = ({
                       <span className={styles.optional}>(optional)</span>
                     )}
                   </label>
-                  <input
-                    type="text"
-                    value={currentParams[prop.name] ?? ""}
-                    onChange={(e) => onParamChange(prop.name, e.target.value)}
-                    className={styles.paramInput}
-                    placeholder={prop.isOptional ? "Optional" : "Required"}
-                  />
+                  {renderInput(prop.name, prop.isOptional)}
                 </div>
               ));
             }
@@ -78,13 +112,7 @@ const QuerySection: React.FC<QuerySectionProps> = ({
                     <span className={styles.optional}>(optional)</span>
                   )}
                 </label>
-                <input
-                  type="text"
-                  value={currentParams[arg.name] ?? ""}
-                  onChange={(e) => onParamChange(arg.name, e.target.value)}
-                  className={styles.paramInput}
-                  placeholder={arg.isOptional ? "Optional" : "Required"}
-                />
+                {renderInput(arg.name, arg.isOptional)}
               </div>
             );
           })}
@@ -104,3 +132,4 @@ const QuerySection: React.FC<QuerySectionProps> = ({
 };
 
 export default QuerySection;
+

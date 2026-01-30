@@ -47,16 +47,20 @@ export const BridgeService = {
         try {
             const { url, method, data, headers } = config;
 
+            const isFormData = data instanceof FormData;
+
             const options: RequestInit = {
                 method: method.toUpperCase(),
                 headers: {
-                    'Content-Type': 'application/json',
+                    // Don't set Content-Type for FormData - browser sets it with boundary
+                    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
                     ...headers
                 },
             };
 
             if (data && method.toUpperCase() !== 'GET' && method.toUpperCase() !== 'HEAD') {
-                options.body = JSON.stringify(data);
+                // Pass FormData directly, stringify other data
+                options.body = isFormData ? data : JSON.stringify(data);
             }
 
             const res = await fetch(url, options);

@@ -26,6 +26,7 @@ interface EndpointMetadata {
     client: string;
     url: string;
     requiresAuth?: boolean;
+    contentType?: string;
 }
 
 interface EndpointArg {
@@ -42,6 +43,7 @@ interface ModuleExports {
         client: string;
         url: string;
         requiresAuth?: boolean;
+        contentType?: string;
     }
 }
 
@@ -155,19 +157,24 @@ class ProjectService {
 
                                         const metadata = extractMetadata(funcInit);
 
-                                        // Check for @auth in leading comments on the PropertyAssignment
+                                        // Check for @auth and @contentType in leading comments on the PropertyAssignment
                                         let requiresAuth = false;
+                                        let contentType: string | undefined = undefined;
                                         const fullText = sourceFile.getFullText();
                                         const leadingComments = property.getLeadingCommentRanges();
                                         for (const comment of leadingComments) {
                                             const commentText = fullText.substring(comment.getPos(), comment.getEnd());
                                             if (commentText.includes("@auth")) {
                                                 requiresAuth = true;
-                                                break;
+                                            }
+                                            // Parse @contentType value
+                                            const contentTypeMatch = commentText.match(/@contentType\s+(\S+)/);
+                                            if (contentTypeMatch) {
+                                                contentType = contentTypeMatch[1];
                                             }
                                         }
 
-                                        moduleExports[methodName] = { args: params, ...metadata, requiresAuth };
+                                        moduleExports[methodName] = { args: params, ...metadata, requiresAuth, contentType };
                                         count++;
                                     }
                                 }

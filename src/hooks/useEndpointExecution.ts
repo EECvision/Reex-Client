@@ -27,7 +27,11 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
     const [savingInterface, setSavingInterface] = useState(false);
     const [copied, setCopied] = useState(false);
 
-    const tryParse = (value: string) => {
+    const tryParse = (value: any) => {
+        // Don't try to parse File objects or non-strings
+        if (value instanceof File || typeof value !== 'string') {
+            return value;
+        }
         try {
             return JSON.parse(value);
         } catch {
@@ -35,7 +39,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
         }
     };
 
-    const handleParamChange = (paramName: string, value: string) => {
+    const handleParamChange = (paramName: string, value: any) => {
         if (!selectedEndpoint) return;
         const key = `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}`;
         setParams((prev) => ({
@@ -141,7 +145,11 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             const fullUrl = `${cleanBase}${cleanPath}`;
 
             let requestUrl = fullUrl;
-            let requestData: Record<string, any> | undefined = remainingData;
+            let requestData: Record<string, any> | FormData | undefined = remainingData;
+            let headers: Record<string, string> | undefined = authToken ? { 'Authorization': `Bearer ${authToken}` } : undefined;
+
+            // Check if this is a multipart/form-data request
+            const isMultipart = selectedEndpoint.contentType === 'multipart/form-data';
 
             if (method.toUpperCase() === 'GET' || method.toUpperCase() === 'DELETE') {
                 const cleanParams: Record<string, string> = {};
@@ -155,13 +163,25 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
                     requestUrl += `?${qs}`;
                 }
                 requestData = undefined;
+            } else if (isMultipart) {
+                // Build FormData for multipart requests
+                const formData = new FormData();
+                Object.entries(remainingData).forEach(([k, v]) => {
+                    if (v instanceof File) {
+                        formData.append(k, v);
+                    } else if (v !== undefined && v !== null) {
+                        formData.append(k, typeof v === 'object' ? JSON.stringify(v) : String(v));
+                    }
+                });
+                requestData = formData;
+                // Don't set Content-Type for FormData - browser will set it with boundary
             }
 
             const execRes: any = await api.executeRequest({
                 url: requestUrl,
                 method,
                 data: requestData,
-                headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : undefined
+                headers
             });
 
             if (!execRes.success) {

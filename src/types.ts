@@ -15,6 +15,7 @@ export interface EndpointInfo {
     url?: string;
     method?: string;
     requiresAuth?: boolean;
+    contentType?: string;
 }
 
 export type Methods = "ALL" | "GET" | "POST" | "DELETE" | "PATCH";

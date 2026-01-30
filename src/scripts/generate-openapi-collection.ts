@@ -105,8 +105,27 @@ const mapToStandardIR = (
         });
       }
 
-      // Body Schema
-      const bodySchema = operation.requestBody?.content?.["application/json"]?.schema;
+      // Body Schema - Check for multipart/form-data first, then application/json
+      const requestBodyContent = operation.requestBody?.content;
+      let bodySchema = null;
+      let contentType = 'application/json'; // default
+
+      if (requestBodyContent) {
+        if (requestBodyContent["multipart/form-data"]) {
+          bodySchema = requestBodyContent["multipart/form-data"].schema;
+          contentType = 'multipart/form-data';
+        } else if (requestBodyContent["application/json"]) {
+          bodySchema = requestBodyContent["application/json"].schema;
+          contentType = 'application/json';
+        } else {
+          // Fallback to first available content type
+          const firstKey = Object.keys(requestBodyContent)[0];
+          if (firstKey) {
+            bodySchema = requestBodyContent[firstKey].schema;
+            contentType = firstKey;
+          }
+        }
+      }
 
       // Resolve Client and Adjust Path
       const { clientName, path: finalPath } = resolveClientAndPath(path, normalizedPath, clientMappings);
@@ -131,7 +150,8 @@ const mapToStandardIR = (
         bodySchema,
         isPostman: false,
         clientName,
-        requiresAuth
+        requiresAuth,
+        contentType
       });
 
       generatedFunctions.add(functionName);
