@@ -6,8 +6,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 1rem;
-  background-color: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  background-color: var(--card-bg, #fff);
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
 }
 
 .leftSection {
@@ -28,7 +28,7 @@
   gap: 8px;
   padding: 6px 8px;
   border-radius: 6px;
-  color: #374151;
+  color: var(--text-primary, #374151);
   font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 600;
@@ -40,8 +40,8 @@
 }
 
 .projectContainer:hover {
-  background-color: #f3f4f6;
-  border-color: #e5e7eb;
+  background-color: var(--hover-bg, #f3f4f6);
+  border-color: var(--border-color, #e5e7eb);
 }
 
 .projectIcon {
@@ -57,7 +57,7 @@
 .separator {
   width: 1px;
   height: 24px;
-  background-color: #e5e7eb;
+  background-color: var(--border-color, #e5e7eb);
   margin: 0 8px;
 }
 
@@ -91,8 +91,8 @@
   left: 50%;
   transform: translateX(-50%);
   margin-top: 8px;
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--card-bg, white);
+  border: 1px solid var(--border-color, #e5e7eb);
   border-radius: 8px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   padding: 16px;
@@ -103,7 +103,7 @@
 .popoverHeader {
   font-size: 11px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--text-secondary, #6b7280);
   text-transform: uppercase;
   margin-bottom: 8px;
 }
@@ -118,11 +118,13 @@
 .popoverInput {
   width: 100%;
   padding: 8px 30px 8px 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-color, #e5e7eb);
   border-radius: 6px;
   font-size: 13px;
   outline: none;
   transition: border-color 0.15s;
+  background-color: var(--input-bg, #fff);
+  color: var(--text-primary, #374151);
 }
 
 .popoverInput:focus {

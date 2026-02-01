@@ -5,6 +5,7 @@ import { Folder, Trash2, ChevronRight, ChevronDown, Lock } from "lucide-react";
 import { Button } from "../ui/Button/Button";
 import { Select } from "../ui/Select/Select";
 import Logo from "../Logo/Logo";
+import SidebarSettings from "../SidebarSettings/SidebarSettings";
 
 const METHOD_OPTIONS = [
   { value: "ALL", label: "ALL METHODS" },
@@ -73,8 +74,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 }
               </div>
               <div className={styles.folderContent}>
-                <Folder size={14} className={styles.folderIcon} fill={expandedFolders.has(apiKey) ? "#EBF5FF" : "none"} color={expandedFolders.has(apiKey) ? "#3b82f6" : "#6b7280"} />
-                <span className={styles.folderName} style={{ fontWeight: expandedFolders.has(apiKey) ? 600 : 500, color: expandedFolders.has(apiKey) ? "#1f2937" : "#374151" }}>{apiKey}</span>
+                <Folder size={14} className={`${styles.folderIcon} ${expandedFolders.has(apiKey) ? styles.folderIconExpanded : ''}`} />
+                <span className={`${styles.folderName} ${expandedFolders.has(apiKey) ? styles.folderNameExpanded : ''}`}>{apiKey}</span>
                 <span className={styles.folderCount}>{endpoints.length}</span>
               </div>
 
@@ -112,9 +113,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                       <span className={`${styles.methodDot} ${styles[endpoint.fnName.split('_')[0].toLowerCase()] || styles.defaultMethod}`}></span>
 
                       <span className={styles.fileName}>{endpoint.fnName}</span>
-                      {endpoint.requiresAuth && (
+                      {/* {endpoint.requiresAuth && (
                         <Lock size={12} className={styles.authIcon} />
-                      )}
+                      )} */}
                     </div>
                     {onDeleteFunction && (
                       <Button
@@ -137,6 +138,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
         ))}
       </div>
+
+      <SidebarSettings />
 
       {baseURL && (
         <div className={styles.footer}>

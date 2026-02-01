@@ -3,7 +3,7 @@
     align-items: stretch;
     height: 28px;
     border-radius: 6px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border-color, #e5e7eb);
     overflow: hidden;
     font-family: 'Inter', sans-serif;
     width: fit-content;
@@ -22,18 +22,21 @@
     justify-content: center;
     min-width: 50px;
     text-align: center;
+    background-color: var(--hover-bg, #f3f4f6);
+    color: var(--text-secondary, #6b7280);
 }
 
 .value {
     display: flex;
     align-items: center;
     padding: 0 12px;
-    background-color: #fff;
+    background-color: var(--card-bg, #fff);
     font-family: 'JetBrains Mono', monospace;
     font-size: 13px;
-    color: #374151;
+    color: var(--text-primary, #374151);
     overflow: hidden;
     white-space: nowrap;
+    border-left: 1px solid var(--border-color, #e5e7eb);
 }
 
 .valueText {

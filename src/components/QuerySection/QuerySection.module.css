@@ -3,17 +3,17 @@
 }
 
 .querySection {
-  background: #fff;
+  background: var(--card-bg, #fff);
   padding: 1.5rem;
   border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
   /* box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.04); */
 }
 
 .queryTitle {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   display: flex;
@@ -31,11 +31,11 @@
 .noParams {
   padding: 2.5rem 2rem;
   text-align: center;
-  color: #94a3b8;
+  color: var(--text-muted, #94a3b8);
   font-size: 0.875rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: var(--hover-bg, linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%));
   border-radius: 10px;
-  border: 1px dashed #e2e8f0;
+  border: 1px dashed var(--border-color, #e2e8f0);
   margin: 0 0 1.5rem 0;
 }
 
@@ -63,7 +63,7 @@
 .paramLabel {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: #475569;
+  color: var(--text-primary, #475569);
   display: flex;
   align-items: center;
   gap: 0.375rem;
@@ -76,9 +76,9 @@
 
 .optional {
   font-size: 0.6875rem;
-  color: #94a3b8;
+  color: var(--text-muted, #94a3b8);
   font-weight: 400;
-  background-color: #f1f5f9;
+  background-color: var(--hover-bg, #f1f5f9);
   padding: 2px 6px;
   border-radius: 4px;
   margin-left: 0.25rem;
@@ -88,21 +88,22 @@
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
   font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid var(--border-color, #e2e8f0);
   border-radius: 8px;
-  background-color: #fff;
+  background-color: var(--input-bg, #fff);
   transition: all 0.2s ease;
   outline: none;
-  color: #1e293b;
+  color: var(--text-primary, #1e293b);
 }
 
 .paramInput::placeholder {
-  color: #94a3b8;
+  color: var(--text-muted, #94a3b8);
   font-family: inherit;
 }
 
 .paramInput:hover {
-  border-color: #cbd5e1;
+  border-color: var(--border-color, #cbd5e1);
+  background-color: var(--input-bg, #fff);
 }
 
 .paramInput:focus {
@@ -162,12 +163,12 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.875rem 1rem;
-  border: 1.5px dashed #e2e8f0;
+  border: 1.5px dashed var(--border-color, #e2e8f0);
   border-radius: 8px;
-  background: linear-gradient(135deg, #fafbfc 0%, #fff 100%);
+  background: var(--card-bg, linear-gradient(135deg, #fafbfc 0%, #fff 100%));
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   font-size: 0.875rem;
 }
 

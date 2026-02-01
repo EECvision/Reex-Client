@@ -5,7 +5,7 @@
 .resultsTitle {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 1rem;
@@ -71,8 +71,8 @@
 
 /* Result Box */
 .resultBox {
-  background: linear-gradient(135deg, #fafbfc 0%, #ffffff 100%);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--card-bg, linear-gradient(135deg, #fafbfc 0%, #ffffff 100%));
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
@@ -83,12 +83,12 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.875rem 1rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--hover-bg, linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%));
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
 }
 
 .resultTitle {
-  color: #475569;
+  color: var(--text-primary, #475569);
   font-size: 0.8125rem;
   font-weight: 600;
   display: flex;
@@ -123,11 +123,11 @@
   font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
   font-size: 0.8125rem;
   line-height: 1.6;
-  color: #1e293b;
+  color: var(--text-primary, #1e293b);
   white-space: pre-wrap;
   max-height: 450px;
   overflow-y: auto;
-  background-color: #fff;
+  background-color: var(--card-bg, #fff);
 }
 
 .resultContent::-webkit-scrollbar {
@@ -136,16 +136,16 @@
 }
 
 .resultContent::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: var(--hover-bg, #f1f5f9);
 }
 
 .resultContent::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--border-color, #cbd5e1);
   border-radius: 3px;
 }
 
 .resultContent::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--text-muted, #94a3b8);
 }
 
 /* Empty Results */
@@ -155,10 +155,10 @@
   justify-content: center;
   align-items: center;
   padding: 3rem 2rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 1.5px dashed #e2e8f0;
+  background: var(--card-bg, linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%));
+  border: 1.5px dashed var(--border-color, #e2e8f0);
   border-radius: 12px;
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
 }
 
 .emptyResultsIcon {

@@ -6,8 +6,8 @@
   height: 100vh;
   width: 100%;
   padding: 2rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
-  color: #111827;
+  background: var(--sidebar-bg, linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%));
+  color: var(--text-primary, #111827);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   position: relative;
   overflow: hidden;
@@ -44,7 +44,7 @@
 .appName {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-primary, #111827);
   margin: 0;
   letter-spacing: -0.5px;
 }
@@ -98,13 +98,13 @@
 .secondaryBtn {
   flex: 1;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--card-bg, rgba(255, 255, 255, 0.8));
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
   border-radius: 10px;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: #475569;
+  color: var(--text-secondary, #475569);
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -148,13 +148,13 @@
 .emptyTitle {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-primary, #1e293b);
   margin: 0 0 0.75rem 0;
 }
 
 .emptyText {
   font-size: 0.9375rem;
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   margin: 0;
   line-height: 1.6;
   max-width: 280px;

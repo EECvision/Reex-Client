@@ -14,7 +14,7 @@
     height: 32px;
     /* Slightly taller for workspace? or keep 28px? Let's go 32px or matches input height. Inputs are usually ~38px. Let's make it prominent. */
     border-radius: 6px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border-color, #e5e7eb);
     overflow: hidden;
     font-family: 'Inter', sans-serif;
     width: fit-content;
@@ -37,10 +37,10 @@
     display: flex;
     align-items: center;
     padding: 0 16px;
-    background-color: #fff;
+    background-color: var(--card-bg, #fff);
     font-family: 'JetBrains Mono', monospace;
     font-size: 14px;
-    color: #374151;
+    color: var(--text-primary, #374151);
     overflow: hidden;
     white-space: nowrap;
 }

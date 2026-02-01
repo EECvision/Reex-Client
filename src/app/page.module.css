@@ -4,7 +4,7 @@
   display: flex;
   align-items: stretch;
   justify-content: flex-start;
-  background-color: #f5f5f5;
+  background-color: var(--background, #f5f5f5);
 }
 
 .mainWrapper {
@@ -13,7 +13,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #fafafa;
+  background-color: var(--card-bg, #fafafa);
 }
 
 .main {
@@ -34,7 +34,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #fff;
+  background-color: var(--background, #fff);
   font-family: 'Inter', -apple-system, system-ui, sans-serif;
 }
 
@@ -55,7 +55,7 @@
 }
 
 .loadingText {
-  color: #6b7280;
+  color: var(--text-secondary, #6b7280);
   font-size: 0.9375rem;
   font-weight: 500;
   animation: pulse 1.5s ease-in-out infinite;
@@ -90,7 +90,7 @@
 .brandName {
   font-size: 20px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-primary, #111827);
   letter-spacing: -0.5px;
 }
 

@@ -1,0 +1,129 @@
+.settingsBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  background-color: var(--settings-bg, #f9fafb);
+}
+
+.settingsButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--icon-color, #6b7280);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.settingsButton:hover {
+  background-color: var(--hover-bg, #e5e7eb);
+  color: var(--icon-hover-color, #374151);
+}
+
+.settingsButton.active {
+  background-color: var(--active-bg, #dbeafe);
+  color: var(--primary-color, #3b82f6);
+}
+
+.chevron {
+  transition: transform 0.2s ease;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+/* View Preference Dropdown */
+.viewPrefWrapper {
+  position: relative;
+}
+
+.viewMenu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 160px;
+  background-color: var(--menu-bg, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  z-index: 100;
+}
+
+.menuHeader {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-secondary, #9ca3af);
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  background-color: var(--menu-header-bg, #f9fafb);
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-primary, #374151);
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+
+.menuItem:hover {
+  background-color: var(--hover-bg, #f3f4f6);
+}
+
+.menuItemActive {
+  background-color: var(--active-bg, #eff6ff);
+  color: var(--primary-color, #3b82f6);
+}
+
+.menuIcon {
+  display: flex;
+  align-items: center;
+  color: inherit;
+}
+
+.checkmark {
+  margin-left: auto;
+  color: var(--primary-color, #3b82f6);
+  font-weight: 600;
+}
+
+/* Dark theme overrides */
+:global([data-theme="dark"]) .settingsBar {
+  --border-color: #374151;
+  --settings-bg: #1f2937;
+  --icon-color: #9ca3af;
+  --icon-hover-color: #e5e7eb;
+  --hover-bg: #374151;
+  --active-bg: #1e3a5f;
+  --primary-color: #60a5fa;
+}
+
+:global([data-theme="dark"]) .viewMenu {
+  --menu-bg: #1f2937;
+  --border-color: #374151;
+  --menu-header-bg: #111827;
+  --text-secondary: #6b7280;
+  --text-primary: #e5e7eb;
+  --hover-bg: #374151;
+  --active-bg: #1e3a5f;
+  --primary-color: #60a5fa;
+}

@@ -40,8 +40,8 @@ export const BadgeGroup: React.FC<BadgeGroupProps> = ({
 
     // Let's refine the style generation:
     const isDefault = color === "#6b7280";
-    const bgStyle = isDefault ? "#f3f4f6" : `${color}15`;
-    const borderStyle = isDefault ? "#e5e7eb" : `${color}30`;
+    const bgStyle = isDefault ? undefined : `${color}15`; // Use CSS variable for default
+    const borderStyle = isDefault ? undefined : `${color}30`; // Use CSS variable for default
 
     return (
         <div
@@ -60,7 +60,13 @@ export const BadgeGroup: React.FC<BadgeGroupProps> = ({
             >
                 {label}
             </div>
-            <div className={styles.value} title={title}>
+            <div
+                className={styles.value}
+                title={title}
+                style={{
+                    borderLeftColor: borderStyle
+                }}
+            >
                 <span className={`${styles.valueText} ${valueClassName || ''}`}>
                     {value}
                 </span>
