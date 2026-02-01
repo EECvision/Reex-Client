@@ -78,7 +78,7 @@
 }
 
 .secondary:active:not(:disabled) {
-    background-color: #f3f4f6;
+    background-color: var(--hover-bg, #f3f4f6);
 }
 
 /* Ghost */
