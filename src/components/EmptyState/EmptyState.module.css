@@ -63,30 +63,6 @@
 
 .primaryBtn {
   width: 100%;
-  padding: 1.125rem 1.5rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  gap: 0.625rem;
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25), 0 2px 6px rgba(59, 130, 246, 0.15);
-}
-
-.primaryBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3), 0 3px 8px rgba(59, 130, 246, 0.2);
-}
-
-.primaryBtn:active {
-  transform: translateY(0);
-}
-
-.btnIcon {
-  font-size: 1.1rem;
 }
 
 .secondaryActions {
@@ -99,25 +75,14 @@
   flex: 1;
   padding: 1rem;
   background: var(--card-bg, rgba(255, 255, 255, 0.8));
-  backdrop-filter: blur(8px);
   border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
-  border-radius: 10px;
-  font-size: 0.8125rem;
-  font-weight: 500;
   color: var(--text-secondary, #475569);
-  cursor: pointer;
   transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .secondaryBtn:hover {
   background: rgba(255, 255, 255, 0.95);
   border-color: rgba(0, 0, 0, 0.12);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 /* Fallback for 'No Endpoint Selected' when sidebar is active */
@@ -138,11 +103,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  background-color: var(--hover-bg, #f1f5f9);
   border-radius: 20px;
   margin-bottom: 1.5rem;
   font-size: 2.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  color: #64748b;
+}
+
+:global([data-theme="dark"]) .emptyIcon {
+  background-color: var(--card-bg, #1f2937);
+  color: var(--text-secondary);
 }
 
 .emptyTitle {

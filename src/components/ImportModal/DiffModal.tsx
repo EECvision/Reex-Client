@@ -100,10 +100,10 @@ const CustomDiffViewer = ({
         <div className={styles.diffViewer}>
             <div className={styles.diffRow}>
                 <div className={styles.diffSplit}>
-                    <div className={styles.diffPaneHeader}>Original</div>
+                    <div className={styles.diffPaneHeader}>Incoming</div>
                 </div>
                 <div className={styles.diffSplit}>
-                    <div className={styles.diffPaneHeader}>Updated</div>
+                    <div className={styles.diffPaneHeader}>Current</div>
                 </div>
             </div>
             {rows.map((row, idx) => (

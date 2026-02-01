@@ -72,16 +72,17 @@
 
 .toastClose {
   font-size: 1.25rem;
-  /* Ensure icon size is kept if needed, or rely on Button */
   opacity: 0.5;
   transition: opacity 0.15s;
-  color: inherit;
+  color: inherit !important;
   padding: 0;
-  /* Override Button padding if needed to be tight? Or let it be. Let's try removing padding override and see. */
-  background: transparent;
-  /* Ghost handles this but safe to keep */
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .toastClose:hover {
   opacity: 1;
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  color: inherit !important;
 }

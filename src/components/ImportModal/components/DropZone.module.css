@@ -29,6 +29,16 @@
     background-color: var(--card-bg, #f0fdf4);
 }
 
+/* Dark mode specific overrides for better visibility */
+:global([data-theme="dark"]) .dropZone:hover,
+:global([data-theme="dark"]) .dropZoneActive {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+:global([data-theme="dark"]) .dropZoneSelected {
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
 .input {
     display: none;
 }
