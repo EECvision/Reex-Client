@@ -1,9 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
+import dynamic from "next/dynamic";
 import styles from "./ResultSection.module.css";
 import { Button } from "../ui/Button/Button";
 import { useSettings, ViewPreferenceType } from "@/providers/SettingsContext";
 import { FileJson, FileText, Code } from "lucide-react";
+
+// Dynamic import for Monaco to avoid SSR issues
+const MonacoJsonEditor = dynamic(
+  () => import("../MonacoJsonEditor/MonacoJsonEditor"),
+  { ssr: false, loading: () => <div className={styles.editorLoading}>Loading editor...</div> }
+);
 
 const VIEW_OPTIONS: { value: ViewPreferenceType; label: string; icon: React.ReactNode }[] = [
   { value: "json", label: "JSON", icon: <FileJson size={14} /> },
@@ -102,9 +109,13 @@ const ResultSection: React.FC<ResultSectionProps> = ({
                 {copied ? "✓ Copied" : "Copy"}
               </Button>
             </div>
-            <pre className={styles.resultContent}>
-              {formatResult(result)}
-            </pre>
+            <div className={styles.editorWrapper}>
+              <MonacoJsonEditor
+                value={formatResult(result)}
+                readOnly={true}
+                height="350px"
+              />
+            </div>
           </div>
 
           <div className={styles.resultBox}>
@@ -129,9 +140,14 @@ const ResultSection: React.FC<ResultSectionProps> = ({
                 </Button>
               )}
             </div>
-            <pre className={styles.resultContent}>
-              {interfacePreview || "Generating preview..."}
-            </pre>
+            <div className={styles.editorWrapper}>
+              <MonacoJsonEditor
+                value={interfacePreview || "// Generating preview..."}
+                readOnly={true}
+                height="350px"
+                language="typescript"
+              />
+            </div>
           </div>
         </div>
       )}
@@ -153,4 +169,5 @@ const ResultSection: React.FC<ResultSectionProps> = ({
 };
 
 export default ResultSection;
+
 

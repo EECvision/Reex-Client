@@ -190,7 +190,6 @@
   background: var(--text-muted, #94a3b8);
 }
 
-/* Empty Results */
 .emptyResults {
   display: flex;
   flex-direction: column;
@@ -214,4 +213,20 @@
   margin: 0;
   font-size: 0.875rem;
   text-align: center;
+}
+
+/* Monaco Editor */
+.editorWrapper {
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
+}
+
+.editorLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.875rem;
+  background: var(--card-bg, #fff);
 }

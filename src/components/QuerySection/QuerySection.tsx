@@ -1,8 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import styles from "./QuerySection.module.css";
 import { Button } from "../ui/Button/Button";
 import { ClipboardList, FileText, Upload, ListTree, XIcon, FormInput, Code } from "lucide-react";
+
+// Dynamic import for Monaco to avoid SSR issues
+const MonacoJsonEditor = dynamic(
+  () => import("../MonacoJsonEditor/MonacoJsonEditor"),
+  { ssr: false, loading: () => <div className={styles.editorLoading}>Loading editor...</div> }
+);
 
 type InputMode = "form" | "raw";
 
@@ -205,15 +212,13 @@ const QuerySection: React.FC<QuerySectionProps> = ({
           </div>
         ) : localInputMode === "raw" ? (
           <div className={styles.rawInputWrapper}>
-            <textarea
-              className={styles.rawTextarea}
+            <MonacoJsonEditor
               value={localRawPayload}
-              onChange={(e) => handleRawChange(e.target.value)}
-              placeholder="Enter JSON payload..."
-              spellCheck={false}
+              onChange={handleRawChange}
+              height="200px"
             />
             <p className={styles.rawHint}>
-              Enter valid JSON. Fill in the values for each parameter.
+              Fill in the values for each parameter.
             </p>
           </div>
         ) : (

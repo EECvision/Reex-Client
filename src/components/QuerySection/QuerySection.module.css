@@ -303,3 +303,16 @@
   color: var(--text-muted, #94a3b8);
   margin: 0;
 }
+
+/* Monaco Editor Loading */
+.editorLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.875rem;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+}
