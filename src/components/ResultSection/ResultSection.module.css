@@ -2,13 +2,20 @@
   margin-top: 1.5rem;
 }
 
+.responseHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
 .resultsTitle {
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text-secondary, #64748b);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 1rem;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -18,6 +25,41 @@
   width: 18px;
   height: 18px;
   color: #94a3b8;
+}
+
+/* Format Toggle */
+.formatToggle {
+  display: flex;
+  background-color: var(--hover-bg, #f1f5f9);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.formatButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted, #64748b);
+  background-color: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.formatButton:hover {
+  color: var(--text-primary, #475569);
+  background-color: var(--card-bg, rgba(255, 255, 255, 0.5));
+}
+
+.formatButtonActive {
+  color: var(--primary-color, #3b82f6);
+  background-color: var(--card-bg, #fff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 /* Error Box */

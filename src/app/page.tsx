@@ -93,7 +93,12 @@ const App = () => {
     handleSaveInterface,
     isSubmitDisabled,
     handleCopy,
-    getComputedUrl
+    getComputedUrl,
+    // Raw payload mode
+    rawPayload,
+    inputMode,
+    handleRawPayloadChange,
+    handleInputModeChange,
   } = useEndpointExecution({
     projectConfig,
     apiManifest,
@@ -248,6 +253,10 @@ const App = () => {
           onGenerate={() => setShowGenerateModal(true)}
           computedUrl={getComputedUrl()}
           method={selectedEndpoint ? selectedEndpoint.fnName.split('_')[0].toUpperCase() : ""}
+          rawPayload={rawPayload}
+          inputMode={inputMode}
+          onRawPayloadChange={handleRawPayloadChange}
+          onInputModeChange={handleInputModeChange}
         />
       </div>
     </div>

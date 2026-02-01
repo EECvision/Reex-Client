@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./QuerySection.module.css";
 import { Button } from "../ui/Button/Button";
-import { ClipboardList, FileText, Upload, ListTree, XIcon } from "lucide-react";
+import { ClipboardList, FileText, Upload, ListTree, XIcon, FormInput, Code } from "lucide-react";
+
+type InputMode = "form" | "raw";
 
 interface EndpointArg {
   name: string;
@@ -28,6 +30,10 @@ interface QuerySectionProps {
   isSubmitDisabled: boolean;
   onParamChange: (paramName: string, value: any) => void;
   onSubmit: () => void;
+  rawPayload?: string;
+  onRawPayloadChange?: (value: string) => void;
+  inputMode?: InputMode;
+  onInputModeChange?: (mode: InputMode) => void;
 }
 
 const QuerySection: React.FC<QuerySectionProps> = ({
@@ -37,9 +43,59 @@ const QuerySection: React.FC<QuerySectionProps> = ({
   isSubmitDisabled,
   onParamChange,
   onSubmit,
+  rawPayload = "",
+  onRawPayloadChange,
+  inputMode = "form",
+  onInputModeChange,
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<Record<string, File>>({});
+  const [localInputMode, setLocalInputMode] = useState<InputMode>(inputMode);
+  const [localRawPayload, setLocalRawPayload] = useState(rawPayload);
+
   const isMultipart = selectedEndpoint.contentType === 'multipart/form-data';
+
+  // Generate default JSON template from endpoint args
+  const generateDefaultTemplate = () => {
+    const template: Record<string, string> = {};
+
+    selectedEndpoint.args.forEach((arg) => {
+      if (arg.isObject && Array.isArray(arg.properties)) {
+        arg.properties.forEach((prop) => {
+          template[prop.name] = "";
+        });
+      } else {
+        template[arg.name] = "";
+      }
+    });
+
+    return JSON.stringify(template, null, 2);
+  };
+
+  // Sync with parent if controlled
+  useEffect(() => {
+    setLocalInputMode(inputMode);
+  }, [inputMode]);
+
+  useEffect(() => {
+    // If parent provides a raw payload, use it; otherwise generate default
+    if (rawPayload) {
+      setLocalRawPayload(rawPayload);
+    } else if (selectedEndpoint.args.length > 0) {
+      const defaultTemplate = generateDefaultTemplate();
+      setLocalRawPayload(defaultTemplate);
+      onRawPayloadChange?.(defaultTemplate);
+    }
+  }, [rawPayload, selectedEndpoint]);
+
+  const handleModeChange = (mode: InputMode) => {
+    setLocalInputMode(mode);
+    onInputModeChange?.(mode);
+  };
+
+  const handleRawChange = (value: string) => {
+    setLocalRawPayload(value);
+    onRawPayloadChange?.(value);
+  };
 
   const handleFileChange = (paramName: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -107,19 +163,58 @@ const QuerySection: React.FC<QuerySectionProps> = ({
     );
   };
 
+  const hasParams = selectedEndpoint.args.length > 0;
+
   return (
     <div className={styles.querySectionWrapper}>
-      <h2 className={styles.queryTitle}>
-        <ListTree className={styles.titleIcon} size={18} />
-        Request Parameters
-        {isMultipart && <span className={styles.multipartBadge}>multipart</span>}
-      </h2>
+      <div className={styles.queryHeader}>
+        <h2 className={styles.queryTitle}>
+          <ListTree className={styles.titleIcon} size={18} />
+          Request Parameters
+          {isMultipart && <span className={styles.multipartBadge}>multipart</span>}
+        </h2>
+
+        {/* Input Mode Toggle - only show if there are parameters and not multipart */}
+        {hasParams && !isMultipart && (
+          <div className={styles.modeToggle}>
+            <button
+              className={`${styles.modeButton} ${localInputMode === "form" ? styles.modeButtonActive : ""}`}
+              onClick={() => handleModeChange("form")}
+              title="Form Input"
+            >
+              <FormInput size={14} />
+              <span>Form</span>
+            </button>
+            <button
+              className={`${styles.modeButton} ${localInputMode === "raw" ? styles.modeButtonActive : ""}`}
+              onClick={() => handleModeChange("raw")}
+              title="Raw JSON"
+            >
+              <Code size={14} />
+              <span>Raw</span>
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className={styles.querySection}>
-        {selectedEndpoint.args.length === 0 ? (
+        {!hasParams ? (
           <div className={styles.noParams}>
             <ClipboardList className={styles.noParamsIcon} size={40} strokeWidth={1.5} />
             <p>No parameters required for this endpoint</p>
+          </div>
+        ) : localInputMode === "raw" ? (
+          <div className={styles.rawInputWrapper}>
+            <textarea
+              className={styles.rawTextarea}
+              value={localRawPayload}
+              onChange={(e) => handleRawChange(e.target.value)}
+              placeholder="Enter JSON payload..."
+              spellCheck={false}
+            />
+            <p className={styles.rawHint}>
+              Enter valid JSON. Fill in the values for each parameter.
+            </p>
           </div>
         ) : (
           <div className={styles.paramList}>

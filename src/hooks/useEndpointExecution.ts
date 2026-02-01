@@ -3,6 +3,8 @@ import { useState } from "react";
 import { api } from "@/services/api";
 import { EndpointInfo } from "@/types";
 
+type InputMode = "form" | "raw";
+
 interface UseEndpointExecutionProps {
     projectConfig: any;
     apiManifest: any;
@@ -16,9 +18,19 @@ type ParamsState = {
     };
 };
 
+type RawPayloadState = {
+    [key: string]: string;
+};
+
+type InputModeState = {
+    [key: string]: InputMode;
+};
+
 export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, authToken }: UseEndpointExecutionProps) => {
     const [selectedEndpoint, setSelectedEndpoint] = useState<EndpointInfo | null>(null);
     const [params, setParams] = useState<ParamsState>({});
+    const [rawPayloads, setRawPayloads] = useState<RawPayloadState>({});
+    const [inputModes, setInputModes] = useState<InputModeState>({});
     const [result, setResult] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -51,6 +63,30 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
         }));
     };
 
+    const handleRawPayloadChange = (value: string) => {
+        if (!selectedEndpoint) return;
+        const key = `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}`;
+        setRawPayloads((prev) => ({ ...prev, [key]: value }));
+    };
+
+    const handleInputModeChange = (mode: InputMode) => {
+        if (!selectedEndpoint) return;
+        const key = `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}`;
+        setInputModes((prev) => ({ ...prev, [key]: mode }));
+    };
+
+    const getCurrentInputMode = (): InputMode => {
+        if (!selectedEndpoint) return "form";
+        const key = `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}`;
+        return inputModes[key] || "form";
+    };
+
+    const getCurrentRawPayload = (): string => {
+        if (!selectedEndpoint) return "";
+        const key = `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}`;
+        return rawPayloads[key] || "";
+    };
+
     const getComputedUrl = () => {
         if (!selectedEndpoint || !projectConfig || !apiManifest) return "";
         const { apiKey, fnName } = selectedEndpoint;
@@ -74,35 +110,47 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
 
         try {
             const key = `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}`;
+            const currentInputMode = inputModes[key] || "form";
+            const currentRawPayload = rawPayloads[key] || "";
             const currentParams = params[key] || {};
 
             // 1. Prepare Arguments Map
-            const argsMap: Record<string, any> = {};
+            let argsMap: Record<string, any> = {};
 
-            // Flatten params logic
-            if (
-                selectedEndpoint.args.length === 1 &&
-                selectedEndpoint.args[0].isObject &&
-                Array.isArray(selectedEndpoint.args[0].properties)
-            ) {
-                const props = selectedEndpoint.args[0].properties;
-                for (const prop of props) {
-                    const value = currentParams[prop.name];
-                    if (value !== undefined && value !== "") {
-                        argsMap[prop.name] = value;
-                    } else if (!prop.isOptional) {
-                        throw new Error(`Missing required field: ${prop.name}`);
-                    }
+            // If in raw mode, parse the raw JSON payload
+            if (currentInputMode === "raw" && currentRawPayload.trim()) {
+                try {
+                    argsMap = JSON.parse(currentRawPayload);
+                } catch (parseErr) {
+                    throw new Error("Invalid JSON in raw payload. Please check your input.");
                 }
-            } else {
-                selectedEndpoint.args.forEach(arg => {
-                    const value = currentParams[arg.name];
-                    if (value !== undefined && value !== "") {
-                        argsMap[arg.name] = value;
-                    } else if (!arg.isOptional) {
-                        throw new Error(`Missing required param: ${arg.name}`);
+            } else if (currentInputMode === "form") {
+
+                // Flatten params logic
+                if (
+                    selectedEndpoint.args.length === 1 &&
+                    selectedEndpoint.args[0].isObject &&
+                    Array.isArray(selectedEndpoint.args[0].properties)
+                ) {
+                    const props = selectedEndpoint.args[0].properties;
+                    for (const prop of props) {
+                        const value = currentParams[prop.name];
+                        if (value !== undefined && value !== "") {
+                            argsMap[prop.name] = value;
+                        } else if (!prop.isOptional) {
+                            throw new Error(`Missing required field: ${prop.name}`);
+                        }
                     }
-                });
+                } else {
+                    selectedEndpoint.args.forEach(arg => {
+                        const value = currentParams[arg.name];
+                        if (value !== undefined && value !== "") {
+                            argsMap[arg.name] = value;
+                        } else if (!arg.isOptional) {
+                            throw new Error(`Missing required param: ${arg.name}`);
+                        }
+                    });
+                }
             }
 
             // 2. Construct URL & Method
@@ -241,6 +289,15 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
         if (!selectedEndpoint || loading) return true;
 
         const key = `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}`;
+        const currentInputMode = inputModes[key] || "form";
+
+        // In raw mode, just check if there's content
+        if (currentInputMode === "raw") {
+            const rawPayload = rawPayloads[key] || "";
+            return !rawPayload.trim();
+        }
+
+        // In form mode, check required fields
         const currentParams = params[key] || {};
 
         const requiredFields = selectedEndpoint.args.flatMap((arg) => {
@@ -294,6 +351,11 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
         handleSaveInterface,
         isSubmitDisabled,
         handleCopy,
-        getComputedUrl
+        getComputedUrl,
+        // Raw payload mode
+        rawPayload: getCurrentRawPayload(),
+        inputMode: getCurrentInputMode(),
+        handleRawPayloadChange,
+        handleInputModeChange,
     };
 };

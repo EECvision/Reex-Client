@@ -2,6 +2,14 @@
 import React from "react";
 import styles from "./ResultSection.module.css";
 import { Button } from "../ui/Button/Button";
+import { useSettings, ViewPreferenceType } from "@/providers/SettingsContext";
+import { FileJson, FileText, Code } from "lucide-react";
+
+const VIEW_OPTIONS: { value: ViewPreferenceType; label: string; icon: React.ReactNode }[] = [
+  { value: "json", label: "JSON", icon: <FileJson size={14} /> },
+  { value: "raw", label: "Raw", icon: <FileText size={14} /> },
+  { value: "pretty", label: "Pretty", icon: <Code size={14} /> },
+];
 
 interface ResultSectionProps {
   error: string | null;
@@ -22,17 +30,48 @@ const ResultSection: React.FC<ResultSectionProps> = ({
   onUpdateInterface,
   updatingInterface,
 }) => {
+  const { viewPreference, setViewPreference } = useSettings();
+
+  const formatResult = (data: any): string => {
+    switch (viewPreference) {
+      case "raw":
+        return typeof data === "string" ? data : JSON.stringify(data);
+      case "pretty":
+        return JSON.stringify(data, null, 4);
+      case "json":
+      default:
+        return JSON.stringify(data, null, 2);
+    }
+  };
+
   return (
     <div className={styles.resultsSection}>
-      <h2 className={styles.resultsTitle}>
-        <svg className={styles.titleIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" />
-          <line x1="16" y1="13" x2="8" y2="13" />
-          <line x1="16" y1="17" x2="8" y2="17" />
-        </svg>
-        Response
-      </h2>
+      <div className={styles.responseHeader}>
+        <h2 className={styles.resultsTitle}>
+          <svg className={styles.titleIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+          Response
+        </h2>
+
+        {/* Format Toggle */}
+        <div className={styles.formatToggle}>
+          {VIEW_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              className={`${styles.formatButton} ${viewPreference === option.value ? styles.formatButtonActive : ""}`}
+              onClick={() => setViewPreference(option.value)}
+              title={option.label}
+            >
+              {option.icon}
+              <span>{option.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       {error && (
         <div className={styles.errorBox}>
@@ -64,7 +103,7 @@ const ResultSection: React.FC<ResultSectionProps> = ({
               </Button>
             </div>
             <pre className={styles.resultContent}>
-              {JSON.stringify(result, null, 2)}
+              {formatResult(result)}
             </pre>
           </div>
 
@@ -114,3 +153,4 @@ const ResultSection: React.FC<ResultSectionProps> = ({
 };
 
 export default ResultSection;
+

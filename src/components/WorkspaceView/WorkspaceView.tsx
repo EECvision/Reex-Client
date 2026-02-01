@@ -7,6 +7,8 @@ import { EndpointInfo } from "@/types";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
 import { Lock } from "lucide-react";
 
+type InputMode = "form" | "raw";
+
 interface WorkspaceViewProps {
     selectedEndpoint: EndpointInfo | null;
     currentParams: Record<string, any>;
@@ -26,6 +28,11 @@ interface WorkspaceViewProps {
     onGenerate?: () => void;
     computedUrl?: string;
     method?: string;
+    // Raw payload mode
+    rawPayload?: string;
+    inputMode?: InputMode;
+    onRawPayloadChange?: (value: string) => void;
+    onInputModeChange?: (mode: InputMode) => void;
 }
 
 const WorkspaceView: React.FC<WorkspaceViewProps> = ({
@@ -46,7 +53,11 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
     onImport,
     onGenerate,
     computedUrl,
-    method
+    method,
+    rawPayload,
+    inputMode,
+    onRawPayloadChange,
+    onInputModeChange,
 }) => {
 
     const getMethodColor = (m?: string) => {
@@ -89,6 +100,10 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
                         onSubmit={onSubmit}
                         loading={loading}
                         isSubmitDisabled={isSubmitDisabled}
+                        rawPayload={rawPayload}
+                        inputMode={inputMode}
+                        onRawPayloadChange={onRawPayloadChange}
+                        onInputModeChange={onInputModeChange}
                     />
                     <ResultSection
                         result={result}
@@ -112,3 +127,4 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
 };
 
 export default WorkspaceView;
+
