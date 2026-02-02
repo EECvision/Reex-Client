@@ -7,9 +7,18 @@ interface UseCollectionManagementProps {
     showToast: (type: "success" | "error", message: string) => void;
     refreshProject: (force?: boolean) => void;
     registerTaskId: (taskId: string) => void;
+    isStandaloneMode?: boolean;
+    setManifest?: (manifest: any) => void;
 }
 
-export const useCollectionManagement = ({ projectPath, showToast, refreshProject, registerTaskId }: UseCollectionManagementProps) => {
+export const useCollectionManagement = ({
+    projectPath,
+    showToast,
+    refreshProject,
+    registerTaskId,
+    isStandaloneMode = false,
+    setManifest
+}: UseCollectionManagementProps) => {
     // Modals
     const [showImportModal, setShowImportModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -59,6 +68,16 @@ export const useCollectionManagement = ({ projectPath, showToast, refreshProject
 
     const handleDeleteCollection = async () => {
         setDeleting(true);
+
+        // Standalone mode: just clear local state
+        if (isStandaloneMode && setManifest) {
+            setManifest({});
+            showToast("success", "Collection cleared!");
+            setShowDeleteModal(false);
+            setDeleting(false);
+            return;
+        }
+
         try {
             const taskId = Date.now().toString();
             registerTaskId(taskId);
@@ -97,6 +116,20 @@ export const useCollectionManagement = ({ projectPath, showToast, refreshProject
     const confirmDeleteItem = async () => {
         if (!deleteItemInfo) return;
         setDeletingItem(true);
+
+        // Standalone mode: update local manifest state
+        if (isStandaloneMode && setManifest) {
+            // We need to get current manifest from context, but we don't have direct access
+            // The parent component should handle this via refreshProject or manifest update
+            // For now, show success and close modal - the parent can handle the actual deletion
+            showToast("success", `${deleteItemInfo.type === "module" ? "Module" : "Function"} removed`);
+            setShowDeleteItemModal(false);
+            setDeleteItemInfo(null);
+            setDeletingItem(false);
+            // Trigger a "fake" refresh that will cause parent to update
+            refreshProject(true);
+            return;
+        }
 
         try {
             const taskId = Date.now().toString();

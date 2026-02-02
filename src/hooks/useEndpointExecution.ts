@@ -10,6 +10,7 @@ interface UseEndpointExecutionProps {
     apiManifest: any;
     showToast: (type: "success" | "error", message: string) => void;
     authToken?: string;
+    isStandaloneMode?: boolean;
 }
 
 type ParamsState = {
@@ -26,7 +27,7 @@ type InputModeState = {
     [key: string]: InputMode;
 };
 
-export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, authToken }: UseEndpointExecutionProps) => {
+export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, authToken, isStandaloneMode = false }: UseEndpointExecutionProps) => {
     const [selectedEndpoint, setSelectedEndpoint] = useState<EndpointInfo | null>(null);
     const [params, setParams] = useState<ParamsState>({});
     const [rawPayloads, setRawPayloads] = useState<RawPayloadState>({});
@@ -38,6 +39,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
     const [interfacePreview, setInterfacePreview] = useState<string | null>(null);
     const [savingInterface, setSavingInterface] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [executedCurl, setExecutedCurl] = useState<string | null>(null);
 
     const tryParse = (value: any) => {
         // Don't try to parse File objects or non-strings
@@ -88,15 +90,16 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
     };
 
     const getComputedUrl = () => {
-        if (!selectedEndpoint || !projectConfig || !apiManifest) return "";
+        if (!selectedEndpoint || !projectConfig) return "";
         const { apiKey, fnName } = selectedEndpoint;
-        const endpointDef = apiManifest[apiKey]?.[fnName];
+        const endpointDef = apiManifest?.[apiKey]?.[fnName];
 
-        if (!endpointDef) return "";
-
-        const clientName = endpointDef.client || "BASE_CLIENT";
+        const clientName = endpointDef?.client || "BASE_CLIENT";
         const clientBase = projectConfig.clients?.[clientName] || projectConfig.baseURL;
-        const path = endpointDef.url || "";
+        // Fallback to selectedEndpoint.url if endpointDef doesn't have the url
+        const path = endpointDef?.url || selectedEndpoint.url || "";
+
+        console.log("[Execution] Computed:", { clientName, clientBase, path, full: `${clientBase}${path}` });
 
         return `${clientBase}${path}`;
     };
@@ -225,11 +228,48 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
                 // Don't set Content-Type for FormData - browser will set it with boundary
             }
 
+            // FormData cannot be sent through the JSON proxy - show helpful error in standalone mode
+            const isFormDataRequest = requestData instanceof FormData;
+            if (isStandaloneMode && isFormDataRequest) {
+                throw new Error("File uploads are not supported in standalone mode. Please connect to the bridge to test multipart/form-data requests.");
+            }
+
+            // --- Generate Snapshot Curl ---
+            let curlCmd = `curl -X '${method.toUpperCase()}' \\\n  '${requestUrl}'`;
+            const curlHeaders: string[] = [];
+
+            if (headers) {
+                Object.entries(headers).forEach(([k, v]) => {
+                    curlHeaders.push(`  -H '${k}: ${v}'`);
+                });
+            }
+            // Always add accept header if not present (logic implies it might not be in 'headers' var but api adds it? api service usually adds it. 
+            // In getGeneratedCurl we force added it. Let's force add it here for consistency if headers doesn't have it.
+            // Actually, headers var is init with Auth only. Content-Type is distinct.
+            if (!curlHeaders.some(h => h.toLowerCase().includes('accept:'))) {
+                curlHeaders.push("  -H 'accept: application/json'");
+            }
+
+            // Handle Body
+            if (requestData && Object.keys(requestData).length > 0 && !isFormDataRequest) { // Simple JSON body
+                curlHeaders.push("  -H 'Content-Type: application/json'");
+                curlCmd += ` \\\n${curlHeaders.join(" \\\n")}`;
+                const jsonData = JSON.stringify(requestData, null, 2);
+                curlCmd += ` \\\n  -d '${jsonData}'`;
+            } else {
+                if (curlHeaders.length > 0) {
+                    curlCmd += ` \\\n${curlHeaders.join(" \\\n")}`;
+                }
+            }
+            setExecutedCurl(curlCmd);
+            // -----------------------------
+
             const execRes: any = await api.executeRequest({
                 url: requestUrl,
                 method,
                 data: requestData,
-                headers
+                headers,
+                useProxy: isStandaloneMode && !isFormDataRequest // Use proxy for non-FormData requests in standalone mode
             });
 
             if (!execRes.success) {
@@ -328,6 +368,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
         setResult(null);
         setError(null);
         setInterfacePreview(null);
+        setExecutedCurl(null);
     }
 
     // Reset result when endpoint changes
@@ -352,6 +393,9 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
         isSubmitDisabled,
         handleCopy,
         getComputedUrl,
+        // generatedCurl replaced by executedCurl
+        generatedCurl: executedCurl || "",
+        getGeneratedCurl: () => executedCurl || "", // Backward compat if needed or just replace usage
         // Raw payload mode
         rawPayload: getCurrentRawPayload(),
         inputMode: getCurrentInputMode(),

@@ -1,0 +1,52 @@
+.curlSection {
+    background: var(--card-bg, linear-gradient(135deg, #fafbfc 0%, #ffffff 100%));
+    border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.curlHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    background: var(--hover-bg, linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%));
+}
+
+.curlTitle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-primary, #475569);
+    margin: 0;
+}
+
+.curlIcon {
+    color: #6366f1;
+    width: 16px;
+    height: 16px;
+}
+
+.editorWrapper {
+    background: var(--card-bg, #ffffff);
+}
+
+.curlContent {
+    margin: 0;
+    padding: 1rem;
+    overflow-x: auto;
+    font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: var(--text-primary, #1e293b);
+    white-space: pre;
+    /* Keep 'pre' for curl commands to preserve newlines/formatting */
+}

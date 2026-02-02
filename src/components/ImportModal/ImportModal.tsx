@@ -28,6 +28,9 @@ interface ImportModalProps {
   resumeTaskId?: string | null;
   clientMappings?: Record<string, string>;
   onError: (message: string) => void;
+  isStandaloneMode?: boolean;
+  onManifestUpdate?: (manifest: any) => void;
+  onConfigUpdate?: (config: any) => void;
 }
 
 
@@ -42,9 +45,11 @@ const ImportModal: React.FC<ImportModalProps> = ({
   progressMessage,
   resumeTaskId,
   onSuccess,
-
   clientMappings,
-  onError
+  onError,
+  isStandaloneMode = false,
+  onManifestUpdate,
+  onConfigUpdate
 }) => {
   // State for Diffs
   const [diffs, setDiffs] = useState<DiffResult[]>([]);
@@ -95,7 +100,10 @@ const ImportModal: React.FC<ImportModalProps> = ({
     setDiffs,
     setSelectedModules,
     setSelectedFunctions,
-    forceOverwriteFunctions
+    forceOverwriteFunctions,
+    isStandaloneMode,
+    onManifestUpdate,
+    onConfigUpdate
   });
 
   // Effect: Initialize from props

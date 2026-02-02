@@ -7,11 +7,16 @@ import { api } from '../services/api';
 interface ProjectContextType {
   manifest: any;
   modules: any[];
-  config: any; // New field
+  config: any;
   projectPath: string;
   loading: boolean;
   error: string | null;
+  isStandaloneMode: boolean;
   refreshProject: (silent?: boolean) => Promise<void>;
+  // State setters for standalone mode
+  setManifest: (manifest: any) => void;
+  setConfig: (config: any) => void;
+  setModules: (modules: any[]) => void;
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
@@ -19,10 +24,11 @@ const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [manifest, setManifest] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
-  const [config, setConfig] = useState<any>(null); // New state
+  const [config, setConfig] = useState<any>(null);
   const [projectPath, setProjectPath] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isStandaloneMode, setIsStandaloneMode] = useState(false);
 
   const fetchProjectData = async (silent = false) => {
     try {
@@ -32,14 +38,19 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       const realTargetDir = bridgeStatus?.targetDir;
 
       if (!realTargetDir) {
-        const errorMsg = "CRITICAL: CLI Bridge not connected. Cannot determine Target Directory. Please ensure the CLI is running.";
-        setError(errorMsg);
-        console.error(errorMsg);
-        return; // HALT. Do not proceed to fetch manifest.
+        // No bridge connected - enter standalone mode instead of erroring
+        console.info("[ProjectContext] Bridge not connected, entering standalone mode");
+        setIsStandaloneMode(true);
+        setManifest({});
+        setModules([]);
+        setConfig({ baseURL: "" });
+        setProjectPath("");
+        setError(null);
+        return;
       }
 
-      setProjectPath(realTargetDir);
-
+      // Bridge is connected - exit standalone mode
+      setIsStandaloneMode(false);
       setProjectPath(realTargetDir);
 
       // Bridge is Active
@@ -58,7 +69,12 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       setError(null);
     } catch (err: any) {
       console.error("Failed to load project:", err);
-      setError(err.message || "Failed to load project configuration");
+      // On error, also enter standalone mode
+      setIsStandaloneMode(true);
+      setManifest({});
+      setModules([]);
+      setConfig({ baseURL: "" });
+      setError(null);
     } finally {
       setLoading(false);
     }
@@ -69,7 +85,19 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   }, []);
 
   return (
-    <ProjectContext.Provider value={{ manifest, modules, config, projectPath, loading, error, refreshProject: fetchProjectData }}>
+    <ProjectContext.Provider value={{
+      manifest,
+      modules,
+      config,
+      projectPath,
+      loading,
+      error,
+      isStandaloneMode,
+      refreshProject: fetchProjectData,
+      setManifest,
+      setConfig,
+      setModules
+    }}>
       {children}
     </ProjectContext.Provider>
   );

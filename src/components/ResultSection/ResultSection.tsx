@@ -26,6 +26,7 @@ interface ResultSectionProps {
   interfacePreview: string | null;
   onUpdateInterface: () => void;
   updatingInterface: boolean;
+  isStandaloneMode?: boolean;
 }
 
 const ResultSection: React.FC<ResultSectionProps> = ({
@@ -36,8 +37,18 @@ const ResultSection: React.FC<ResultSectionProps> = ({
   interfacePreview,
   onUpdateInterface,
   updatingInterface,
+  isStandaloneMode = false,
 }) => {
   const { viewPreference, setViewPreference } = useSettings();
+  const [interfaceCopied, setInterfaceCopied] = React.useState(false);
+
+  const handleCopyInterface = () => {
+    if (interfacePreview) {
+      navigator.clipboard.writeText(interfacePreview);
+      setInterfaceCopied(true);
+      setTimeout(() => setInterfaceCopied(false), 2000);
+    }
+  };
 
   const formatResult = (data: any): string => {
     switch (viewPreference) {
@@ -129,14 +140,14 @@ const ResultSection: React.FC<ResultSectionProps> = ({
               </strong>
               {interfacePreview && (
                 <Button
-                  onClick={onUpdateInterface}
+                  onClick={isStandaloneMode ? handleCopyInterface : onUpdateInterface}
                   disabled={updatingInterface}
                   isLoading={updatingInterface}
-                  variant="primary"
+                  variant={isStandaloneMode ? "secondary" : "primary"}
                   size="sm"
                   className={styles.updateButton}
                 >
-                  Save Interface
+                  {isStandaloneMode ? (interfaceCopied ? "✓ Copied" : "Copy") : "Save Interface"}
                 </Button>
               )}
             </div>

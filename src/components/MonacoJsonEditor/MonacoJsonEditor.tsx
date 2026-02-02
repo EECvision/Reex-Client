@@ -10,7 +10,7 @@ interface MonacoJsonEditorProps {
     readOnly?: boolean;
     height?: string | number;
     minHeight?: string | number;
-    language?: "json" | "typescript";
+    language?: string;
 }
 
 const MonacoJsonEditor: React.FC<MonacoJsonEditorProps> = ({

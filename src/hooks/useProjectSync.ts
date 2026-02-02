@@ -8,9 +8,10 @@ interface UseProjectSyncProps {
     refreshProject: (force?: boolean) => void;
     onImportTaskComplete?: () => void;
     onSyncComplete?: () => void;
+    isStandaloneMode?: boolean;
 }
 
-export const useProjectSync = ({ showToast, refreshProject, onImportTaskComplete, onSyncComplete }: UseProjectSyncProps) => {
+export const useProjectSync = ({ showToast, refreshProject, onImportTaskComplete, onSyncComplete, isStandaloneMode = false }: UseProjectSyncProps) => {
     const [backgroundTasks, setBackgroundTasks] = useState<BackgroundTask[]>([]);
     const [activeTaskMessage, setActiveTaskMessage] = useState<string>("");
     const [importTaskComplete, setImportTaskComplete] = useState(false);
@@ -57,8 +58,14 @@ export const useProjectSync = ({ showToast, refreshProject, onImportTaskComplete
         }
     }, []);
 
-    // SSE Listener
+    // SSE Listener - Skip in standalone mode
     useEffect(() => {
+        // Don't connect to SSE in standalone mode
+        if (isStandaloneMode) {
+            console.log("[SSE] Skipping connection - standalone mode");
+            return;
+        }
+
         const bridgeUrl = api.getBridgeUrl();
         console.log("[SSE] Connecting to:", bridgeUrl);
         const eventSource = api.getEventSource(bridgeUrl);
@@ -170,7 +177,8 @@ export const useProjectSync = ({ showToast, refreshProject, onImportTaskComplete
         return () => {
             eventSource.close();
         };
-    }, []); // Empty dependency array as we want this to run once on mount
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isStandaloneMode]); // Re-run only if standalone mode changes
 
     return {
         backgroundTasks,

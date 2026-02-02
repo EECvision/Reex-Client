@@ -20,6 +20,7 @@ interface NavbarProps {
   collectionName?: string;
   authToken?: string;
   onAuthTokenChange?: (token: string) => void;
+  isStandaloneMode?: boolean;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -34,7 +35,8 @@ const Navbar: React.FC<NavbarProps> = ({
   projectPath,
   collectionName,
   authToken,
-  onAuthTokenChange
+  onAuthTokenChange,
+  isStandaloneMode = false
 }) => {
   const [url, setUrl] = React.useState(() => localStorage.getItem("docs_url") || "");
   const [isFetchOpen, setIsFetchOpen] = React.useState(false);
@@ -107,10 +109,17 @@ const Navbar: React.FC<NavbarProps> = ({
     <nav className={styles.navbar}>
       <div className={styles.leftSection}>
         {/* Project Context - Unique Design */}
-        <div className={styles.projectContainer} title={projectPath}>
-          <Folder size={18} className={styles.projectIcon} strokeWidth={2} />
-          <span>{formatProjectPath(projectPath)}</span>
-        </div>
+        {isStandaloneMode ? (
+          <div className={styles.projectContainer} title="Not connected to a project">
+            <Folder size={18} className={styles.projectIcon} strokeWidth={2} />
+            <span style={{ color: '#f59e0b' }}>Standalone Mode</span>
+          </div>
+        ) : (
+          <div className={styles.projectContainer} title={projectPath}>
+            <Folder size={18} className={styles.projectIcon} strokeWidth={2} />
+            <span>{formatProjectPath(projectPath)}</span>
+          </div>
+        )}
 
         {hasCollection && collectionName && (
           <BadgeGroup
@@ -224,8 +233,9 @@ const Navbar: React.FC<NavbarProps> = ({
           Import
         </Button>
 
+        {/* Generate button - only show when connected to bridge */}
         {
-          onGenerateClick && (
+          onGenerateClick && !isStandaloneMode && (
             <Button variant="ghost" onClick={onGenerateClick} leftIcon={<Plus size={16} />}>
               Generate
             </Button>

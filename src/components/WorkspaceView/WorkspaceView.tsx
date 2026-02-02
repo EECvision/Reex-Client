@@ -1,4 +1,6 @@
 import React from "react";
+// dynamic removed
+// Button removed
 import QuerySection from "../QuerySection/QuerySection";
 import ResultSection from "../ResultSection/ResultSection";
 import EmptyState from "../EmptyState/EmptyState";
@@ -6,6 +8,10 @@ import styles from "./WorkspaceView.module.css";
 import { EndpointInfo } from "@/types";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
 import { Lock } from "lucide-react";
+import CurlSection from "../CurlSection/CurlSection";
+
+// Dynamic import for Monaco
+// Monaco definition removed
 
 type InputMode = "form" | "raw";
 
@@ -33,6 +39,8 @@ interface WorkspaceViewProps {
     inputMode?: InputMode;
     onRawPayloadChange?: (value: string) => void;
     onInputModeChange?: (mode: InputMode) => void;
+    generatedCurl?: string;
+    isStandaloneMode?: boolean;
 }
 
 const WorkspaceView: React.FC<WorkspaceViewProps> = ({
@@ -58,6 +66,8 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
     inputMode,
     onRawPayloadChange,
     onInputModeChange,
+    generatedCurl,
+    isStandaloneMode,
 }) => {
 
     const getMethodColor = (m?: string) => {
@@ -105,6 +115,14 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
                         onRawPayloadChange={onRawPayloadChange}
                         onInputModeChange={onInputModeChange}
                     />
+
+                    {isStandaloneMode && generatedCurl && (
+                        <div>
+                            <div>Can show curl</div>
+                            <CurlSection curlCommand={generatedCurl} />
+                        </div>
+                    )}
+
                     <ResultSection
                         result={result}
                         error={error}
@@ -113,6 +131,7 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
                         onUpdateInterface={onUpdateInterface}
                         onCopy={onCopy}
                         copied={copied}
+                        isStandaloneMode={isStandaloneMode}
                     />
                 </>
             ) : (

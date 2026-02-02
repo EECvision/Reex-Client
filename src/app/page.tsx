@@ -22,7 +22,17 @@ import { useEndpointExecution } from "@/hooks/useEndpointExecution";
 
 const App = () => {
   // Project Context
-  const { manifest: apiManifest, loading: projectLoading, error: projectError, refreshProject, projectPath, config: projectConfig } = useProject();
+  const {
+    manifest: apiManifest,
+    loading: projectLoading,
+    error: projectError,
+    refreshProject,
+    projectPath,
+    config: projectConfig,
+    isStandaloneMode,
+    setManifest,
+    setConfig
+  } = useProject();
 
   // Custom Hooks
   const { toasts, showToast, dismissToast } = useToast();
@@ -37,7 +47,8 @@ const App = () => {
     activeTaskId
   } = useProjectSync({
     showToast,
-    refreshProject
+    refreshProject,
+    isStandaloneMode
   });
 
   const {
@@ -59,7 +70,9 @@ const App = () => {
     projectPath,
     showToast,
     refreshProject,
-    registerTaskId // Link async ops to sync tracker
+    registerTaskId,
+    isStandaloneMode,
+    setManifest
   });
 
   // Auth Token State
@@ -99,11 +112,13 @@ const App = () => {
     inputMode,
     handleRawPayloadChange,
     handleInputModeChange,
+    getGeneratedCurl,
   } = useEndpointExecution({
     projectConfig,
     apiManifest,
     showToast,
-    authToken // Pass token to hook
+    authToken, // Pass token to hook
+    isStandaloneMode // Use proxy for API calls in standalone mode
   });
 
   // Reset selected endpoint if manifest becomes empty
@@ -126,9 +141,7 @@ const App = () => {
     );
   }
 
-  if (projectError) {
-    return <div className={styles.container}><div className={styles.main}>Error loading project: {projectError}</div></div>;
-  }
+  // Note: projectError is no longer blocking - standalone mode handles missing bridge
 
   return (
     <div className={styles.container}>
@@ -168,6 +181,7 @@ const App = () => {
           collectionName={projectConfig?.collectionName}
           authToken={authToken}
           onAuthTokenChange={setAuthToken}
+          isStandaloneMode={isStandaloneMode}
         />
 
         {showImportModal && (
@@ -188,6 +202,9 @@ const App = () => {
             progressMessage={activeTaskMessage}
             resumeTaskId={activeTaskId}
             clientMappings={projectConfig?.clientPrefixes}
+            isStandaloneMode={isStandaloneMode}
+            onManifestUpdate={setManifest}
+            onConfigUpdate={setConfig}
           />
         )}
 
@@ -258,6 +275,8 @@ const App = () => {
           inputMode={inputMode}
           onRawPayloadChange={handleRawPayloadChange}
           onInputModeChange={handleInputModeChange}
+          generatedCurl={getGeneratedCurl()}
+          isStandaloneMode={isStandaloneMode}
         />
       </div>
     </div>

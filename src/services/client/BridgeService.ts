@@ -43,9 +43,19 @@ export const BridgeService = {
     },
 
     // Execution could be viewed as separate, but often runs client-side making request
-    executeRequest: async (config: { url: string; method: string; data?: any; headers?: any }) => {
+    executeRequest: async (config: { url: string; method: string; data?: any; headers?: any; useProxy?: boolean }) => {
         try {
-            const { url, method, data, headers } = config;
+            const { url, method, data, headers, useProxy } = config;
+
+            // Use proxy for standalone mode to bypass CORS
+            if (useProxy) {
+                const proxyRes = await fetch('/api/cors-proxy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, method, data, headers })
+                });
+                return proxyRes.json();
+            }
 
             const isFormData = data instanceof FormData;
 

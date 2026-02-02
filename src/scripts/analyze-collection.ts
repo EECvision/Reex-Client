@@ -14,6 +14,7 @@ interface FunctionDiff {
     status: "new" | "modified" | "deleted" | "unchanged" | "disabled";
     oldContent?: string;
     newContent?: string;
+    args?: any[];
 }
 
 interface AnalysisResult {
@@ -104,7 +105,7 @@ const getReferencedDefs = (text: string, allTypes: Map<string, string>): string 
 };
 
 const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
-    const functions = new Map<string, { content: string, disabled: boolean }>();
+    const functions = new Map<string, { content: string, disabled: boolean, args: any[] }>();
 
     // Extract all local types to check for dependencies
     const allTypes = getAllTypes(sourceFile);
@@ -129,17 +130,79 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
             // Resolve any types used by this function
             const dependencyDefs = getReferencedDefs(functionBody, allTypes);
 
-            // Combine function body and its dependencies for comparison
-            // We append dependencies so that logic changes in the function are prioritized visually if we were to diff
-            // but here we just normalization & equality check.
-            const fullContent = functionBody + "\n" + dependencyDefs;
+            // Check for write-disable leading comment and capture JSDoc comments
+            const ranges = assignment.getLeadingCommentRanges ? assignment.getLeadingCommentRanges() : [];
+            let disabled = false;
+            let leadingComments = "";
 
-            // Check for write-disable leading comment
-            const ranges = assignment.getLeadingCommentRanges ? assignment.getLeadingCommentRanges() : []; // Safe access
             // ts-morph PropertyAssignment has getLeadingCommentRanges
-            const disabled = ranges.some((r: any) => r.getText().includes("/* write-disable */"));
+            for (const r of ranges) {
+                const commentText = r.getText();
+                if (commentText.includes("/* write-disable */")) {
+                    disabled = true;
+                }
+                // Capture all JSDoc comments (for @auth, @contentType, etc.)
+                leadingComments += commentText + "\n";
+            }
 
-            functions.set(name, { content: fullContent, disabled });
+            // Extract Args
+            const args: any[] = [];
+            const func = assignment.getInitializer();
+            if (func && (func.getKind() === SyntaxKind.ArrowFunction || func.getKind() === SyntaxKind.FunctionExpression)) {
+                const callSig = func as any;
+                callSig.getParameters().forEach((p: any) => {
+                    const paramName = p.getName();
+                    const isOptional = p.isOptional();
+                    const typeNode = p.getTypeNode();
+                    const arg: any = { name: paramName, isOptional };
+
+                    if (typeNode) {
+                        if (typeNode.getKind() === SyntaxKind.TypeLiteral) {
+                            arg.isObject = true;
+                            arg.properties = [];
+                            typeNode.getMembers().forEach((m: any) => {
+                                if (m.getKind() === SyntaxKind.PropertySignature) {
+                                    arg.properties.push({
+                                        name: m.getName(),
+                                        isOptional: m.hasQuestionToken()
+                                    });
+                                }
+                            });
+                        } else if (typeNode.getKind() === SyntaxKind.TypeReference) {
+                            // Attempt to resolve the type using the TypeChecker
+                            try {
+                                const type = typeNode.getType();
+                                if (type.isObject()) {
+                                    arg.isObject = true;
+                                    arg.properties = [];
+                                    const props = type.getProperties();
+                                    props.forEach((prop: any) => {
+                                        const declaration = prop.getValueDeclaration();
+                                        const isOptional = declaration
+                                            ? (declaration as any).hasQuestionToken?.()
+                                            : false;
+
+                                        arg.properties.push({
+                                            name: prop.getName(),
+                                            isOptional: isOptional
+                                        });
+                                    });
+                                }
+                            } catch (e) {
+                                // Fallback or ignore if type resolution fails
+                                // console.warn("Could not resolve type for", paramName);
+                            }
+                        }
+                    }
+                    args.push(arg);
+                });
+            }
+
+            // Combine JSDoc comments, function body and its dependencies
+            // Include leading comments so @auth and @contentType can be parsed
+            const fullContent = leadingComments + functionBody + "\n" + dependencyDefs;
+
+            functions.set(name, { content: fullContent, disabled, args });
         }
     });
 
@@ -197,18 +260,27 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
         const project = new Project({ useInMemoryFileSystem: true });
 
         // Check for New, Modified, Unchanged
+        // Pre-load all modules into project to allow type resolution across files
+        for (const mod of newModules) {
+            // Use a virtual path. We assume flat structure for resolution simplicity in this context
+            // or we'd need the real file paths. Most generators used here output to flat dir or known structure.
+            project.createSourceFile(`${mod.name}.ts`, mod.content, { overwrite: true });
+        }
+
         for (const mod of newModules) {
             const existingContent = existingModules.get(mod.name);
 
             if (!existingContent) {
                 // For new modules, extract functions from the new content
-                const sourceFileNew = project.createSourceFile(`${mod.name}_new.ts`, mod.content, { overwrite: true });
+                // It's already in the project, retrieve it
+                const sourceFileNew = project.getSourceFileOrThrow(`${mod.name}.ts`);
                 const newFuncs = getFunctionsFromModule(sourceFileNew, mod.name);
 
                 const functionDiffs: FunctionDiff[] = [];
                 for (const [name, _] of newFuncs) {
                     const formattedNew = await formatCode(newFuncs.get(name)!.content);
-                    functionDiffs.push({ name, status: "new", newContent: formattedNew });
+                    const args = newFuncs.get(name)!.args;
+                    functionDiffs.push({ name, status: "new", newContent: formattedNew, args });
                 }
 
                 analysis.push({
@@ -248,13 +320,13 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
                             if (!existingData) {
                                 // New function - format it
                                 const formattedNew = await formatCode(newBody);
-                                functionDiffs.push({ name, status: "new", newContent: formattedNew });
+                                functionDiffs.push({ name, status: "new", newContent: formattedNew, args: newData.args });
                             } else {
                                 const { content: existingBody, disabled } = existingData;
                                 if (disabled) {
                                     const formattedOld = await formatCode(existingBody);
                                     const formattedNew = await formatCode(newBody);
-                                    functionDiffs.push({ name, status: "disabled", oldContent: formattedOld, newContent: formattedNew });
+                                    functionDiffs.push({ name, status: "disabled", oldContent: formattedOld, newContent: formattedNew, args: newData.args });
                                     processedExisting.add(name);
                                 } else if (normalize(existingBody) !== normalize(newBody)) {
                                     // It is modified based on normalization
@@ -264,19 +336,20 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
 
                                     // Safety check: if formatted versions are identical, mark as unchanged
                                     if (formattedOld === formattedNew) {
-                                        functionDiffs.push({ name, status: "unchanged" });
+                                        functionDiffs.push({ name, status: "unchanged", args: newData.args });
                                         processedExisting.add(name);
                                     } else {
                                         functionDiffs.push({
                                             name,
                                             status: "modified",
                                             oldContent: formattedOld,
-                                            newContent: formattedNew
+                                            newContent: formattedNew,
+                                            args: newData.args
                                         });
                                         processedExisting.add(name);
                                     }
                                 } else {
-                                    functionDiffs.push({ name, status: "unchanged" });
+                                    functionDiffs.push({ name, status: "unchanged", args: newData.args });
                                     processedExisting.add(name);
                                 }
                             }
@@ -318,9 +391,9 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
                         const functionDiffs: FunctionDiff[] = [];
                         existingFuncs.forEach((data, name) => {
                             if (data.disabled) {
-                                functionDiffs.push({ name, status: "disabled" });
+                                functionDiffs.push({ name, status: "disabled", args: data.args });
                             } else {
-                                functionDiffs.push({ name, status: "unchanged" });
+                                functionDiffs.push({ name, status: "unchanged", args: data.args });
                             }
                         });
 

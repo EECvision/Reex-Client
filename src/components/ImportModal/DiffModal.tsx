@@ -8,6 +8,7 @@ export interface FunctionDiff {
     status: "new" | "modified" | "deleted" | "unchanged" | "disabled";
     oldContent?: string;
     newContent?: string;
+    args?: any[];
 }
 
 interface DiffModalProps {
