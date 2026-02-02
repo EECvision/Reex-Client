@@ -21,6 +21,8 @@ interface ProjectContextType {
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
+const STANDALONE_STORAGE_KEY = "api_builder_standalone_data";
+
 export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [manifest, setManifest] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
@@ -41,9 +43,28 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         // No bridge connected - enter standalone mode instead of erroring
         console.info("[ProjectContext] Bridge not connected, entering standalone mode");
         setIsStandaloneMode(true);
-        setManifest({});
-        setModules([]);
-        setConfig({ baseURL: "" });
+
+        // Try to load from local storage
+        try {
+          const stored = localStorage.getItem(STANDALONE_STORAGE_KEY);
+          if (stored) {
+            const { manifest: storedManifest, config: storedConfig, modules: storedModules } = JSON.parse(stored);
+            setManifest(storedManifest || {});
+            setModules(storedModules || []);
+            setConfig(storedConfig || { baseURL: "" });
+            console.log("[ProjectContext] Loaded standalone data from storage");
+          } else {
+            setManifest({});
+            setModules([]);
+            setConfig({ baseURL: "" });
+          }
+        } catch (e) {
+          console.error("Failed to load standalone data", e);
+          setManifest({});
+          setModules([]);
+          setConfig({ baseURL: "" });
+        }
+
         setProjectPath("");
         setError(null);
         return;
@@ -83,6 +104,22 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   useEffect(() => {
     fetchProjectData();
   }, []);
+
+  // Persist standalone data
+  useEffect(() => {
+    if (isStandaloneMode && manifest !== null) {
+      try {
+        const data = {
+          manifest,
+          modules,
+          config
+        };
+        localStorage.setItem(STANDALONE_STORAGE_KEY, JSON.stringify(data));
+      } catch (e) {
+        console.error("Failed to save standalone data", e);
+      }
+    }
+  }, [manifest, modules, config, isStandaloneMode]);
 
   return (
     <ProjectContext.Provider value={{
