@@ -7,7 +7,7 @@ import { Project, SyntaxKind, PropertyAssignment } from "ts-morph";
 const { API_DEFINITIONS_DIR } = require("../paths");
 import { generateOpenApi } from "./generate-openapi-collection";
 import { generatePostman } from "./generate-postman-collection";
-import { extractBaseUrl } from "./generator-utils";
+import { extractBaseUrl, extractCollectionName } from "./generator-utils";
 
 interface FunctionDiff {
     name: string;
@@ -151,7 +151,9 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
     try {
         const specData = JSON.parse(specContent);
         const baseUrl = extractBaseUrl(specData);
+        const collectionName = extractCollectionName(specData);
         console.log("[ANALYZE] Extracted baseURL from spec:", baseUrl);
+        console.log("[ANALYZE] Extracted collectionName from spec:", collectionName);
 
         // 1. Generate new code in-memory (Dry Run)
         // rawModules now contains proposedClient info
@@ -340,7 +342,7 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
         });
 
         // Return result
-        return { diffs: analysis, proposedClients, baseUrl };
+        return { diffs: analysis, proposedClients, baseUrl, collectionName };
 
     } catch (error) {
         console.error("Analysis failed:", error);

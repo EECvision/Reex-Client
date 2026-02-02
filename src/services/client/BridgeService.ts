@@ -12,7 +12,7 @@ export const BridgeService = {
         return res.json();
     },
 
-    updateProjectConfig: async (config: { baseUrl?: string; clients?: Record<string, string> }) => {
+    updateProjectConfig: async (config: { baseUrl?: string; clients?: Record<string, string>; collectionName?: string }) => {
         const url = getLocalUrl();
         const res = await fetch(`${url}/api/project/config/update`, {
             method: 'POST',

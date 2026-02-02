@@ -28,6 +28,7 @@ export const useImportActions = ({
     const [step, setStep] = useState<ImportStep>("upload");
     const [proposedClients, setProposedClients] = useState<Record<string, string> | undefined>(undefined);
     const [baseUrl, setBaseUrl] = useState<string | undefined>(undefined);
+    const [collectionName, setCollectionName] = useState<string | undefined>(undefined);
 
     const startAnalysis = async (clientMappings?: Record<string, string>) => {
         if (!selectedFile) return;
@@ -50,6 +51,7 @@ export const useImportActions = ({
                 diffs = responseData.diffs;
                 proposedClients = responseData.proposedClients;
                 setBaseUrl(responseData.baseUrl);
+                setCollectionName(responseData.collectionName);
             }
 
             setDiffs(diffs);
@@ -152,11 +154,12 @@ export const useImportActions = ({
             const finalClients = responseProposedClients || proposedClients;
             const finalBaseUrl = proposedBaseUrl || baseUrl;
 
-            if (finalBaseUrl || (finalClients && Object.keys(finalClients).length > 0)) {
+            if (finalBaseUrl || (finalClients && Object.keys(finalClients).length > 0) || res.data?.collectionName) {
                 try {
                     await api.updateProjectConfig({
                         baseUrl: finalBaseUrl,
-                        clients: finalClients
+                        clients: finalClients,
+                        collectionName: res.data?.collectionName || collectionName
                     });
                 } catch (e) {
                     console.error("Config update failed:", e);

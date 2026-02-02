@@ -165,6 +165,7 @@ const App = () => {
           onGenerateClick={() => setShowGenerateModal(true)}
           baseURL={projectConfig?.baseURL}
           projectPath={projectPath}
+          collectionName={projectConfig?.collectionName}
           authToken={authToken}
           onAuthTokenChange={setAuthToken}
         />

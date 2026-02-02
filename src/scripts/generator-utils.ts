@@ -240,6 +240,22 @@ export const extractBaseUrl = (data: any): string | undefined => {
     return undefined;
 };
 
+export const extractCollectionName = (data: any): string | undefined => {
+    if (!data) return undefined;
+
+    // OpenAPI 3 / Swagger 2
+    if (data.info?.title) {
+        return data.info.title;
+    }
+
+    // Postman
+    if (data.info?.name) {
+        return data.info.name;
+    }
+
+    return undefined;
+};
+
 // --- AST / Analysis Helpers ---
 
 export const getExistingFunctions = (sourceFile: SourceFile, moduleName: string): Map<string, string> => {
@@ -283,7 +299,7 @@ export const mergePreservedFunctions = (
             if (prop) {
                 prop.replaceWithText(funcText);
             } else {
-                initializer.addMember(funcText);
+                initializer.addProperty(funcText);
             }
         } else {
             console.log(`⚡ Force Overwrite applied for: ${funcName}`);

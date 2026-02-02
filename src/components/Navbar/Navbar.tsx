@@ -17,6 +17,7 @@ interface NavbarProps {
   onGenerateClick?: () => void;
   baseURL?: string;
   projectPath?: string;
+  collectionName?: string;
   authToken?: string;
   onAuthTokenChange?: (token: string) => void;
 }
@@ -31,6 +32,7 @@ const Navbar: React.FC<NavbarProps> = ({
   onGenerateClick,
   baseURL,
   projectPath,
+  collectionName,
   authToken,
   onAuthTokenChange
 }) => {
@@ -109,6 +111,13 @@ const Navbar: React.FC<NavbarProps> = ({
           <Folder size={18} className={styles.projectIcon} strokeWidth={2} />
           <span>{formatProjectPath(projectPath)}</span>
         </div>
+
+        {hasCollection && collectionName && (
+          <BadgeGroup
+            label="Collection"
+            value={collectionName}
+          />
+        )}
 
         {hasCollection && baseURL && (
           <BadgeGroup
