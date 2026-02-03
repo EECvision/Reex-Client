@@ -12,6 +12,7 @@ interface SidebarControllerProps {
     onSelectEndpoint: (endpoint: EndpointInfo) => void;
     onDeleteModule: (moduleName: string) => void;
     onDeleteFunction: (moduleName: string, functionName: string) => void;
+    onDeleteCollection: (id: string) => void;
 }
 
 type ApiKey = string;
@@ -21,10 +22,12 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
     selectedEndpoint,
     onSelectEndpoint,
     onDeleteModule,
-    onDeleteFunction
+    onDeleteFunction,
+    onDeleteCollection,
 }) => {
     const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
     const [methodFilter, setMethodFilter] = useState<Methods>("ALL");
+
 
     const toggleFolder = (apiKey: string) => {
         setExpandedFolders((prev) => {
@@ -77,11 +80,55 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
         }, {} as Record<string, EndpointInfo[]>);
     }, [endpoints]);
 
-    const { isStandaloneMode, config } = useProject();
+    const { isStandaloneMode, config, collections } = useProject();
+
+    const collectionGroups = useMemo(() => {
+        const groups: Record<string, { id: string, name: string, modules: Record<string, EndpointInfo[]> }> = {};
+
+        // Initialize collections
+        if (isStandaloneMode && collections.length > 0) {
+            collections.forEach(c => {
+                groups[c.id] = { id: c.id, name: c.name, modules: {} };
+            });
+        } else {
+            // Default/Bridge mode
+            groups['default'] = { id: 'default', name: config?.collectionName || 'Collection', modules: {} };
+        }
+
+        endpoints.forEach(ep => {
+            let colId = 'default';
+            let modName = ep.apiKey;
+
+            if (ep.apiKey.startsWith('col_')) {
+                const parts = ep.apiKey.split('__');
+                if (parts.length > 1) {
+                    colId = parts[0].replace('col_', '');
+                    modName = parts[1];
+                }
+            }
+
+            // If collection exists (it should), add module
+            if (groups[colId]) {
+                if (!groups[colId].modules[modName]) {
+                    groups[colId].modules[modName] = [];
+                }
+                groups[colId].modules[modName].push(ep);
+            } else if (!isStandaloneMode) {
+                // Fallback for non-standalone if something weird happens, mostly 'default'
+                if (!groups['default'].modules[modName]) {
+                    groups['default'].modules[modName] = [];
+                }
+                groups['default'].modules[modName].push(ep);
+            }
+        });
+
+        return Object.values(groups);
+    }, [endpoints, isStandaloneMode, collections, config]);
 
     return (
         <Sidebar
-            groupedEndpoints={groupedEndpoints}
+            groupedEndpoints={{}} // Deprecated/Unused if collectionGroups provided
+            collectionGroups={collectionGroups}
             expandedFolders={expandedFolders}
             selectedEndpoint={selectedEndpoint}
             methodFilter={methodFilter}
@@ -90,7 +137,8 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
             setMethodFilter={setMethodFilter}
             onDeleteModule={isStandaloneMode ? undefined : onDeleteModule}
             onDeleteFunction={isStandaloneMode ? undefined : onDeleteFunction}
-            collectionName={config?.collectionName}
+            onDeleteCollection={isStandaloneMode ? onDeleteCollection : undefined}
+            collectionName={config?.collectionName} // Legacy
         />
     );
 };

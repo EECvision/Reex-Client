@@ -31,6 +31,7 @@ interface ImportModalProps {
   isStandaloneMode?: boolean;
   onManifestUpdate?: (manifest: any) => void;
   onConfigUpdate?: (config: any) => void;
+  addCollection?: (collection: any) => void;
 }
 
 
@@ -49,7 +50,8 @@ const ImportModal: React.FC<ImportModalProps> = ({
   onError,
   isStandaloneMode = false,
   onManifestUpdate,
-  onConfigUpdate
+  onConfigUpdate,
+  addCollection
 }) => {
   // State for Diffs
   const [diffs, setDiffs] = useState<DiffResult[]>([]);
@@ -103,7 +105,8 @@ const ImportModal: React.FC<ImportModalProps> = ({
     forceOverwriteFunctions,
     isStandaloneMode,
     onManifestUpdate,
-    onConfigUpdate
+    onConfigUpdate,
+    addCollection
   });
 
   // Effect: Initialize from props

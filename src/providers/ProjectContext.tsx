@@ -4,6 +4,14 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { api } from '../services/api';
 
+export interface StandaloneCollection {
+  id: string;
+  name: string;
+  manifest: any;
+  modules: any[];
+  config: any;
+}
+
 interface ProjectContextType {
   manifest: any;
   modules: any[];
@@ -17,6 +25,12 @@ interface ProjectContextType {
   setManifest: (manifest: any) => void;
   setConfig: (config: any) => void;
   setModules: (modules: any[]) => void;
+  // Multiple Collections Support
+  collections: StandaloneCollection[];
+  setCollections: (collections: StandaloneCollection[]) => void;
+  addCollection: (collection: StandaloneCollection) => void;
+  updateCollection: (id: string, updates: Partial<StandaloneCollection>) => void;
+  removeCollection: (id: string) => void;
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
@@ -32,6 +46,24 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [error, setError] = useState<string | null>(null);
   const [isStandaloneMode, setIsStandaloneMode] = useState(false);
 
+  const [collections, setCollections] = useState<StandaloneCollection[]>([]);
+
+  // Computed merged manifest
+  const mergedManifest = React.useMemo(() => {
+    if (!isStandaloneMode) return manifest;
+    // Merge logic
+    const merged: any = {};
+    collections.forEach(col => {
+      if (!col.manifest) return;
+      Object.keys(col.manifest).forEach(moduleName => {
+        // Namespace: col_{id}__{moduleName}
+        const newKey = `col_${col.id}__${moduleName}`;
+        merged[newKey] = col.manifest[moduleName];
+      });
+    });
+    return merged;
+  }, [manifest, collections, isStandaloneMode]);
+
   const fetchProjectData = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
@@ -40,7 +72,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       const realTargetDir = bridgeStatus?.targetDir;
 
       if (!realTargetDir) {
-        // No bridge connected - enter standalone mode instead of erroring
+        // No bridge connected - enter standalone mode
         console.info("[ProjectContext] Bridge not connected, entering standalone mode");
         setIsStandaloneMode(true);
 
@@ -48,21 +80,31 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         try {
           const stored = localStorage.getItem(STANDALONE_STORAGE_KEY);
           if (stored) {
-            const { manifest: storedManifest, config: storedConfig, modules: storedModules } = JSON.parse(stored);
-            setManifest(storedManifest || {});
-            setModules(storedModules || []);
-            setConfig(storedConfig || { baseURL: "" });
-            console.log("[ProjectContext] Loaded standalone data from storage");
+            const parsed = JSON.parse(stored);
+
+            // Check if it's new list format or old single object format
+            if (Array.isArray(parsed.collections)) {
+              setCollections(parsed.collections);
+            } else if (parsed.manifest) {
+              // Migration: Wrap old data
+              const defaultCol: StandaloneCollection = {
+                id: "default",
+                name: parsed.config?.collectionName || "Default Collection",
+                manifest: parsed.manifest,
+                modules: parsed.modules || [],
+                config: parsed.config || { baseURL: "" }
+              };
+              setCollections([defaultCol]);
+            } else {
+              setCollections([]);
+            }
+            console.log("[ProjectContext] Loaded standalone data");
           } else {
-            setManifest({});
-            setModules([]);
-            setConfig({ baseURL: "" });
+            setCollections([]);
           }
         } catch (e) {
           console.error("Failed to load standalone data", e);
-          setManifest({});
-          setModules([]);
-          setConfig({ baseURL: "" });
+          setCollections([]);
         }
 
         setProjectPath("");
@@ -70,14 +112,12 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         return;
       }
 
-      // Bridge is connected - exit standalone mode
+      // Bridge is connected
       setIsStandaloneMode(false);
       setProjectPath(realTargetDir);
 
-      // Bridge is Active
-      const bridgeUrl = api.getBridgeUrl();
-
       // Fetch Data from Bridge directly
+      const bridgeUrl = api.getBridgeUrl();
       const [manifestData, modulesData, configData] = await Promise.all([
         api.fetchProjectManifest(bridgeUrl),
         api.fetchProjectModules(bridgeUrl),
@@ -92,9 +132,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       console.error("Failed to load project:", err);
       // On error, also enter standalone mode
       setIsStandaloneMode(true);
-      setManifest({});
-      setModules([]);
-      setConfig({ baseURL: "" });
+      setCollections([]);
       setError(null);
     } finally {
       setLoading(false);
@@ -107,23 +145,33 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   // Persist standalone data
   useEffect(() => {
-    if (isStandaloneMode && manifest !== null) {
+    if (isStandaloneMode) {
       try {
         const data = {
-          manifest,
-          modules,
-          config
+          collections
         };
         localStorage.setItem(STANDALONE_STORAGE_KEY, JSON.stringify(data));
       } catch (e) {
         console.error("Failed to save standalone data", e);
       }
     }
-  }, [manifest, modules, config, isStandaloneMode]);
+  }, [collections, isStandaloneMode]);
+
+  const addCollection = (col: StandaloneCollection) => {
+    setCollections(prev => [...prev, col]);
+  };
+
+  const updateCollection = (id: string, updates: Partial<StandaloneCollection>) => {
+    setCollections(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+  };
+
+  const removeCollection = (id: string) => {
+    setCollections(prev => prev.filter(c => c.id !== id));
+  };
 
   return (
     <ProjectContext.Provider value={{
-      manifest,
+      manifest: isStandaloneMode ? mergedManifest : manifest,
       modules,
       config,
       projectPath,
@@ -133,7 +181,12 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       refreshProject: fetchProjectData,
       setManifest,
       setConfig,
-      setModules
+      setModules,
+      collections,
+      setCollections,
+      addCollection,
+      updateCollection,
+      removeCollection
     }}>
       {children}
     </ProjectContext.Provider>

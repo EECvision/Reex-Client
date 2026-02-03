@@ -16,6 +16,7 @@ interface UseImportActionsProps {
     isStandaloneMode?: boolean;
     onManifestUpdate?: (manifest: any) => void;
     onConfigUpdate?: (config: any) => void;
+    addCollection?: (collection: any) => void;
 }
 
 export const useImportActions = ({
@@ -30,7 +31,8 @@ export const useImportActions = ({
     forceOverwriteFunctions,
     isStandaloneMode = false,
     onManifestUpdate,
-    onConfigUpdate
+    onConfigUpdate,
+    addCollection
 }: UseImportActionsProps) => {
     const [step, setStep] = useState<ImportStep>("upload");
     const [proposedClients, setProposedClients] = useState<Record<string, string> | undefined>(undefined);
@@ -214,10 +216,6 @@ export const useImportActions = ({
             try {
                 const manifest = buildManifestFromDiffs(diffs, selectedModules, selectedFunctions);
 
-                if (onManifestUpdate) {
-                    onManifestUpdate(manifest);
-                }
-
                 const derivedClients: Record<string, string> = {};
                 if (proposedClients && baseUrl) {
                     Object.entries(proposedClients).forEach(([name, prefix]) => {
@@ -226,17 +224,35 @@ export const useImportActions = ({
                         derivedClients[name] = cleanBase + cleanPrefix;
                     });
                 }
-                console.log("[Standalone Import] BaseUrl:", baseUrl);
-                console.log("[Standalone Import] Proposed:", proposedClients);
-                console.log("[Standalone Import] Derived Clients:", derivedClients);
 
-                if (onConfigUpdate) {
-                    onConfigUpdate({
-                        baseURL: baseUrl || '',
-                        collectionName: collectionName || 'Imported Collection',
-                        clientPrefixes: proposedClients,
-                        clients: derivedClients
-                    });
+                if (addCollection) {
+                    // New Multi-Collection Flow
+                    const newCollection = {
+                        id: crypto.randomUUID(), // Or Date.now().toString() if crypto not avail
+                        name: collectionName || 'Imported Collection',
+                        manifest,
+                        modules: [], // Can generate modules list from manifest keys if needed by UI
+                        config: {
+                            baseURL: baseUrl || '',
+                            collectionName: collectionName || 'Imported Collection',
+                            clientPrefixes: proposedClients,
+                            clients: derivedClients
+                        }
+                    };
+                    addCollection(newCollection);
+                } else {
+                    // Legacy Fallback (Should not be hit if wired correctly)
+                    if (onManifestUpdate) {
+                        onManifestUpdate(manifest);
+                    }
+                    if (onConfigUpdate) {
+                        onConfigUpdate({
+                            baseURL: baseUrl || '',
+                            collectionName: collectionName || 'Imported Collection',
+                            clientPrefixes: proposedClients,
+                            clients: derivedClients
+                        });
+                    }
                 }
 
                 setStep("success");

@@ -9,6 +9,9 @@ interface UseCollectionManagementProps {
     registerTaskId: (taskId: string) => void;
     isStandaloneMode?: boolean;
     setManifest?: (manifest: any) => void;
+    removeCollection?: (id: string) => void;
+    activeCollectionId?: string;
+    setCollections?: (cols: any[]) => void;
 }
 
 export const useCollectionManagement = ({
@@ -17,7 +20,10 @@ export const useCollectionManagement = ({
     refreshProject,
     registerTaskId,
     isStandaloneMode = false,
-    setManifest
+    setManifest,
+    removeCollection,
+    activeCollectionId,
+    setCollections
 }: UseCollectionManagementProps) => {
     // Modals
     const [showImportModal, setShowImportModal] = useState(false);
@@ -30,6 +36,12 @@ export const useCollectionManagement = ({
 
     // Delete Collection State
     const [deleting, setDeleting] = useState(false);
+    const [collectionToDelete, setCollectionToDelete] = useState<string | null>(null);
+
+    const openDeleteModal = (collectionId?: string) => {
+        setCollectionToDelete(collectionId || null);
+        setShowDeleteModal(true);
+    };
 
     // Delete Item State
     const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
@@ -69,12 +81,24 @@ export const useCollectionManagement = ({
     const handleDeleteCollection = async () => {
         setDeleting(true);
 
-        // Standalone mode: just clear local state
-        if (isStandaloneMode && setManifest) {
-            setManifest({});
-            showToast("success", "Collection cleared!");
+        // Standalone mode: remove specific or clear all
+        if (isStandaloneMode) {
+            if (collectionToDelete && removeCollection) {
+                // Delete specific
+                removeCollection(collectionToDelete);
+                showToast("success", "Collection deleted!");
+            } else if (!collectionToDelete && setCollections) {
+                // Delete ALL (Navbar)
+                setCollections([]);
+                showToast("success", "All collections cleared!");
+            } else if (setManifest) {
+                // Legacy fallback
+                setManifest({});
+                showToast("success", "Collection cleared!");
+            }
             setShowDeleteModal(false);
             setDeleting(false);
+            setCollectionToDelete(null);
             return;
         }
 
@@ -168,6 +192,8 @@ export const useCollectionManagement = ({
         deleteItemInfo, setDeleteItemInfo,
         handleFetchUrl,
         handleDeleteCollection,
+        openDeleteModal,
+        collectionToDelete,
         handleDeleteModule,
         handleDeleteFunction,
         confirmDeleteItem

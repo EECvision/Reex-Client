@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { api } from "@/services/api";
 import { EndpointInfo } from "@/types";
 
@@ -11,6 +11,7 @@ interface UseEndpointExecutionProps {
     showToast: (type: "success" | "error", message: string) => void;
     authToken?: string;
     isStandaloneMode?: boolean;
+    selectedEndpoint: EndpointInfo | null;
 }
 
 type ParamsState = {
@@ -27,8 +28,8 @@ type InputModeState = {
     [key: string]: InputMode;
 };
 
-export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, authToken, isStandaloneMode = false }: UseEndpointExecutionProps) => {
-    const [selectedEndpoint, setSelectedEndpoint] = useState<EndpointInfo | null>(null);
+export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, authToken, isStandaloneMode = false, selectedEndpoint }: UseEndpointExecutionProps) => {
+    // Internal state for execution management
     const [params, setParams] = useState<ParamsState>({});
     const [rawPayloads, setRawPayloads] = useState<RawPayloadState>({});
     const [inputModes, setInputModes] = useState<InputModeState>({});
@@ -40,6 +41,23 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
     const [savingInterface, setSavingInterface] = useState(false);
     const [copied, setCopied] = useState(false);
     const [executedCurl, setExecutedCurl] = useState<string | null>(null);
+
+    const clearResult = () => {
+        setResult(null);
+        setError(null);
+        setInterfacePreview(null);
+        setExecutedCurl(null);
+    };
+
+    // Reset result when endpoint changes key
+    // We use a combination of apiKey + fnName as unique identity
+    const endpointKey = selectedEndpoint ? `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}` : null;
+
+    // We need useEffect to clear result when endpoint changes.
+    // However, we must be careful not to clear if it's the SAME endpoint object reference but no actual change?
+    // Using a key is safer.
+
+
 
     const tryParse = (value: any) => {
         // Don't try to parse File objects or non-strings
@@ -371,22 +389,21 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const clearResult = () => {
-        setResult(null);
-        setError(null);
-        setInterfacePreview(null);
-        setExecutedCurl(null);
-    }
 
-    // Reset result when endpoint changes
-    const selectEndpoint = (endpoint: EndpointInfo) => {
-        setSelectedEndpoint(endpoint);
-        clearResult();
-    };
+
+    const prevKeyRef = useRef<string | null>(null);
+    const currentKey = selectedEndpoint ? `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}` : null;
+
+    useEffect(() => {
+        if (currentKey !== prevKeyRef.current) {
+            clearResult();
+            prevKeyRef.current = currentKey;
+        }
+    }, [currentKey]);
 
     return {
         selectedEndpoint,
-        selectEndpoint, // Replaces simple setter
+        // selectEndpoint removed - controlled by parent
         params,
         result,
         error,

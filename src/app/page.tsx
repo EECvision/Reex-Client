@@ -31,7 +31,12 @@ const App = () => {
     config: projectConfig,
     isStandaloneMode,
     setManifest,
-    setConfig
+    setConfig,
+    collections,
+    addCollection,
+    updateCollection,
+    removeCollection,
+    setCollections // For clearing all
   } = useProject();
 
   // Custom Hooks
@@ -51,32 +56,13 @@ const App = () => {
     isStandaloneMode
   });
 
-  const {
-    showImportModal, setShowImportModal,
-    showDeleteModal, setShowDeleteModal,
-    showGenerateModal, setShowGenerateModal,
-    showDeleteItemModal, setShowDeleteItemModal,
-    importFile, setImportFile,
-    fetchingUrl,
-    deleting,
-    deletingItem,
-    deleteItemInfo, setDeleteItemInfo,
-    handleFetchUrl,
-    handleDeleteCollection,
-    handleDeleteModule,
-    handleDeleteFunction,
-    confirmDeleteItem
-  } = useCollectionManagement({
-    projectPath,
-    showToast,
-    refreshProject,
-    registerTaskId,
-    isStandaloneMode,
-    setManifest
-  });
+  // Move this call AFTER activeCollection derivation
+
 
   // Auth Token State
   const [authToken, setAuthToken] = useState<string>("");
+  // Selected Endpoint State (Hoisted to fix circular dependency)
+  const [selectedEndpoint, setSelectedEndpoint] = useState<EndpointInfo | null>(null);
 
   useEffect(() => {
     const savedToken = localStorage.getItem("auth_token");
@@ -91,9 +77,58 @@ const App = () => {
     }
   }, [authToken]);
 
+  // Derived Active Config for Standalone Mode
+  const getActiveCollection = () => {
+    if (!isStandaloneMode) return null;
+
+    // 1. Try to get from selected endpoint
+    if (selectedEndpoint) {
+      const parts = selectedEndpoint.apiKey.split('__');
+      if (parts.length > 1 && parts[0].startsWith('col_')) {
+        const id = parts[0].replace('col_', '');
+        return collections.find(c => c.id === id);
+      }
+    }
+
+    // 2. Fallback to first collection
+    return collections.length > 0 ? collections[0] : null;
+  };
+
+  const activeCollection = getActiveCollection();
+  const activeConfig = isStandaloneMode ? (activeCollection?.config || {}) : projectConfig;
+  const activeCollectionName = isStandaloneMode ? (activeCollection?.name || "Collection") : projectConfig?.collectionName;
+
   const {
-    selectedEndpoint,
-    selectEndpoint,
+    showImportModal, setShowImportModal,
+    showDeleteModal, setShowDeleteModal,
+    showGenerateModal, setShowGenerateModal,
+    showDeleteItemModal, setShowDeleteItemModal,
+    importFile, setImportFile,
+    fetchingUrl,
+    deleting,
+    deletingItem,
+    deleteItemInfo, setDeleteItemInfo,
+    handleFetchUrl,
+    handleDeleteCollection,
+    openDeleteModal,
+    collectionToDelete,
+    handleDeleteModule,
+    handleDeleteFunction,
+    confirmDeleteItem
+  } = useCollectionManagement({
+    projectPath,
+    showToast,
+    refreshProject,
+    registerTaskId,
+    isStandaloneMode,
+    setManifest,
+    removeCollection,
+    activeCollectionId: activeCollection?.id,
+    setCollections
+  });
+
+
+  const {
     params,
     result,
     error: executionError,
@@ -114,17 +149,18 @@ const App = () => {
     handleInputModeChange,
     getGeneratedCurl,
   } = useEndpointExecution({
-    projectConfig,
+    projectConfig: activeConfig, // Use Active Config
     apiManifest,
     showToast,
-    authToken, // Pass token to hook
-    isStandaloneMode // Use proxy for API calls in standalone mode
+    authToken,
+    isStandaloneMode,
+    selectedEndpoint
   });
 
   // Reset selected endpoint if manifest becomes empty
   useEffect(() => {
     if (apiManifest && Object.keys(apiManifest).length === 0) {
-      selectEndpoint(null as any); // Type assertion to allow null reset
+      setSelectedEndpoint(null);
     }
   }, [apiManifest]);
 
@@ -155,9 +191,10 @@ const App = () => {
         <SidebarController
           apiManifest={apiManifest}
           selectedEndpoint={selectedEndpoint}
-          onSelectEndpoint={selectEndpoint}
+          onSelectEndpoint={setSelectedEndpoint}
           onDeleteModule={handleDeleteModule}
           onDeleteFunction={handleDeleteFunction}
+          onDeleteCollection={openDeleteModal}
         />
       )}
 
@@ -169,22 +206,22 @@ const App = () => {
             setShowImportModal(true);
           }}
           hasCollection={hasEndpoints}
-          onDeleteClick={() => setShowDeleteModal(true)}
+          onDeleteClick={() => openDeleteModal()} // No arg = Delete All
           onFetchUrl={(url) => {
             resetImportTask();
             handleFetchUrl(url);
           }}
           isFetching={fetchingUrl}
           onGenerateClick={() => setShowGenerateModal(true)}
-          baseURL={projectConfig?.baseURL}
+          baseURL={activeConfig?.baseURL}
           projectPath={projectPath}
-          collectionName={projectConfig?.collectionName}
+          collectionName={activeCollectionName}
           authToken={authToken}
           onAuthTokenChange={setAuthToken}
           isStandaloneMode={isStandaloneMode}
           onBaseUrlChange={(newUrl) => {
-            const oldBase = projectConfig?.baseURL || "";
-            const updatedClients = { ...(projectConfig?.clients || {}) };
+            const oldBase = activeConfig?.baseURL || "";
+            const updatedClients = { ...(activeConfig?.clients || {}) };
 
             Object.keys(updatedClients).forEach(key => {
               const clientUrl = updatedClients[key];
@@ -195,11 +232,21 @@ const App = () => {
               }
             });
 
-            setConfig({
-              ...projectConfig,
-              baseURL: newUrl,
-              clients: updatedClients
-            });
+            if (isStandaloneMode && activeCollection) {
+              updateCollection(activeCollection.id, {
+                config: {
+                  ...activeCollection.config,
+                  baseURL: newUrl,
+                  clients: updatedClients
+                }
+              });
+            } else {
+              setConfig({
+                ...projectConfig,
+                baseURL: newUrl,
+                clients: updatedClients
+              });
+            }
           }}
         />
 
@@ -224,6 +271,7 @@ const App = () => {
             isStandaloneMode={isStandaloneMode}
             onManifestUpdate={setManifest}
             onConfigUpdate={setConfig}
+            addCollection={addCollection}
           />
         )}
 
@@ -232,6 +280,11 @@ const App = () => {
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleDeleteCollection}
           deleting={deleting}
+          title={isStandaloneMode && !collectionToDelete ? "Clear All Collections" : "Delete Collection"}
+          message={isStandaloneMode && !collectionToDelete
+            ? "Are you sure you want to delete ALL imported collections? This acts as a workspace reset."
+            : "Are you sure you want to delete this collection? This action cannot be undone."
+          }
         />
 
         <DeleteConfirmModal
