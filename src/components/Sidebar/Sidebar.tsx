@@ -27,6 +27,7 @@ interface SidebarProps {
   onDeleteModule?: (moduleName: string) => void;
   onDeleteFunction?: (moduleName: string, functionName: string) => void;
   baseURL?: string;
+  collectionName?: string;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -40,7 +41,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   onDeleteModule,
   onDeleteFunction,
   baseURL,
+  collectionName,
 }) => {
+  const [isCollectionExpanded, setIsCollectionExpanded] = React.useState(true);
+
   return (
     <aside className={styles.sidebar}>
       <div className={styles.header}>
@@ -61,82 +65,103 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className={styles.folderList}>
-        {Object.entries(groupedEndpoints).map(([apiKey, endpoints]) => (
-          <div key={apiKey} className={styles.folder}>
+        {collectionName && (
+          <div className={styles.folder} style={{ marginBottom: 2 }}>
             <div
               className={styles.folderHeader}
-              onClick={() => onToggleFolder(apiKey)}
+              onClick={() => setIsCollectionExpanded(!isCollectionExpanded)}
             >
               <div className={styles.folderIconWrapper}>
-                {expandedFolders.has(apiKey) ?
+                {isCollectionExpanded ?
                   <ChevronDown size={14} color="#6b7280" /> :
                   <ChevronRight size={14} color="#6b7280" />
                 }
               </div>
               <div className={styles.folderContent}>
-                <Folder size={14} className={`${styles.folderIcon} ${expandedFolders.has(apiKey) ? styles.folderIconExpanded : ''}`} />
-                <span className={`${styles.folderName} ${expandedFolders.has(apiKey) ? styles.folderNameExpanded : ''}`}>{apiKey}</span>
-                <span className={styles.folderCount}>{endpoints.length}</span>
+                <Folder size={14} className={`${styles.folderIcon} ${isCollectionExpanded ? styles.folderIconExpanded : ''}`} />
+                <span className={`${styles.rootFolderName} ${isCollectionExpanded ? styles.rootFolderNameExpanded : ''}`} title={collectionName}>{collectionName}</span>
               </div>
-
-              {onDeleteModule && (
-                <Button
-                  className={styles.deleteBtn}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteModule(apiKey);
-                  }}
-                  title={`Delete ${apiKey} module`}
-                  variant="ghost"
-                  size="sm"
-                >
-                  <Trash2 size={12} color="#ef4444" />
-                </Button>
-              )}
             </div>
-            {expandedFolders.has(apiKey) && (
-              <div className={styles.fileList}>
-                {endpoints.map((endpoint) => (
-                  <div
-                    key={endpoint.fnName}
-                    className={`${styles.file} ${selectedEndpoint?.apiKey === endpoint.apiKey &&
-                      selectedEndpoint?.fnName === endpoint.fnName
-                      ? styles.fileActive
-                      : ""
-                      }`}
-                    onClick={() => onSelectEndpoint(endpoint)}
-                  >
-                    <div
-                      className={styles.fileInfo}
-                      title={`${endpoint.fnName}${endpoint.url ? `\n${endpoint.url}` : ""}`}
-                    >
-                      <span className={`${styles.methodDot} ${styles[endpoint.fnName.split('_')[0].toLowerCase()] || styles.defaultMethod}`}></span>
-
-                      <span className={styles.fileName}>{endpoint.fnName}</span>
-                      {/* {endpoint.requiresAuth && (
-                        <Lock size={12} className={styles.authIcon} />
-                      )} */}
-                    </div>
-                    {onDeleteFunction && (
-                      <Button
-                        className={styles.deleteBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDeleteFunction(apiKey, endpoint.fnName);
-                        }}
-                        title={`Delete ${endpoint.fnName}`}
-                        variant="ghost"
-                        size="sm"
-                      >
-                        <Trash2 size={12} color="#ef4444" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
-        ))}
+        )}
+
+        {(!collectionName || isCollectionExpanded) && (
+          <div style={collectionName ? { paddingLeft: 12, marginTop: 8 } : {}}>
+            {Object.entries(groupedEndpoints).map(([apiKey, endpoints]) => (
+              <div key={apiKey} className={styles.folder}>
+                <div
+                  className={styles.folderHeader}
+                  onClick={() => onToggleFolder(apiKey)}
+                >
+                  <div className={styles.folderIconWrapper}>
+                    {expandedFolders.has(apiKey) ?
+                      <ChevronDown size={14} color="#6b7280" /> :
+                      <ChevronRight size={14} color="#6b7280" />
+                    }
+                  </div>
+                  <div className={styles.folderContent}>
+                    <Folder size={14} className={`${styles.folderIcon} ${expandedFolders.has(apiKey) ? styles.folderIconExpanded : ''}`} />
+                    <span className={`${styles.folderName} ${expandedFolders.has(apiKey) ? styles.folderNameExpanded : ''}`}>{apiKey}</span>
+                    <span className={styles.folderCount}>{endpoints.length}</span>
+                  </div>
+
+                  {onDeleteModule && (
+                    <Button
+                      className={styles.deleteBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteModule(apiKey);
+                      }}
+                      title={`Delete ${apiKey} module`}
+                      variant="ghost"
+                      size="sm"
+                    >
+                      <Trash2 size={12} color="#ef4444" />
+                    </Button>
+                  )}
+                </div>
+                {expandedFolders.has(apiKey) && (
+                  <div className={styles.fileList}>
+                    {endpoints.map((endpoint) => (
+                      <div
+                        key={endpoint.fnName}
+                        className={`${styles.file} ${selectedEndpoint?.apiKey === endpoint.apiKey &&
+                          selectedEndpoint?.fnName === endpoint.fnName
+                          ? styles.fileActive
+                          : ""
+                          }`}
+                        onClick={() => onSelectEndpoint(endpoint)}
+                      >
+                        <div
+                          className={styles.fileInfo}
+                          title={`${endpoint.fnName}${endpoint.url ? `\n${endpoint.url}` : ""}`}
+                        >
+                          <span className={`${styles.methodDot} ${styles[endpoint.fnName.split('_')[0].toLowerCase()] || styles.defaultMethod}`}></span>
+
+                          <span className={styles.fileName}>{endpoint.fnName}</span>
+                        </div>
+                        {onDeleteFunction && (
+                          <Button
+                            className={styles.deleteBtn}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteFunction(apiKey, endpoint.fnName);
+                            }}
+                            title={`Delete ${endpoint.fnName}`}
+                            variant="ghost"
+                            size="sm"
+                          >
+                            <Trash2 size={12} color="#ef4444" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <SidebarSettings />

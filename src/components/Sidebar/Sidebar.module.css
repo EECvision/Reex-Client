@@ -79,6 +79,27 @@
   fill: var(--active-bg, #EBF5FF);
 }
 
+.rootFolderIcon {
+  flex-shrink: 0;
+  color: var(--collection-icon, #8b5cf6);
+  /* fill: var(--collection-icon, #8b5cf6); // Removed fill to look less heavy... */
+}
+
+.rootFolderName {
+  font-weight: 500;
+  color: var(--text-secondary, #374151);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.rootFolderNameExpanded {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 .folderName {
   flex: 1;
   font-size: 13px;

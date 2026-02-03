@@ -77,7 +77,7 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
         }, {} as Record<string, EndpointInfo[]>);
     }, [endpoints]);
 
-    const { isStandaloneMode } = useProject();
+    const { isStandaloneMode, config } = useProject();
 
     return (
         <Sidebar
@@ -90,6 +90,7 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
             setMethodFilter={setMethodFilter}
             onDeleteModule={isStandaloneMode ? undefined : onDeleteModule}
             onDeleteFunction={isStandaloneMode ? undefined : onDeleteFunction}
+            collectionName={config?.collectionName}
         />
     );
 };

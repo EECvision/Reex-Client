@@ -123,12 +123,7 @@ const Navbar: React.FC<NavbarProps> = ({
           </div>
         )}
 
-        {hasCollection && collectionName && (
-          <BadgeGroup
-            label="Collection"
-            value={collectionName}
-          />
-        )}
+
 
         {onBaseUrlChange && isStandaloneMode ? (
           <div className={styles.baseUrlInputWrapper}>
