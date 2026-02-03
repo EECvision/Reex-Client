@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import styles from "./Navbar.module.css";
 import { Button } from "../ui/Button/Button";
-import { ChevronDown, Download, Plus, Trash2, FileText, Loader2, Folder, Lock, X } from "lucide-react";
+import { ChevronDown, Download, Plus, Trash2, FileText, Loader2, Folder, Lock, X, Pencil } from "lucide-react";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
 
 interface NavbarProps {
@@ -21,6 +21,7 @@ interface NavbarProps {
   authToken?: string;
   onAuthTokenChange?: (token: string) => void;
   isStandaloneMode?: boolean;
+  onBaseUrlChange?: (url: string) => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -36,7 +37,8 @@ const Navbar: React.FC<NavbarProps> = ({
   collectionName,
   authToken,
   onAuthTokenChange,
-  isStandaloneMode = false
+  isStandaloneMode = false,
+  onBaseUrlChange
 }) => {
   const [url, setUrl] = React.useState(() => localStorage.getItem("docs_url") || "");
   const [isFetchOpen, setIsFetchOpen] = React.useState(false);
@@ -128,11 +130,24 @@ const Navbar: React.FC<NavbarProps> = ({
           />
         )}
 
-        {hasCollection && baseURL && (
-          <BadgeGroup
-            label="BASE"
-            value={baseURL || "No Base URL"}
-          />
+        {onBaseUrlChange && isStandaloneMode ? (
+          <div className={styles.baseUrlInputWrapper}>
+            <span className={styles.baseUrlLabel}>BASE</span>
+            <input
+              className={styles.baseUrlInput}
+              value={baseURL || ""}
+              onChange={(e) => onBaseUrlChange(e.target.value)}
+              placeholder="http://localhost:3000"
+            />
+            <Pencil size={14} color="#9ca3af" style={{ marginRight: 8, opacity: 0.8 }} />
+          </div>
+        ) : (
+          hasCollection && baseURL && (
+            <BadgeGroup
+              label="BASE"
+              value={baseURL || "No Base URL"}
+            />
+          )
         )}
       </div>
 

@@ -182,3 +182,55 @@
 .authActive:hover {
   background-color: #ecfdf5;
 }
+
+.baseUrlInputWrapper {
+  display: flex;
+  align-items: center;
+  background: var(--input-bg, #fff);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border-color, #e5e7eb);
+  height: 32px;
+  margin-left: 8px;
+  transition: all 0.2s ease;
+}
+
+.baseUrlInputWrapper:hover {
+  border-color: #3b82f6;
+  /* Blue border on hover */
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1);
+}
+
+.baseUrlInputWrapper:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.baseUrlLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  padding: 0 8px;
+  background: var(--hover-bg, #f3f4f6);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid var(--border-color, #e5e7eb);
+  cursor: default;
+}
+
+.baseUrlInput {
+  background: transparent;
+  border: none;
+  color: var(--text-primary, #374151);
+  font-size: 13px;
+  padding: 0 8px;
+  width: 200px;
+  outline: none;
+  font-family: inherit;
+  cursor: text;
+}
+
+.baseUrlInput:focus {
+  background: transparent;
+}

@@ -118,7 +118,6 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
 
                     {isStandaloneMode && generatedCurl && (
                         <div>
-                            <div>Can show curl</div>
                             <CurlSection curlCommand={generatedCurl} />
                         </div>
                     )}

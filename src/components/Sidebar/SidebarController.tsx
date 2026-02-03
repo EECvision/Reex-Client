@@ -4,6 +4,7 @@
 import React, { useState, useMemo } from "react";
 import Sidebar from "./Sidebar";
 import { EndpointInfo, Methods } from "@/types";
+import { useProject } from "@/providers/ProjectContext";
 
 interface SidebarControllerProps {
     apiManifest: any;
@@ -76,6 +77,8 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
         }, {} as Record<string, EndpointInfo[]>);
     }, [endpoints]);
 
+    const { isStandaloneMode } = useProject();
+
     return (
         <Sidebar
             groupedEndpoints={groupedEndpoints}
@@ -85,8 +88,8 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
             onToggleFolder={toggleFolder}
             onSelectEndpoint={onSelectEndpoint}
             setMethodFilter={setMethodFilter}
-            onDeleteModule={onDeleteModule}
-            onDeleteFunction={onDeleteFunction}
+            onDeleteModule={isStandaloneMode ? undefined : onDeleteModule}
+            onDeleteFunction={isStandaloneMode ? undefined : onDeleteFunction}
         />
     );
 };

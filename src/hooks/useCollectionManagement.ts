@@ -104,11 +104,13 @@ export const useCollectionManagement = ({
     };
 
     const handleDeleteModule = (moduleName: string) => {
+        if (isStandaloneMode) return;
         setDeleteItemInfo({ type: "module", moduleName });
         setShowDeleteItemModal(true);
     };
 
     const handleDeleteFunction = (moduleName: string, functionName: string) => {
+        if (isStandaloneMode) return;
         setDeleteItemInfo({ type: "function", moduleName, functionName });
         setShowDeleteItemModal(true);
     };

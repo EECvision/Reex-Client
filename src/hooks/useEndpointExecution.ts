@@ -110,6 +110,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
         setResult(null);
         setError(null);
         setLoading(true);
+        console.log("[Execution] Config at submit:", projectConfig);
 
         try {
             const key = `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}`;
@@ -191,9 +192,11 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
                 }
             });
 
-            const cleanBase = clientBase.replace(/\/$/, "");
+            const cleanBase = clientBase.replace(/\/+$/, "");
             const cleanPath = finalUrl.startsWith("/") ? finalUrl : `/${finalUrl}`;
             const fullUrl = `${cleanBase}${cleanPath}`;
+
+            console.log("[Execution] URL Construction:", { clientBase, cleanBase, cleanPath, fullUrl });
 
             let requestUrl = fullUrl;
             let requestData: Record<string, any> | FormData | undefined = remainingData;
@@ -273,7 +276,11 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             });
 
             if (!execRes.success) {
-                throw new Error(execRes.error || "Execution failed");
+                let errorMessage = execRes.error || "Execution failed";
+                if (isStandaloneMode && (errorMessage.includes("404") || errorMessage.toLowerCase().includes("not found"))) {
+                    errorMessage += "\n\n💡 Hint: The server returned 404. Please check if your Base URL is missing a path prefix (e.g. '/api').";
+                }
+                throw new Error(errorMessage);
             }
 
             const res = execRes.data;

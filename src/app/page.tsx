@@ -182,6 +182,25 @@ const App = () => {
           authToken={authToken}
           onAuthTokenChange={setAuthToken}
           isStandaloneMode={isStandaloneMode}
+          onBaseUrlChange={(newUrl) => {
+            const oldBase = projectConfig?.baseURL || "";
+            const updatedClients = { ...(projectConfig?.clients || {}) };
+
+            Object.keys(updatedClients).forEach(key => {
+              const clientUrl = updatedClients[key];
+              if (oldBase && clientUrl.startsWith(oldBase)) {
+                updatedClients[key] = newUrl + clientUrl.substring(oldBase.length);
+              } else {
+                updatedClients[key] = newUrl;
+              }
+            });
+
+            setConfig({
+              ...projectConfig,
+              baseURL: newUrl,
+              clients: updatedClients
+            });
+          }}
         />
 
         {showImportModal && (

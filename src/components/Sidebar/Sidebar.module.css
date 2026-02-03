@@ -2,7 +2,7 @@
   position: sticky;
   top: 0;
   width: 260px;
-  height: 100vh;
+  height: 100%;
   background-color: var(--sidebar-bg, #fff);
   border-right: 1px solid var(--sidebar-border, #e5e7eb);
   display: flex;
