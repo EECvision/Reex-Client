@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
         // Execute Curl
         // We use spawn directly to avoid shell injection vulnerabilities
-        return new Promise((resolve) => {
+        return new Promise<NextResponse>((resolve) => {
             const child = spawn('curl', args);
 
             let stdout = '';
