@@ -9,6 +9,8 @@ import { EndpointInfo } from "@/types";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
 import { Lock } from "lucide-react";
 import CurlSection from "../CurlSection/CurlSection";
+import { useAuth } from "@/providers/AuthContext";
+import LoginModal from "../LoginModal/LoginModal";
 
 // Dynamic import for Monaco
 // Monaco definition removed
@@ -84,6 +86,17 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
 
     const methodColor = getMethodColor(method);
 
+    const { isAuthenticated } = useAuth();
+    const [showLogin, setShowLogin] = React.useState(false);
+
+    const handleExecute = () => {
+        if (!isAuthenticated) {
+            setShowLogin(true);
+            return;
+        }
+        onSubmit();
+    };
+
     return (
         <div className={styles.workspace}>
             {selectedEndpoint ? (
@@ -98,7 +111,7 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
                         {selectedEndpoint.requiresAuth && (
                             <div className={styles.authRequired} title="Requires Authentication">
                                 <Lock size={16} />
-                                <span>Auth Required</span>
+                                <span style={{ marginLeft: 4 }}>Auth Required</span>
                             </div>
                         )}
                     </div>
@@ -107,7 +120,7 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
                         selectedEndpoint={selectedEndpoint}
                         currentParams={currentParams}
                         onParamChange={onParamChange}
-                        onSubmit={onSubmit}
+                        onSubmit={handleExecute}
                         loading={loading}
                         isSubmitDisabled={isSubmitDisabled}
                         rawPayload={rawPayload}
@@ -140,6 +153,12 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
                     onGenerateClick={isStandaloneMode ? undefined : onGenerate}
                 />
             )}
+
+            <LoginModal
+                isOpen={showLogin}
+                onClose={() => setShowLogin(false)}
+                message="You must be signed in to execute requests."
+            />
         </div>
     );
 };

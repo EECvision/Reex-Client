@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 
 import { ProjectProvider } from "@/providers/ProjectContext";
 import { SettingsProvider } from "@/providers/SettingsContext";
+import { AuthProvider } from "@/providers/AuthContext";
 
 export default function RootLayout({
   children,
@@ -29,9 +30,11 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <SettingsProvider>
-          <ProjectProvider>
-            {children}
-          </ProjectProvider>
+          <AuthProvider>
+            <ProjectProvider>
+              {children}
+            </ProjectProvider>
+          </AuthProvider>
         </SettingsProvider>
       </body>
     </html>

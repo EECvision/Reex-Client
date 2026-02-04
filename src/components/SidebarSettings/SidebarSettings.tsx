@@ -3,24 +3,16 @@
 import React from "react";
 import styles from "./SidebarSettings.module.css";
 import { useSettings } from "@/providers/SettingsContext";
-import { User, Sun, Moon } from "lucide-react";
+import { Sun, Moon } from "lucide-react";
+import UserMenu from "../UserMenu/UserMenu";
 
 const SidebarSettings: React.FC = () => {
     const { theme, toggleTheme } = useSettings();
 
     return (
         <div className={styles.settingsBar}>
-            {/* Profile Button */}
-            <button
-                className={styles.settingsButton}
-                title="Profile Settings"
-                onClick={() => {
-                    // Future: Open profile modal
-                    console.log("Profile clicked");
-                }}
-            >
-                <User size={18} />
-            </button>
+            {/* User Menu */}
+            <UserMenu />
 
             {/* Theme Toggle */}
             <button
