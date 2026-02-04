@@ -148,7 +148,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
       <div className={styles.rightSection}>
         {/* Auth Action */}
-        {onAuthTokenChange && (
+        {onAuthTokenChange && hasCollection && (
           <div className={styles.actionGroup} ref={authContainerRef}>
             <Button
               variant="ghost"
@@ -197,7 +197,7 @@ const Navbar: React.FC<NavbarProps> = ({
           </div>
         )}
 
-        <div className={styles.separator}></div>
+        {hasCollection && <div className={styles.separator}></div>}
 
         {/* Fetch Action */}
         <div className={styles.actionGroup} ref={fetchContainerRef}>
