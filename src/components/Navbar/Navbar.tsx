@@ -125,7 +125,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
 
 
-        {onBaseUrlChange && isStandaloneMode ? (
+        {onBaseUrlChange && isStandaloneMode && hasCollection ? (
           <div className={styles.baseUrlInputWrapper}>
             <span className={styles.baseUrlLabel}>BASE</span>
             <input

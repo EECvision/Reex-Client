@@ -137,7 +137,7 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
                 <EmptyState
                     hasEndpoints={hasCollection}
                     onImportClick={onImport || (() => { })}
-                    onGenerateClick={onGenerate}
+                    onGenerateClick={isStandaloneMode ? undefined : onGenerate}
                 />
             )}
         </div>
