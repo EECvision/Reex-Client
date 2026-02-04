@@ -18,7 +18,7 @@ const THEME_KEY = 'reex_theme';
 const VIEW_PREF_KEY = 'reex_view_preference';
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [theme, setTheme] = useState<ThemeType>('light');
+    const [theme, setTheme] = useState<ThemeType>('dark');
     const [viewPreference, setViewPreferenceState] = useState<ViewPreferenceType>('json');
     const [mounted, setMounted] = useState(false);
 
