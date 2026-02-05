@@ -150,3 +150,53 @@
         transform: scale(1) translateY(0);
     }
 }
+
+/* Theme Switcher */
+.themeRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    width: 100%;
+}
+
+.themeLabel {
+    font-size: 13px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.themeSwitcher {
+    display: flex;
+    background: var(--bg-secondary);
+    border-radius: 20px;
+    padding: 0 2px;
+    border: 1px solid var(--border-light);
+}
+
+.themeOption {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.themeOption:hover {
+    color: var(--text-primary);
+}
+
+.themeOptionActive {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}

@@ -2,12 +2,13 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 
-export type ThemeType = 'light' | 'dark';
+export type ThemeType = 'light' | 'dark' | 'system';
 export type ViewPreferenceType = 'json' | 'raw' | 'pretty';
 
 interface SettingsContextType {
     theme: ThemeType;
     viewPreference: ViewPreferenceType;
+    setTheme: (theme: ThemeType) => void;
     toggleTheme: () => void;
     setViewPreference: (pref: ViewPreferenceType) => void;
 }
@@ -18,7 +19,7 @@ const THEME_KEY = 'reex_theme';
 const VIEW_PREF_KEY = 'reex_view_preference';
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [theme, setTheme] = useState<ThemeType>('dark');
+    const [theme, setTheme] = useState<ThemeType>('system');
     const [viewPreference, setViewPreferenceState] = useState<ViewPreferenceType>('json');
     const [mounted, setMounted] = useState(false);
 
@@ -27,7 +28,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         const savedTheme = localStorage.getItem(THEME_KEY) as ThemeType;
         const savedViewPref = localStorage.getItem(VIEW_PREF_KEY) as ViewPreferenceType;
 
-        if (savedTheme && ['light', 'dark'].includes(savedTheme)) {
+        if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
             setTheme(savedTheme);
         }
         if (savedViewPref && ['json', 'raw', 'pretty'].includes(savedViewPref)) {
@@ -38,9 +39,27 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     // Apply theme to document
     useEffect(() => {
-        if (mounted) {
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem(THEME_KEY, theme);
+        if (!mounted) return;
+
+        const root = document.documentElement;
+        localStorage.setItem(THEME_KEY, theme);
+
+        const applyTheme = (t: ThemeType) => {
+            if (t === 'system') {
+                const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                root.setAttribute('data-theme', systemTheme);
+            } else {
+                root.setAttribute('data-theme', t);
+            }
+        };
+
+        applyTheme(theme);
+
+        if (theme === 'system') {
+            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            const handleChange = () => applyTheme('system');
+            mediaQuery.addEventListener('change', handleChange);
+            return () => mediaQuery.removeEventListener('change', handleChange);
         }
     }, [theme, mounted]);
 
@@ -52,7 +71,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }, [viewPreference, mounted]);
 
     const toggleTheme = useCallback(() => {
-        setTheme(prev => prev === 'light' ? 'dark' : 'light');
+        setTheme(prev => {
+            if (prev === 'system') return 'light';
+            return prev === 'light' ? 'dark' : 'light';
+        });
     }, []);
 
     const setViewPreference = useCallback((pref: ViewPreferenceType) => {
@@ -60,7 +82,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }, []);
 
     return (
-        <SettingsContext.Provider value={{ theme, viewPreference, toggleTheme, setViewPreference }}>
+        <SettingsContext.Provider value={{ theme, viewPreference, setTheme, toggleTheme, setViewPreference }}>
             {children}
         </SettingsContext.Provider>
     );

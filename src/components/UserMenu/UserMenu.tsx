@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import styles from "./UserMenu.module.css";
 import { useAuth } from "@/providers/AuthContext";
 import { useSettings } from "@/providers/SettingsContext";
-import { User, LogOut, LogIn, Settings, CreditCard, LayoutDashboard, Sun, Moon } from "lucide-react";
+import { User, LogOut, LogIn, Settings, CreditCard, LayoutDashboard, Sun, Moon, Monitor, Palette } from "lucide-react";
 import LoginModal from "../LoginModal/LoginModal";
 import { useRouter } from "next/navigation";
 
@@ -14,7 +14,7 @@ interface UserMenuProps {
 
 const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top' }) => {
     const { user, isAuthenticated, logout } = useAuth();
-    const { theme, toggleTheme } = useSettings();
+    const { theme, setTheme } = useSettings();
     const [isOpen, setIsOpen] = useState(false);
     const [showLogin, setShowLogin] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -90,10 +90,35 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top' }) => {
                                     <Settings size={14} />
                                     <span>Settings</span>
                                 </button>
-                                <button className={styles.menuItem} onClick={toggleTheme}>
-                                    {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-                                    <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-                                </button>
+                                <div className={styles.themeRow}>
+                                    <span className={styles.themeLabel}>
+                                        <Palette size={14} />
+                                        <span>Theme</span>
+                                    </span>
+                                    <div className={styles.themeSwitcher}>
+                                        <button
+                                            className={`${styles.themeOption} ${theme === 'system' ? styles.themeOptionActive : ''}`}
+                                            onClick={() => setTheme('system')}
+                                            title="System"
+                                        >
+                                            <Monitor size={14} />
+                                        </button>
+                                        <button
+                                            className={`${styles.themeOption} ${theme === 'light' ? styles.themeOptionActive : ''}`}
+                                            onClick={() => setTheme('light')}
+                                            title="Light"
+                                        >
+                                            <Sun size={14} />
+                                        </button>
+                                        <button
+                                            className={`${styles.themeOption} ${theme === 'dark' ? styles.themeOptionActive : ''}`}
+                                            onClick={() => setTheme('dark')}
+                                            title="Dark"
+                                        >
+                                            <Moon size={14} />
+                                        </button>
+                                    </div>
+                                </div>
                                 <div className={styles.separator} />
                                 <button
                                     className={`${styles.menuItem} ${styles.menuItemDanger}`}
@@ -111,10 +136,35 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top' }) => {
                                 <span className={styles.userEmail}>Not signed in</span>
                             </div>
                             <div className={styles.menu}>
-                                <button className={styles.menuItem} onClick={toggleTheme}>
-                                    {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-                                    <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-                                </button>
+                                <div className={styles.themeRow}>
+                                    <span className={styles.themeLabel}>
+                                        <Palette size={14} />
+                                        <span>Theme</span>
+                                    </span>
+                                    <div className={styles.themeSwitcher}>
+                                        <button
+                                            className={`${styles.themeOption} ${theme === 'system' ? styles.themeOptionActive : ''}`}
+                                            onClick={() => setTheme('system')}
+                                            title="System"
+                                        >
+                                            <Monitor size={14} />
+                                        </button>
+                                        <button
+                                            className={`${styles.themeOption} ${theme === 'light' ? styles.themeOptionActive : ''}`}
+                                            onClick={() => setTheme('light')}
+                                            title="Light"
+                                        >
+                                            <Sun size={14} />
+                                        </button>
+                                        <button
+                                            className={`${styles.themeOption} ${theme === 'dark' ? styles.themeOptionActive : ''}`}
+                                            onClick={() => setTheme('dark')}
+                                            title="Dark"
+                                        >
+                                            <Moon size={14} />
+                                        </button>
+                                    </div>
+                                </div>
                                 <div className={styles.separator} />
                                 <button
                                     className={styles.menuItem}
