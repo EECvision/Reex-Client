@@ -23,7 +23,7 @@ export default function DashboardPage() {
     return (
         <main className={styles.container}>
             <header className={styles.header}>
-                <h1 className={styles.title}>Welcome back, {user.name}</h1>
+                <h1 className={styles.title}>Welcome back, {user.name || "User"}</h1>
                 <p className={styles.subtitle}>Here is what is happening with your APIs today.</p>
             </header>
 

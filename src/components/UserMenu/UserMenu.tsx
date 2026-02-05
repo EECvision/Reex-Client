@@ -48,14 +48,24 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top' }) => {
             <button
                 className={styles.trigger}
                 onClick={() => setIsOpen(!isOpen)}
-                title={isAuthenticated ? user?.name : "Sign In"}
+                title={isAuthenticated ? (user?.name || user?.email || "User") : "Sign In"}
             >
                 {isAuthenticated && user ? (
-                    <div className={styles.avatar}>
+                    user.image ? (
+                        <img
+                            src={user.image}
+                            alt={user.name || "User"}
+                            className={styles.avatarImg}
+                        />
+                    ) : (
+                        <div className={styles.avatar}>
+                            <User size={18} />
+                        </div>
+                    )
+                ) : (
+                    <div className={styles.avatarPlaceholder}>
                         <User size={18} />
                     </div>
-                ) : (
-                    <User size={18} />
                 )}
             </button>
 

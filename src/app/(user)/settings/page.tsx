@@ -56,7 +56,7 @@ export default function SettingsPage() {
                                     </p>
                                     <input
                                         type="text"
-                                        defaultValue={user.name}
+                                        defaultValue={user.name || ""}
                                         className={styles.input}
                                         placeholder="e.g. Acme Corp"
                                     />
@@ -75,7 +75,7 @@ export default function SettingsPage() {
                                     </p>
                                     <input
                                         type="email"
-                                        defaultValue={user.email}
+                                        defaultValue={user.email || ""}
                                         className={styles.input}
                                         disabled
                                     />
