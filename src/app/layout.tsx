@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 import { ProjectProvider } from "@/providers/ProjectContext";
 import { SettingsProvider } from "@/providers/SettingsContext";
 import { AuthProvider } from "@/providers/AuthContext";
+import FloatingTestButton from "@/components/FloatingTestButton/FloatingTestButton";
 
 export default function RootLayout({
   children,
@@ -33,6 +34,7 @@ export default function RootLayout({
           <AuthProvider>
             <ProjectProvider>
               {children}
+              <FloatingTestButton />
             </ProjectProvider>
           </AuthProvider>
         </SettingsProvider>

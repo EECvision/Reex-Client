@@ -1,0 +1,51 @@
+.fab {
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 30px !important;
+    height: 40px;
+    width: 40px;
+    background-color: #000;
+    color: white;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, transform 0.1s ease;
+    z-index: 900;
+    /* High Z-Index to ensure visibility but below Modal (1000) and Toast (9999) */
+    text-decoration: none;
+    cursor: pointer;
+    overflow: hidden;
+    border: 2px solid var(--sidebar-border, #e5e7eb);
+}
+
+
+.label {
+    position: relative;
+    margin-right: 8px;
+    background-color: transparent;
+    color: white;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.2s ease 0.1s;
+}
+
+.fab:hover {
+    width: 120px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.fab:hover .label {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.fab:active {
+    transform: scale(0.95);
+}

@@ -34,7 +34,7 @@
   font-size: 0.875rem;
   background: var(--hover-bg, linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%));
   border-radius: 10px;
-  border: 1px dashed var(--border-color, #e2e8f0);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
   margin: 0 0 1.5rem 0;
 }
 

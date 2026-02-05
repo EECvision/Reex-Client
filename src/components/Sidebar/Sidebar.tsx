@@ -1,7 +1,8 @@
 import React, { SetStateAction } from "react";
 import styles from "./Sidebar.module.css";
 import { EndpointInfo, Methods } from "@/types";
-import { Folder, Trash2, ChevronRight, ChevronDown, Lock } from "lucide-react";
+import { Folder, Trash2, ChevronRight, ChevronDown, Lock, TestTube } from "lucide-react";
+import Link from "next/link";
 import { Button } from "../ui/Button/Button";
 import { Select } from "../ui/Select/Select";
 import Logo from "../Logo/Logo";
@@ -272,6 +273,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <span className={styles.footerUrl} title={baseURL}>{baseURL}</span>
         </div>
       )}
+
     </aside>
   );
 };

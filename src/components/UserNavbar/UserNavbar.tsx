@@ -18,7 +18,7 @@ export default function UserNavbar() {
     return (
         <nav className={styles.navbar}>
             <div className={styles.left}>
-                <Link href="/dashboard" className={styles.brand}>
+                <Link href="/" className={styles.brand}>
                     <Logo size="sm" />
                 </Link>
             </div>

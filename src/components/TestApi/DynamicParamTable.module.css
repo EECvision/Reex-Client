@@ -1,0 +1,116 @@
+.paramTableContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.paramTableHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.paramTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.addParamBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.addParamBtn:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.paramList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.emptyParams {
+    font-style: italic;
+    color: var(--text-secondary);
+    font-size: 13px;
+    padding: 10px;
+    text-align: center;
+    border: 1px dashed var(--border-light);
+    border-radius: 6px;
+}
+
+.paramRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.paramRowInactive {
+    opacity: 0.6;
+}
+
+.activeToggle {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+}
+
+.activeIcon {
+    color: var(--success-icon, #22c55e);
+    /* Fallback or global var */
+}
+
+.inactiveIcon {
+    color: var(--text-secondary);
+    /* or tertiary */
+}
+
+.paramInput {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    /* Slightly less vertical padding for table density */
+    font-size: 0.875rem;
+    font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+    border: 1.5px solid var(--border-color);
+    /* Use global border-color */
+    border-radius: 8px;
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.paramInput:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--hover-tint);
+}
+
+.removeParamBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+}
+
+.removeParamBtn:hover {
+    color: var(--error-color);
+    background: var(--error-bg);
+}

@@ -1,0 +1,217 @@
+/* Editor Container Styles needed for wrapper */
+.editorContainer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+    background: var(--card-bg);
+}
+
+.editorScrollArea {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-bottom: 100px;
+}
+
+.headerRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.headerIcon {
+    color: var(--primary-color);
+    padding: 8px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nameWrapper {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 4px 12px;
+    transition: all 0.2s;
+    width: 100%;
+    max-width: 400px;
+    cursor: text;
+}
+
+.nameWrapper:hover,
+.nameWrapper:focus-within {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+}
+
+.nameInput {
+    flex: 1;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    outline: none;
+    min-width: 0;
+}
+
+.editIcon {
+    color: var(--text-secondary);
+    opacity: 0.5;
+    transition: all 0.2s;
+    margin-left: 8px;
+}
+
+.nameWrapper:hover .editIcon,
+.nameWrapper:focus-within .editIcon {
+    opacity: 1;
+    color: var(--primary-color);
+}
+
+.requestBar {
+    display: flex;
+    gap: 12px;
+    /* background: var(--menu-bg); -- Remove distinctive background to match clean workspace style? Or keep subtle? Let's use transparent or card-bg if it's a "section" */
+    /* background: var(--card-bg); */
+    padding: 0;
+    /* Remove padding if inputs are standalone */
+    /* Actually media_3 shows inputs are part of the header area. Let's keep gap but remove wrapper styling */
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.urlInput {
+    flex: 1;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border: 1.5px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0 16px;
+    font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+    font-size: 14px;
+    height: 42px;
+    outline: none;
+    transition: border 0.2s;
+}
+
+.urlInput:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--hover-tint);
+}
+
+
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 16px;
+}
+
+.tab {
+    padding: 8px 16px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.tabActive {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+/* Auth Section */
+.authSection {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 0;
+}
+
+.authTypeLabel {
+    font-size: 13px;
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.authSelect {
+    padding: 6px 12px;
+    border-radius: 4px;
+    background: var(--menu-bg);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+.authInput {
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-family: monospace;
+    width: 100%;
+    max-width: 600px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.authInput:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.saveStatus {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    padding: 4px 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 99px;
+    transition: all 0.2s;
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.authHelp {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}

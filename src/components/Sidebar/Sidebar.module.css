@@ -18,6 +18,27 @@
 }
 
 /* Filter Section */
+.testApiLink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-top: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.testApiLink:hover {
+  background: var(--hover-bg);
+  border-color: var(--primary-color);
+}
+
 .filterSection {
   padding: 12px 16px;
   border-bottom: 1px solid var(--border-light, #f3f4f6);
@@ -124,8 +145,10 @@
 }
 
 /* File List (Endpoints) */
+/* File List (Endpoints) */
 .fileList {
   /* No indent on list itself, indent items slightly */
+  padding: 0;
 }
 
 .file {

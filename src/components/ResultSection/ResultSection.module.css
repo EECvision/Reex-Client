@@ -200,7 +200,7 @@
   align-items: center;
   padding: 3rem 2rem;
   background: var(--card-bg, linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%));
-  border: 1.5px dashed var(--border-color, #e2e8f0);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
   border-radius: 12px;
   color: var(--text-secondary, #64748b);
 }

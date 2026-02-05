@@ -1,0 +1,49 @@
+/* Main Container */
+.pageContainer {
+    display: flex;
+    height: calc(100vh - 66px);
+    /* Fit within UserLayout content area */
+    overflow: hidden;
+    /* Prevent body scroll */
+    background: var(--card-bg);
+    color: var(--text-primary);
+}
+
+/* Editor (Right Panel Wrapper) */
+.rightPanel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    background: var(--card-bg);
+}
+
+/* Empty State for Editor - rendered by page.tsx when no request selected */
+.emptyEditor {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-secondary);
+
+    gap: 16px;
+}
+
+.modalInput {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    margin-top: 8px;
+}
+
+.modalInput:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}

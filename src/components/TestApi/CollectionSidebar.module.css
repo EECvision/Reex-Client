@@ -1,0 +1,261 @@
+/* Sidebar (Left Panel) */
+.sidebarContainer {
+    width: 260px;
+    height: 100%;
+    border-right: 1px solid var(--sidebar-border);
+    background: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.sidebarHeader {
+    padding: 0 16px;
+    height: 60px;
+    /* Match Sidebar header height */
+    border-bottom: 1px solid var(--sidebar-header-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sidebarTitle {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.iconBtn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+}
+
+.iconBtn:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.collectionsList {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+    /* Align with folderList padding 8px 0 */
+}
+
+.emptyState {
+    padding: 20px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* Collection Item */
+.collectionItem {
+    margin-bottom: 2px;
+    /* Match folder margin */
+}
+
+.collectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 16px 6px 8px;
+    /* Match folderHeader padding */
+    cursor: pointer;
+    border-radius: 0;
+    /* Sidebar folders don't seem to have radius in 2px margin list? Actually folderHeader has transition. Let's use 0 or small radius if desired. Sidebar.css didn't show radius on folderHeader hover. */
+    user-select: none;
+    color: var(--text-secondary);
+    /* Default text color in sidebar */
+}
+
+.collectionHeader:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.collectionInfo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    /* Match folderContent gap */
+    overflow: hidden;
+}
+
+.collectionIcon {
+    color: var(--text-secondary);
+    width: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.collectionName {
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.collectionActions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    /* Show on hover */
+    transition: opacity 0.2s;
+}
+
+.collectionHeader:hover .collectionActions {
+    opacity: 1;
+}
+
+.actionBtn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.actionBtn:hover {
+    color: var(--text-primary);
+}
+
+.deleteAction:hover {
+    color: var(--error-color);
+}
+
+/* Request List inside Collection */
+.requestsList {
+    padding-left: 0;
+    /* Reset? Sidebar uses nested padding? No, Sidebar uses recursive? No, folderContent structure. Collection is 1 level deep. */
+    /* Let's follow sidebar indent pattern. usually just a bit of margin or padding. 
+       Sidebar doesn't show nested items in the snippet I saw, but implies folder/file structure. 
+       Let's stick to a simple indent for now. 
+    */
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.emptyRequestState {
+    padding: 4px 8px 4px 32px;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.requestItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 16px 6px 32px;
+    /* Indent for items inside collection */
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.requestItem:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.requestActive {
+    background: var(--active-bg);
+    border-left-color: var(--primary-color);
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.requestInfo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+}
+
+.requestName {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.deleteReqBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    opacity: 0;
+    font-size: 0;
+}
+
+.requestItem:hover .deleteReqBtn {
+    opacity: 1;
+}
+
+.deleteReqBtn:hover {
+    color: var(--error-color);
+}
+
+/* Method Badges (Mini) */
+.methodBadge {
+    font-size: 9px;
+    font-weight: 700;
+    min-width: 30px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.get {
+    color: #3b82f6;
+}
+
+.post {
+    color: #10b981;
+}
+
+.put {
+    color: #f59e0b;
+}
+
+.delete {
+    color: #ef4444;
+}
+
+.patch {
+    color: #8b5cf6;
+}
+
+/* Footer Credits (Copied from Sidebar.module.css) */
+.footerCredits {
+    padding: 16px;
+    border-top: 1px solid var(--sidebar-header-border);
+    background-color: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+    text-align: center;
+    margin-top: auto;
+    /* Push to bottom */
+}
+
+.devLink {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+
+.devLink:hover {
+    text-decoration: underline;
+    color: var(--text-primary);
+}
