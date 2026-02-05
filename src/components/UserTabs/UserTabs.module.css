@@ -1,0 +1,43 @@
+.container {
+    border-bottom: 1px solid var(--border-color);
+    background: var(--background);
+    position: sticky;
+    top: 64px;
+    /* Height of Navbar */
+    z-index: 40;
+}
+
+.tabs {
+    display: flex;
+    gap: 24px;
+    padding: 0 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* Hide scrollbar Firefox */
+}
+
+.tabs::-webkit-scrollbar {
+    display: none;
+    /* Hide scrollbar Chrome/Safari */
+}
+
+.tab {
+    padding: 16px 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.tab:hover {
+    color: var(--text-primary);
+}
+
+.active {
+    color: var(--text-primary);
+    border-bottom-color: var(--primary-color);
+}

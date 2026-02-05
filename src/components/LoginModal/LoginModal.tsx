@@ -70,9 +70,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, message }) => 
                     </div>
                 </form>
 
-                <div className={styles.footer}>
-                    This is a simulated login for Phase 1.
-                </div>
+
             </div>
         </div>
     );

@@ -15,7 +15,8 @@
 
   /* Borders */
   --border-color: #374151;
-  --border-light: #1f2937;
+  --border-light: #374151;
+  /* Changed from #1f2937 to be visible against menu-bg */
 
   /* Interactive */
   --hover-bg: #1f2937;
@@ -69,10 +70,13 @@
 
   /* Interactive */
   --hover-bg: #f9fafb;
-  --active-bg: #eff6ff;
+  /* gray-50 */
+  --active-bg: #f3f4f6;
+  /* gray-100 */
   --primary-color: #3b82f6;
   --primary-hover: #2563eb;
-  --hover-tint: rgba(59, 130, 246, 0.05);
+  --hover-tint: rgba(0, 0, 0, 0.05);
+  /* neutral tint */
   --collection-icon: #8b5cf6;
 
   /* Components */

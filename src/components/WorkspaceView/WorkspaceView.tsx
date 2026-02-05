@@ -101,50 +101,52 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
         <div className={styles.workspace}>
             {selectedEndpoint ? (
                 <>
-                    <div className={styles.badgeRow}>
-                        <BadgeGroup
-                            label={method || ""}
-                            value={computedUrl || ""}
-                            color={methodColor}
-                            style={{ height: '32px' }}
+                    <div style={{ padding: '1rem', height: '100%', overflowY: 'auto' }}>
+                        <div className={styles.badgeRow}>
+                            <BadgeGroup
+                                label={method || ""}
+                                value={computedUrl || ""}
+                                color={methodColor}
+                                style={{ height: '32px' }}
+                            />
+                            {selectedEndpoint.requiresAuth && (
+                                <div className={styles.authRequired} title="Requires Authentication">
+                                    <Lock size={16} />
+                                    <span style={{ marginLeft: 4 }}>Auth Required</span>
+                                </div>
+                            )}
+                        </div>
+                        <br />
+                        <QuerySection
+                            selectedEndpoint={selectedEndpoint}
+                            currentParams={currentParams}
+                            onParamChange={onParamChange}
+                            onSubmit={handleExecute}
+                            loading={loading}
+                            isSubmitDisabled={isSubmitDisabled}
+                            rawPayload={rawPayload}
+                            inputMode={inputMode}
+                            onRawPayloadChange={onRawPayloadChange}
+                            onInputModeChange={onInputModeChange}
                         />
-                        {selectedEndpoint.requiresAuth && (
-                            <div className={styles.authRequired} title="Requires Authentication">
-                                <Lock size={16} />
-                                <span style={{ marginLeft: 4 }}>Auth Required</span>
+
+                        {isStandaloneMode && generatedCurl && (
+                            <div>
+                                <CurlSection curlCommand={generatedCurl} />
                             </div>
                         )}
+
+                        <ResultSection
+                            result={result}
+                            error={error}
+                            interfacePreview={interfacePreview}
+                            updatingInterface={updatingInterface}
+                            onUpdateInterface={onUpdateInterface}
+                            onCopy={onCopy}
+                            copied={copied}
+                            isStandaloneMode={isStandaloneMode}
+                        />
                     </div>
-                    <br />
-                    <QuerySection
-                        selectedEndpoint={selectedEndpoint}
-                        currentParams={currentParams}
-                        onParamChange={onParamChange}
-                        onSubmit={handleExecute}
-                        loading={loading}
-                        isSubmitDisabled={isSubmitDisabled}
-                        rawPayload={rawPayload}
-                        inputMode={inputMode}
-                        onRawPayloadChange={onRawPayloadChange}
-                        onInputModeChange={onInputModeChange}
-                    />
-
-                    {isStandaloneMode && generatedCurl && (
-                        <div>
-                            <CurlSection curlCommand={generatedCurl} />
-                        </div>
-                    )}
-
-                    <ResultSection
-                        result={result}
-                        error={error}
-                        interfacePreview={interfacePreview}
-                        updatingInterface={updatingInterface}
-                        onUpdateInterface={onUpdateInterface}
-                        onCopy={onCopy}
-                        copied={copied}
-                        isStandaloneMode={isStandaloneMode}
-                    />
                 </>
             ) : (
                 <EmptyState

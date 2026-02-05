@@ -3,6 +3,7 @@ import styles from "./Navbar.module.css";
 import { Button } from "../ui/Button/Button";
 import { ChevronDown, Download, Plus, Trash2, FileText, Loader2, Folder, Lock, X, Pencil } from "lucide-react";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
+import UserMenu from "../UserMenu/UserMenu";
 
 interface NavbarProps {
   selectedEndpoint: {
@@ -264,8 +265,12 @@ const Navbar: React.FC<NavbarProps> = ({
             </Button>
           )
         }
-      </div >
-    </nav >
+
+        <div style={{ width: 1, height: 24, background: 'var(--border-color)', margin: '0 8px' }} />
+
+        <UserMenu placement="bottom" />
+      </div>
+    </nav>
   );
 };
 

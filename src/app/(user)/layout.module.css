@@ -1,0 +1,9 @@
+.container {
+    min-height: 100vh;
+    background: var(--background);
+    padding-top: 64px;
+}
+
+.contentWrapper {
+    padding-bottom: 64px;
+}

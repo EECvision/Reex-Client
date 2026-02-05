@@ -5,7 +5,6 @@ import { Folder, Trash2, ChevronRight, ChevronDown, Lock } from "lucide-react";
 import { Button } from "../ui/Button/Button";
 import { Select } from "../ui/Select/Select";
 import Logo from "../Logo/Logo";
-import SidebarSettings from "../SidebarSettings/SidebarSettings";
 
 const METHOD_OPTIONS = [
   { value: "ALL", label: "ALL METHODS" },
@@ -258,7 +257,14 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      <SidebarSettings />
+      <div className={styles.footerCredits}>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+          Built by <a href="https://github.com/EECvision" target="_blank" rel="noopener noreferrer" className={styles.devLink}>EECvision</a>
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+          Powered by <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>ToolsHQ</span>
+        </div>
+      </div>
 
       {baseURL && (
         <div className={styles.footer}>

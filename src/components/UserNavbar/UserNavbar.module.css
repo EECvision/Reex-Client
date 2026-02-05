@@ -1,0 +1,62 @@
+.navbar {
+    height: 64px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--nav-bg, var(--background));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 50;
+    backdrop-filter: blur(8px);
+}
+
+.left {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.navLinks {
+    display: flex;
+    gap: 8px;
+}
+
+.link {
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.link:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.linkActive {
+    background: var(--active-bg);
+    color: var(--primary-color);
+}
+
+.right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}

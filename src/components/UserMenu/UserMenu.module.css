@@ -48,8 +48,6 @@
 
 .popover {
     position: absolute;
-    bottom: 50px;
-    left: 0;
     width: 240px;
     background: var(--menu-bg);
     border: 1px solid var(--border-color);
@@ -58,6 +56,18 @@
     z-index: 100;
     overflow: hidden;
     animation: scaleIn 0.15s ease-out;
+}
+
+.popoverTop {
+    bottom: 50px;
+    left: 0;
+    transform-origin: bottom left;
+}
+
+.popoverBottom {
+    top: 50px;
+    right: 0;
+    transform-origin: top right;
 }
 
 .header {
@@ -106,7 +116,12 @@
 }
 
 .menuItem:hover {
-    background: var(--hover-bg);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+:global([data-theme="light"]) .menuItem:hover {
+    background: rgba(0, 0, 0, 0.05);
 }
 
 .menuItemDanger {
@@ -118,9 +133,9 @@
 }
 
 .separator {
-    height: 1px;
-    background: var(--border-light);
-    margin: 4px 0;
+    height: 0;
+    border-top: 1px solid var(--border-light);
+    margin: 4px -4px;
 }
 
 @keyframes scaleIn {

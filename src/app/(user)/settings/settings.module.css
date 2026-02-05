@@ -1,0 +1,220 @@
+.container {
+    padding: 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.pageTitle {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 48px;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 64px;
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: sticky;
+    top: 96px;
+    /* 64px header + 32px padding */
+    align-self: flex-start;
+}
+
+.navItem {
+    text-align: left;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.navItem:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.active {
+    background: var(--active-bg);
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    /* For footer rounding */
+}
+
+.cardContent {
+    padding: 24px;
+}
+
+.cardTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.cardDescription {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    line-height: 1.5;
+    max-width: 600px;
+}
+
+.input {
+    width: 100%;
+    max-width: 320px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    transition: box-shadow 0.2s;
+}
+
+.input:focus {
+    border-color: var(--text-primary);
+}
+
+.cardFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    /* Often slightly different bg */
+}
+
+.footerText {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* Theme Selection */
+.themeSelector {
+    display: flex;
+    gap: 12px;
+}
+
+.themeOption {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.themeOptionActive {
+    border: 2px solid var(--primary-color);
+    background: var(--active-bg);
+}
+
+.themeOptionText {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Integrations */
+.integrationList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.integrationRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.integrationContent {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.integrationIcon {
+    width: 32px;
+    height: 32px;
+    background: #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 10px;
+}
+
+.integrationName {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.integrationDesc {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* Utilities */
+.emptyState {
+    padding: 32px;
+    text-align: center;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border-radius: 6px;
+    border: 1px dashed var(--border-color);
+}
+
+.input:disabled {
+    background: var(--bg-secondary);
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

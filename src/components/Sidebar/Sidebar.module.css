@@ -254,3 +254,25 @@
   flex-shrink: 0;
   color: #9ca3af;
 }
+
+.footerCredits {
+  padding: 16px;
+  border-top: 1px solid var(--sidebar-border, #e5e7eb);
+  background-color: var(--sidebar-bg);
+  /* Use sidebar-bg to blend in, or match footer bg */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  text-align: center;
+}
+
+.devLink {
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.devLink:hover {
+  text-decoration: underline;
+  color: var(--text-primary);
+}

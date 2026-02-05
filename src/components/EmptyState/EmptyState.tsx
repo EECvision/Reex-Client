@@ -34,42 +34,53 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   }
 
   return (
-    <div className={styles.container}>
-      {/* Logo & Branding */}
-      <div className={styles.header}>
-        <Logo size="lg" />
-      </div>
+    <div className={styles.wrapper}>
+      <div className={styles.container}>
+        {/* Logo & Branding */}
+        <div className={styles.header}>
+          <Logo size="lg" />
+        </div>
 
-      {/* Primary Actions */}
-      <div className={styles.actions}>
-        <Button
-          variant="primary"
-          onClick={onImportClick}
-          className={styles.primaryBtn}
-          leftIcon={<Folder size={18} />}
-        >
-          Import Collection
-        </Button>
+        {/* Primary Actions */}
+        <div className={styles.actions}>
+          <Button
+            variant="primary"
+            onClick={onImportClick}
+            className={styles.primaryBtn}
+            leftIcon={<Folder size={18} />}
+          >
+            Import Collection
+          </Button>
 
-        <div className={styles.secondaryActions}>
-          {onGenerateClick && (
+          <div className={styles.secondaryActions}>
+            {onGenerateClick && (
+              <Button
+                variant="secondary"
+                onClick={onGenerateClick}
+                className={styles.secondaryBtn}
+              >
+                <Plus size={16} />
+                <span>New Template</span>
+              </Button>
+            )}
             <Button
               variant="secondary"
-              onClick={onGenerateClick}
+              onClick={() => window.open("https://docs.reexapi.com", "_blank")}
               className={styles.secondaryBtn}
             >
-              <Plus size={16} />
-              <span>New Template</span>
+              <BookOpen size={16} />
+              <span>Documentation</span>
             </Button>
-          )}
-          <Button
-            variant="secondary"
-            onClick={() => window.open("https://docs.reexapi.com", "_blank")}
-            className={styles.secondaryBtn}
-          >
-            <BookOpen size={16} />
-            <span>Documentation</span>
-          </Button>
+          </div>
+        </div>
+      </div >
+
+      <div className={styles.footerCredits}>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+          Built by <a href="https://github.com/EECvision" target="_blank" rel="noopener noreferrer" className={styles.devLink}>EECvision</a>
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+          Powered by <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>ToolsHQ</span>
         </div>
       </div>
     </div>

@@ -1,0 +1,138 @@
+.container {
+    padding: 32px;
+    max-width: 1000px;
+    margin: 0 auto;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 48px;
+}
+
+.title {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 18px;
+}
+
+.currentPlan {
+    background: linear-gradient(135deg, var(--menu-bg) 0%, var(--hover-bg) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 32px;
+    margin-bottom: 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.planInfo h3 {
+    font-size: 14px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.planName {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.badge {
+    background: var(--primary-color);
+    color: white;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 99px;
+}
+
+.planCard {
+    flex: 1;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+}
+
+.planCard.featured {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 1px var(--primary-color);
+    position: relative;
+}
+
+.featuredLabel {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary-color);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 99px;
+}
+
+.price {
+    font-size: 42px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 24px 0;
+}
+
+.price span {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--text-secondary);
+}
+
+.features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 32px 0;
+    flex: 1;
+}
+
+.plansGrid {
+    display: flex;
+    gap: 24px;
+    align-items: stretch;
+}
+
+.feature {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    color: var(--text-secondary);
+    font-size: 15px;
+}
+
+.check {
+    color: var(--success-color, #10b981);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
