@@ -40,7 +40,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, message }) => 
             <div className={styles.modal}>
                 <div className={styles.header}>
                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
-                        <Logo size="lg" showText={false} />
+                        <Logo icon />
                     </div>
                     <h2 className={styles.title}>Sign in to Reex</h2>
                     <p className={styles.subtitle}>

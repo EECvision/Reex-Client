@@ -1,20 +1,38 @@
+"use client";
+
 import React from 'react';
 import styles from './Logo.module.css';
+import Image from 'next/image';
+import { useSettings } from '@/providers/SettingsContext';
+import logoIcon from "@/assets/logo-icon.svg";
+import logoLight from "@/assets/logo-light.svg";
+import logoLightHorizontal from "@/assets/logo-light-2.svg";
+import logoDark from "@/assets/logo-dark.svg";
+import logoDarkHorizontal from "@/assets/logo-dark-2.svg";
 
 interface LogoProps {
-    className?: string;
-    size?: 'sm' | 'md' | 'lg';
-    showText?: boolean;
+    icon?: boolean;
+    horizontal?: boolean;
 }
 
-const Logo: React.FC<LogoProps> = ({ className = '', size = 'md', showText = true }) => {
+const Logo: React.FC<LogoProps> = ({ icon, horizontal }) => {
+    const { theme } = useSettings();
+
+    const isDark = theme === 'dark';
+
+    // Select assets based on theme and orientation
+    const logoToUse = isDark
+        ? (horizontal ? logoDarkHorizontal : logoDark)
+        : (horizontal ? logoLightHorizontal : logoLight);
+
     return (
-        <div className={`${styles.brand} ${styles[size]} ${className}`}>
-            <div className={styles.logoIcon}>
-                <div className={styles.logoInner}></div>
-            </div>
-            {showText && <span className={styles.brandName}>Reex<span className={styles.brandAccent}>API</span></span>}
-        </div>
+        <>
+            {icon ? (
+                <Image className={styles.logoIcon} src={logoIcon} alt="ReexAPI Icon" priority />
+            ) : (
+                <Image className={`${styles.logo} ${horizontal ? styles.horizontal : ''}`} src={logoToUse} alt="ReexAPI Logo" priority />
+            )}
+        </>
     );
 };
 

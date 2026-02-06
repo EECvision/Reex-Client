@@ -19,7 +19,7 @@ export default function UserNavbar() {
         <nav className={styles.navbar}>
             <div className={styles.left}>
                 <Link href="/" className={styles.brand}>
-                    <Logo size="sm" />
+                    <Logo />
                 </Link>
             </div>
 

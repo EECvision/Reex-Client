@@ -17,6 +17,15 @@
   border-bottom: 1px solid var(--sidebar-header-border, #e5e7eb);
 }
 
+.brand {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+
+
 /* Filter Section */
 .testApiLink {
   display: flex;

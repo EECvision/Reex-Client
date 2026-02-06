@@ -66,7 +66,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
         <div className={styles.container}>
           {/* Logo & Branding */}
           <div className={styles.header}>
-            <Logo size="lg" />
+            <Logo horizontal />
           </div>
 
           {/* Primary Actions */}
