@@ -113,8 +113,11 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
                     groups[colId].modules[modName] = [];
                 }
                 groups[colId].modules[modName].push(ep);
-            } else if (!isStandaloneMode) {
+            } else if (isStandaloneMode) {
+                console.warn(`[SidebarController] Endpoint dropped! Groups missing ID: ${colId}. Keys: ${Object.keys(groups).join(', ')}`);
+            } else {
                 // Fallback for non-standalone if something weird happens, mostly 'default'
+
                 if (!groups['default'].modules[modName]) {
                     groups['default'].modules[modName] = [];
                 }

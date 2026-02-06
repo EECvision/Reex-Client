@@ -5,6 +5,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { api } from '../services/api';
 
 import { addToHistory, getHistory, deleteFromHistory } from '../app/actions/collectionActions';
+import { useStandaloneCollections } from '../hooks/useStandaloneCollections';
 
 export interface StandaloneCollection {
   id: string;
@@ -40,6 +41,7 @@ interface ProjectContextType {
   addCollection: (collection: StandaloneCollection) => void;
   updateCollection: (id: string, updates: Partial<StandaloneCollection>) => void;
   removeCollection: (id: string) => void;
+  clearAllCollections: () => Promise<void>;
   // History Support
   recentCollections: HistoryItem[];
   addCollectionToHistory: (name: string, content: any) => Promise<void>;
@@ -62,21 +64,39 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [collections, setCollections] = useState<StandaloneCollection[]>([]);
   const [recentCollections, setRecentCollections] = useState<HistoryItem[]>([]);
 
+  // Standalone Collection Management via TanStack Query
+  const {
+    collections: standaloneCollections,
+    createStandaloneCollection,
+    updateStandaloneCollection,
+    deleteStandaloneCollection,
+    clearAllStandaloneCollections,
+    isLoading: isLoadingStandalone
+  } = useStandaloneCollections(isStandaloneMode);
+
+
   // Computed merged manifest
   const mergedManifest = React.useMemo(() => {
     if (!isStandaloneMode) return manifest;
     // Merge logic
     const merged: any = {};
-    collections.forEach(col => {
-      if (!col.manifest) return;
+    const sourceCollections = isStandaloneMode ? standaloneCollections : collections;
+
+    console.log('[ProjectContext] Calculating merged manifest from collections:', sourceCollections);
+    sourceCollections.forEach(col => {
+      if (!col.manifest) {
+        console.warn('[ProjectContext] Collection missing manifest:', col);
+        return;
+      }
       Object.keys(col.manifest).forEach(moduleName => {
         // Namespace: col_{id}__{moduleName}
         const newKey = `col_${col.id}__${moduleName}`;
         merged[newKey] = col.manifest[moduleName];
       });
     });
+    console.log('[ProjectContext] Merged Manifest Result:', merged);
     return merged;
-  }, [manifest, collections, isStandaloneMode]);
+  }, [manifest, collections, standaloneCollections, isStandaloneMode]);
 
   const refreshHistory = async () => {
     try {
@@ -113,37 +133,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         // No bridge connected - enter standalone mode
         console.info("[ProjectContext] Bridge not connected, entering standalone mode");
         setIsStandaloneMode(true);
-
-        // Try to load from local storage
-        try {
-          const stored = localStorage.getItem(STANDALONE_STORAGE_KEY);
-          if (stored) {
-            const parsed = JSON.parse(stored);
-
-            // Check if it's new list format or old single object format
-            if (Array.isArray(parsed.collections)) {
-              setCollections(parsed.collections);
-            } else if (parsed.manifest) {
-              // Migration: Wrap old data
-              const defaultCol: StandaloneCollection = {
-                id: "default",
-                name: parsed.config?.collectionName || "Default Collection",
-                manifest: parsed.manifest,
-                modules: parsed.modules || [],
-                config: parsed.config || { baseURL: "" }
-              };
-              setCollections([defaultCol]);
-            } else {
-              setCollections([]);
-            }
-            console.log("[ProjectContext] Loaded standalone data");
-          } else {
-            setCollections([]);
-          }
-        } catch (e) {
-          console.error("Failed to load standalone data", e);
-          setCollections([]);
-        }
+        // Hook handles fetching now
 
         setProjectPath("");
         setError(null);
@@ -181,30 +171,51 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     fetchProjectData();
   }, []);
 
-  // Persist standalone data
-  useEffect(() => {
+  // No local storage persistence
+
+  const addCollection = async (col: StandaloneCollection) => {
+    // DB Sync - Hook handles cache update via onSuccess
+    try {
+      await createStandaloneCollection(col);
+    } catch (e) {
+      console.error("DB Create Exception", e);
+    }
+  };
+
+  const updateCollection = async (id: string, updates: Partial<StandaloneCollection>) => {
     if (isStandaloneMode) {
       try {
-        const data = {
-          collections
-        };
-        localStorage.setItem(STANDALONE_STORAGE_KEY, JSON.stringify(data));
+        await updateStandaloneCollection({ id, updates });
       } catch (e) {
-        console.error("Failed to save standalone data", e);
+        console.error("Failed to update collection", e);
       }
+    } else {
+      setCollections(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
     }
-  }, [collections, isStandaloneMode]);
-
-  const addCollection = (col: StandaloneCollection) => {
-    setCollections(prev => [...prev, col]);
   };
 
-  const updateCollection = (id: string, updates: Partial<StandaloneCollection>) => {
-    setCollections(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+  const removeCollection = async (id: string) => {
+    if (isStandaloneMode) {
+      try {
+        await deleteStandaloneCollection(id);
+      } catch (e) {
+        console.error("Failed to delete collection", e);
+      }
+    } else {
+      setCollections(prev => prev.filter(c => c.id !== id));
+    }
   };
 
-  const removeCollection = (id: string) => {
-    setCollections(prev => prev.filter(c => c.id !== id));
+  const clearAllCollections = async () => {
+    if (isStandaloneMode) {
+      try {
+        await clearAllStandaloneCollections();
+      } catch (e) {
+        console.error("Failed to clear collections", e);
+      }
+    } else {
+      setCollections([]);
+    }
   };
 
   return (
@@ -213,18 +224,19 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       modules,
       config,
       projectPath,
-      loading,
+      loading: isStandaloneMode ? isLoadingStandalone : loading, // Use standalone loading when appropriate
       error,
       isStandaloneMode,
       refreshProject: fetchProjectData,
       setManifest,
       setConfig,
       setModules,
-      collections,
+      collections: isStandaloneMode ? standaloneCollections : collections,
       setCollections,
       addCollection,
       updateCollection,
       removeCollection,
+      clearAllCollections, // Expose
       recentCollections,
       addCollectionToHistory,
       removeCollectionFromHistory

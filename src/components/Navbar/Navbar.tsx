@@ -4,6 +4,7 @@ import { Button } from "../ui/Button/Button";
 import { ChevronDown, Download, Plus, Trash2, FileText, Loader2, Folder, Lock, X, Pencil } from "lucide-react";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
 import UserMenu from "../UserMenu/UserMenu";
+import { BaseUrlInput } from "./BaseUrlInput";
 
 interface NavbarProps {
   selectedEndpoint: {
@@ -129,11 +130,9 @@ const Navbar: React.FC<NavbarProps> = ({
         {onBaseUrlChange && isStandaloneMode && hasCollection ? (
           <div className={styles.baseUrlInputWrapper}>
             <span className={styles.baseUrlLabel}>BASE</span>
-            <input
-              className={styles.baseUrlInput}
+            <BaseUrlInput
               value={baseURL || ""}
-              onChange={(e) => onBaseUrlChange(e.target.value)}
-              placeholder="http://localhost:3000"
+              onChange={onBaseUrlChange}
             />
             <Pencil size={14} color="#9ca3af" style={{ marginRight: 8, opacity: 0.8 }} />
           </div>

@@ -40,7 +40,8 @@ const App = () => {
     setCollections,
     recentCollections,
     addCollectionToHistory,
-    removeCollectionFromHistory
+    removeCollectionFromHistory,
+    clearAllCollections
   } = useProject();
 
   // ...
@@ -130,7 +131,8 @@ const App = () => {
     setManifest,
     removeCollection,
     activeCollectionId: activeCollection?.id,
-    setCollections
+    setCollections,
+    clearAllCollections
   });
 
   const [showHistoryModal, setShowHistoryModal] = useState(false);

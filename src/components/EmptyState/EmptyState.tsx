@@ -6,8 +6,11 @@ import { Button } from "../ui/Button/Button";
 import { BookOpen, Folder, Plus } from "lucide-react";
 import Logo from "../Logo/Logo";
 
-import { HistoryItem } from "../../providers/ProjectContext";
+import { HistoryItem, useProject } from "../../providers/ProjectContext";
 import RecentCollectionsList from "./RecentCollectionsList";
+import { useAuth } from "@/providers/AuthContext";
+import { useState } from "react";
+import LoginModal from "../LoginModal/LoginModal";
 
 interface EmptyStateProps {
   hasEndpoints: boolean;
@@ -26,6 +29,19 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   onHistoryClick,
   onHistoryDelete
 }) => {
+  const { isStandaloneMode } = useProject();
+  const { isAuthenticated } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // Helper to check auth before action
+  const handleAction = (action: () => void) => {
+    if (isStandaloneMode && !isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
+    action();
+  };
+
   if (hasEndpoints) {
     return (
       <div className={styles.emptyState}>
@@ -43,67 +59,75 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   }
 
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.container}>
-        {/* Logo & Branding */}
-        <div className={styles.header}>
-          <Logo size="lg" />
-        </div>
+    <>
+      <div className={styles.wrapper}>
+        <div className={styles.container}>
+          {/* Logo & Branding */}
+          <div className={styles.header}>
+            <Logo size="lg" />
+          </div>
 
-        {/* Primary Actions */}
-        <div className={styles.actions}>
-          <Button
-            variant="primary"
-            onClick={onImportClick}
-            className={styles.primaryBtn}
-            leftIcon={<Folder size={18} />}
-          >
-            Import Collection
-          </Button>
+          {/* Primary Actions */}
+          <div className={styles.actions}>
+            <Button
+              variant="primary"
+              onClick={() => handleAction(onImportClick)}
+              className={styles.primaryBtn}
+              leftIcon={<Folder size={18} />}
+            >
+              Import Collection
+            </Button>
 
-          <div className={styles.secondaryActions}>
-            {onGenerateClick && (
+            <div className={styles.secondaryActions}>
+              {onGenerateClick && (
+                <Button
+                  variant="secondary"
+                  onClick={() => handleAction(onGenerateClick)}
+                  className={styles.secondaryBtn}
+                >
+                  <Plus size={16} />
+                  <span>New Template</span>
+                </Button>
+              )}
               <Button
                 variant="secondary"
-                onClick={onGenerateClick}
+                onClick={() => window.open("https://docs.reexapi.com", "_blank")}
                 className={styles.secondaryBtn}
               >
-                <Plus size={16} />
-                <span>New Template</span>
+                <BookOpen size={16} />
+                <span>Documentation</span>
               </Button>
-            )}
-            <Button
-              variant="secondary"
-              onClick={() => window.open("https://docs.reexapi.com", "_blank")}
-              className={styles.secondaryBtn}
-            >
-              <BookOpen size={16} />
-              <span>Documentation</span>
-            </Button>
+            </div>
+          </div>
+
+          {/* Recent History */}
+          {recentCollections && recentCollections.length > 0 && onHistoryClick && (
+            <RecentCollectionsList
+              items={recentCollections}
+              onItemClick={(item) => {
+                onHistoryClick(item);
+              }}
+              onDelete={onHistoryDelete}
+            />
+          )}
+        </div>
+
+        <div className={styles.footerCredits}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+            Built by <a href="https://github.com/EECvision" target="_blank" rel="noopener noreferrer" className={styles.devLink}>EECvision</a>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+            Powered by <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>ToolsHQ</span>
           </div>
         </div>
-
-        {/* Recent History */}
-        {recentCollections && recentCollections.length > 0 && onHistoryClick && (
-          <RecentCollectionsList
-            items={recentCollections}
-            onItemClick={onHistoryClick}
-            onDelete={onHistoryDelete}
-          />
-        )}
       </div>
 
-
-
-      <div className={styles.footerCredits}>
-        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-          Built by <a href="https://github.com/EECvision" target="_blank" rel="noopener noreferrer" className={styles.devLink}>EECvision</a>
-        </div>
-        <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
-          Powered by <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>ToolsHQ</span>
-        </div>
-      </div>
-    </div>
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message="You need to be signed in to perform this action."
+      />
+    </>
   );
 };
 

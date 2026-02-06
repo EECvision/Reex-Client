@@ -14,6 +14,8 @@ import ReviewList from "./components/ReviewList";
 import { useFileHandler } from "./hooks/useFileHandler";
 import { useDiffSelection } from "./hooks/useDiffSelection";
 import { useImportActions } from "./hooks/useImportActions";
+import { useAuth } from "@/providers/AuthContext";
+import LoginModal from "../LoginModal/LoginModal";
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -59,6 +61,10 @@ const ImportModal: React.FC<ImportModalProps> = ({
   onOpenHistory,
   hasHistory = false
 }) => {
+  // Auth Check
+  const { isAuthenticated, login } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
   // State for Diffs
   const [diffs, setDiffs] = useState<DiffResult[]>([]);
 
@@ -177,7 +183,13 @@ const ImportModal: React.FC<ImportModalProps> = ({
             Back
           </Button>
           <Button
-            onClick={() => handleUpdate(diffs, selectedModules, selectedFunctions)}
+            onClick={() => {
+              if (isStandaloneMode && !isAuthenticated) {
+                setShowLoginModal(true);
+                return;
+              }
+              handleUpdate(diffs, selectedModules, selectedFunctions)
+            }}
             disabled={selectedModules.size === 0}
             variant="primary"
           >
@@ -281,6 +293,12 @@ const ImportModal: React.FC<ImportModalProps> = ({
       </Modal>
 
       <DiffModal diff={diffFunction} onClose={() => setDiffFunction(null)} />
+
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message="You need to be signed in to update cloud collections."
+      />
     </>
   );
 };

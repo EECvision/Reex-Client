@@ -12,6 +12,7 @@ interface UseCollectionManagementProps {
     removeCollection?: (id: string) => void;
     activeCollectionId?: string;
     setCollections?: (cols: any[]) => void;
+    clearAllCollections?: () => Promise<void>;
 }
 
 export const useCollectionManagement = ({
@@ -23,7 +24,8 @@ export const useCollectionManagement = ({
     setManifest,
     removeCollection,
     activeCollectionId,
-    setCollections
+    setCollections,
+    clearAllCollections
 }: UseCollectionManagementProps) => {
     // Modals
     const [showImportModal, setShowImportModal] = useState(false);
@@ -87,9 +89,13 @@ export const useCollectionManagement = ({
                 // Delete specific
                 removeCollection(collectionToDelete);
                 showToast("success", "Collection deleted!");
-            } else if (!collectionToDelete && setCollections) {
+            } else if (!collectionToDelete) {
                 // Delete ALL (Navbar)
-                setCollections([]);
+                if (clearAllCollections) {
+                    await clearAllCollections();
+                } else if (setCollections) {
+                    setCollections([]);
+                }
                 showToast("success", "All collections cleared!");
             } else if (setManifest) {
                 // Legacy fallback
