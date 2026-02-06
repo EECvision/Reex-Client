@@ -204,3 +204,83 @@ export async function deleteRequest(id: string) {
     if (error) throw error;
     revalidatePath('/test-api');
 }
+
+async function ensureUserExists(user: any) {
+    if (!user || !user.id) return;
+    try {
+        const { data } = await supabase.from('users' as any).select('id').eq('id', user.id).single();
+        if (!data) {
+            console.log('[Action] Self-healing: Syncing user to DB', user.id);
+            await supabase.from('users' as any).upsert({
+                id: user.id,
+                email: user.email,
+                name: user.name || 'User',
+                image: user.image
+            } as any, { onConflict: 'id' });
+        }
+    } catch (e) {
+        console.warn('[Action] Sync attempt failed:', e);
+    }
+}
+
+export async function addToHistory(name: string, content: any) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: 'Unauthorized' };
+
+    await ensureUserExists(session.user);
+
+    // UPSERT: Rely on Unique Constraint (user_id, name)
+    const { error } = await supabase
+        .from('history_collections')
+        .upsert({
+            user_id: session.user.id,
+            name,
+            content,
+            updated_at: new Date().toISOString()
+        } as any, { onConflict: 'user_id, name' });
+
+    if (error) {
+        console.error('Error adding to history:', error);
+        return { error: error.message };
+    }
+
+    return { success: true };
+}
+
+export async function getHistory() {
+    const session = await auth();
+    if (!session?.user?.id) return [];
+
+    const { data, error } = await supabase
+        .from('history_collections')
+        .select('id, name, updated_at, content')
+        .eq('user_id', session.user.id)
+        .order('updated_at', { ascending: false })
+        .limit(20);
+
+    // If error, return empty array gracefully
+    if (error) {
+        console.error('Error fetching history:', error);
+        return [];
+    }
+
+    return data || [];
+}
+
+export async function deleteFromHistory(id: string) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: 'Unauthorized' };
+
+    const { error } = await supabase
+        .from('history_collections')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', session.user.id);
+
+    if (error) {
+        console.error('Error deleting history:', error);
+        return { error: error.message };
+    }
+
+    return { success: true };
+}

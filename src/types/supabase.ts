@@ -36,6 +36,33 @@ export type Database = {
                 }
                 Relationships: []
             }
+            history_collections: {
+                Row: {
+                    id: string
+                    user_id: string
+                    name: string
+                    content: Json
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    user_id: string
+                    name: string
+                    content: Json
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    user_id?: string
+                    name?: string
+                    content?: Json
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: []
+            }
             api_requests: {
                 Row: {
                     id: string

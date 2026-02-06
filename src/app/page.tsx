@@ -36,8 +36,13 @@ const App = () => {
     addCollection,
     updateCollection,
     removeCollection,
-    setCollections // For clearing all
+    setCollections,
+    recentCollections,
+    addCollectionToHistory,
+    removeCollectionFromHistory
   } = useProject();
+
+  // ...
 
   // Custom Hooks
   const { toasts, showToast, dismissToast } = useToast();
@@ -272,6 +277,7 @@ const App = () => {
             onManifestUpdate={setManifest}
             onConfigUpdate={setConfig}
             addCollection={addCollection}
+            addCollectionToHistory={addCollectionToHistory}
           />
         )}
 
@@ -349,6 +355,15 @@ const App = () => {
           onInputModeChange={handleInputModeChange}
           generatedCurl={getGeneratedCurl()}
           isStandaloneMode={isStandaloneMode}
+          recentCollections={recentCollections}
+          onHistoryClick={(item) => {
+            const blob = new Blob([JSON.stringify(item.content, null, 2)], { type: "application/json" });
+            const file = new File([blob], item.name, { type: "application/json" });
+            resetImportTask();
+            setImportFile(file);
+            setShowImportModal(true);
+          }}
+          onHistoryDelete={removeCollectionFromHistory}
         />
       </div>
     </div>

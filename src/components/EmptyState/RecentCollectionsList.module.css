@@ -1,0 +1,101 @@
+.container {
+    width: 100%;
+    max-width: 420px;
+    margin: 1.5rem auto 0;
+}
+
+.title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding-left: 2px;
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    /* Reduced gap */
+}
+
+.item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    /* Reduced padding (was 16px) */
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.item:hover {
+    background: var(--item-hover-bg, rgba(255, 255, 255, 0.05));
+    border-color: var(--text-muted);
+}
+
+.iconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    /* Reduced icon container (was 40px) */
+    height: 32px;
+    background: var(--hover-bg);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.item:hover .iconWrapper {
+    color: var(--primary-color);
+}
+
+.info {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.name {
+    font-size: 13px;
+    /* Slightly smaller name */
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.showMoreBtn {
+    margin-top: 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 6px;
+    width: 100%;
+}
+
+.showMoreBtn:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+}

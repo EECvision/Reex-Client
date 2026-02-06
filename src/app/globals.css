@@ -25,6 +25,7 @@
   --primary-hover: #3b82f6;
   --hover-tint: rgba(59, 130, 246, 0.1);
   --collection-icon: #a78bfa;
+  --item-hover-bg: rgba(255, 255, 255, 0.05);
 
   /* Components */
   --input-bg: #1f2937;
@@ -78,6 +79,7 @@
   --hover-tint: rgba(0, 0, 0, 0.05);
   /* neutral tint */
   --collection-icon: #8b5cf6;
+  --item-hover-bg: rgba(0, 0, 0, 0.05);
 
   /* Components */
   --input-bg: #ffffff;

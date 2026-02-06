@@ -11,6 +11,7 @@ import { Lock } from "lucide-react";
 import CurlSection from "../CurlSection/CurlSection";
 import { useAuth } from "@/providers/AuthContext";
 import LoginModal from "../LoginModal/LoginModal";
+import { HistoryItem } from "@/providers/ProjectContext";
 
 // Dynamic import for Monaco
 // Monaco definition removed
@@ -43,6 +44,9 @@ interface WorkspaceViewProps {
     onInputModeChange?: (mode: InputMode) => void;
     generatedCurl?: string;
     isStandaloneMode?: boolean;
+    recentCollections?: HistoryItem[];
+    onHistoryClick?: (item: HistoryItem) => void;
+    onHistoryDelete?: (id: string) => void;
 }
 
 const WorkspaceView: React.FC<WorkspaceViewProps> = ({
@@ -70,6 +74,9 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
     onInputModeChange,
     generatedCurl,
     isStandaloneMode,
+    recentCollections,
+    onHistoryClick,
+    onHistoryDelete
 }) => {
 
     const getMethodColor = (m?: string) => {
@@ -153,6 +160,9 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
                     hasEndpoints={hasCollection}
                     onImportClick={onImport || (() => { })}
                     onGenerateClick={isStandaloneMode ? undefined : onGenerate}
+                    recentCollections={recentCollections}
+                    onHistoryClick={onHistoryClick}
+                    onHistoryDelete={onHistoryDelete}
                 />
             )}
 
@@ -166,4 +176,3 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
 };
 
 export default WorkspaceView;
-

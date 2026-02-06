@@ -17,6 +17,7 @@ interface UseImportActionsProps {
     onManifestUpdate?: (manifest: any) => void;
     onConfigUpdate?: (config: any) => void;
     addCollection?: (collection: any) => void;
+    addCollectionToHistory?: (name: string, content: any) => Promise<void>;
 }
 
 export const useImportActions = ({
@@ -32,7 +33,8 @@ export const useImportActions = ({
     isStandaloneMode = false,
     onManifestUpdate,
     onConfigUpdate,
-    addCollection
+    addCollection,
+    addCollectionToHistory
 }: UseImportActionsProps) => {
     const [step, setStep] = useState<ImportStep>("upload");
     const [proposedClients, setProposedClients] = useState<Record<string, string> | undefined>(undefined);
@@ -40,10 +42,17 @@ export const useImportActions = ({
     const [collectionName, setCollectionName] = useState<string | undefined>(undefined);
     // Store full analysis data for standalone mode
     const [analysisData, setAnalysisData] = useState<any>(null);
+    const [fileContent, setFileContent] = useState<string | null>(null);
 
     const startAnalysis = async (clientMappings?: Record<string, string>) => {
         if (!selectedFile) return;
         setStep("analyzing");
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            if (e.target?.result) setFileContent(e.target.result as string);
+        };
+        reader.readAsText(selectedFile);
 
         try {
             const res = await api.analyzeCollection(selectedFile, selectedFile.name, targetDir, clientMappings);
@@ -252,6 +261,15 @@ export const useImportActions = ({
                             clientPrefixes: proposedClients,
                             clients: derivedClients
                         });
+                    }
+                }
+
+                if (addCollectionToHistory && collectionName && fileContent) {
+                    try {
+                        const jsonContent = JSON.parse(fileContent);
+                        addCollectionToHistory(collectionName, jsonContent).catch(e => console.error("History save failed:", e));
+                    } catch (e) {
+                        console.warn("Could not parse file content for history", e);
                     }
                 }
 

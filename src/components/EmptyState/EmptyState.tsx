@@ -6,16 +6,25 @@ import { Button } from "../ui/Button/Button";
 import { BookOpen, Folder, Plus } from "lucide-react";
 import Logo from "../Logo/Logo";
 
+import { HistoryItem } from "../../providers/ProjectContext";
+import RecentCollectionsList from "./RecentCollectionsList";
+
 interface EmptyStateProps {
   hasEndpoints: boolean;
   onImportClick: () => void;
   onGenerateClick?: () => void;
+  recentCollections?: HistoryItem[];
+  onHistoryClick?: (item: HistoryItem) => void;
+  onHistoryDelete?: (id: string) => void;
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({
   hasEndpoints,
   onImportClick,
   onGenerateClick,
+  recentCollections,
+  onHistoryClick,
+  onHistoryDelete
 }) => {
   if (hasEndpoints) {
     return (
@@ -73,7 +82,18 @@ const EmptyState: React.FC<EmptyStateProps> = ({
             </Button>
           </div>
         </div>
-      </div >
+
+        {/* Recent History */}
+        {recentCollections && recentCollections.length > 0 && onHistoryClick && (
+          <RecentCollectionsList
+            items={recentCollections}
+            onItemClick={onHistoryClick}
+            onDelete={onHistoryDelete}
+          />
+        )}
+      </div>
+
+
 
       <div className={styles.footerCredits}>
         <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
