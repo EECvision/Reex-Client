@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 // Static imports removed in favor of ProjectContext
 import { useProject } from "@/providers/ProjectContext";
 import ImportModal from "@/components/ImportModal/ImportModal";
+import HistoryModal from "@/components/HistoryModal/HistoryModal";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal/DeleteConfirmModal";
 import GenerateTemplateModal from "@/components/GenerateTemplateModal/GenerateTemplateModal";
 import Navbar from "@/components/Navbar/Navbar";
@@ -131,6 +132,8 @@ const App = () => {
     activeCollectionId: activeCollection?.id,
     setCollections
   });
+
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
 
 
   const {
@@ -278,6 +281,26 @@ const App = () => {
             onConfigUpdate={setConfig}
             addCollection={addCollection}
             addCollectionToHistory={addCollectionToHistory}
+            hasHistory={recentCollections && recentCollections.length > 0}
+            onOpenHistory={() => {
+              setShowHistoryModal(true);
+            }}
+          />
+        )}
+
+        {showHistoryModal && (
+          <HistoryModal
+            isOpen={showHistoryModal}
+            onClose={() => setShowHistoryModal(false)}
+            items={recentCollections}
+            onItemClick={(item) => {
+              const blob = new Blob([JSON.stringify(item.content, null, 2)], { type: "application/json" });
+              const file = new File([blob], item.name, { type: "application/json" });
+              resetImportTask();
+              setImportFile(file);
+              setShowHistoryModal(false);
+            }}
+            onDelete={removeCollectionFromHistory}
           />
         )}
 

@@ -12,3 +12,24 @@
   display: flex;
   gap: 0.75rem;
 }
+
+.historyActions {
+  display: flex;
+  justify-content: center;
+  padding-top: 1rem;
+}
+
+.historyBtn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0.5rem;
+  transition: color 0.2s;
+}
+
+.historyBtn:hover {
+  color: var(--primary-color);
+}

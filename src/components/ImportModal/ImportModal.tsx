@@ -33,6 +33,8 @@ interface ImportModalProps {
   onConfigUpdate?: (config: any) => void;
   addCollection?: (collection: any) => void;
   addCollectionToHistory?: (name: string, content: any) => Promise<void>;
+  onOpenHistory?: () => void;
+  hasHistory?: boolean;
 }
 
 
@@ -53,7 +55,9 @@ const ImportModal: React.FC<ImportModalProps> = ({
   onManifestUpdate,
   onConfigUpdate,
   addCollection,
-  addCollectionToHistory
+  addCollectionToHistory,
+  onOpenHistory,
+  hasHistory = false
 }) => {
   // State for Diffs
   const [diffs, setDiffs] = useState<DiffResult[]>([]);
@@ -211,18 +215,31 @@ const ImportModal: React.FC<ImportModalProps> = ({
       >
         <div className={styles.body}>
           {step === "upload" && (
-            <DropZone
-              dragActive={dragActive}
-              selectedFile={selectedFile}
-              collectionType={collectionType}
-              inputRef={inputRef as React.RefObject<HTMLInputElement>}
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-              onChange={handleChange}
-              onClearFile={resetFile}
-            />
+            <>
+              <DropZone
+                dragActive={dragActive}
+                selectedFile={selectedFile}
+                collectionType={collectionType}
+                inputRef={inputRef as React.RefObject<HTMLInputElement>}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                onChange={handleChange}
+                onClearFile={resetFile}
+              />
+              {onOpenHistory && hasHistory && (
+                <div className={styles.historyActions}>
+                  <Button
+                    variant="ghost"
+                    className={styles.historyBtn}
+                    onClick={onOpenHistory}
+                  >
+                    Import from recent collection
+                  </Button>
+                </div>
+              )}
+            </>
           )}
 
           {step === "analyzing" && (

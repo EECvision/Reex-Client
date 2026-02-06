@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { HistoryItem } from '../../providers/ProjectContext';
 import styles from './HistoryModal.module.css';
-import { Search, Folder, X, Trash2 } from 'lucide-react';
+import { Search, Folder, X } from 'lucide-react';
 import { Modal } from '../ui/Modal/Modal';
-import { Button } from '../ui/Button/Button';
 
 interface HistoryModalProps {
     isOpen: boolean;
@@ -61,8 +60,8 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, items, onI
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            size="lg" // Use app's large size
-            showCloseButton={false} // We have our own in search bar
+            size="md" // Use app's large size
+            // showCloseButton={false} // We have our own in search bar
             closeOnOverlayClick={true}
         >
             <div
@@ -83,9 +82,6 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, items, onI
                             setSelectedIndex(0);
                         }}
                     />
-                    <Button onClick={onClose} variant="ghost" >
-                        <X size={16} />
-                    </Button>
                 </div>
 
                 {/* List */}
