@@ -17,13 +17,30 @@ interface LogoProps {
 
 const Logo: React.FC<LogoProps> = ({ icon, horizontal }) => {
     const { theme } = useSettings();
+    const [isLight, setIsLight] = React.useState(true);
 
-    const isDark = theme === 'dark';
+    React.useEffect(() => {
+        const checkTheme = () => {
+            if (theme === 'system') {
+                setIsLight(!window.matchMedia('(prefers-color-scheme: dark)').matches);
+            } else {
+                setIsLight(theme === 'light');
+            }
+        };
+
+        checkTheme();
+
+        if (theme === 'system') {
+            const mq = window.matchMedia('(prefers-color-scheme: dark)');
+            mq.addEventListener('change', checkTheme);
+            return () => mq.removeEventListener('change', checkTheme);
+        }
+    }, [theme]);
 
     // Select assets based on theme and orientation
-    const logoToUse = isDark
-        ? (horizontal ? logoDarkHorizontal : logoDark)
-        : (horizontal ? logoLightHorizontal : logoLight);
+    const logoToUse = isLight
+        ? (horizontal ? logoLightHorizontal : logoLight)
+        : (horizontal ? logoDarkHorizontal : logoDark)
 
     return (
         <>

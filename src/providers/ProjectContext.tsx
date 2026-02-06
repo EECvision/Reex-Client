@@ -89,10 +89,8 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     const merged: any = {};
     const sourceCollections = isStandaloneMode ? standaloneCollections : collections;
 
-    console.log('[ProjectContext] Calculating merged manifest from collections:', sourceCollections);
     sourceCollections.forEach(col => {
       if (!col.manifest) {
-        console.warn('[ProjectContext] Collection missing manifest:', col);
         return;
       }
       Object.keys(col.manifest).forEach(moduleName => {
@@ -101,7 +99,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         merged[newKey] = col.manifest[moduleName];
       });
     });
-    console.log('[ProjectContext] Merged Manifest Result:', merged);
     return merged;
   }, [manifest, collections, standaloneCollections, isStandaloneMode]);
 
@@ -125,7 +122,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
 
       if (!realTargetDir) {
         // No bridge connected - enter standalone mode
-        console.info("[ProjectContext] Bridge not connected, entering standalone mode");
         setIsStandaloneMode(true);
         // Hook handles fetching now
 
