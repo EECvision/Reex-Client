@@ -21,6 +21,7 @@ import { ProjectProvider } from "@/providers/ProjectContext";
 import { SettingsProvider } from "@/providers/SettingsContext";
 import { AuthProvider } from "@/providers/AuthContext";
 import FloatingTestButton from "@/components/FloatingTestButton/FloatingTestButton";
+import QueryProvider from "@/providers/QueryProvider";
 
 export default function RootLayout({
   children,
@@ -32,13 +33,15 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <SettingsProvider>
           <AuthProvider>
-            <ProjectProvider>
-              {children}
-              <FloatingTestButton />
-            </ProjectProvider>
+            <QueryProvider>
+              <ProjectProvider>
+                {children}
+                <FloatingTestButton />
+              </ProjectProvider>
+            </QueryProvider>
           </AuthProvider>
         </SettingsProvider>
       </body>
-    </html>
+    </html >
   );
 }

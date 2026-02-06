@@ -87,8 +87,7 @@ export default function RequestEditor({ data, onSave, requestName }: RequestEdit
                 url,
                 queryParams,
                 headers,
-                authType,
-                authToken,
+                auth: { type: authType, token: authToken },
                 body
             };
             onSave(name, config);

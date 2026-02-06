@@ -1,46 +1,66 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './page.module.css';
 import CollectionSidebar, { Collection, RequestItem } from '@/components/TestApi/CollectionSidebar';
 import RequestEditor from '@/components/TestApi/RequestEditor';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import { Modal } from '@/components/ui/Modal/Modal';
 import { Button } from '@/components/ui/Button/Button';
+import { useAuth } from '@/providers/AuthContext';
+import { signOut } from 'next-auth/react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCollections } from '@/hooks/useCollections';
+import { useToast } from '@/hooks/useToast';
+
+import LoginModal from '@/components/LoginModal/LoginModal';
 
 export default function TestApiPage() {
-  // Local State (to be replaced by DB later)
-  const [collections, setCollections] = useState<Collection[]>([
-    {
-      id: 'c1',
-      name: 'Example Collection',
-      isOpen: true,
-      requests: [
-        {
-          id: 'r1',
-          name: 'Get Todos',
-          method: 'GET',
-          url: 'https://jsonplaceholder.typicode.com/todos',
-          config: {
-            method: 'GET',
-            url: 'https://jsonplaceholder.typicode.com/todos'
-          }
-        }
-      ]
-    }
-  ]);
+  const { user } = useAuth();
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Collections Data via TanStack Query
+  const {
+    collections,
+    isLoading,
+    createCollection,
+    deleteCollection,
+    createRequest,
+    updateRequest,
+    deleteRequest
+  } = useCollections(user?.id);
+
+  // Active Request State
   const [activeRequest, setActiveRequest] = useState<RequestItem | null>(null);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
   const [modalType, setModalType] = useState<'collection' | 'request' | 'delete-collection' | 'delete-request'>('collection');
-  const [newItemName, newItemNameSet] = useState(''); // renamed to avoid conflict if any, but let's stick to setNewItemName
+  const [newItemName, newItemNameSet] = useState('');
   const [targetColId, setTargetColId] = useState<string | null>(null);
   const [targetReqId, setTargetReqId] = useState<string | null>(null);
 
   // --- Actions ---
 
-  const handleAddCollection = () => {
+  const handleAddCollection = async () => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    // Check for stale session (User object exists but has no ID)
+    if (user && !user.id) {
+      console.warn('Stale session detected: User has no ID');
+      showToast('error', 'Session incomplete. Please sign in again.');
+      // Force logout to clear stale token
+      await signOut({ redirect: false });
+      setShowLoginModal(true);
+      return;
+    }
+
     setModalType('collection');
     newItemNameSet('');
     setIsModalOpen(true);
@@ -53,68 +73,69 @@ export default function TestApiPage() {
     setIsModalOpen(true);
   };
 
-  const confirmDeleteCollection = () => {
+  const confirmDeleteCollection = async () => {
     if (!targetColId) return;
-    setCollections(collections.filter(c => c.id !== targetColId));
-    if (activeRequest && collections.find(c => c.id === targetColId)?.requests.find(r => r.id === activeRequest.id)) {
-      setActiveRequest(null);
-    }
-    setIsModalOpen(false);
-  };
-
-  const confirmDeleteRequest = () => {
-    if (!targetColId || !targetReqId) return;
-    setCollections(collections.map(c => {
-      if (c.id === targetColId) {
-        return { ...c, requests: c.requests.filter(r => r.id !== targetReqId) };
+    setIsActionLoading(true);
+    try {
+      await deleteCollection(targetColId);
+      if (activeRequest && collections.find(c => c.id === targetColId)?.requests.find(r => r.id === activeRequest.id)) {
+        setActiveRequest(null);
       }
-      return c;
-    }));
-    if (activeRequest?.id === targetReqId) {
-      setActiveRequest(null);
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsActionLoading(false);
     }
-    setIsModalOpen(false);
   };
 
-  const handleConfirmModal = () => {
+  const confirmDeleteRequest = async () => {
+    if (!targetColId || !targetReqId) return;
+    setIsActionLoading(true);
+    try {
+      await deleteRequest({ collectionId: targetColId, requestId: targetReqId });
+      if (activeRequest?.id === targetReqId) {
+        setActiveRequest(null);
+      }
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleConfirmModal = async () => {
     if (modalType === 'delete-collection') {
-      confirmDeleteCollection();
+      await confirmDeleteCollection();
       return;
     }
     if (modalType === 'delete-request') {
-      confirmDeleteRequest();
+      await confirmDeleteRequest();
       return;
     }
 
     if (!newItemName.trim()) return;
 
-    if (modalType === 'collection') {
-      const newCol: Collection = {
-        id: Date.now().toString(),
-        name: newItemName,
-        requests: [],
-        isOpen: true
-      };
-      setCollections([...collections, newCol]);
-    } else {
-      if (!targetColId) return;
-      const newReq: RequestItem = {
-        id: Date.now().toString(),
-        name: newItemName,
-        method: 'GET',
-        url: '',
-        config: {}
-      };
-
-      setCollections(collections.map(c => {
-        if (c.id === targetColId) {
-          return { ...c, requests: [...c.requests, newReq], isOpen: true };
+    setIsActionLoading(true);
+    try {
+      if (modalType === 'collection') {
+        if (!user?.id) {
+          showToast('error', 'You must be logged in');
+          return;
         }
-        return c;
-      }));
-      setActiveRequest(newReq);
+        await createCollection(newItemName);
+      } else {
+        if (!targetColId) return;
+        const newReq = await createRequest({ collectionId: targetColId, name: newItemName });
+        setActiveRequest(newReq as RequestItem);
+      }
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsActionLoading(false);
     }
-    setIsModalOpen(false);
   };
 
   const handleDeleteCollection = (id: string) => {
@@ -131,53 +152,43 @@ export default function TestApiPage() {
   };
 
   const handleToggleCollection = (id: string) => {
-    setCollections(collections.map(c => {
-      if (c.id === id) return { ...c, isOpen: !c.isOpen };
-      return c;
-    }));
+    queryClient.setQueryData(['collections', user?.id], (old: Collection[] | undefined) => {
+      if (!old) return [];
+      return old.map(c => c.id === id ? { ...c, isOpen: !c.isOpen } : c);
+    });
   };
 
-  const handleSaveRequest = (name: string, config: any) => {
+  const handleSaveRequest = async (name: string, config: any) => {
     if (!activeRequest) return;
 
-    // Find which collection owns this request
-    // Find which collection owns this request
-    setCollections(collections.map(c => {
-      if (c.requests.some(r => r.id === activeRequest.id)) {
-        return {
-          ...c,
-          // Update Collection Auth (Shared State)
-          auth: {
-            type: config.authType,
-            token: config.authToken
-          },
-          requests: c.requests.map(r => {
-            if (r.id === activeRequest.id) {
-              return {
-                ...r,
-                name, // update name
-                method: config.method, // update badge
-                url: config.url,
-                config // save full config
-              };
-            }
-            return r;
-          })
-        };
-      }
-      return c;
-    }));
+    const activeCol = collections.find(c => c.requests.some(r => r.id === activeRequest.id));
+    if (!activeCol) return;
 
-    // Update local active request to reflect changes immediately
-    setActiveRequest(prev => prev ? ({ ...prev, name, method: config.method, config }) : null);
+    try {
+      await updateRequest({
+        id: activeRequest.id,
+        updates: {
+          name,
+          method: config.method,
+          url: config.url,
+          config
+        }
+      });
+
+      setActiveRequest(prev => prev ? ({ ...prev, name, method: config.method, config }) : null);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const activeCollection = collections.find(c => c.requests.some(r => r.id === activeRequest?.id));
 
   const editorData = activeRequest ? {
     ...activeRequest.config,
-    authType: activeCollection?.auth?.type || activeRequest.config.authType || 'none',
-    authToken: activeCollection?.auth?.token || activeRequest.config.authToken || ''
+    method: activeRequest.method,
+    url: activeRequest.url,
+    authType: activeCollection?.auth?.type || activeRequest.config?.auth?.type || 'none',
+    authToken: activeCollection?.auth?.token || activeRequest.config?.auth?.token || ''
   } : undefined;
 
   const getModalTitle = () => {
@@ -203,15 +214,22 @@ export default function TestApiPage() {
       />
 
       <div className={styles.rightPanel}>
-        {activeRequest ? (
+        {isLoading ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
+            Loading...
+          </div>
+        ) : activeRequest ? (
           <RequestEditor
-            key={activeRequest.id} // Force remount on switch to avoid stale state issues easily
+            key={activeRequest.id}
             data={editorData}
             onSave={handleSaveRequest}
             requestName={activeRequest.name}
           />
         ) : (
           <EmptyState hasEndpoints={true} onImportClick={() => { }} />
+          // Note: EmptyState hasEndpoints=true usually shows "Select an endpoint". 
+          // If collections are empty, we might want "Create a collection". 
+          // But existing logic is fine.
         )}
       </div>
 
@@ -226,6 +244,8 @@ export default function TestApiPage() {
             <Button
               variant={modalType.startsWith('delete') ? 'danger' : 'primary'}
               onClick={handleConfirmModal}
+              isLoading={isActionLoading}
+              disabled={!modalType.startsWith('delete') && !newItemName.trim()}
             >
               {modalType.startsWith('delete') ? 'Delete' : 'Create'}
             </Button>
@@ -256,6 +276,12 @@ export default function TestApiPage() {
           )}
         </div>
       </Modal>
+
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message="Sign in to create your first API collection."
+      />
     </div>
   );
 }
