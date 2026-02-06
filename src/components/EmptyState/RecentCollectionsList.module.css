@@ -84,7 +84,16 @@
     color: var(--text-muted);
 }
 
+.showMoreBtnContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .showMoreBtn {
+    width: auto;
+    height: 24px;
+    margin: 0 auto;
     margin-top: 16px;
     background: transparent;
     border: none;
@@ -92,10 +101,4 @@
     font-size: 12px;
     cursor: pointer;
     padding: 6px;
-    width: 100%;
-}
-
-.showMoreBtn:hover {
-    color: var(--text-primary);
-    text-decoration: underline;
 }

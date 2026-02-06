@@ -3,6 +3,7 @@ import { FileCode } from 'lucide-react';
 import { HistoryItem } from '../../providers/ProjectContext';
 import styles from './RecentCollectionsList.module.css';
 import HistoryModal from '../HistoryModal/HistoryModal';
+import { Button } from '../ui/Button/Button';
 
 interface RecentCollectionsListProps {
     items: HistoryItem[];
@@ -52,14 +53,18 @@ const RecentCollectionsList: React.FC<RecentCollectionsListProps> = ({ items, on
                         </button>
                     ))}
                 </div>
-                {hasMore && (
-                    <button
-                        className={styles.showMoreBtn}
-                        onClick={() => setShowModal(true)}
-                    >
-                        Show More... {items.length}
-                    </button>
-                )}
+
+                <div className={styles.showMoreBtnContainer}>
+                    {hasMore && (
+                        <Button
+                            variant="ghost"
+                            className={styles.showMoreBtn}
+                            onClick={() => setShowModal(true)}
+                        >
+                            Show More...
+                        </Button>
+                    )}
+                </div>
             </div>
 
             <HistoryModal

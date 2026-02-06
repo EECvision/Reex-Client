@@ -216,6 +216,16 @@ export const useImportActions = ({
         return 'GET';
     };
 
+    const saveToHistory = (name: string) => {
+        if (!addCollectionToHistory || !fileContent) return;
+        try {
+            const jsonContent = JSON.parse(fileContent);
+            addCollectionToHistory(name, jsonContent).catch(e => console.error("History save failed:", e));
+        } catch (e) {
+            console.warn("Could not parse file content for history", e);
+        }
+    };
+
     const handleUpdate = async (diffs: DiffResult[], selectedModules: Set<string>, selectedFunctions: Map<string, Set<string>>) => {
         if (!selectedFile) return;
         setStep("updating");
@@ -264,13 +274,8 @@ export const useImportActions = ({
                     }
                 }
 
-                if (addCollectionToHistory && collectionName && fileContent) {
-                    try {
-                        const jsonContent = JSON.parse(fileContent);
-                        addCollectionToHistory(collectionName, jsonContent).catch(e => console.error("History save failed:", e));
-                    } catch (e) {
-                        console.warn("Could not parse file content for history", e);
-                    }
+                if (collectionName) {
+                    saveToHistory(collectionName);
                 }
 
                 setStep("success");
@@ -386,6 +391,10 @@ export const useImportActions = ({
                 await api.syncProjectClients();
             } catch (e) {
                 console.warn("Client sync/prune failed:", e);
+            }
+
+            if (res.data?.collectionName || collectionName) {
+                saveToHistory(res.data?.collectionName || collectionName || 'Imported Collection');
             }
 
             setStep("success");

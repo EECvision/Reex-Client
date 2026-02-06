@@ -3,6 +3,7 @@ import { HistoryItem } from '../../providers/ProjectContext';
 import styles from './HistoryModal.module.css';
 import { Search, Folder, X, Trash2 } from 'lucide-react';
 import { Modal } from '../ui/Modal/Modal';
+import { Button } from '../ui/Button/Button';
 
 interface HistoryModalProps {
     isOpen: boolean;
@@ -82,9 +83,9 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, items, onI
                             setSelectedIndex(0);
                         }}
                     />
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                    <Button onClick={onClose} variant="ghost" >
                         <X size={16} />
-                    </button>
+                    </Button>
                 </div>
 
                 {/* List */}
