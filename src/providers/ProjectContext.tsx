@@ -6,6 +6,7 @@ import { api } from '../services/api';
 
 import { addToHistory, getHistory, deleteFromHistory } from '../app/actions/collectionActions';
 import { useStandaloneCollections } from '../hooks/useStandaloneCollections';
+import { useRecentCollections } from '../hooks/useRecentCollections';
 
 export interface StandaloneCollection {
   id: string;
@@ -50,7 +51,7 @@ interface ProjectContextType {
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
-const STANDALONE_STORAGE_KEY = "api_builder_standalone_data";
+
 
 export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [manifest, setManifest] = useState<any>(null);
@@ -62,7 +63,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [isStandaloneMode, setIsStandaloneMode] = useState(false);
 
   const [collections, setCollections] = useState<StandaloneCollection[]>([]);
-  const [recentCollections, setRecentCollections] = useState<HistoryItem[]>([]);
 
   // Standalone Collection Management via TanStack Query
   const {
@@ -73,6 +73,13 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     clearAllStandaloneCollections,
     isLoading: isLoadingStandalone
   } = useStandaloneCollections(isStandaloneMode);
+
+  // Recent History Management via TanStack Query
+  const {
+    recentCollections,
+    addCollectionToHistory,
+    removeCollectionFromHistory
+  } = useRecentCollections();
 
 
   // Computed merged manifest
@@ -98,28 +105,15 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     return merged;
   }, [manifest, collections, standaloneCollections, isStandaloneMode]);
 
-  const refreshHistory = async () => {
-    try {
-      const history = await getHistory();
-      setRecentCollections(history);
-    } catch (e) {
-      console.error("Failed to load history", e);
-    }
+
+
+  // Wrappers to match Context Interface signatures
+  const addHistoryWrapper = async (name: string, content: any) => {
+    await addCollectionToHistory({ name, content });
   };
 
-  useEffect(() => {
-    refreshHistory();
-  }, []);
-
-  const addCollectionToHistory = async (name: string, content: any) => {
-    await addToHistory(name, content);
-    await refreshHistory();
-  };
-
-  const removeCollectionFromHistory = async (id: string) => {
-    await deleteFromHistory(id);
-    // Optimistic update
-    setRecentCollections(prev => prev.filter(item => item.id !== id));
+  const removeHistoryWrapper = async (id: string) => {
+    await removeCollectionFromHistory(id);
   };
 
   const fetchProjectData = async (silent = false) => {
@@ -238,8 +232,8 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       removeCollection,
       clearAllCollections, // Expose
       recentCollections,
-      addCollectionToHistory,
-      removeCollectionFromHistory
+      addCollectionToHistory: addHistoryWrapper,
+      removeCollectionFromHistory: removeHistoryWrapper
     }}>
       {children}
     </ProjectContext.Provider>
