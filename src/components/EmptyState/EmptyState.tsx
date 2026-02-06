@@ -10,6 +10,7 @@ import { HistoryItem, useProject } from "../../providers/ProjectContext";
 import RecentCollectionsList from "./RecentCollectionsList";
 import { useAuth } from "@/providers/AuthContext";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import LoginModal from "../LoginModal/LoginModal";
 
 interface EmptyStateProps {
@@ -32,6 +33,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   const { isStandaloneMode } = useProject();
   const { isAuthenticated } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const router = useRouter();
 
   // Helper to check auth before action
   const handleAction = (action: () => void) => {
@@ -91,7 +93,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
               )}
               <Button
                 variant="secondary"
-                onClick={() => window.open("https://docs.reexapi.com", "_blank")}
+                onClick={() => router.push('/docs')}
                 className={styles.secondaryBtn}
               >
                 <BookOpen size={16} />
