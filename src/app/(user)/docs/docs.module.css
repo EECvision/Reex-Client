@@ -1,35 +1,42 @@
 .container {
     padding: 32px;
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     animation: fadeIn 0.3s ease-out;
+    height: calc(100vh - 64px);
+    /* Subtract navbar height if applicable */
+    overflow: hidden;
 }
 
 .pageTitle {
     font-size: 32px;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 48px;
+    margin-bottom: 32px;
 }
 
 .layout {
     display: grid;
-    grid-template-columns: 240px 1fr;
-    gap: 64px;
+    grid-template-columns: 280px 1fr;
+    gap: 48px;
+    height: 100%;
+    overflow: hidden;
 }
 
+/* Sidebar */
 .sidebar {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    position: sticky;
-    top: 96px;
-    align-self: flex-start;
+    overflow-y: auto;
+    padding-right: 16px;
+    padding-bottom: 32px;
+    border-right: 1px solid var(--border-color);
 }
 
 .navItem {
     text-align: left;
-    padding: 8px 12px;
+    padding: 10px 12px;
     border-radius: 6px;
     background: transparent;
     border: none;
@@ -38,6 +45,10 @@
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
 }
 
 .navItem:hover {
@@ -51,36 +62,170 @@
     font-weight: 600;
 }
 
-.content {
+.chevron {
+    margin-left: auto;
+    transition: transform 0.2s;
+    color: var(--text-secondary);
+}
+
+.chevron.expanded {
+    transform: rotate(90deg);
+}
+
+.subItemsWrapper {
+    display: none;
+}
+
+.subItemsWrapper.open {
+    display: block;
+}
+
+.subItems {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 2px;
+    margin-left: 42px;
+    padding: 4px 0 4px 12px;
+    border-left: 1px solid var(--border-color);
 }
 
-.card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    overflow: hidden;
+.subItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 12px;
+    text-align: left;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 40px;
+    /* Ensure visual consistency with parent items */
 }
 
-.cardContent {
-    padding: 24px;
-}
-
-.cardTitle {
-    font-size: 18px;
-    font-weight: 600;
+.subItem:hover {
+    background: var(--hover-bg);
     color: var(--text-primary);
+}
+
+.subItem.active {
+    background: transparent;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Content Area */
+.content {
+    overflow-y: auto;
+    padding-bottom: 64px;
+    padding-right: 24px;
+}
+
+.article {
+    max-width: 800px;
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+/* Typography & Elements */
+.article h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: var(--text-primary);
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.article h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-top: 40px;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+
+.article h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 32px;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+
+.article p {
+    margin-bottom: 16px;
+    color: var(--text-secondary);
+    font-size: 16px;
+}
+
+.article ul,
+.article ol {
+    margin-bottom: 24px;
+    padding-left: 24px;
+    color: var(--text-secondary);
+}
+
+.article li {
     margin-bottom: 8px;
 }
 
-.cardDescription {
-    font-size: 14px;
-    color: var(--text-secondary);
+.article strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Code Blocks */
+.article pre {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
     margin-bottom: 24px;
-    line-height: 1.5;
-    max-width: 600px;
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+}
+
+.article code {
+    background: var(--hover-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9em;
+    color: var(--primary-color);
+}
+
+.article pre code {
+    background: transparent;
+    padding: 0;
+    color: var(--text-primary);
+}
+
+/* Scrollbar */
+.sidebar::-webkit-scrollbar,
+.content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track,
+.content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb,
+.content::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover,
+.content::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
 }
 
 @keyframes fadeIn {
@@ -93,4 +238,65 @@
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* Module Cards */
+.moduleGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-top: 32px;
+    margin-bottom: 32px;
+}
+
+.moduleCard {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: left;
+    text-decoration: none !important;
+}
+
+.moduleCard:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.1);
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 4px;
+}
+
+.cardIcon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: var(--hover-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    flex-shrink: 0;
+}
+
+.cardTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.cardDescription {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
 }
