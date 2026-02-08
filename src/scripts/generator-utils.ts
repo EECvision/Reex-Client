@@ -475,12 +475,15 @@ export const generateModuleTemplate = (
 
     // Default to BASE_CLIENT if nothing found (shouldn't happen with new logic)
     if (potentialClients.size === 0) potentialClients.add("BASE_CLIENT");
-    const clientImports = Array.from(potentialClients).sort().join(", ");
 
+    // Combine clients and utils into one import list
+    const allImports = [
+        ...Array.from(potentialClients).sort(),
+        ...utilsImports
+    ].join(", ");
 
     return `/* eslint-disable @typescript-eslint/no-explicit-any */
-import { ${clientImports} } from "../config";
-import { ${utilsImports.join(", ")} } from "../config/utils";
+import { ${allImports} } from "../config";
 
 // --- Types ---
 ${typeDefinitions.join("\n")}

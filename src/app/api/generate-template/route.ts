@@ -22,8 +22,7 @@ function generateTemplateContent(moduleName: string) {
   const TypeName = capitalize(moduleName.replace(/s$/, "")); // Remove trailing 's' for singular
 
   return `/* eslint-disable @typescript-eslint/no-explicit-any */
-import { BASE_CLIENT } from "../config";
-import { constructQueryParams, handleApiCall } from "../config/utils";
+import { BASE_CLIENT, constructQueryParams, handleApiCall } from "../config";
 
 // --- Types ---
 
