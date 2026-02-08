@@ -19,12 +19,12 @@ export const docSections: DocSection[] = [
             <>
                 <h1>Introduction & Philosophy</h1>
 
-                <h3>What is Reex API Client?</h3>
+                <h3>What is Reex API Builder?</h3>
                 <p>
-                    Reex API Client is a developer-first tool designed to streamline the lifecycle of API testing and integration. While traditional tools focus heavily on backend verification, Reex is built specifically with the Frontend Developer in mind.
+                    Reex API Builder is a developer-first tool designed to streamline the lifecycle of API testing and integration. While traditional tools focus heavily on backend verification, Reex is built specifically with the Frontend Developer in mind.
                 </p>
                 <p>
-                    It is not just an API client; it is a code generation engine. Reex connects directly to your local project, managing the gap between your API definitions and your UI components.
+                    It is not just an API client; it is a code generation engine. Reex connects directly to your local project, managing the gap between your API definitions and your UI components by generating strictly typed, production ready hooks directly into your codebase.
                 </p>
 
                 <h3>How is it different?</h3>
