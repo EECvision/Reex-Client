@@ -450,6 +450,9 @@ export const generateAxiosCallBody = (
     } else {
         lines.push(`    const res = await handleApiCall(() => ${clientName}.${methodLower}(url${payloadArg}), "${functionName}");`);
         lines.push(`    if (res.error) throw res.error;`);
+        lines.push(`    if (res.data === undefined) {
+            throw new Error("API succeeded but yielded no data");
+        }`);
         lines.push(`    return res.data;`);
     }
 

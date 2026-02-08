@@ -71,6 +71,9 @@ export const ${moduleName}Api = {
       "get_list${TypeName}s"
     );
     if (res.error) throw res.error;
+    if (res.data === undefined) {
+            throw new Error("API succeeded but yielded no data");
+        };
     return res.data;
   },
 
@@ -81,6 +84,9 @@ export const ${moduleName}Api = {
       "get_${moduleName.slice(0, -1)}Detail"
     );
     if (res.error) throw res.error;
+    if (res.data === undefined) {
+            throw new Error("API succeeded but yielded no data");
+        };
     return res.data;
   },
 
@@ -93,6 +99,9 @@ export const ${moduleName}Api = {
       "post_create${TypeName}"
     );
     if (res.error) throw res.error;
+    if (res.data === undefined) {
+            throw new Error("API succeeded but yielded no data");
+        };
     return res.data;
   },
 
@@ -106,6 +115,9 @@ export const ${moduleName}Api = {
       "put_update${TypeName}"
     );
     if (res.error) throw res.error;
+    if (res.data === undefined) {
+            throw new Error("API succeeded but yielded no data");
+        };
     return res.data;
   },
 
@@ -113,6 +125,10 @@ export const ${moduleName}Api = {
     const url = \`/${moduleName}/\${id}\`;
     const res = await handleApiCall(() => BASE_CLIENT.delete(url), "delete_remove${TypeName}");
     if (res.error) throw res.error;
+    if (res.data === undefined) {
+            throw new Error("API succeeded but yielded no data");
+        };
+    return res.data;
   },
 };
 `;
