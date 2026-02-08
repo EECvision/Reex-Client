@@ -405,19 +405,22 @@ export const generateFunctionSignature = (config: SignatureConfig): string => {
         });
     }
 
+    // Response Type is the same as function name unless it's a DELETE
+    const returnType = functionName.startsWith('delete_') ? 'any' : functionName;
+
     if (params.length === 0) {
-        return `  ${functionName}: async (): Promise<any> => {`;
+        return `  ${functionName}: async (): Promise<${returnType}> => {`;
     } else if (params.length === 1) {
         const p = params[0];
         if (p.isInterface) {
-            return `  ${functionName}: async (${p.name}: ${p.type}): Promise<any> => {`;
+            return `  ${functionName}: async (${p.name}: ${p.type}): Promise<${returnType}> => {`;
         } else {
-            return `  ${functionName}: async ({${p.name}}: {${p.name}: ${p.type}}): Promise<any> => {`;
+            return `  ${functionName}: async ({${p.name}}: {${p.name}: ${p.type}}): Promise<${returnType}> => {`;
         }
     } else {
         const destructured = params.map((p) => p.name).join(", ");
         const types = params.map((p) => `${p.name}: ${p.type}`).join(", ");
-        return `  ${functionName}: async ({${destructured}}: {${types}}): Promise<any> => {`;
+        return `  ${functionName}: async ({${destructured}}: {${types}}): Promise<${returnType}> => {`;
     }
 };
 
@@ -457,7 +460,8 @@ export const generateAxiosCallBody = (
 export const generateModuleTemplate = (
     moduleName: string,
     typeDefinitions: string[],
-    functionDefinitions: string[]
+    functionDefinitions: string[],
+    functionNames: string[]
 ): string => {
     const usesQueryParams = functionDefinitions.some((def) => def.includes("constructQueryParams"));
     const utilsImports = ["handleApiCall"];
@@ -482,8 +486,15 @@ export const generateModuleTemplate = (
         ...utilsImports
     ].join(", ");
 
+    // Response Type Imports (Exclude DELETE)
+    const responseTypeImports = functionNames
+        .filter(name => !name.startsWith('delete_'))
+        .map(funcName => `import { ${funcName} } from "../types/${moduleName}/${funcName}";`)
+        .join("\n");
+
     return `/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ${allImports} } from "../config";
+${responseTypeImports}
 
 // --- Types ---
 ${typeDefinitions.join("\n")}
@@ -495,6 +506,7 @@ ${functionDefinitions.join("\n")}
 };
 `;
 };
+
 
 // --- Core Driver Logic ---
 
@@ -683,7 +695,7 @@ export const generateStandardModuleContent = (
 
         generatedModules.push({
             name: moduleName,
-            content: generateModuleTemplate(moduleName, typeDefinitions, functionDefinitions),
+            content: generateModuleTemplate(moduleName, typeDefinitions, functionDefinitions, Array.from(generatedFunctions)),
             proposedClient: mod.proposedClient
         });
     });

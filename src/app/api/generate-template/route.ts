@@ -23,6 +23,10 @@ function generateTemplateContent(moduleName: string) {
 
   return `/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BASE_CLIENT, constructQueryParams, handleApiCall } from "../config";
+import { get_list${TypeName}s } from "../types/${moduleName}/get_list${TypeName}s";
+import { get_${moduleName.slice(0, -1)}Detail } from "../types/${moduleName}/get_${moduleName.slice(0, -1)}Detail";
+import { post_create${TypeName} } from "../types/${moduleName}/post_create${TypeName}";
+import { put_update${TypeName} } from "../types/${moduleName}/put_update${TypeName}";
 
 // --- Types ---
 
@@ -58,7 +62,7 @@ interface Update${TypeName}Params {
 export const ${moduleName}Api = {
   get_list${TypeName}s: async (
     params: Get${TypeName}sParams
-  ): Promise<any> => {
+  ): Promise<get_list${TypeName}s> => {
     const queryString = constructQueryParams(params);
     const url = \`/${moduleName}\${queryString}\`;
 
@@ -70,7 +74,7 @@ export const ${moduleName}Api = {
     return res.data;
   },
 
-  get_${moduleName.slice(0, -1)}Detail: async ({ id } : { id: string }): Promise<any> => {
+  get_${moduleName.slice(0, -1)}Detail: async ({ id } : { id: string }): Promise<get_${moduleName.slice(0, -1)}Detail> => {
     const url = \`/${moduleName}/\${id}\`;
     const res = await handleApiCall(
       () => BASE_CLIENT.get(url),
@@ -82,7 +86,7 @@ export const ${moduleName}Api = {
 
   post_create${TypeName}: async (
     payload: Create${TypeName}Payload
-  ): Promise<any> => {
+  ): Promise<post_create${TypeName}> => {
     const url = "/${moduleName}";
     const res = await handleApiCall(
       () => BASE_CLIENT.post(url, payload),
@@ -95,7 +99,7 @@ export const ${moduleName}Api = {
   put_update${TypeName}: async ({
     id,
     payload,
-  }: Update${TypeName}Params): Promise<any> => {
+  }: Update${TypeName}Params): Promise<put_update${TypeName}> => {
     const url = \`/${moduleName}/\${id}\`;
     const res = await handleApiCall(
       () => BASE_CLIENT.put(url, payload),
