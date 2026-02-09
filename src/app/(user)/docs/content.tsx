@@ -331,7 +331,7 @@ function App() {
                         </p>
                         <p><strong>To use Standalone Mode:</strong></p>
                         <p>Visit the web app directly:</p>
-                        <pre><code>https://reex-api-client.vercel.app/</code></pre>
+                        <pre><code>https://reex-api-builder.vercel.app/</code></pre>
                         <p>The app launches in Standalone Mode by default, ready for you to import and test collections.</p>
 
                         <h3>Switching from Project Mode</h3>
@@ -572,7 +572,7 @@ interface GetUserResponse {
                         <p>Text Mode is available directly in the Reex API Builder web app:</p>
                         <p><strong>To use Text Mode:</strong></p>
                         <p>Visit the web app and switch to Text Mode:</p>
-                        <pre><code>https://reex-api-client.vercel.app/</code></pre>
+                        <pre><code>https://reex-api-builder.vercel.app/</code></pre>
                         <p>Click <strong>Text Mode</strong> in the navigation or mode switcher.</p>
 
                         <h3>Switching from Other Modes</h3>
