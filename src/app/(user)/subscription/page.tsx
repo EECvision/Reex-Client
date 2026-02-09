@@ -1,13 +1,91 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import styles from "./subscription.module.css";
 import { Button } from "@/components/ui/Button/Button";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSubscription } from "@/hooks/useSubscription";
+import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
+import LoginModal from "@/components/LoginModal/LoginModal";
 
 export default function SubscriptionPage() {
     const router = useRouter();
+    const { isPro, user, isLoading } = useSubscription();
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [showLogin, setShowLogin] = useState(false);
+
+    const config = {
+        public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY || "",
+        tx_ref: Date.now().toString(),
+        amount: 10, // Amount in USD
+        currency: "USD",
+        payment_options: "card,mobilemoney,ussd",
+        payment_plan: process.env.NEXT_PUBLIC_FLUTTERWAVE_PLAN_ID || "",
+        customer: {
+            email: user?.email || "",
+            phone_number: "",
+            name: user?.name || "",
+        },
+        customizations: {
+            title: "Reex API Builder Pro",
+            description: "Upgrade to Pro for unlimited access",
+            logo: "/logo-subscription.svg",
+        },
+    };
+
+    const handleFlutterPayment = useFlutterwave(config);
+
+    const handlePayment = () => {
+        if (!user?.email) {
+            setShowLogin(true);
+            return;
+        }
+
+        handleFlutterPayment({
+            callback: async (response) => {
+                console.log("Payment response:", response);
+                closePaymentModal();
+
+                if (response.status === "successful") {
+                    setIsProcessing(true);
+                    try {
+                        const verifyRes = await fetch("/api/subscription/verify", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                transaction_id: response.transaction_id,
+                                plan_id: config.payment_plan
+                            }),
+                        });
+
+                        const verifyData = await verifyRes.json();
+
+                        if (verifyRes.ok && verifyData.success) {
+                            alert("Subscription successful! Welcome to Pro.");
+                            router.refresh(); // Refresh to update session/subscription status
+                        } else {
+                            alert("Payment verification failed. Please contact support.");
+                        }
+                    } catch (error) {
+                        console.error("Verification error:", error);
+                        alert("An error occurred during verification.");
+                    } finally {
+                        setIsProcessing(false);
+                    }
+                } else {
+                    alert("Payment failed or cancelled.");
+                }
+            },
+            onClose: () => {
+                // handle close
+            },
+        });
+    };
+
+    if (isLoading) {
+        return <div className={styles.loading}>Loading...</div>;
+    }
 
     return (
         <main className={styles.container}>
@@ -20,8 +98,8 @@ export default function SubscriptionPage() {
                 <div className={styles.planInfo}>
                     <h3>Current Plan</h3>
                     <div className={styles.planName}>
-                        Free Tier
-                        <span className={styles.badge}>Active</span>
+                        {isPro ? "Pro Developer" : "Free Tier"}
+                        <span className={isPro ? styles.badgePro : styles.badge}>Active</span>
                     </div>
                 </div>
                 <Button variant="ghost" onClick={() => router.push('/')}>Back to Workspace</Button>
@@ -38,23 +116,41 @@ export default function SubscriptionPage() {
                         <li className={styles.feature}><Check size={18} className={styles.check} /> Community Support</li>
                         <li className={styles.feature}><Check size={18} className={styles.check} /> Local Storage</li>
                     </ul>
-                    <Button variant="secondary" disabled>Current Plan</Button>
+                    <Button variant="secondary" disabled={!isPro}>
+                        {!isPro ? "Current Plan" : "Downgrade"}
+                    </Button>
                 </div>
 
                 {/* Pro Plan */}
                 <div className={`${styles.planCard} ${styles.featured}`}>
                     <div className={styles.featuredLabel}>RECOMMENDED</div>
                     <h3 style={{ fontSize: 20, fontWeight: 600 }}>Pro Developer</h3>
-                    <div className={styles.price}>$19<span>/mo</span></div>
+                    <div className={styles.price}>$10<span>/mo</span></div>
                     <ul className={styles.features}>
                         <li className={styles.feature}><Check size={18} className={styles.check} /> Unlimited Collections</li>
                         <li className={styles.feature}><Check size={18} className={styles.check} /> Unlimited Requests</li>
                         <li className={styles.feature}><Check size={18} className={styles.check} /> Cloud Sync & Backup</li>
                         <li className={styles.feature}><Check size={18} className={styles.check} /> Team Collaboration</li>
                     </ul>
-                    <Button variant="primary">Upgrade to Pro</Button>
+
+                    {isPro ? (
+                        <Button variant="primary" disabled>Current Plan</Button>
+                    ) : (
+                        <Button
+                            variant="primary"
+                            onClick={handlePayment}
+                            disabled={isProcessing}
+                        >
+                            {isProcessing ? <><Loader2 className="animate-spin mr-2" size={16} /> Processing...</> : "Upgrade to Pro"}
+                        </Button>
+                    )}
                 </div>
             </div>
+            <LoginModal
+                isOpen={showLogin}
+                onClose={() => setShowLogin(false)}
+                message="Sign in to subscribe to the Pro plan."
+            />
         </main>
     );
 }
