@@ -42,7 +42,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, message }) => 
                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
                         <Logo icon />
                     </div>
-                    <h2 className={styles.title}>Sign in to Reex</h2>
+                    <h2 className={styles.title}>Sign in to Reex API Builder</h2>
                     <p className={styles.subtitle}>
                         {message || "Please sign in to continue using Reex API Builder."}
                     </p>

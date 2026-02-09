@@ -52,7 +52,7 @@ export default function SettingsPage() {
                                 <div className={styles.cardContent}>
                                     <h2 className={styles.cardTitle}>Display Name</h2>
                                     <p className={styles.cardDescription}>
-                                        This is your visible name within ReexAPI. It will be displayed on your dashboard and invoices.
+                                        This is your visible name within Reex API Builder. It will be displayed on your dashboard and invoices.
                                     </p>
                                     <input
                                         type="text"
@@ -141,7 +141,7 @@ export default function SettingsPage() {
                                                 <div className={styles.integrationIcon}>▲</div>
                                                 <div>
                                                     <div className={styles.integrationName}>Vercel</div>
-                                                    <div className={styles.integrationDesc}>Deploy directly from ReexAPI</div>
+                                                    <div className={styles.integrationDesc}>Deploy directly from Reex API Builder</div>
                                                 </div>
                                             </div>
                                             <Button variant="ghost" size="sm">Connect</Button>

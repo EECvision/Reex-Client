@@ -1,5 +1,5 @@
 ## Start command
-Reex
+Reex-build
 
 ## Test url
 https://api.money.orki.io/api/providers

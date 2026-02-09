@@ -21,17 +21,17 @@ export const docSections: DocSection[] = [
 
                 <h3>What is Reex API Builder?</h3>
                 <p>
-                    Reex API Builder is a developer-first tool designed to streamline the lifecycle of API testing and integration. While traditional tools focus heavily on backend verification, Reex is built specifically with the Frontend Developer in mind.
+                    Reex API Builder is a developer-first tool designed to streamline the lifecycle of API testing and integration. While traditional tools focus heavily on backend verification, Reex API Builder is built specifically with the Frontend Developer in mind.
                 </p>
                 <p>
-                    It is not just an API client; it is a code generation engine. Reex connects directly to your local project, managing the gap between your API definitions and your UI components by generating strictly typed, production ready hooks directly into your codebase.
+                    It is not just an API client; it is a code generation engine. Reex API Builder connects directly to your local project, managing the gap between your API definitions and your UI components by generating strictly typed, production ready hooks directly into your codebase.
                 </p>
 
                 <h3>How is it different?</h3>
                 <p>
                     The standard workflow for frontend developers often involves manually typing out API collections, creating interfaces, and writing repetitive fetch hooks.
                 </p>
-                <p>Reex eliminates this boilerplate.</p>
+                <p>Reex API Builder eliminates this boilerplate.</p>
                 <ul>
                     <li><strong>No more manual typing</strong>: We generate your API collections for you.</li>
                     <li><strong>No more interface mismatch</strong>: We generate TypeScript interfaces automatically.</li>
@@ -39,7 +39,7 @@ export const docSections: DocSection[] = [
                 </ul>
 
                 <h3>Core Modules</h3>
-                <p>Reex is composed of three powerful modules to suit different stages of development:</p>
+                <p>Reex API Builder is composed of three powerful modules to suit different stages of development:</p>
 
                 <div className={styles.moduleGrid}>
                     <a href="#project-module" className={styles.moduleCard}>
@@ -89,10 +89,10 @@ export const docSections: DocSection[] = [
             <>
                 <h1>Project Module</h1>
                 <p>
-                    The Project Module is the flagship experience of Reex. It establishes a direct link between the Reex UI and your local React application.
+                    The Project Module is the flagship experience of Reex API Builder. It establishes a direct link between the Reex UI and your local React application.
                 </p>
                 <p>
-                    In this mode, Reex acts as a companion app that lives alongside your development server. It reads your project structure, installs necessary dependencies, and injects generated code directly into your file system.
+                    In this mode, Reex API Builder acts as a companion app that lives alongside your development server. It reads your project structure, installs necessary dependencies, and injects generated code directly into your file system.
                 </p>
             </>
         ),
@@ -104,7 +104,7 @@ export const docSections: DocSection[] = [
                     <>
                         <h1>Getting Started</h1>
                         <p>
-                            Getting up and running with Reex is designed to be frictionless. The tool handles the heavy lifting of installing dependencies and setting up the required infrastructure in your React application.
+                            Getting up and running with Reex API Builder is designed to be frictionless. The tool handles the heavy lifting of installing dependencies and setting up the required infrastructure in your React application.
                         </p>
 
                         <h3>Prerequisites</h3>
@@ -117,20 +117,20 @@ export const docSections: DocSection[] = [
 
                         <h3>Step 1: Install the CLI</h3>
                         <p>
-                            Reex relies on a global CLI package to bridge the connection between the Reex API Builder (the UI) and your local project files.
+                            Reex API Builder relies on a global CLI package to bridge the connection between the Reex API Builder (the UI) and your local project files.
                         </p>
                         <p>Open your terminal and install the builder globally:</p>
                         <pre><code>npm install -g reex-api-builder</code></pre>
 
                         <h3>Step 2: Initialize Your Project</h3>
-                        <p>Navigate to the root directory of your React project. Run the initialization command to launch Reex in Project Mode:</p>
+                        <p>Navigate to the root directory of your React project. Run the initialization command to launch Reex API Builder in Project Mode:</p>
                         <pre><code>reex-api</code></pre>
 
                         <h3>Step 3: Automatic Dependency Management</h3>
                         <p>
-                            When you run the command above, Reex performs a health check on your project. It automatically detects if the necessary data-fetching libraries are present.
+                            When you run the command above, Reex API Builder performs a health check on your project. It automatically detects if the necessary data-fetching libraries are present.
                         </p>
-                        <p>If they are missing, Reex will install them for you automatically:</p>
+                        <p>If they are missing, Reex API Builder will install them for you automatically:</p>
                         <ul>
                             <li><strong>Axios</strong>: For handling HTTP requests.</li>
                             <li><strong>TanStack Query (React Query)</strong>: For robust server state management.</li>
@@ -138,7 +138,7 @@ export const docSections: DocSection[] = [
 
                         <h3>Step 4: Configure the Provider</h3>
                         <p>
-                            Reex generates a dedicated Providers component to manage the query client context. You must wrap your application with this provider to enable the generated hooks.
+                            Reex API Builder generates a dedicated Providers component to manage the query client context. You must wrap your application with this provider to enable the generated hooks.
                         </p>
                         <ol>
                             <li>Open your project's root file (usually <code>App.tsx</code>, <code>main.tsx</code>, or <code>index.tsx</code>).</li>
@@ -173,23 +173,23 @@ function App() {
                         </p>
                         <ul>
                             <li><strong>Supported Formats</strong>: Swagger/OpenAPI, Postman JSON.</li>
-                            <li><strong>Result</strong>: Reex parses the file and prepares it for analysis.</li>
+                            <li><strong>Result</strong>: Reex API Builder parses the file and prepares it for analysis.</li>
                         </ul>
 
                         <h3>Step 2: Analyze & Generate</h3>
                         <p>Once imported, click <strong>Analyze</strong>. The tool reviews the collection structure.</p>
                         <p>Click <strong>Update Selected</strong> to generate the code.</p>
-                        <p>Reex immediately creates the <code>api-services</code> folder structure in your project.</p>
+                        <p>Reex API Builder immediately creates the <code>api-services</code> folder structure in your project.</p>
 
                         <h3>Step 3: The Two-Way Sync</h3>
-                        <p>Reex maintains a live link between the UI and your code.</p>
+                        <p>Reex API Builder maintains a live link between the UI and your code.</p>
                         <ul>
-                            <li><strong>UI to Code</strong>: Changes made in the Reex Builder (like renaming an endpoint) are written to your definitions files.</li>
-                            <li><strong>Code to UI</strong>: Because <code>definitions</code> is the single source of truth, you can manually edit the TypeScript files in your IDE. The Reex Builder UI will automatically detect these changes and update its display.</li>
+                            <li><strong>UI to Code</strong>: Changes made in the Reex API Builder (like renaming an endpoint) are written to your definitions files.</li>
+                            <li><strong>Code to UI</strong>: Because <code>definitions</code> is the single source of truth, you can manually edit the TypeScript files in your IDE. The Reex API Builder UI will automatically detect these changes and update its display.</li>
                         </ul>
 
                         <h3>Step 4: Handling Updates (Diff View)</h3>
-                        <p>APIs change. When you re-import an updated Swagger or Postman file, Reex protects your code from silent overwrites.</p>
+                        <p>APIs change. When you re-import an updated Swagger or Postman file, Reex API Builder protects your code from silent overwrites.</p>
                         <ul>
                             <li><strong>Conflict Detection</strong>: The tool compares the Incoming collection against your Current definitions.</li>
                             <li><strong>Diff View</strong>: You are presented with a side-by-side "Git-style" diff view. You can see exactly what changed (e.g., a new <code>firstName</code> string added to a payload) and decide whether to accept or reject the update.</li>
@@ -204,7 +204,7 @@ function App() {
                     <>
                         <h1>Architecture</h1>
                         <p>
-                            When you run the generator, Reex creates a structured <code>api-services</code> directory in the <code>src</code> folder of your project. Understanding this structure is key to leveraging the tool effectively.
+                            When you run the generator, Reex API Builder creates a structured <code>api-services</code> directory in the <code>src</code> folder of your project. Understanding this structure is key to leveraging the tool effectively.
                         </p>
 
                         <h3>Overview</h3>
@@ -238,7 +238,7 @@ function App() {
                         <ul>
                             <li><strong>Editable</strong>: You are encouraged to edit these files to customize behavior.</li>
                             <li><strong>Structure</strong>: Each file exports an API object with async functions for each endpoint.</li>
-                            <li><strong>Two-Way Sync</strong>: Changes here are reflected in the Reex Builder UI.</li>
+                            <li><strong>Two-Way Sync</strong>: Changes here are reflected in the Reex API Builder UI.</li>
                         </ul>
 
                         <h3>generated/ - React Query Hooks</h3>
@@ -267,7 +267,7 @@ function App() {
 
                         <h3>Frontend-First Approach</h3>
                         <p>
-                            Reex is designed with the frontend developer in mind, automatically generating the boilerplate code needed to integrate APIs into your React application.
+                            Reex API Builder is designed with the frontend developer in mind, automatically generating the boilerplate code needed to integrate APIs into your React application.
                         </p>
 
                         <h3>Type Safety</h3>
@@ -282,12 +282,12 @@ function App() {
 
                         <h3>Two-Way Sync</h3>
                         <p>
-                            Edit your API definitions in the Reex UI or directly in your IDE - changes are synchronized bidirectionally.
+                            Edit your API definitions in the Reex API Builder UI or directly in your IDE - changes are synchronized bidirectionally.
                         </p>
 
                         <h3>Conflict Resolution</h3>
                         <p>
-                            When APIs change, Reex shows you exactly what's different through a Git-style diff view, giving you full control over what to accept or reject.
+                            When APIs change, Reex API Builder shows you exactly what's different through a Git-style diff view, giving you full control over what to accept or reject.
                         </p>
                     </>
                 ),
@@ -339,7 +339,7 @@ function App() {
                         <ol>
                             <li><strong>Stop the Project Bridge</strong> - First, stop the <code>reex-api-bridge</code> from watching your project</li>
                         </ol>
-                        <pre><code>{`# In your terminal where reex-api is running
+                        <pre><code>{`# In your terminal where reex-api-bridge is running
 Ctrl + C  # or Cmd + C on Mac`}</code></pre>
                         <ol start={2}>
                             <li><strong>Launch in Standalone Mode</strong></li>
@@ -430,7 +430,7 @@ Headers:
                         </ul>
 
                         <h4>Send the Request</h4>
-                        <p>Click the <strong>Send</strong> button. Reex makes the request and displays the response in real-time.</p>
+                        <p>Click the <strong>Send</strong> button. Reex API Builder makes the request and displays the response in real-time.</p>
 
                         <h3>Step 3: View Response and Interface</h3>
                         <p>After sending a request, you'll see two panels:</p>
@@ -669,7 +669,7 @@ X-Custom-Header      | custom-value`}</code></pre>
                         </ul>
 
                         <h3>Step 4: Send the Request</h3>
-                        <p>Click the <strong>Send</strong> button to execute the request. Reex makes the request and displays the response in real-time.</p>
+                        <p>Click the <strong>Send</strong> button to execute the request. Reex API Builder makes the request and displays the response in real-time.</p>
 
                         <h3>Step 5: View Response and Interface</h3>
                         <p>After sending a request, you'll see two panels:</p>
@@ -698,7 +698,7 @@ Time: 234ms
 Size: 487 bytes`}</code></pre>
 
                         <h4>Interface Panel (TypeScript)</h4>
-                        <p>Reex automatically generates TypeScript interfaces from the response:</p>
+                        <p>Reex API Builder automatically generates TypeScript interfaces from the response:</p>
                         <pre><code>{`interface User {
   id: string;
   firstName: string;
@@ -933,7 +933,7 @@ interface GetUsersResponse {
                 <p><strong>Solution</strong>: Check your <code>config/constants.ts</code> to ensure the base URL is correct and that your backend has proper CORS configuration.</p>
 
                 <p><strong>Issue</strong>: Types are out of sync after updating API definitions.</p>
-                <p><strong>Solution</strong>: Re-run the analyze and update process in the Reex Builder to regenerate types and hooks.</p>
+                <p><strong>Solution</strong>: Re-run the analyze and update process in the Reex API Builder to regenerate types and hooks.</p>
             </>
         ),
     },
@@ -945,7 +945,7 @@ interface GetUsersResponse {
             <>
                 <h1>Summary</h1>
                 <p>
-                    Reex API Client bridges the gap between API specifications and frontend implementation, automating the tedious parts of API integration while maintaining full type safety and developer control. By generating and maintaining the boilerplate code for you, Reex lets you focus on building great user experiences instead of wrestling with data fetching logic.
+                    Reex API Builder bridges the gap between API specifications and frontend implementation, automating the tedious parts of API integration while maintaining full type safety and developer control. By generating and maintaining the boilerplate code for you, Reex API Builder lets you focus on building great user experiences instead of wrestling with data fetching logic.
                 </p>
             </>
         ),

@@ -45,9 +45,9 @@ const Logo: React.FC<LogoProps> = ({ icon, horizontal }) => {
     return (
         <>
             {icon ? (
-                <Image className={styles.logoIcon} src={logoIcon} alt="ReexAPI Icon" priority />
+                <Image className={styles.logoIcon} src={logoIcon} alt="Reex API Builder Icon" priority />
             ) : (
-                <Image className={`${styles.logo} ${horizontal ? styles.horizontal : ''}`} src={logoToUse} alt="ReexAPI Logo" priority />
+                <Image className={`${styles.logo} ${horizontal ? styles.horizontal : ''}`} src={logoToUse} alt="Reex API Builder Logo" priority />
             )}
         </>
     );
