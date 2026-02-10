@@ -4,7 +4,7 @@ import { HistoryItem } from '@/providers/ProjectContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { ClientStorage } from '@/lib/clientStorage';
 import { useToast } from '@/hooks/useToast';
-import { PRO_HISTORY_LIMIT } from '@/lib/constants';
+import { FREE_RECENT_COLLECTION_LIMIT } from '@/lib/constants';
 
 const HISTORY_KEY = 'recent_collections';
 
@@ -25,7 +25,7 @@ export const useRecentCollections = () => {
             if (!isPro) {
                 return ClientStorage.get<HistoryItem>(HISTORY_KEY)
                     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-                    .slice(0, PRO_HISTORY_LIMIT);
+                    .slice(0, FREE_RECENT_COLLECTION_LIMIT);
             }
             return await getHistory();
         }
@@ -51,6 +51,9 @@ export const useRecentCollections = () => {
                     history[index] = { ...history[index], content, updated_at: newItem.updated_at };
                     ClientStorage.save(HISTORY_KEY, history);
                 } else {
+                    if (history.length >= FREE_RECENT_COLLECTION_LIMIT) {
+                        return { error: `History limit reached (${FREE_RECENT_COLLECTION_LIMIT}). Upgrade to Pro for more.` };
+                    }
                     ClientStorage.add(HISTORY_KEY, newItem);
                 }
                 return;

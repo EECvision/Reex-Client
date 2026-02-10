@@ -5,7 +5,7 @@ import { Database } from '@/types/supabase';
 import { auth } from '@/auth';
 import { revalidatePath } from 'next/cache';
 import { verifyProStatus } from '@/lib/verifyProStatus';
-import { PRO_COLLECTION_LIMIT, PRO_REQUEST_LIMIT } from '@/lib/constants';
+import { PRO_TEST_COLLECTION_LIMIT, PRO_TEST_REQUEST_LIMIT } from '@/lib/constants';
 
 
 
@@ -117,8 +117,8 @@ export async function createCollection(name: string) {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', session.user.id);
 
-    if (count !== null && count >= PRO_COLLECTION_LIMIT) {
-        return { error: `Collection limit reached (${PRO_COLLECTION_LIMIT}). Please delete old collections to create a new one.` };
+    if (count !== null && count >= PRO_TEST_COLLECTION_LIMIT) {
+        return { error: `Collection limit reached (${PRO_TEST_COLLECTION_LIMIT}). Please delete old collections to create a new one.` };
     }
 
     try {
@@ -190,13 +190,13 @@ export async function createRequest(collectionId: string, request: any) {
     if (!col) return { error: 'Collection not found or unauthorized' };
 
     // LIMIT CHECK: Max 20 requests per collection
-    const { count } = await supabase
+    const { count: requestCount } = await supabase
         .from('test_collection_requests')
         .select('*', { count: 'exact', head: true })
         .eq('collection_id', collectionId);
 
-    if (count !== null && count >= PRO_REQUEST_LIMIT) {
-        return { error: `Request limit reached (${PRO_REQUEST_LIMIT}) for this collection. Please delete old requests.` };
+    if (requestCount !== null && requestCount >= PRO_TEST_REQUEST_LIMIT) {
+        return { error: `Request limit reached (${PRO_TEST_REQUEST_LIMIT}). Please delete old requests.` };
     }
 
     const { data, error } = await supabase

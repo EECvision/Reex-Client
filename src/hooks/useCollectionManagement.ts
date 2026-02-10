@@ -88,7 +88,6 @@ export const useCollectionManagement = ({
             if (collectionToDelete && removeCollection) {
                 // Delete specific
                 removeCollection(collectionToDelete);
-                showToast("success", "Collection deleted!");
             } else if (!collectionToDelete) {
                 // Delete ALL (Navbar)
                 if (clearAllCollections) {
@@ -121,7 +120,6 @@ export const useCollectionManagement = ({
 
             if (!data.taskId) {
                 // Sync fallback
-                showToast("success", "Collection deleted!");
                 setShowDeleteModal(false);
                 setDeleting(false);
                 refreshProject(true);

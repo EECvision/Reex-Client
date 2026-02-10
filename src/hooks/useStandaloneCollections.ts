@@ -8,6 +8,7 @@ import {
 import { StandaloneCollection } from '@/providers/ProjectContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { ClientStorage } from '@/lib/clientStorage';
+import { FREE_STANDALONE_LIMIT } from '@/lib/constants';
 import { useToast } from '@/hooks/useToast';
 
 const STANDALONE_KEY = 'standalone_collections';
@@ -38,6 +39,10 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
     const createCollectionMutation = useMutation({
         mutationFn: async (collection: StandaloneCollection) => {
             if (!isPro) {
+                const existing = ClientStorage.get<StandaloneCollection>(STANDALONE_KEY);
+                if (existing.length >= FREE_STANDALONE_LIMIT) {
+                    return { error: `Collection limit reached (${FREE_STANDALONE_LIMIT}). Upgrade to Pro for more.` };
+                }
                 const newCol = { ...collection, id: collection.id || crypto.randomUUID() };
                 ClientStorage.add(STANDALONE_KEY, newCol);
                 return newCol;

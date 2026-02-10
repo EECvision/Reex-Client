@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/useToast';
 import { Collection } from '@/components/TestApi/CollectionSidebar';
 import { useSubscription } from '@/hooks/useSubscription';
 import { ClientStorage } from '@/lib/clientStorage';
+import { FREE_TEST_COLLECTION_LIMIT, FREE_TEST_REQUEST_LIMIT } from '@/lib/constants';
 
 const COLLECTIONS_KEY = 'test_collections';
 // We need to store requests separately or nested? 
@@ -56,6 +57,10 @@ export const useCollections = (userId?: string) => {
     const createCollectionMutation = useMutation({
         mutationFn: async (name: string) => {
             if (!isPro) {
+                const existing = ClientStorage.get<Collection>(COLLECTIONS_KEY);
+                if (existing.length >= FREE_TEST_COLLECTION_LIMIT) {
+                    return { error: `Collection limit reached (${FREE_TEST_COLLECTION_LIMIT}). Upgrade to Pro for more.` };
+                }
                 const newCol: Collection = {
                     id: crypto.randomUUID(),
                     name,
@@ -120,6 +125,11 @@ export const useCollections = (userId?: string) => {
     const createRequestMutation = useMutation({
         mutationFn: async ({ collectionId, name }: { collectionId: string, name: string }) => {
             if (!isPro) {
+                const collections = ClientStorage.get<Collection>(COLLECTIONS_KEY);
+                const col = collections.find(c => c.id === collectionId);
+                if (col && col.requests.length >= FREE_TEST_REQUEST_LIMIT) {
+                    return { error: `Request limit reached (${FREE_TEST_REQUEST_LIMIT}). Upgrade to Pro for more.` };
+                }
                 const newReq = {
                     id: crypto.randomUUID(),
                     name,
@@ -128,8 +138,6 @@ export const useCollections = (userId?: string) => {
                     config: { headers: [], queryParams: [], body: null, auth: null }
                 };
 
-                const collections = ClientStorage.get<Collection>(COLLECTIONS_KEY);
-                const col = collections.find(c => c.id === collectionId);
                 if (col) {
                     col.requests.push(newReq as any);
                     ClientStorage.update(COLLECTIONS_KEY, collectionId, col);

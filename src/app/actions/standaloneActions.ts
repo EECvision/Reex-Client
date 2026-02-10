@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/supabase';
 import { auth } from '@/auth';
 import { verifyProStatus } from '@/lib/verifyProStatus';
-import { PRO_COLLECTION_LIMIT } from '@/lib/constants';
+import { PRO_STANDALONE_LIMIT } from '@/lib/constants';
 
 
 
@@ -84,8 +84,8 @@ export async function createStandaloneCollection(collection: any) {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', session.user.id);
 
-    if (count !== null && count >= PRO_COLLECTION_LIMIT) {
-        return { error: `Standalone collection limit reached (${PRO_COLLECTION_LIMIT}). Please delete old items.` };
+    if (count !== null && count >= PRO_STANDALONE_LIMIT) {
+        return { error: `Standalone collection limit reached (${PRO_STANDALONE_LIMIT}). Please delete old items.` };
     }
 
     // SUPABASE STORAGE (PRO)
