@@ -29,6 +29,8 @@ interface ProjectContextType {
   loading: boolean;
   error: string | null;
   isStandaloneMode: boolean;
+  manualStandaloneMode: boolean;
+  toggleStandaloneMode: () => Promise<void>;
   refreshProject: (silent?: boolean) => Promise<void>;
   // State setters for standalone mode
   setManifest: (manifest: any) => void;
@@ -59,8 +61,25 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isStandaloneMode, setIsStandaloneMode] = useState(false);
+  const [manualStandaloneMode, setManualStandaloneMode] = useState(false);
 
   const [collections, setCollections] = useState<StandaloneCollection[]>([]);
+
+  // Toggle Function
+  const toggleStandaloneMode = async () => {
+    const nextMode = !manualStandaloneMode;
+    setManualStandaloneMode(nextMode);
+
+    // If enabling manual standalone, force switch immediately
+    if (nextMode) {
+      setIsStandaloneMode(true);
+      setProjectPath("");
+    } else {
+      // If disabling, retry fetching bridge to revert to project mode if available
+      // Pass false to ignoreManual because manual mode state update might be async/batched
+      // actually, we rely on the effect to trigger fetchProjectData
+    }
+  };
 
   // Standalone Collection Management via TanStack Query
   const {
@@ -111,7 +130,13 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     await removeCollectionFromHistory(id);
   };
 
-  const fetchProjectData = async (silent = false) => {
+  const fetchProjectData = async (silent = false, ignoreManual = false) => {
+    // If manual mode is ON and we are not ignoring it (e.g. initial load), force standalone
+    if (manualStandaloneMode && !ignoreManual) {
+      setIsStandaloneMode(true);
+      setLoading(false);
+      return;
+    }
     try {
       if (!silent) setLoading(true);
       // Fetch Config from Bridge (Source of Truth for Target Dir)
@@ -157,7 +182,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   useEffect(() => {
     fetchProjectData();
-  }, []);
+  }, [manualStandaloneMode]); // Re-run when manual mode changes
 
   // No local storage persistence
 
@@ -215,6 +240,8 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       loading: isStandaloneMode ? isLoadingStandalone : loading, // Use standalone loading when appropriate
       error,
       isStandaloneMode,
+      manualStandaloneMode,
+      toggleStandaloneMode,
       refreshProject: fetchProjectData,
       setManifest,
       setConfig,

@@ -24,6 +24,8 @@ import FloatingTestButton from "@/components/FloatingTestButton/FloatingTestButt
 import QueryProvider from "@/providers/QueryProvider";
 import { ToastProvider } from "@/providers/ToastContext";
 
+import FloatingStandaloneToggle from "@/components/FloatingStandaloneToggle/FloatingStandaloneToggle";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -39,6 +41,7 @@ export default function RootLayout({
                 <ProjectProvider>
                   {children}
                   <FloatingTestButton />
+                  <FloatingStandaloneToggle />
                 </ProjectProvider>
               </ToastProvider>
             </QueryProvider>

@@ -248,3 +248,42 @@
     transform: scale(1) translateY(0);
   }
 }
+
+.toggleModeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #9ca3af;
+  margin-left: 4px;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.toggleModeBtn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #374151;
+}
+
+.reconnectBtn {
+  color: #f59e0b;
+}
+
+.reconnectBtn:hover {
+  background-color: #fffbeb;
+  color: #d97706;
+}
+
+.disconnectBtn {
+  color: #6b7280;
+}
+
+.disconnectBtn:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
