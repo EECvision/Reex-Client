@@ -1,0 +1,136 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.statusIcon {
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.success {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
+.failure {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.value {
+    font-weight: 600;
+    text-transform: capitalize;
+    color: var(--text-primary);
+}
+
+.amount {
+    text-align: right;
+}
+
+.amountValue {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.detailsGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.detailItem {
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.detailLabel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.detailValue {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.detailValueMono {
+    font-family: monospace;
+    font-size: 12px;
+    word-break: break-all;
+}
+
+.sectionTitle {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+
+.lineItems {
+    border-top: 1px solid var(--border-color);
+    padding-top: 16px;
+}
+
+.lineItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border-color);
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 16px;
+}
+
+.footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 8px;
+}

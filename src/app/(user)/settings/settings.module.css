@@ -218,3 +218,97 @@
         transform: translateY(0);
     }
 }
+
+/* Invoices */
+.invoiceList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.invoiceItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.invoiceItem:hover {
+    background: var(--hover-bg);
+}
+
+.invoiceInfo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.invoiceIcon {
+    width: 32px;
+    height: 32px;
+    background: rgba(30, 64, 175, 0.2);
+    /* blue-900/20 */
+    color: var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.invoiceMeta {
+    display: flex;
+    flex-direction: column;
+}
+
+.invoiceTitle {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.invoiceDate {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.invoiceActions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Skeleton Loading */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loadingState {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 0;
+    color: var(--text-secondary);
+    gap: 8px;
+}
+
+.loadingIcon {
+    animation: spin 1s linear infinite;
+    color: var(--primary-color);
+}
+
+.loadingText {
+    font-size: 14px;
+    font-weight: 500;
+}

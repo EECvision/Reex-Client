@@ -11,7 +11,7 @@ import LoginModal from "@/components/LoginModal/LoginModal";
 
 export default function SubscriptionPage() {
     const router = useRouter();
-    const { isPro, user, isLoading } = useSubscription();
+    const { isPro, user, isLoading, update } = useSubscription();
     const [isProcessing, setIsProcessing] = useState(false);
     const [showLogin, setShowLogin] = useState(false);
 
@@ -63,6 +63,7 @@ export default function SubscriptionPage() {
 
                         if (verifyRes.ok && verifyData.success) {
                             alert("Subscription successful! Welcome to Pro.");
+                            await update(); // Refresh session data securely from server
                             router.refresh(); // Refresh to update session/subscription status
                         } else {
                             alert("Payment verification failed. Please contact support.");
@@ -116,8 +117,8 @@ export default function SubscriptionPage() {
                         <li className={styles.feature}><Check size={18} className={styles.check} /> Community Support</li>
                         <li className={styles.feature}><Check size={18} className={styles.check} /> Local Storage</li>
                     </ul>
-                    <Button variant="secondary" disabled={!isPro}>
-                        {!isPro ? "Current Plan" : "Downgrade"}
+                    <Button variant="secondary" disabled>
+                        {!isPro ? "Current Plan" : "Included"}
                     </Button>
                 </div>
 

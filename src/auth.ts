@@ -20,7 +20,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         secret: process.env.SUPABASE_SERVICE_ROLE_KEY!,
     }),
     callbacks: {
-        async jwt({ token, user }) {
+        async jwt({ token, user, trigger, session }) {
             if (user) {
                 token.id = user.id;
                 token.subscription_status = user.subscription_status;
@@ -29,6 +29,34 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
                 token.customer_code = user.customer_code;
                 token.current_period_end = user.current_period_end;
             }
+
+            if (trigger === "update" && token.id) {
+                // Fetch latest user data from Supabase
+                try {
+                    const { createClient } = await import("@supabase/supabase-js");
+                    const supabase = createClient(
+                        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                        process.env.SUPABASE_SERVICE_ROLE_KEY!
+                    );
+
+                    const { data: refreshedUser } = await supabase
+                        .from("users")
+                        .select("*")
+                        .eq("id", token.id)
+                        .single();
+
+                    if (refreshedUser) {
+                        token.subscription_status = refreshedUser.subscription_status;
+                        token.subscription_plan = refreshedUser.subscription_plan;
+                        token.subscription_id = refreshedUser.subscription_id;
+                        token.customer_code = refreshedUser.customer_code;
+                        token.current_period_end = refreshedUser.current_period_end;
+                    }
+                } catch (error) {
+                    console.error("Error refreshing session:", error);
+                }
+            }
+
             return token;
         },
         async session({ session, token }) {

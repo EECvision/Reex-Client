@@ -1,7 +1,7 @@
 import { useSession } from "next-auth/react";
 
 export function useSubscription() {
-    const { data: session, status } = useSession();
+    const { data: session, status, update } = useSession();
 
     const isLoading = status === "loading";
     const user = session?.user;
@@ -18,6 +18,7 @@ export function useSubscription() {
         plan,
         isLoading,
         user,
-        subscriptionStatus: user?.subscription_status
+        subscriptionStatus: user?.subscription_status,
+        update // Expose update function
     };
 }

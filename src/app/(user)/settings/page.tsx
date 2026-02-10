@@ -5,14 +5,43 @@ import styles from "./settings.module.css";
 import { Button } from "@/components/ui/Button/Button";
 import { useAuth } from "@/providers/AuthContext";
 import { useSettings } from "@/providers/SettingsContext";
-import { Trash2, Monitor } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSubscription } from "@/hooks/useSubscription";
+import { InvoiceModal } from "@/components/InvoiceModal/InvoiceModal";
+import { FileText, Eye, Loader2 } from "lucide-react";
 
 export default function SettingsPage() {
     const { user, logout } = useAuth();
     const { theme, toggleTheme } = useSettings();
+    const { isPro, user: subscriptionUser } = useSubscription();
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<'account' | 'billing' | 'integrations'>('account');
+
+    // Invoice State
+    const [invoices, setInvoices] = useState<any[]>([]);
+    const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
+    const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+
+    React.useEffect(() => {
+        if (activeTab === 'billing') {
+            fetchInvoices();
+        }
+    }, [activeTab]);
+
+    const fetchInvoices = async () => {
+        setIsLoadingInvoices(true);
+        try {
+            const res = await fetch('/api/subscription/invoices');
+            if (res.ok) {
+                const data = await res.json();
+                setInvoices(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch invoices", error);
+        } finally {
+            setIsLoadingInvoices(false);
+        }
+    };
 
     const handleSignOut = () => {
         logout();
@@ -33,20 +62,13 @@ export default function SettingsPage() {
                         Account
                     </button>
                     <button className={`${styles.navItem} ${activeTab === 'billing' ? styles.active : ''}`} onClick={() => setActiveTab('billing')}>Billing</button>
-                    {/* <button
-                        className={`${styles.navItem} ${activeTab === 'theme' ? styles.active : ''}`}
-                        onClick={() => setActiveTab('theme')}
-                    >
-                        Theme
-                    </button> */}
-                    {/* <button className={`${styles.navItem} ${activeTab === 'integrations' ? styles.active : ''}`} onClick={() => setActiveTab('integrations')}>Integrations</button> */}
+                    {/* ... other code ... */}
                 </aside>
 
                 {/* Right Content */}
                 <div className={styles.content}>
-
-
                     {activeTab === 'account' && user && (
+                        /* ... existing account code ... */
                         <>
                             <div className={styles.card}>
                                 <div className={styles.cardContent}>
@@ -93,25 +115,77 @@ export default function SettingsPage() {
                                 <div className={styles.cardContent}>
                                     <h2 className={styles.cardTitle}>Current Plan</h2>
                                     <p className={styles.cardDescription}>
-                                        You are currently on the <strong>Free Plan</strong>. Upgrade to unlock more features.
+                                        {isPro ? (
+                                            <>You are currently on the <strong>Pro Developer</strong> plan. Enjoy unlimited access.</>
+                                        ) : (
+                                            <>You are currently on the <strong>Free Plan</strong>. Upgrade to unlock more features.</>
+                                        )}
                                     </p>
                                 </div>
                                 <div className={styles.cardFooter}>
-                                    <span className={styles.footerText}>You are not charged for this plan.</span>
-                                    <Button variant="primary" size="sm" onClick={() => router.push('/subscription')}>Upgrade Plan</Button>
+                                    <span className={styles.footerText}>
+                                        {isPro && subscriptionUser?.current_period_end
+                                            ? `Your next billing date is ${new Date(subscriptionUser.current_period_end).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}.`
+                                            : "You are not charged for this plan."}
+                                    </span>
+                                    {isPro ? (
+                                        <Button variant="secondary" size="sm" disabled>Active</Button>
+                                    ) : (
+                                        <Button variant="primary" size="sm" onClick={() => router.push('/subscription')}>Upgrade Plan</Button>
+                                    )}
                                 </div>
                             </div>
+
                             <div className={styles.card}>
                                 <div className={styles.cardContent}>
                                     <h2 className={styles.cardTitle}>Invoices</h2>
                                     <p className={styles.cardDescription}>
                                         View and download your past invoices.
                                     </p>
-                                    <div className={styles.emptyState}>
-                                        No invoices found.
-                                    </div>
+
+                                    {isLoadingInvoices ? (
+                                        <div className={styles.loadingState}>
+                                            <Loader2 size={24} className={styles.loadingIcon} />
+                                            <span className={styles.loadingText}>Loading invoices...</span>
+                                        </div>
+                                    ) : invoices.length > 0 ? (
+                                        <div className={styles.invoiceList}>
+                                            {invoices.map((invoice) => (
+                                                <div key={invoice.id} className={styles.invoiceItem}>
+                                                    <div className={styles.invoiceInfo}>
+                                                        <div className={styles.invoiceIcon}>
+                                                            <FileText size={16} />
+                                                        </div>
+                                                        <div className={styles.invoiceMeta}>
+                                                            <p className={styles.invoiceTitle}>
+                                                                {invoice.plan_id === process.env.NEXT_PUBLIC_FLUTTERWAVE_PLAN_ID ? "Pro Plan" : "Subscription"}
+                                                            </p>
+                                                            <p className={styles.invoiceDate}>
+                                                                {new Date(invoice.created_at).toLocaleDateString()}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className={styles.invoiceActions}>
+                                                        <span className={styles.invoiceAmount}>{invoice.currency} {invoice.amount}</span>
+                                                        <Button variant="ghost" size="sm" onClick={() => setSelectedInvoice(invoice)}>
+                                                            <Eye size={16} className="mr-2" /> View
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className={styles.emptyState}>
+                                            No invoices found.
+                                        </div>
+                                    )}
                                 </div>
                             </div>
+                            <InvoiceModal
+                                isOpen={!!selectedInvoice}
+                                onClose={() => setSelectedInvoice(null)}
+                                invoice={selectedInvoice}
+                            />
                         </>
                     )}
 
