@@ -4,6 +4,9 @@ import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/supabase';
 import { auth } from '@/auth';
 import { revalidatePath } from 'next/cache';
+import { isProUser } from '@/lib/storage';
+
+
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -19,6 +22,11 @@ const supabase = createClient<Database>(supabaseUrl, supabaseServiceKey, {
 export async function getCollections() {
     const session = await auth();
     if (!session?.user?.id) {
+        return [];
+    }
+
+    // HYBRID STORAGE CHECK
+    if (!isProUser(session.user)) {
         return [];
     }
 
@@ -75,6 +83,11 @@ export async function createCollection(name: string) {
         return { error: 'Unauthorized: Please sign in again' };
     }
 
+    // HYBRID STORAGE CHECK
+    if (!isProUser(session.user)) {
+        return { error: 'Upgrade to Pro' };
+    }
+
     try {
         const { data, error } = await supabase
             .from('test_collections')
@@ -111,7 +124,12 @@ export async function createCollection(name: string) {
 
 export async function deleteCollection(id: string) {
     const session = await auth();
-    if (!session?.user?.id) throw new Error('Unauthorized');
+    if (!session?.user?.id) return { error: 'Unauthorized' };
+
+    // HYBRID STORAGE CHECK
+    if (!isProUser(session.user)) {
+        return;
+    }
 
     const { error } = await supabase
         .from('test_collections')
@@ -125,11 +143,16 @@ export async function deleteCollection(id: string) {
 
 export async function createRequest(collectionId: string, request: any) {
     const session = await auth();
-    if (!session?.user?.id) throw new Error('Unauthorized');
+    if (!session?.user?.id) return { error: 'Unauthorized' };
+
+    // HYBRID STORAGE CHECK
+    if (!isProUser(session.user)) {
+        return { error: 'Upgrade to Pro' };
+    }
 
     // Verify collection ownership
     const { data: col } = await supabase.from('test_collections').select('id').eq('id', collectionId).eq('user_id', session.user.id).single();
-    if (!col) throw new Error('Collection not found or unauthorized');
+    if (!col) return { error: 'Collection not found or unauthorized' };
 
     const { data, error } = await supabase
         .from('test_collection_requests')
@@ -146,7 +169,7 @@ export async function createRequest(collectionId: string, request: any) {
         .select()
         .single();
 
-    if (error) throw error;
+    if (error) return { error: error.message };
     revalidatePath('/test-api');
 
     return {
@@ -166,10 +189,15 @@ export async function createRequest(collectionId: string, request: any) {
 
 export async function updateRequest(id: string, updates: any) {
     const session = await auth();
-    if (!session?.user?.id) throw new Error('Unauthorized');
+    if (!session?.user?.id) return { error: 'Unauthorized' };
 
     // Ideally verify ownership via join, but for now assuming ID is UUID and hard to guess + benign update
     // A stricter check would be: select id from test_collection_requests join test_collections on ... where ...
+
+    // HYBRID STORAGE CHECK
+    if (!isProUser(session.user)) {
+        return;
+    }
 
     const dbUpdates: any = {};
     if (updates.name) dbUpdates.name = updates.name;
@@ -194,7 +222,12 @@ export async function updateRequest(id: string, updates: any) {
 
 export async function deleteRequest(id: string) {
     const session = await auth();
-    if (!session?.user?.id) throw new Error('Unauthorized');
+    if (!session?.user?.id) return { error: 'Unauthorized' };
+
+    // HYBRID STORAGE CHECK
+    if (!isProUser(session.user)) {
+        return;
+    }
 
     const { error } = await supabase
         .from('test_collection_requests')

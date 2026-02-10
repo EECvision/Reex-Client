@@ -3,6 +3,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/supabase';
 import { auth } from '@/auth';
+import { isProUser } from '@/lib/storage';
+
+
+
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -18,6 +22,12 @@ export async function getStandaloneCollections() {
     const session = await auth();
     if (!session?.user?.id) return [];
 
+    // HYBRID STORAGE CHECK
+    if (!isProUser(session.user)) {
+        return [];
+    }
+
+    // SUPABASE STORAGE (PRO)
     const { data, error } = await supabase
         .from('standalone_collections' as any)
         .select('*')
@@ -60,6 +70,12 @@ export async function createStandaloneCollection(collection: any) {
     // Use specific ID if provided (e.g. from generated UUID), otherwise let DB gen
     // But for sync consistency, we usually valid UUID from client
 
+    // HYBRID STORAGE CHECK
+    if (!isProUser(session.user)) {
+        return { error: 'Upgrade to Pro' };
+    }
+
+    // SUPABASE STORAGE (PRO)
     const { data, error } = await supabase
         .from('standalone_collections' as any)
         .insert({
@@ -98,6 +114,13 @@ export async function updateStandaloneCollection(id: string, updates: any) {
     // But updateCollection in Context takes Partial.
 
     // Let's implement a SMART update.
+
+    // HYBRID STORAGE CHECK
+    if (!isProUser(session.user)) {
+        return { error: 'Upgrade to Pro' };
+    }
+
+    // SUPABASE STORAGE (PRO)
     const { data: existing } = await supabase
         .from('standalone_collections' as any)
         .select('content')
@@ -132,6 +155,11 @@ export async function deleteStandaloneCollection(id: string) {
     const session = await auth();
     if (!session?.user?.id) return { error: 'Unauthorized' };
 
+    // HYBRID STORAGE CHECK
+    if (!isProUser(session.user)) {
+        return { success: true };
+    }
+
     const { error } = await supabase
         .from('standalone_collections' as any)
         .delete()
@@ -149,6 +177,11 @@ export async function deleteStandaloneCollection(id: string) {
 export async function deleteAllStandaloneCollections() {
     const session = await auth();
     if (!session?.user?.id) return { error: 'Unauthorized' };
+
+    // HYBRID STORAGE CHECK
+    if (!isProUser(session.user)) {
+        return { success: true };
+    }
 
     const { error } = await supabase
         .from('standalone_collections' as any)

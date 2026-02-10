@@ -6,9 +6,14 @@ import {
     deleteStandaloneCollection
 } from '@/app/actions/standaloneActions';
 import { StandaloneCollection } from '@/providers/ProjectContext';
+import { useSubscription } from '@/hooks/useSubscription';
+import { ClientStorage } from '@/lib/clientStorage';
+
+const STANDALONE_KEY = 'standalone_collections';
 
 export const useStandaloneCollections = (enabled: boolean = true) => {
     const queryClient = useQueryClient();
+    const { isPro } = useSubscription();
     const QUERY_KEY = ['standalone-collections'];
 
     // Query: Fetch Collections
@@ -19,6 +24,9 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
     } = useQuery<StandaloneCollection[]>({
         queryKey: QUERY_KEY,
         queryFn: async () => {
+            if (!isPro) {
+                return ClientStorage.get<StandaloneCollection>(STANDALONE_KEY);
+            }
             return await getStandaloneCollections();
         },
         enabled: enabled,
@@ -27,6 +35,12 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
     // Mutation: Create Collection
     const createCollectionMutation = useMutation({
         mutationFn: async (collection: StandaloneCollection) => {
+            if (!isPro) {
+                const newCol = { ...collection, id: collection.id || crypto.randomUUID() };
+                ClientStorage.add(STANDALONE_KEY, newCol);
+                return newCol;
+            }
+
             const res = await createStandaloneCollection(collection);
             if (res.error) throw new Error(res.error);
             return {
@@ -50,6 +64,11 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
     // Mutation: Update Collection
     const updateCollectionMutation = useMutation({
         mutationFn: async ({ id, updates }: { id: string, updates: Partial<StandaloneCollection> }) => {
+            if (!isPro) {
+                ClientStorage.update(STANDALONE_KEY, id, updates);
+                return { id, updates };
+            }
+
             const res = await updateStandaloneCollection(id, updates);
             if (res.error) throw new Error(res.error);
             return { id, updates };
@@ -67,6 +86,11 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
     // Mutation: Delete Collection
     const deleteCollectionMutation = useMutation({
         mutationFn: async (id: string) => {
+            if (!isPro) {
+                ClientStorage.delete(STANDALONE_KEY, id);
+                return id;
+            }
+
             const res = await deleteStandaloneCollection(id);
             if (res.error) throw new Error(res.error);
             return id;
@@ -84,6 +108,13 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
     // Mutation: Clear All Collections
     const clearAllMutation = useMutation({
         mutationFn: async () => {
+            if (!isPro) {
+                if (typeof window !== 'undefined') {
+                    window.localStorage.removeItem(STANDALONE_KEY);
+                }
+                return;
+            }
+
             const { deleteAllStandaloneCollections } = await import('@/app/actions/standaloneActions');
             const res = await deleteAllStandaloneCollections();
             if (res.error) throw new Error(res.error);

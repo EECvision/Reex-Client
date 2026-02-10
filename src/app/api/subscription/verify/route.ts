@@ -68,7 +68,7 @@ export async function POST(req: Request) {
 
             // 3. IDEMPOTENCY CHECK: Ensure this transaction hasn't been used before
             const { data: existingTx } = await supabase
-                .from("transactions")
+                .from("payments")
                 .select("id")
                 .eq("transaction_id", transaction_id)
                 .single();
@@ -98,7 +98,7 @@ export async function POST(req: Request) {
             }
 
             // 6. Log Transaction (To prevent reuse)
-            await supabase.from("transactions").insert({
+            await supabase.from("payments").insert({
                 user_id: session.user.id,
                 transaction_id: transaction_id,
                 amount: fwData.amount,

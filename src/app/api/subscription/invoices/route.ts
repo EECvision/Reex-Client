@@ -15,7 +15,7 @@ export async function GET(req: Request) {
         );
 
         const { data: invoices, error } = await supabase
-            .from("transactions")
+            .from("payments")
             .select("*")
             .eq("user_id", session.user.id)
             .order("created_at", { ascending: false });
