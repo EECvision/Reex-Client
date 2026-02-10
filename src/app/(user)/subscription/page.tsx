@@ -8,13 +8,30 @@ import { Loading } from '@/components/ui/Loading/Loading';
 import { useRouter } from "next/navigation";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
+import { useQueryClient } from "@tanstack/react-query";
 import LoginModal from "@/components/LoginModal/LoginModal";
+
+import { SubscriptionStatusModal } from "./_components/SubscriptionStatusModal";
 
 export default function SubscriptionPage() {
     const router = useRouter();
     const { isPro, user, isLoading, update } = useSubscription();
+    const queryClient = useQueryClient();
     const [isProcessing, setIsProcessing] = useState(false);
     const [showLogin, setShowLogin] = useState(false);
+
+    // Status Modal State
+    const [statusModal, setStatusModal] = useState<{
+        isOpen: boolean;
+        status: 'success' | 'error';
+        title: string;
+        message: string;
+    }>({
+        isOpen: false,
+        status: 'success',
+        title: '',
+        message: ''
+    });
 
     const config = {
         public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY || "",
@@ -63,20 +80,46 @@ export default function SubscriptionPage() {
                         const verifyData = await verifyRes.json();
 
                         if (verifyRes.ok && verifyData.success) {
-                            alert("Subscription successful! Welcome to Pro.");
-                            await update(); // Refresh session data securely from server
-                            router.refresh(); // Refresh to update session/subscription status
+                            await update({ refresh: true });
+                            await queryClient.invalidateQueries({ queryKey: ['subscription-status', user?.id] }); // Force refresh of subscription status
+
+                            setStatusModal({
+                                isOpen: true,
+                                status: 'success',
+                                title: 'Subscription Successful!',
+                                message: 'Welcome to Pro. You now have unlimited access.'
+                            });
+
+                            router.refresh();
                         } else {
-                            alert("Payment verification failed. Please contact support.");
+                            setStatusModal({
+                                isOpen: true,
+                                status: 'error',
+                                title: 'Verification Failed',
+                                message: 'Payment verification failed. Please contact support.'
+                            });
                         }
                     } catch (error) {
                         console.error("Verification error:", error);
-                        alert("An error occurred during verification.");
+                        setStatusModal({
+                            isOpen: true,
+                            status: 'error',
+                            title: 'Error',
+                            message: 'An error occurred during verification.'
+                        });
                     } finally {
                         setIsProcessing(false);
                     }
                 } else {
-                    alert("Payment failed or cancelled.");
+                    // Only show error if explicitly failed, not just closed
+                    if (response.status === "failed") {
+                        setStatusModal({
+                            isOpen: true,
+                            status: 'error',
+                            title: 'Payment Failed',
+                            message: 'The payment could not be completed.'
+                        });
+                    }
                 }
             },
             onClose: () => {
@@ -152,6 +195,14 @@ export default function SubscriptionPage() {
                 isOpen={showLogin}
                 onClose={() => setShowLogin(false)}
                 message="Sign in to subscribe to the Pro plan."
+            />
+
+            <SubscriptionStatusModal
+                isOpen={statusModal.isOpen}
+                onClose={() => setStatusModal(prev => ({ ...prev, isOpen: false }))}
+                status={statusModal.status}
+                title={statusModal.title}
+                message={statusModal.message}
             />
         </main>
     );

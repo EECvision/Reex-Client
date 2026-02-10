@@ -1,24 +1,41 @@
 import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 
 export function useSubscription() {
     const { data: session, status, update } = useSession();
-
-    const isLoading = status === "loading";
     const user = session?.user;
 
-    const isPro =
-        user?.subscription_status === "active" &&
-        user?.current_period_end &&
-        new Date(user.current_period_end) > new Date();
+    // Fetch fresh subscription status from the database
+    const { data: subscriptionData, isLoading: isQueryLoading } = useQuery({
+        queryKey: ['subscription-status', user?.id],
+        queryFn: async () => {
+            const { data } = await axios.get('/api/subscription/status');
+            return data;
+        },
+        enabled: !!user?.id,
+        // Refetch when window is focused to ensure status is always up-to-date
+        refetchOnWindowFocus: true,
+    });
 
-    const plan = user?.subscription_plan || "free";
+    const isLoading = status === "loading" || isQueryLoading;
+
+    // Use the fresh data from the query, falling back to session data if needed
+    const subscriptionStatus = subscriptionData?.subscription_status ?? user?.subscription_status;
+    const currentPeriodEnd = subscriptionData?.current_period_end ?? user?.current_period_end;
+    const plan = subscriptionData?.subscription_plan ?? user?.subscription_plan ?? "free";
+
+    const isPro =
+        subscriptionStatus === "active" &&
+        currentPeriodEnd &&
+        new Date(currentPeriodEnd) > new Date();
 
     return {
         isPro,
         plan,
         isLoading,
-        user,
-        subscriptionStatus: user?.subscription_status,
-        update // Expose update function
+        user: { ...user, ...subscriptionData }, // Merge fresh data into user object
+        subscriptionStatus,
+        update
     };
 }

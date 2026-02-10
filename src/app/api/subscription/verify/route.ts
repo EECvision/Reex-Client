@@ -66,7 +66,7 @@ export async function POST(req: Request) {
                 process.env.SUPABASE_SERVICE_ROLE_KEY!
             );
 
-            // 3. IDEMPOTENCY CHECK: Ensure this transaction hasn't been used before
+            // 3. IDEMPOTENCY CHECK: Ensure this payment hasn't been used before
             const { data: existingTx } = await supabase
                 .from("payments")
                 .select("id")

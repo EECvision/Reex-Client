@@ -9,8 +9,8 @@ ADD COLUMN IF NOT EXISTS current_period_end TIMESTAMP WITH TIME ZONE;
 -- Create an index on subscription_status for faster queries
 CREATE INDEX IF NOT EXISTS idx_users_subscription_status ON users(subscription_status);
 
--- Create transactions table for idempotency and logging
-CREATE TABLE IF NOT EXISTS transactions (
+-- Create payments table for idempotency and logging
+CREATE TABLE IF NOT EXISTS payments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     transaction_id TEXT UNIQUE NOT NULL,
@@ -22,4 +22,4 @@ CREATE TABLE IF NOT EXISTS transactions (
 );
 
 -- Index for faster lookups by transaction_id
-CREATE INDEX IF NOT EXISTS idx_transactions_transaction_id ON transactions(transaction_id);
+CREATE INDEX IF NOT EXISTS idx_payments_transaction_id ON payments(transaction_id);
