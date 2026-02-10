@@ -7,6 +7,7 @@ import RequestEditor from '@/components/TestApi/RequestEditor';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import { Modal } from '@/components/ui/Modal/Modal';
 import { Button } from '@/components/ui/Button/Button';
+import { Loading } from '@/components/ui/Loading/Loading';
 import { useAuth } from '@/providers/AuthContext';
 import { signOut } from 'next-auth/react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -215,9 +216,7 @@ export default function TestApiPage() {
 
       <div className={styles.rightPanel}>
         {isLoading ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
-            Loading...
-          </div>
+          <Loading />
         ) : activeRequest ? (
           <RequestEditor
             key={activeRequest.id}

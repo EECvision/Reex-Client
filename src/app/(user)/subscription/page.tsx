@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import styles from "./subscription.module.css";
 import { Button } from "@/components/ui/Button/Button";
 import { Check, Loader2 } from "lucide-react";
+import { Loading } from '@/components/ui/Loading/Loading';
 import { useRouter } from "next/navigation";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
@@ -85,7 +86,7 @@ export default function SubscriptionPage() {
     };
 
     if (isLoading) {
-        return <div className={styles.loading}>Loading...</div>;
+        return <Loading />;
     }
 
     return (
