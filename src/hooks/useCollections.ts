@@ -6,7 +6,7 @@ import {
     createRequest,
     updateRequest,
     deleteRequest
-} from '@/app/actions/collectionActions';
+} from '@/app/actions/testCollectionActions';
 import { useToast } from '@/hooks/useToast';
 import { Collection } from '@/components/TestApi/CollectionSidebar';
 

@@ -9,7 +9,7 @@ export type Json =
 export type Database = {
     public: {
         Tables: {
-            api_collections: {
+            test_collections: {
                 Row: {
                     id: string
                     user_id: string
@@ -36,7 +36,7 @@ export type Database = {
                 }
                 Relationships: []
             }
-            history_collections: {
+            recent_collections: {
                 Row: {
                     id: string
                     user_id: string
@@ -63,7 +63,7 @@ export type Database = {
                 }
                 Relationships: []
             }
-            api_requests: {
+            test_collection_requests: {
                 Row: {
                     id: string
                     collection_id: string
@@ -108,10 +108,10 @@ export type Database = {
                 }
                 Relationships: [
                     {
-                        foreignKeyName: "api_requests_collection_id_fkey"
+                        foreignKeyName: "test_collection_requests_collection_id_fkey"
                         columns: ["collection_id"]
                         isOneToOne: false
-                        referencedRelation: "api_collections"
+                        referencedRelation: "test_collections"
                         referencedColumns: ["id"]
                     }
                 ]

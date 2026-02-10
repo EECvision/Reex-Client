@@ -23,10 +23,10 @@ export async function getCollections() {
     }
 
     const { data: collections, error } = await supabase
-        .from('api_collections')
+        .from('test_collections')
         .select(`
       *,
-      requests:api_requests(*)
+      requests:test_collection_requests(*)
     `)
         .eq('user_id', session.user.id) // Manually filter by user_id
         .order('created_at', { ascending: true });
@@ -77,7 +77,7 @@ export async function createCollection(name: string) {
 
     try {
         const { data, error } = await supabase
-            .from('api_collections')
+            .from('test_collections')
             .insert({
                 name,
                 user_id: session.user.id,
@@ -114,7 +114,7 @@ export async function deleteCollection(id: string) {
     if (!session?.user?.id) throw new Error('Unauthorized');
 
     const { error } = await supabase
-        .from('api_collections')
+        .from('test_collections')
         .delete()
         .eq('id', id)
         .eq('user_id', session.user.id); // Ensure ownership
@@ -128,11 +128,11 @@ export async function createRequest(collectionId: string, request: any) {
     if (!session?.user?.id) throw new Error('Unauthorized');
 
     // Verify collection ownership
-    const { data: col } = await supabase.from('api_collections').select('id').eq('id', collectionId).eq('user_id', session.user.id).single();
+    const { data: col } = await supabase.from('test_collections').select('id').eq('id', collectionId).eq('user_id', session.user.id).single();
     if (!col) throw new Error('Collection not found or unauthorized');
 
     const { data, error } = await supabase
-        .from('api_requests')
+        .from('test_collection_requests')
         .insert({
             collection_id: collectionId,
             name: request.name || 'New Request',
@@ -169,7 +169,7 @@ export async function updateRequest(id: string, updates: any) {
     if (!session?.user?.id) throw new Error('Unauthorized');
 
     // Ideally verify ownership via join, but for now assuming ID is UUID and hard to guess + benign update
-    // A stricter check would be: select id from api_requests join api_collections on ... where ...
+    // A stricter check would be: select id from test_collection_requests join test_collections on ... where ...
 
     const dbUpdates: any = {};
     if (updates.name) dbUpdates.name = updates.name;
@@ -184,7 +184,7 @@ export async function updateRequest(id: string, updates: any) {
     }
 
     const { error } = await supabase
-        .from('api_requests')
+        .from('test_collection_requests')
         .update(dbUpdates as any)
         .eq('id', id);
 
@@ -197,90 +197,10 @@ export async function deleteRequest(id: string) {
     if (!session?.user?.id) throw new Error('Unauthorized');
 
     const { error } = await supabase
-        .from('api_requests')
+        .from('test_collection_requests')
         .delete()
         .eq('id', id);
 
     if (error) throw error;
     revalidatePath('/test-api');
-}
-
-async function ensureUserExists(user: any) {
-    if (!user || !user.id) return;
-    try {
-        const { data } = await supabase.from('users' as any).select('id').eq('id', user.id).single();
-        if (!data) {
-            console.log('[Action] Self-healing: Syncing user to DB', user.id);
-            await supabase.from('users' as any).upsert({
-                id: user.id,
-                email: user.email,
-                name: user.name || 'User',
-                image: user.image
-            } as any, { onConflict: 'id' });
-        }
-    } catch (e) {
-        console.warn('[Action] Sync attempt failed:', e);
-    }
-}
-
-export async function addToHistory(name: string, content: any) {
-    const session = await auth();
-    if (!session?.user?.id) return { error: 'Unauthorized' };
-
-    await ensureUserExists(session.user);
-
-    // UPSERT: Rely on Unique Constraint (user_id, name)
-    const { error } = await supabase
-        .from('history_collections')
-        .upsert({
-            user_id: session.user.id,
-            name,
-            content,
-            updated_at: new Date().toISOString()
-        } as any, { onConflict: 'user_id, name' });
-
-    if (error) {
-        console.error('Error adding to history:', error);
-        return { error: error.message };
-    }
-
-    return { success: true };
-}
-
-export async function getHistory() {
-    const session = await auth();
-    if (!session?.user?.id) return [];
-
-    const { data, error } = await supabase
-        .from('history_collections')
-        .select('id, name, updated_at, content')
-        .eq('user_id', session.user.id)
-        .order('updated_at', { ascending: false })
-        .limit(20);
-
-    // If error, return empty array gracefully
-    if (error) {
-        console.error('Error fetching history:', error);
-        return [];
-    }
-
-    return data || [];
-}
-
-export async function deleteFromHistory(id: string) {
-    const session = await auth();
-    if (!session?.user?.id) return { error: 'Unauthorized' };
-
-    const { error } = await supabase
-        .from('history_collections')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', session.user.id);
-
-    if (error) {
-        console.error('Error deleting history:', error);
-        return { error: error.message };
-    }
-
-    return { success: true };
 }

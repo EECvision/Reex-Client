@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getHistory, addToHistory, deleteFromHistory } from '@/app/actions/collectionActions';
+import { getHistory, addToHistory, deleteFromHistory } from '@/app/actions/recentCollectionActions';
 import { HistoryItem } from '@/providers/ProjectContext';
 
 export const useRecentCollections = () => {

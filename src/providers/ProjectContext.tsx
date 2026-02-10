@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { api } from '../services/api';
 
-import { addToHistory, getHistory, deleteFromHistory } from '../app/actions/collectionActions';
+import { addToHistory, getHistory, deleteFromHistory } from '../app/actions/recentCollectionActions';
 import { useStandaloneCollections } from '../hooks/useStandaloneCollections';
 import { useRecentCollections } from '../hooks/useRecentCollections';
 
