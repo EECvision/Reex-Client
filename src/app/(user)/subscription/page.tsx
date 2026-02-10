@@ -156,9 +156,9 @@ export default function SubscriptionPage() {
                     <h3 style={{ fontSize: 20, fontWeight: 600 }}>Hobby</h3>
                     <div className={styles.price}>$0<span>/mo</span></div>
                     <ul className={styles.features}>
-                        <li className={styles.feature}><Check size={18} className={styles.check} /> 20 Active Collections</li>
-                        <li className={styles.feature}><Check size={18} className={styles.check} /> 20 Requests per Collection</li>
-                        <li className={styles.feature}><Check size={18} className={styles.check} /> Unlimited Requests</li>
+                        <li className={styles.feature}><Check size={18} className={styles.check} /> 10 Active Collections</li>
+                        <li className={styles.feature}><Check size={18} className={styles.check} /> 10 Requests per Collection</li>
+                        <li className={styles.feature}><Check size={18} className={styles.check} /> 1,000 Requests</li>
                         <li className={styles.feature}><Check size={18} className={styles.check} /> Community Support</li>
                         <li className={styles.feature}><Check size={18} className={styles.check} /> Local Storage</li>
                     </ul>
@@ -173,7 +173,10 @@ export default function SubscriptionPage() {
                     <h3 style={{ fontSize: 20, fontWeight: 600 }}>Pro Developer</h3>
                     <div className={styles.price}>$10<span>/mo</span></div>
                     <ul className={styles.features}>
-                        <li className={styles.feature}><Check size={18} className={styles.check} /> Everything in Hobby</li>
+                        <li className={styles.feature}><Check size={18} className={styles.check} /> 20 Active Collections</li>
+                        <li className={styles.feature}><Check size={18} className={styles.check} /> 20 Requests per Collection</li>
+                        <li className={styles.feature}><Check size={18} className={styles.check} /> Unlimited Requests</li>
+                        <li className={styles.feature}><Check size={18} className={styles.check} /> Community Support</li>
                         <li className={styles.feature}><Check size={18} className={styles.check} /> Cloud Sync & Backup</li>
                     </ul>
 
@@ -203,6 +206,6 @@ export default function SubscriptionPage() {
                 title={statusModal.title}
                 message={statusModal.message}
             />
-        </main>
+        </main >
     );
 }
