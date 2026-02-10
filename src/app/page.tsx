@@ -10,7 +10,6 @@ import GenerateTemplateModal from "@/components/GenerateTemplateModal/GenerateTe
 import Navbar from "@/components/Navbar/Navbar";
 import SidebarController from "@/components/Sidebar/SidebarController";
 import WorkspaceView from "@/components/WorkspaceView/WorkspaceView";
-import Toast from "@/components/Toast/Toast";
 import BackgroundNotification from "@/components/BackgroundNotification/BackgroundNotification";
 import styles from "./page.module.css";
 import { EndpointInfo } from "@/types";

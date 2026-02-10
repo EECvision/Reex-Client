@@ -4,8 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/supabase';
 import { auth } from '@/auth';
 import { revalidatePath } from 'next/cache';
-import { isProUser } from '@/lib/storage';
 import { verifyProStatus } from '@/lib/verifyProStatus';
+import { PRO_COLLECTION_LIMIT, PRO_REQUEST_LIMIT } from '@/lib/constants';
 
 
 
@@ -106,7 +106,8 @@ export async function createCollection(name: string) {
     }
 
     // HYBRID STORAGE CHECK
-    if (!isProUser(session.user)) {
+    const isPro = await verifyProStatus(session.user.id);
+    if (!isPro) {
         return { error: 'Upgrade to Pro' };
     }
 
@@ -116,8 +117,8 @@ export async function createCollection(name: string) {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', session.user.id);
 
-    if (count !== null && count >= 20) {
-        return { error: 'Collection limit reached (20). Please delete old collections to create a new one.' };
+    if (count !== null && count >= PRO_COLLECTION_LIMIT) {
+        return { error: `Collection limit reached (${PRO_COLLECTION_LIMIT}). Please delete old collections to create a new one.` };
     }
 
     try {
@@ -194,8 +195,8 @@ export async function createRequest(collectionId: string, request: any) {
         .select('*', { count: 'exact', head: true })
         .eq('collection_id', collectionId);
 
-    if (count !== null && count >= 20) {
-        return { error: 'Request limit reached (20) for this collection. Please delete old requests.' };
+    if (count !== null && count >= PRO_REQUEST_LIMIT) {
+        return { error: `Request limit reached (${PRO_REQUEST_LIMIT}) for this collection. Please delete old requests.` };
     }
 
     const { data, error } = await supabase

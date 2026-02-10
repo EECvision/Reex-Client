@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Play, Send, Layout, Save, Pencil, Loader2, Check } from 'lucide-react';
+import { Send, Layout, Pencil, Loader2, Check } from 'lucide-react';
 import { api } from '@/services/api';
 import styles from './RequestEditor.module.css';
 import ResultSection from '@/components/ResultSection/ResultSection';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button/Button';
 import { Select } from '@/components/ui/Select/Select';
 import DynamicParamTable, { ParamRow } from '@/components/TestApi/DynamicParamTable';
 import { useToast } from '@/hooks/useToast';
-import Toast from '@/components/Toast/Toast';
+
 import CurlSection from '@/components/CurlSection/CurlSection';
 
 // Monaco Editor

@@ -3,8 +3,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/supabase';
 import { auth } from '@/auth';
-import { isProUser } from '@/lib/storage';
 import { verifyProStatus } from '@/lib/verifyProStatus';
+import { PRO_HISTORY_LIMIT } from '@/lib/constants';
 
 
 
@@ -75,8 +75,8 @@ export async function addToHistory(name: string, content: any) {
             .eq('user_id', session.user.id)
             .order('updated_at', { ascending: false }); // Latest first
 
-        if (items && items.length > 20) {
-            const itemsToDelete = items.slice(20).map(i => i.id);
+        if (items && items.length > PRO_HISTORY_LIMIT) {
+            const itemsToDelete = items.slice(PRO_HISTORY_LIMIT).map(i => i.id);
             if (itemsToDelete.length > 0) {
                 await supabase
                     .from('recent_collections')
@@ -107,7 +107,7 @@ export async function getHistory() {
         .select('id, name, updated_at, content')
         .eq('user_id', session.user.id)
         .order('updated_at', { ascending: false })
-        .limit(20);
+        .limit(PRO_HISTORY_LIMIT);
 
     // If error, return empty array gracefully
     if (error) {

@@ -4,6 +4,7 @@ import { HistoryItem } from '@/providers/ProjectContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { ClientStorage } from '@/lib/clientStorage';
 import { useToast } from '@/hooks/useToast';
+import { PRO_HISTORY_LIMIT } from '@/lib/constants';
 
 const HISTORY_KEY = 'recent_collections';
 
@@ -24,7 +25,7 @@ export const useRecentCollections = () => {
             if (!isPro) {
                 return ClientStorage.get<HistoryItem>(HISTORY_KEY)
                     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-                    .slice(0, 20);
+                    .slice(0, PRO_HISTORY_LIMIT);
             }
             return await getHistory();
         }
