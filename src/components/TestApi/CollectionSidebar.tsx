@@ -119,8 +119,8 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
                                         onClick={() => onSelectRequest(col.id, req)}
                                     >
                                         <div className={styles.requestInfo}>
-                                            <span className={`${styles.methodBadge} ${styles[req.method.toLowerCase()]}`}>
-                                                {req.method}
+                                            <span className={`${styles.methodBadge} ${styles[(req.method || 'GET').toLowerCase()]}`}>
+                                                {req.method || 'GET'}
                                             </span>
                                             <span className={styles.requestName}>{req.name}</span>
                                         </div>

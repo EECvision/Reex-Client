@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/supabase';
 import { auth } from '@/auth';
 import { isProUser } from '@/lib/storage';
+import { verifyProStatus } from '@/lib/verifyProStatus';
 
 
 
@@ -46,7 +47,8 @@ export async function addToHistory(name: string, content: any) {
 
 
     // HYBRID STORAGE CHECK
-    if (!isProUser(session.user)) {
+    const isPro = await verifyProStatus(session.user.id);
+    if (!isPro) {
         return { success: true };
     }
 
@@ -65,6 +67,28 @@ export async function addToHistory(name: string, content: any) {
         return { error: error.message };
     }
 
+    // ENFORCE LIMIT: Keep only the latest 20 items
+    try {
+        const { data: items } = await supabase
+            .from('recent_collections')
+            .select('id')
+            .eq('user_id', session.user.id)
+            .order('updated_at', { ascending: false }); // Latest first
+
+        if (items && items.length > 20) {
+            const itemsToDelete = items.slice(20).map(i => i.id);
+            if (itemsToDelete.length > 0) {
+                await supabase
+                    .from('recent_collections')
+                    .delete()
+                    .in('id', itemsToDelete);
+            }
+        }
+    } catch (cleanupError) {
+        console.warn('Error enforcing history limit:', cleanupError);
+        // Don't fail the request if cleanup fails
+    }
+
     return { success: true };
 }
 
@@ -73,7 +97,8 @@ export async function getHistory() {
     if (!session?.user?.id) return [];
 
     // HYBRID STORAGE CHECK
-    if (!isProUser(session.user)) {
+    const isPro = await verifyProStatus(session.user.id);
+    if (!isPro) {
         return [];
     }
 
@@ -98,7 +123,8 @@ export async function deleteFromHistory(id: string) {
     if (!session?.user?.id) return { error: 'Unauthorized' };
 
     // HYBRID STORAGE CHECK
-    if (!isProUser(session.user)) {
+    const isPro = await verifyProStatus(session.user.id);
+    if (!isPro) {
         return { success: true };
     }
 

@@ -47,7 +47,7 @@ const App = () => {
   // ...
 
   // Custom Hooks
-  const { toasts, showToast, dismissToast } = useToast();
+  const { showToast } = useToast();
 
   const {
     backgroundTasks,
@@ -191,7 +191,7 @@ const App = () => {
 
   return (
     <div className={styles.container}>
-      <Toast toasts={toasts} onDismiss={dismissToast} />
+
       <BackgroundNotification
         tasks={backgroundTasks}
         onDismiss={dismissBackgroundTask}

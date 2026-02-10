@@ -3,13 +3,15 @@ import { getHistory, addToHistory, deleteFromHistory } from '@/app/actions/recen
 import { HistoryItem } from '@/providers/ProjectContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { ClientStorage } from '@/lib/clientStorage';
+import { useToast } from '@/hooks/useToast';
 
 const HISTORY_KEY = 'recent_collections';
 
 export const useRecentCollections = () => {
     const queryClient = useQueryClient();
     const { isPro } = useSubscription();
-    const QUERY_KEY = ['recent-collections'];
+    const { showToast } = useToast();
+    const QUERY_KEY = ['recent-collections', isPro];
 
     // Query: Fetch History
     const {
@@ -53,13 +55,20 @@ export const useRecentCollections = () => {
                 return;
             }
 
-            await addToHistory(name, content);
+            const res = await addToHistory(name, content);
+            if (res && 'error' in res) {
+                return { error: res.error };
+            }
         },
-        onSuccess: () => {
+        onSuccess: (result) => {
+            if (result && 'error' in result) {
+                showToast('error', String(result.error));
+                return;
+            }
             queryClient.invalidateQueries({ queryKey: QUERY_KEY });
         },
-        onError: (err) => {
-            console.error('Failed to add to history', err);
+        onError: (err: any) => {
+            showToast('error', err.message || 'Failed to add to history');
         }
     });
 
@@ -70,18 +79,27 @@ export const useRecentCollections = () => {
                 ClientStorage.delete(HISTORY_KEY, id);
                 return id;
             }
-            await deleteFromHistory(id);
+            const res = await deleteFromHistory(id);
+            if (res && 'error' in res) {
+                return { error: res.error };
+            }
             return id;
         },
-        onSuccess: (deletedId) => {
+        onSuccess: (result) => {
+            if (result && typeof result === 'object' && 'error' in result) {
+                showToast('error', String((result as any).error));
+                return;
+            }
+            const deletedId = result as string;
             // Optimistic update or just invalidate
             queryClient.setQueryData(QUERY_KEY, (old: HistoryItem[] = []) => {
                 return old.filter(item => item.id !== deletedId);
             });
             queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+            showToast('success', 'Removed from history');
         },
-        onError: (err) => {
-            console.error('Failed to delete from history', err);
+        onError: (err: any) => {
+            showToast('error', err.message || 'Failed to delete from history');
         }
     });
 

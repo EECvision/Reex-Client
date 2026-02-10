@@ -5,6 +5,7 @@ import { Database } from '@/types/supabase';
 import { auth } from '@/auth';
 import { revalidatePath } from 'next/cache';
 import { isProUser } from '@/lib/storage';
+import { verifyProStatus } from '@/lib/verifyProStatus';
 
 
 
@@ -26,45 +27,66 @@ export async function getCollections() {
     }
 
     // HYBRID STORAGE CHECK
-    if (!isProUser(session.user)) {
+    const isPro = await verifyProStatus(session.user.id);
+    if (!isPro) {
         return [];
     }
 
-    const { data: collections, error } = await supabase
+    // 1. Fetch Collections
+    const { data: collections, error: colError } = await supabase
         .from('test_collections')
-        .select(`
-      *,
-      requests:test_collection_requests(*)
-    `)
-        .eq('user_id', session.user.id) // Manually filter by user_id
+        .select('*')
+        .eq('user_id', session.user.id)
         .order('created_at', { ascending: true });
 
-    if (error) {
-        console.error('Error fetching collections:', error);
+    if (colError) {
+        console.error('Error fetching collections:', colError);
         throw new Error('Failed to fetch collections');
     }
 
-    // Transform to frontend model matches CollectionService structure
-    return (collections || []).map((col: any) => ({
-        id: col.id,
-        name: col.name,
-        auth: col.auth,
-        requests: (col.requests || [])
-            .sort((a: any, b: any) => (a.sort_order - b.sort_order) || new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-            .map((req: any) => ({
-                id: req.id,
-                name: req.name,
-                method: req.method,
-                url: req.url,
-                config: {
-                    headers: req.headers,
-                    queryParams: req.params, // Mapped from DB 'params' to frontend 'queryParams'
-                    body: req.body,
-                    auth: req.auth
-                }
-            })),
-        isOpen: false
-    }));
+    if (!collections || collections.length === 0) {
+        return [];
+    }
+
+    // 2. Fetch Requests for these collections
+    const collectionIds = collections.map(c => c.id);
+    const { data: requests, error: reqError } = await supabase
+        .from('test_collection_requests')
+        .select('*')
+        .in('collection_id', collectionIds);
+
+    if (reqError) {
+        console.error('Error fetching requests:', reqError);
+        // We can still return collections but empty requests
+    }
+
+
+
+    // 3. Merge and Transform
+    return collections.map((col: any) => {
+        const colRequests = requests?.filter((r: any) => r.collection_id === col.id) || [];
+
+        return {
+            id: col.id,
+            name: col.name,
+            auth: col.auth,
+            requests: colRequests
+                .sort((a: any, b: any) => (a.sort_order - b.sort_order) || new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                .map((req: any) => ({
+                    id: req.id,
+                    name: req.name,
+                    method: req.method,
+                    url: req.url,
+                    config: {
+                        headers: req.headers,
+                        queryParams: req.params,
+                        body: req.body,
+                        auth: req.auth
+                    }
+                })),
+            isOpen: false
+        };
+    });
 }
 
 export async function createCollection(name: string) {
@@ -86,6 +108,16 @@ export async function createCollection(name: string) {
     // HYBRID STORAGE CHECK
     if (!isProUser(session.user)) {
         return { error: 'Upgrade to Pro' };
+    }
+
+    // LIMIT CHECK: Max 20 collections
+    const { count } = await supabase
+        .from('test_collections')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', session.user.id);
+
+    if (count !== null && count >= 20) {
+        return { error: 'Collection limit reached (20). Please delete old collections to create a new one.' };
     }
 
     try {
@@ -127,7 +159,8 @@ export async function deleteCollection(id: string) {
     if (!session?.user?.id) return { error: 'Unauthorized' };
 
     // HYBRID STORAGE CHECK
-    if (!isProUser(session.user)) {
+    const isPro = await verifyProStatus(session.user.id);
+    if (!isPro) {
         return;
     }
 
@@ -146,13 +179,24 @@ export async function createRequest(collectionId: string, request: any) {
     if (!session?.user?.id) return { error: 'Unauthorized' };
 
     // HYBRID STORAGE CHECK
-    if (!isProUser(session.user)) {
+    const isPro = await verifyProStatus(session.user.id);
+    if (!isPro) {
         return { error: 'Upgrade to Pro' };
     }
 
     // Verify collection ownership
     const { data: col } = await supabase.from('test_collections').select('id').eq('id', collectionId).eq('user_id', session.user.id).single();
     if (!col) return { error: 'Collection not found or unauthorized' };
+
+    // LIMIT CHECK: Max 20 requests per collection
+    const { count } = await supabase
+        .from('test_collection_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('collection_id', collectionId);
+
+    if (count !== null && count >= 20) {
+        return { error: 'Request limit reached (20) for this collection. Please delete old requests.' };
+    }
 
     const { data, error } = await supabase
         .from('test_collection_requests')
@@ -195,7 +239,8 @@ export async function updateRequest(id: string, updates: any) {
     // A stricter check would be: select id from test_collection_requests join test_collections on ... where ...
 
     // HYBRID STORAGE CHECK
-    if (!isProUser(session.user)) {
+    const isPro = await verifyProStatus(session.user.id);
+    if (!isPro) {
         return;
     }
 
@@ -225,7 +270,8 @@ export async function deleteRequest(id: string) {
     if (!session?.user?.id) return { error: 'Unauthorized' };
 
     // HYBRID STORAGE CHECK
-    if (!isProUser(session.user)) {
+    const isPro = await verifyProStatus(session.user.id);
+    if (!isPro) {
         return;
     }
 

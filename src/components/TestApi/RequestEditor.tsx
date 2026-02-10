@@ -26,7 +26,7 @@ interface RequestEditorProps {
 }
 
 export default function RequestEditor({ data, onSave, requestName }: RequestEditorProps) {
-    const { toasts, showToast, dismissToast } = useToast();
+    const { showToast } = useToast();
 
     // Request State
     const [name, setName] = useState(requestName);
@@ -209,7 +209,7 @@ export default function RequestEditor({ data, onSave, requestName }: RequestEdit
 
     return (
         <div className={styles.editorContainer}>
-            <Toast toasts={toasts} onDismiss={dismissToast} />
+
 
             <div className={styles.editorScrollArea}>
                 <div className={styles.headerRow}>

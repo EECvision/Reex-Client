@@ -29,7 +29,8 @@ export default function TestApiPage() {
     deleteCollection,
     createRequest,
     updateRequest,
-    deleteRequest
+    deleteRequest,
+    toggleCollection
   } = useCollections(user?.id);
 
   // Active Request State
@@ -128,8 +129,12 @@ export default function TestApiPage() {
         await createCollection(newItemName);
       } else {
         if (!targetColId) return;
-        const newReq = await createRequest({ collectionId: targetColId, name: newItemName });
-        setActiveRequest(newReq as RequestItem);
+        const result = await createRequest({ collectionId: targetColId, name: newItemName });
+        if (result && (result as any).error) {
+          // Error handled in hook toast
+          return;
+        }
+        setActiveRequest(result as RequestItem);
       }
       setIsModalOpen(false);
     } catch (error) {
@@ -153,10 +158,7 @@ export default function TestApiPage() {
   };
 
   const handleToggleCollection = (id: string) => {
-    queryClient.setQueryData(['collections', user?.id], (old: Collection[] | undefined) => {
-      if (!old) return [];
-      return old.map(c => c.id === id ? { ...c, isOpen: !c.isOpen } : c);
-    });
+    toggleCollection(id);
   };
 
   const handleSaveRequest = async (name: string, config: any) => {

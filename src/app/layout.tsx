@@ -22,6 +22,7 @@ import { SettingsProvider } from "@/providers/SettingsContext";
 import { AuthProvider } from "@/providers/AuthContext";
 import FloatingTestButton from "@/components/FloatingTestButton/FloatingTestButton";
 import QueryProvider from "@/providers/QueryProvider";
+import { ToastProvider } from "@/providers/ToastContext";
 
 export default function RootLayout({
   children,
@@ -34,10 +35,12 @@ export default function RootLayout({
         <SettingsProvider>
           <AuthProvider>
             <QueryProvider>
-              <ProjectProvider>
-                {children}
-                <FloatingTestButton />
-              </ProjectProvider>
+              <ToastProvider>
+                <ProjectProvider>
+                  {children}
+                  <FloatingTestButton />
+                </ProjectProvider>
+              </ToastProvider>
             </QueryProvider>
           </AuthProvider>
         </SettingsProvider>

@@ -30,7 +30,7 @@ export const useCollections = (userId?: string) => {
         isLoading,
         error
     } = useQuery<Collection[]>({
-        queryKey: ['collections', userId],
+        queryKey: ['collections', userId, isPro],
         queryFn: async () => {
             if (!userId) return [];
 
@@ -68,11 +68,16 @@ export const useCollections = (userId?: string) => {
             }
 
             const res = await createCollection(name);
-            if (res.error) throw new Error(res.error);
+            if (res.error) return { error: res.error };
             return res.data;
         },
         onSuccess: (newCollection) => {
-            queryClient.setQueryData(['collections', userId], (old: Collection[] = []) => {
+            if (!newCollection) return;
+            if ((newCollection as any).error) {
+                showToast('error', String((newCollection as any).error));
+                return;
+            }
+            queryClient.setQueryData(['collections', userId, isPro], (old: Collection[] = []) => {
                 return [...old, newCollection];
             });
             showToast('success', 'Collection created');
@@ -89,17 +94,25 @@ export const useCollections = (userId?: string) => {
                 ClientStorage.delete(COLLECTIONS_KEY, id);
                 return id;
             }
-            await deleteCollection(id);
+            const res = await deleteCollection(id);
+            if (res && typeof res === 'object' && 'error' in res) {
+                return { error: res.error };
+            }
             return id;
         },
-        onSuccess: (deletedId) => {
-            queryClient.setQueryData(['collections', userId], (old: Collection[] = []) => {
+        onSuccess: (result) => {
+            if (result && typeof result === 'object' && 'error' in result) {
+                showToast('error', result.error);
+                return;
+            }
+            const deletedId = result as string;
+            queryClient.setQueryData(['collections', userId, isPro], (old: Collection[] = []) => {
                 return old.filter(c => c.id !== deletedId);
             });
             showToast('success', 'Collection deleted');
         },
         onError: (err: any) => {
-            showToast('error', 'Failed to delete collection');
+            showToast('error', err.message || 'Failed to delete collection');
         }
     });
 
@@ -123,10 +136,17 @@ export const useCollections = (userId?: string) => {
                 }
                 return newReq;
             }
-            return await createRequest(collectionId, { name });
+            const res = await createRequest(collectionId, { name });
+            if (res.error) return { error: res.error };
+            return res;
         },
         onSuccess: (newRequest, variables) => {
-            queryClient.setQueryData(['collections', userId], (old: Collection[] = []) => {
+            if (!newRequest) return;
+            if ((newRequest as any).error) {
+                showToast('error', String((newRequest as any).error));
+                return;
+            }
+            queryClient.setQueryData(['collections', userId, isPro], (old: Collection[] = []) => {
                 return old.map(c => {
                     if (c.id === variables.collectionId) {
                         return { ...c, requests: [...c.requests, newRequest], isOpen: true };
@@ -137,7 +157,7 @@ export const useCollections = (userId?: string) => {
             showToast('success', 'Request created');
         },
         onError: (err: any) => {
-            showToast('error', 'Failed to create request');
+            showToast('error', err.message || 'Failed to create request');
         }
     });
 
@@ -170,12 +190,20 @@ export const useCollections = (userId?: string) => {
                 return { id, updates };
             }
 
-            await updateRequest(id, updates);
+            const res = await updateRequest(id, updates);
+            if (res && typeof res === 'object' && 'error' in res) {
+                return { error: res.error };
+            }
             return { id, updates };
         },
-        onSuccess: ({ id, updates }) => {
+        onSuccess: (result) => {
+            if (result && typeof result === 'object' && 'error' in result) {
+                showToast('error', (result as any).error);
+                return;
+            }
+            const { id, updates } = result as { id: string, updates: any };
             // Optimistic update or refetch. Here we manipulate cache manually to avoid refetch lag.
-            queryClient.setQueryData(['collections', userId], (old: Collection[] = []) => {
+            queryClient.setQueryData(['collections', userId, isPro], (old: Collection[] = []) => {
                 return old.map(c => {
                     // Check if request is in this collection
                     const reqIndex = c.requests.findIndex(r => r.id === id);
@@ -195,7 +223,7 @@ export const useCollections = (userId?: string) => {
             showToast('success', 'Request saved');
         },
         onError: (err: any) => {
-            showToast('error', 'Failed to save request');
+            showToast('error', err.message || 'Failed to save request');
         }
     });
 
@@ -212,11 +240,19 @@ export const useCollections = (userId?: string) => {
                 return { collectionId, requestId };
             }
 
-            await deleteRequest(requestId);
+            const res = await deleteRequest(requestId);
+            if (res && typeof res === 'object' && 'error' in res) {
+                return { error: res.error };
+            }
             return { collectionId, requestId };
         },
-        onSuccess: ({ collectionId, requestId }) => {
-            queryClient.setQueryData(['collections', userId], (old: Collection[] = []) => {
+        onSuccess: (result) => {
+            if (result && typeof result === 'object' && 'error' in result) {
+                showToast('error', (result as any).error);
+                return;
+            }
+            const { collectionId, requestId } = result as { collectionId: string, requestId: string };
+            queryClient.setQueryData(['collections', userId, isPro], (old: Collection[] = []) => {
                 return old.map(c => {
                     if (c.id === collectionId) {
                         return { ...c, requests: c.requests.filter(r => r.id !== requestId) };
@@ -227,9 +263,16 @@ export const useCollections = (userId?: string) => {
             showToast('success', 'Request deleted');
         },
         onError: (err: any) => {
-            showToast('error', 'Failed to delete request');
+            showToast('error', err.message || 'Failed to delete request');
         }
     });
+
+    const toggleCollection = (id: string) => {
+        queryClient.setQueryData(['collections', userId, isPro], (old: Collection[] | undefined) => {
+            if (!old) return [];
+            return old.map(c => c.id === id ? { ...c, isOpen: !c.isOpen } : c);
+        });
+    };
 
     return {
         collections,
@@ -239,6 +282,7 @@ export const useCollections = (userId?: string) => {
         createRequest: createRequestMutation.mutateAsync,
         updateRequest: updateRequestMutation.mutateAsync,
         deleteRequest: deleteRequestMutation.mutateAsync,
+        toggleCollection,
         isCreating: createCollectionMutation.isPending || createRequestMutation.isPending,
         isDeleting: deleteCollectionMutation.isPending || deleteRequestMutation.isPending,
         isUpdating: updateRequestMutation.isPending

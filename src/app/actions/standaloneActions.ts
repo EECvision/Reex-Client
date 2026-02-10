@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/supabase';
 import { auth } from '@/auth';
 import { isProUser } from '@/lib/storage';
+import { verifyProStatus } from '@/lib/verifyProStatus';
 
 
 
@@ -23,7 +24,8 @@ export async function getStandaloneCollections() {
     if (!session?.user?.id) return [];
 
     // HYBRID STORAGE CHECK
-    if (!isProUser(session.user)) {
+    const isPro = await verifyProStatus(session.user.id);
+    if (!isPro) {
         return [];
     }
 
@@ -71,8 +73,19 @@ export async function createStandaloneCollection(collection: any) {
     // But for sync consistency, we usually valid UUID from client
 
     // HYBRID STORAGE CHECK
-    if (!isProUser(session.user)) {
+    const isPro = await verifyProStatus(session.user.id);
+    if (!isPro) {
         return { error: 'Upgrade to Pro' };
+    }
+
+    // LIMIT CHECK: Max 20 standalone collections
+    const { count } = await supabase
+        .from('standalone_collections' as any)
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', session.user.id);
+
+    if (count !== null && count >= 20) {
+        return { error: 'Standalone collection limit reached (20). Please delete old items.' };
     }
 
     // SUPABASE STORAGE (PRO)
@@ -116,7 +129,8 @@ export async function updateStandaloneCollection(id: string, updates: any) {
     // Let's implement a SMART update.
 
     // HYBRID STORAGE CHECK
-    if (!isProUser(session.user)) {
+    const isPro = await verifyProStatus(session.user.id);
+    if (!isPro) {
         return { error: 'Upgrade to Pro' };
     }
 
@@ -156,7 +170,8 @@ export async function deleteStandaloneCollection(id: string) {
     if (!session?.user?.id) return { error: 'Unauthorized' };
 
     // HYBRID STORAGE CHECK
-    if (!isProUser(session.user)) {
+    const isPro = await verifyProStatus(session.user.id);
+    if (!isPro) {
         return { success: true };
     }
 
@@ -179,7 +194,8 @@ export async function deleteAllStandaloneCollections() {
     if (!session?.user?.id) return { error: 'Unauthorized' };
 
     // HYBRID STORAGE CHECK
-    if (!isProUser(session.user)) {
+    const isPro = await verifyProStatus(session.user.id);
+    if (!isPro) {
         return { success: true };
     }
 

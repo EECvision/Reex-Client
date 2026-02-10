@@ -8,13 +8,15 @@ import {
 import { StandaloneCollection } from '@/providers/ProjectContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { ClientStorage } from '@/lib/clientStorage';
+import { useToast } from '@/hooks/useToast';
 
 const STANDALONE_KEY = 'standalone_collections';
 
 export const useStandaloneCollections = (enabled: boolean = true) => {
     const queryClient = useQueryClient();
     const { isPro } = useSubscription();
-    const QUERY_KEY = ['standalone-collections'];
+    const { showToast } = useToast();
+    const QUERY_KEY = ['standalone-collections', isPro];
 
     // Query: Fetch Collections
     const {
@@ -42,22 +44,28 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
             }
 
             const res = await createStandaloneCollection(collection);
-            if (res.error) throw new Error(res.error);
+            if (res.error) return { error: res.error };
             return {
                 ...collection,
                 id: (res.data as any)?.id || collection.id // Use DB ID if available
             };
         },
         onSuccess: (newCollection) => {
+            if ((newCollection as any).error) {
+                showToast('error', String((newCollection as any).error));
+                return;
+            }
+            const collection = newCollection as StandaloneCollection;
             queryClient.setQueryData(QUERY_KEY, (old: StandaloneCollection[] = []) => {
                 // Check if already exists (optimistic update handling)
-                const exists = old.find(c => c.id === newCollection.id);
-                if (exists) return old.map(c => c.id === newCollection.id ? newCollection : c);
-                return [newCollection, ...old];
+                const exists = old.find(c => c.id === collection.id);
+                if (exists) return old.map(c => c.id === collection.id ? collection : c);
+                return [collection, ...old];
             });
+            showToast('success', 'Collection created');
         },
         onError: (err: any) => {
-            console.error('Failed to create standalone collection', err);
+            showToast('error', err.message || 'Failed to create standalone collection');
         }
     });
 
@@ -70,16 +78,22 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
             }
 
             const res = await updateStandaloneCollection(id, updates);
-            if (res.error) throw new Error(res.error);
+            if (res.error) return { error: res.error };
             return { id, updates };
         },
-        onSuccess: ({ id, updates }) => {
+        onSuccess: (result) => {
+            if ((result as any).error) {
+                showToast('error', String((result as any).error));
+                return;
+            }
+            const { id, updates } = result as { id: string, updates: Partial<StandaloneCollection> };
             queryClient.setQueryData(QUERY_KEY, (old: StandaloneCollection[] = []) => {
                 return old.map(c => c.id === id ? { ...c, ...updates } : c);
             });
+            showToast('success', 'Collection updated');
         },
         onError: (err: any) => {
-            console.error('Failed to update standalone collection', err);
+            showToast('error', err.message || 'Failed to update standalone collection');
         }
     });
 
@@ -92,16 +106,22 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
             }
 
             const res = await deleteStandaloneCollection(id);
-            if (res.error) throw new Error(res.error);
+            if (res.error) return { error: res.error };
             return id;
         },
-        onSuccess: (deletedId) => {
+        onSuccess: (result) => {
+            if ((result as any).error) {
+                showToast('error', String((result as any).error));
+                return;
+            }
+            const deletedId = result as string;
             queryClient.setQueryData(QUERY_KEY, (old: StandaloneCollection[] = []) => {
                 return old.filter(c => c.id !== deletedId);
             });
+            showToast('success', 'Collection deleted');
         },
         onError: (err: any) => {
-            console.error('Failed to delete standalone collection', err);
+            showToast('error', err.message || 'Failed to delete standalone collection');
         }
     });
 
