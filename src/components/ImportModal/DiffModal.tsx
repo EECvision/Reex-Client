@@ -10,6 +10,8 @@ export interface FunctionDiff {
     oldContent?: string;
     newContent?: string;
     args?: any[];
+    requiresAuth?: boolean;
+    contentType?: string;
 }
 
 interface DiffModalProps {

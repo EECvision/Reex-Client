@@ -22,18 +22,30 @@ import {
 
 export const processPostmanCollection = (collectionData: any) => {
   const processedModules = new Map<string, any[]>();
-  const processItem = (item: any, folderName?: string) => {
+
+  const processItem = (item: any, folderName?: string, parentAuth?: any) => {
+    // 1. Resolve Auth (Local > Parent)
+    const currentAuth = item.auth || parentAuth;
+
     if (item.item) {
       const folder = folderName || item.name;
-      item.item.forEach((subItem: any) => processItem(subItem, folder));
+      item.item.forEach((subItem: any) => processItem(subItem, folder, currentAuth));
     } else if (item.request) {
       const folder = folderName || "general";
       const moduleName = sanitizeModuleName(folder);
       if (!processedModules.has(moduleName)) processedModules.set(moduleName, []);
+
+      // Attach the resolved auth to the item for later use
+      item.inheritedAuth = currentAuth;
       processedModules.get(moduleName)!.push(item);
     }
   };
-  if (collectionData.item) collectionData.item.forEach((item: any) => processItem(item));
+
+  // Start processing from root
+  // Collection itself might have auth
+  const collectionAuth = collectionData.auth;
+  if (collectionData.item) collectionData.item.forEach((item: any) => processItem(item, undefined, collectionAuth));
+
   return processedModules;
 };
 
@@ -104,9 +116,35 @@ const mapToStandardIR = (
       const { clientName, path: finalPath } = resolveClientAndPath(finalUrl, normalizedPath, clientMappings);
 
       // Auth (Postman)
-      // If request.auth exists and is not type 'noauth', we assume auth is required.
-      // Note: This misses inherited auth from parents, which is complex to resolve in this flat structure.
-      const requiresAuth = !!(request.auth && request.auth.type !== 'noauth');
+      // 1. Check specific request auth OR inherited auth
+      const auth = request.auth || item.inheritedAuth;
+
+      // 2. Check for manual Authorization header
+      const hasAuthHeader = request.header && Array.isArray(request.header)
+        ? request.header.some((h: any) => h.key.toLowerCase() === 'authorization')
+        : false;
+
+      // Logic:
+      // - If 'noauth' is explicitly set (locally or inherited) -> FALSE
+      // - If Authorization header matches -> TRUE
+      // - If explicit auth is set (and not noauth) -> TRUE
+      // - If NO auth info is present (undefined) -> TRUE (Assume secure by default for APIs)
+
+      let requiresAuth = true; // Default to secure
+
+      if (auth) {
+        if (auth.type === 'noauth') {
+          requiresAuth = false;
+        } else {
+          requiresAuth = true;
+        }
+      } else {
+        // No auth object locally or inherited. Default to true.
+        requiresAuth = true;
+      }
+
+      // Override if header is present (doubly sure)
+      if (hasAuthHeader) requiresAuth = true;
 
       functions.push({
         name: functionName,

@@ -131,7 +131,7 @@ export const useImportActions = ({
         }
 
         // Check for @auth in JSDoc comments: /** @auth */ or /* @auth */
-        const requiresAuth = /@auth\b/.test(code);
+        const requiresAuth = /@auth\b/.test(code) || /\*+\s*@auth/.test(code);
 
         // Extract @contentType from JSDoc: @contentType multipart/form-data
         let contentType: string | undefined;

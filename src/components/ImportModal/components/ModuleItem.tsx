@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Lock } from 'lucide-react';
 import styles from './ModuleItem.module.css';
 import { DiffResult } from '../importTypes';
 import StatusBadge from './StatusBadge';
@@ -84,6 +84,11 @@ const ModuleItem: React.FC<ModuleItemProps> = ({
                             <span className={styles.functionName} title={f.name}>
                                 {f.name}
                             </span>
+                            {f.requiresAuth && (
+                                <div title="Requires Authentication" className={styles.authIconWrapper}>
+                                    <Lock size={12} className={styles.authIcon} />
+                                </div>
+                            )}
                             <StatusBadge status={f.status} />
                             {f.status === "modified" && (
                                 <div className={styles.overwriteAction}>

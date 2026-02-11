@@ -15,6 +15,8 @@ interface FunctionDiff {
     oldContent?: string;
     newContent?: string;
     args?: any[];
+    requiresAuth?: boolean;
+    contentType?: string;
 }
 
 interface AnalysisResult {
@@ -105,7 +107,7 @@ const getReferencedDefs = (text: string, allTypes: Map<string, string>): string 
 };
 
 const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
-    const functions = new Map<string, { content: string, disabled: boolean, args: any[] }>();
+    const functions = new Map<string, { content: string, disabled: boolean, args: any[], requiresAuth?: boolean, contentType?: string }>();
 
     // Extract all local types to check for dependencies
     const allTypes = getAllTypes(sourceFile);
@@ -134,12 +136,21 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
             const ranges = assignment.getLeadingCommentRanges ? assignment.getLeadingCommentRanges() : [];
             let disabled = false;
             let leadingComments = "";
+            let requiresAuth = false;
+            let contentType: string | undefined;
 
             // ts-morph PropertyAssignment has getLeadingCommentRanges
             for (const r of ranges) {
                 const commentText = r.getText();
                 if (commentText.includes("/* write-disable */")) {
                     disabled = true;
+                }
+                if (commentText.includes("@auth")) {
+                    requiresAuth = true;
+                }
+                const contentTypeMatch = commentText.match(/@contentType\s+(\S+)/);
+                if (contentTypeMatch) {
+                    contentType = contentTypeMatch[1];
                 }
                 // Capture all JSDoc comments (for @auth, @contentType, etc.)
                 leadingComments += commentText + "\n";
@@ -202,7 +213,7 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
             // Include leading comments so @auth and @contentType can be parsed
             const fullContent = leadingComments + functionBody + "\n" + dependencyDefs;
 
-            functions.set(name, { content: fullContent, disabled, args });
+            functions.set(name, { content: fullContent, disabled, args, requiresAuth, contentType });
         }
     });
 
@@ -280,7 +291,9 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
                 for (const [name, _] of newFuncs) {
                     const formattedNew = await formatCode(newFuncs.get(name)!.content);
                     const args = newFuncs.get(name)!.args;
-                    functionDiffs.push({ name, status: "new", newContent: formattedNew, args });
+                    const requiresAuth = newFuncs.get(name)!.requiresAuth;
+                    const contentType = newFuncs.get(name)!.contentType;
+                    functionDiffs.push({ name, status: "new", newContent: formattedNew, args, requiresAuth, contentType });
                 }
 
                 analysis.push({
@@ -320,7 +333,14 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
                             if (!existingData) {
                                 // New function - format it
                                 const formattedNew = await formatCode(newBody);
-                                functionDiffs.push({ name, status: "new", newContent: formattedNew, args: newData.args });
+                                functionDiffs.push({
+                                    name,
+                                    status: "new",
+                                    newContent: formattedNew,
+                                    args: newData.args,
+                                    requiresAuth: newData.requiresAuth,
+                                    contentType: newData.contentType
+                                });
                             } else {
                                 const { content: existingBody, disabled } = existingData;
                                 if (disabled) {
@@ -344,12 +364,20 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
                                             status: "modified",
                                             oldContent: formattedOld,
                                             newContent: formattedNew,
-                                            args: newData.args
+                                            args: newData.args,
+                                            requiresAuth: newData.requiresAuth,
+                                            contentType: newData.contentType
                                         });
                                         processedExisting.add(name);
                                     }
                                 } else {
-                                    functionDiffs.push({ name, status: "unchanged", args: newData.args });
+                                    functionDiffs.push({
+                                        name,
+                                        status: "unchanged",
+                                        args: newData.args,
+                                        requiresAuth: newData.requiresAuth,
+                                        contentType: newData.contentType
+                                    });
                                     processedExisting.add(name);
                                 }
                             }
@@ -393,7 +421,13 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
                             if (data.disabled) {
                                 functionDiffs.push({ name, status: "disabled", args: data.args });
                             } else {
-                                functionDiffs.push({ name, status: "unchanged", args: data.args });
+                                functionDiffs.push({
+                                    name,
+                                    status: "unchanged",
+                                    args: data.args,
+                                    requiresAuth: data.requiresAuth,
+                                    contentType: data.contentType
+                                });
                             }
                         });
 

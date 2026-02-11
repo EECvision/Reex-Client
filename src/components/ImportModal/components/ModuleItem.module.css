@@ -1,4 +1,10 @@
 /* Module Item */
+.authIconWrapper {
+    display: flex;
+    align-items: center;
+    cursor: help;
+}
+
 .moduleWrapper {
     border: 1px solid var(--border-color, #e5e7eb);
     border-radius: 8px;
@@ -133,6 +139,12 @@
     text-overflow: ellipsis;
     min-width: 0;
     padding-right: 8px;
+}
+
+.authIcon {
+    margin-right: 8px;
+    color: var(--text-muted, #9ca3af);
+    min-width: 12px;
 }
 
 .overwriteAction {
