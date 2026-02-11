@@ -1,4 +1,3 @@
-/* Sidebar (Left Panel) */
 .sidebarContainer {
     width: 260px;
     height: 100%;
@@ -7,6 +6,39 @@
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    transition: width 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+    z-index: 1001;
+    overflow: hidden;
+    /* Prevent content jump during width transition */
+}
+
+@media (min-width: 1141px) {
+    .sidebarContainer:not(.open) {
+        width: 0;
+        transform: translateX(-100%);
+        opacity: 0;
+        border-right-width: 0;
+        pointer-events: none;
+    }
+}
+
+@media (max-width: 1140px) {
+    .sidebarContainer {
+        position: fixed;
+        left: 0;
+        top: 64px;
+        bottom: 0;
+        height: calc(100vh - 64px);
+        transform: translateX(-100%);
+        box-shadow: 10px 0 15px -3px rgba(0, 0, 0, 0.1);
+        width: 260px;
+        /* Reset width to fixed on mobile */
+        opacity: 1;
+    }
+
+    .open {
+        transform: translateX(0);
+    }
 }
 
 .sidebarHeader {

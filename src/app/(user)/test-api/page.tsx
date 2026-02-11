@@ -14,12 +14,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCollections } from '@/hooks/useCollections';
 import { useToast } from '@/hooks/useToast';
 
+import { useUI } from '@/providers/UIContext';
 import LoginModal from '@/components/LoginModal/LoginModal';
 
 export default function TestApiPage() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
+  const { isSidebarOpen, setSidebarOpen, setHasSidebar } = useUI();
 
   // Collections Data via TanStack Query
   const {
@@ -44,6 +46,14 @@ export default function TestApiPage() {
   const [newItemName, newItemNameSet] = useState('');
   const [targetColId, setTargetColId] = useState<string | null>(null);
   const [targetReqId, setTargetReqId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setHasSidebar(true);
+    if (typeof window !== 'undefined' && window.innerWidth > 1140) {
+      setSidebarOpen(true);
+    }
+    return () => setHasSidebar(false);
+  }, [setHasSidebar, setSidebarOpen]);
 
   // --- Actions ---
 
@@ -205,15 +215,24 @@ export default function TestApiPage() {
 
   return (
     <div className={styles.pageContainer}>
+      <div
+        className={`${styles.sidebarOverlay} ${isSidebarOpen ? styles.showOverlay : ''}`}
+        onClick={() => setSidebarOpen(false)}
+      />
+
       <CollectionSidebar
         collections={collections}
         activeRequestId={activeRequest?.id || null}
-        onSelectRequest={(cid, req) => setActiveRequest(req)}
+        onSelectRequest={(cid, req) => {
+          setActiveRequest(req);
+          if (window.innerWidth <= 1140) setSidebarOpen(false);
+        }}
         onAddCollection={handleAddCollection}
         onAddRequest={handleAddRequest}
         onDeleteCollection={handleDeleteCollection}
         onDeleteRequest={handleDeleteRequest}
         onToggleCollection={handleToggleCollection}
+        isOpen={isSidebarOpen}
       />
 
       <div className={styles.rightPanel}>
@@ -228,9 +247,6 @@ export default function TestApiPage() {
           />
         ) : (
           <EmptyState hasEndpoints={true} onImportClick={() => { }} />
-          // Note: EmptyState hasEndpoints=true usually shows "Select an endpoint". 
-          // If collections are empty, we might want "Create a collection". 
-          // But existing logic is fine.
         )}
       </div>
 

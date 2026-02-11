@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './Modal.module.css';
 import { Button } from '../Button/Button';
 import { X } from 'lucide-react';
@@ -28,6 +29,13 @@ export const Modal: React.FC<ModalProps> = ({
     overlayClassName = '',
     closeOnOverlayClick = true
 }) => {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        return () => setMounted(false);
+    }, []);
+
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
             if (isOpen && e.key === 'Escape') {
@@ -38,7 +46,7 @@ export const Modal: React.FC<ModalProps> = ({
         return () => window.removeEventListener('keydown', handleEsc);
     }, [isOpen, onClose]);
 
-    if (!isOpen) return null;
+    if (!isOpen || !mounted) return null;
 
     const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (closeOnOverlayClick && e.target === e.currentTarget) {
@@ -46,7 +54,7 @@ export const Modal: React.FC<ModalProps> = ({
         }
     };
 
-    return (
+    const modalContent = (
         <div className={`${styles.overlay} ${overlayClassName}`} onClick={handleOverlayClick}>
             <div className={`${styles.modal} ${styles[size]} ${className}`}>
                 {title && (
@@ -93,4 +101,6 @@ export const Modal: React.FC<ModalProps> = ({
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 };

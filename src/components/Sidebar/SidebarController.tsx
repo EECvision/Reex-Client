@@ -13,6 +13,7 @@ interface SidebarControllerProps {
     onDeleteModule: (moduleName: string) => void;
     onDeleteFunction: (moduleName: string, functionName: string) => void;
     onDeleteCollection: (id: string) => void;
+    isOpen?: boolean;
 }
 
 type ApiKey = string;
@@ -24,6 +25,7 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
     onDeleteModule,
     onDeleteFunction,
     onDeleteCollection,
+    isOpen = false,
 }) => {
     const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
     const [methodFilter, setMethodFilter] = useState<Methods>("ALL");
@@ -142,6 +144,7 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
             onDeleteFunction={isStandaloneMode ? undefined : onDeleteFunction}
             onDeleteCollection={isStandaloneMode ? onDeleteCollection : undefined}
             collectionName={config?.collectionName} // Legacy
+            isOpen={isOpen}
         />
     );
 };

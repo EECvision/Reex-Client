@@ -136,3 +136,33 @@
         transform: translateY(0);
     }
 }
+
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+
+    .title {
+        font-size: 24px;
+    }
+
+    .subtitle {
+        font-size: 16px;
+    }
+
+    .currentPlan {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 24px;
+        gap: 20px;
+    }
+
+    .plansGrid {
+        flex-direction: column;
+    }
+
+    .planCard {
+        width: 100%;
+        padding: 24px;
+    }
+}

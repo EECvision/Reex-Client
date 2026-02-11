@@ -135,6 +135,14 @@ const App = () => {
   });
 
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    // Open sidebar by default on desktop
+    if (typeof window !== "undefined" && window.innerWidth > 1140) {
+      setIsSidebarOpen(true);
+    }
+  }, []);
 
 
   const {
@@ -189,7 +197,7 @@ const App = () => {
   // Note: projectError is no longer blocking - standalone mode handles missing bridge
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${isSidebarOpen ? styles.sidebarOpen : ""}`}>
 
       <BackgroundNotification
         tasks={backgroundTasks}
@@ -197,13 +205,21 @@ const App = () => {
       />
 
       {hasEndpoints && (
+        <div className={`${styles.sidebarOverlay} ${isSidebarOpen ? styles.showOverlay : ""}`} onClick={() => setIsSidebarOpen(false)} />
+      )}
+
+      {hasEndpoints && (
         <SidebarController
           apiManifest={apiManifest}
           selectedEndpoint={selectedEndpoint}
-          onSelectEndpoint={setSelectedEndpoint}
+          onSelectEndpoint={(ep) => {
+            setSelectedEndpoint(ep);
+            if (window.innerWidth <= 1140) setIsSidebarOpen(false);
+          }}
           onDeleteModule={handleDeleteModule}
           onDeleteFunction={handleDeleteFunction}
           onDeleteCollection={openDeleteModal}
+          isOpen={isSidebarOpen}
         />
       )}
 
@@ -257,6 +273,8 @@ const App = () => {
               });
             }
           }}
+          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          isSidebarOpen={isSidebarOpen}
         />
 
         {showImportModal && (

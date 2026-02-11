@@ -316,3 +316,19 @@
   border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 8px;
 }
+
+@media (max-width: 640px) {
+  .querySection {
+    padding: 1rem;
+  }
+
+  .queryHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .queryTitle {
+    margin-bottom: 4px;
+  }
+}

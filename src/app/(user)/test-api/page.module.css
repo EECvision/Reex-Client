@@ -47,3 +47,34 @@
     border-color: var(--primary-color);
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
+
+@media (max-width: 1140px) {
+    .sidebarOverlay {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(2px);
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+    }
+
+    .showOverlay {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .pageContainer {
+        flex-direction: column;
+    }
+
+    .rightPanel {
+        width: 100%;
+        min-width: 0;
+    }
+}

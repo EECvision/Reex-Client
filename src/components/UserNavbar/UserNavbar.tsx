@@ -7,17 +7,27 @@ import styles from "./UserNavbar.module.css";
 import Logo from "../Logo/Logo";
 import UserMenu from "../UserMenu/UserMenu";
 import { Button } from "../ui/Button/Button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Menu } from "lucide-react";
+import { useUI } from "@/providers/UIContext";
 
-export default function UserNavbar() {
+interface UserNavbarProps {
+}
+
+export default function UserNavbar({ }: UserNavbarProps) {
     const pathname = usePathname();
     const router = useRouter();
+    const { toggleSidebar, hasSidebar } = useUI();
 
     const isActive = (path: string) => pathname?.startsWith(path);
 
     return (
         <nav className={styles.navbar}>
             <div className={styles.left}>
+                {hasSidebar && (
+                    <button className={styles.sidebarToggle} onClick={toggleSidebar}>
+                        <Menu size={20} />
+                    </button>
+                )}
                 <Link href="/" className={styles.brand}>
                     <Logo />
                 </Link>

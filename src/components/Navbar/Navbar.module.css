@@ -8,6 +8,8 @@
   padding: 0 16px;
   background-color: var(--card-bg, #fff);
   border-bottom: 1px solid var(--border-color, #e5e7eb);
+  position: relative;
+  z-index: 100;
 }
 
 .leftSection {
@@ -54,6 +56,27 @@
   gap: 4px;
 }
 
+.sidebarToggle,
+.mobileMenuBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--card-bg, #fff);
+  color: var(--text-primary, #374151);
+  cursor: pointer;
+  margin-left: 8px;
+  padding: 0 !important;
+}
+
+.sidebarToggle {
+  display: block !important;
+  flex-shrink: 0;
+}
+
 .separator {
   width: 1px;
   height: 24px;
@@ -64,11 +87,11 @@
 /* Obsolete actionButton removed. Used Button component instead. */
 
 .deleteBtn {
-  color: #ef4444;
+  color: rgba(239, 68, 68, 0.8);
 }
 
 .deleteBtn:hover {
-  background-color: #fef2f2;
+  color: #ef4444 !important;
 }
 
 /* Fetch Action Group */
@@ -233,9 +256,66 @@
   cursor: text;
 }
 
+
 .baseUrlInput:focus {
   background: transparent;
 }
+
+/* Mobile Menu Styles */
+.mobileOverlay {
+  display: none;
+  position: fixed;
+  top: 60px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 9997;
+}
+
+.mobileMenu {
+  display: none;
+  position: fixed;
+  top: 60px;
+  left: 0;
+  right: 0;
+  background: var(--card-bg, #fff);
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  padding: 16px;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 9998;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  animation: slideDown 0.2s ease-out;
+}
+
+.mobileSubMenu {
+  display: flex;
+  flex-direction: column;
+  background: var(--hover-bg, #f3f4f6);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  gap: 12px;
+  width: 100%;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+
 
 @keyframes scaleIn {
   from {
@@ -248,6 +328,7 @@
     transform: scale(1) translateY(0);
   }
 }
+
 
 .toggleModeBtn {
   display: flex;
@@ -286,4 +367,49 @@
 .disconnectBtn:hover {
   background-color: #f3f4f6;
   color: #111827;
+}
+
+/* Media Queries */
+@media (max-width: 1024px) {
+  .rightSection .separator {
+    display: none;
+  }
+}
+
+@media (max-width: 1140px) {
+  .sidebarToggle {
+    display: flex;
+  }
+
+  .rightSection>button:not(.mobileMenuBtn),
+  .rightSection .actionGroup,
+  .rightSection .separator {
+    display: none;
+  }
+
+  .mobileMenuBtn {
+    display: flex;
+  }
+
+  .mobileMenu {
+    display: flex;
+  }
+
+  .mobileOverlay {
+    display: block;
+  }
+
+  .baseUrlInputWrapper {
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 480px) {
+  .baseUrlInputWrapper {
+    display: none;
+  }
+
+  .projectContainer {
+    max-width: 140px;
+  }
 }

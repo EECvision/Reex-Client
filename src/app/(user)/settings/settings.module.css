@@ -312,3 +312,61 @@
     font-size: 14px;
     font-weight: 500;
 }
+
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+
+    .pageTitle {
+        font-size: 24px;
+        margin-bottom: 24px;
+    }
+
+    .layout {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+
+    .sidebar {
+        position: static;
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: -8px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .sidebar::-webkit-scrollbar {
+        height: 0;
+    }
+
+    .navItem {
+        white-space: nowrap;
+        padding: 8px 16px;
+    }
+
+    .cardContent {
+        padding: 20px;
+    }
+
+    .cardFooter {
+        padding: 16px 20px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .footerText {
+        margin-bottom: 4px;
+    }
+
+    .input {
+        max-width: none;
+    }
+
+    .themeSelector {
+        flex-direction: column;
+    }
+}

@@ -167,3 +167,25 @@
     margin-bottom: 16px;
     border: 1px solid rgba(239, 68, 68, 0.2);
 }
+
+@media (max-width: 640px) {
+    .container {
+        padding: 24px 16px;
+    }
+
+    .title {
+        font-size: 24px;
+    }
+
+    .card {
+        padding: 24px;
+    }
+
+    .formFooter {
+        justify-content: stretch;
+    }
+
+    .formFooter button {
+        width: 100%;
+    }
+}

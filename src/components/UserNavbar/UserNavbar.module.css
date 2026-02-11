@@ -60,3 +60,28 @@
     align-items: center;
     gap: 16px;
 }
+
+.sidebarToggle {
+    display: flex;
+    /* Rendered conditionally via hasSidebar in JSX */
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, #e5e7eb);
+    background: var(--card-bg, #fff);
+    color: var(--text-primary, #374151);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.sidebarToggle:hover {
+    background-color: var(--hover-bg, #f3f4f6);
+}
+
+@media (max-width: 1140px) {
+    .left {
+        gap: 12px;
+    }
+}

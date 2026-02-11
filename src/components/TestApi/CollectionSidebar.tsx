@@ -38,6 +38,7 @@ interface CollectionSidebarProps {
     onDeleteCollection: (collectionId: string) => void;
     onDeleteRequest: (collectionId: string, requestId: string) => void;
     onToggleCollection: (collectionId: string) => void;
+    isOpen?: boolean;
 }
 
 const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
@@ -48,10 +49,11 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
     onAddRequest,
     onDeleteCollection,
     onDeleteRequest,
-    onToggleCollection
+    onToggleCollection,
+    isOpen = false
 }) => {
     return (
-        <div className={styles.sidebarContainer}>
+        <div className={`${styles.sidebarContainer} ${isOpen ? styles.open : ''}`}>
             <div className={styles.sidebarHeader}>
                 <span className={styles.sidebarTitle}>Collections</span>
                 <button

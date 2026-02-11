@@ -57,6 +57,7 @@
     align-items: center;
     justify-content: flex-start;
     gap: 8px;
+    flex-wrap: wrap;
 }
 
 .authRequired {
@@ -66,4 +67,12 @@
     color: #ef4444;
     font-size: 12px;
     font-weight: 500;
+    white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+    .authRequired {
+        margin-left: 0;
+        margin-top: 4px;
+    }
 }

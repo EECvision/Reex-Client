@@ -1,6 +1,7 @@
 import React from "react";
 import UserNavbar from "@/components/UserNavbar/UserNavbar";
 import styles from "./layout.module.css";
+import { UIProvider } from "@/providers/UIContext";
 
 export default function UserLayout({
     children,
@@ -8,11 +9,13 @@ export default function UserLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className={styles.container}>
-            <UserNavbar />
-            <div className={styles.contentWrapper}>
-                {children}
+        <UIProvider>
+            <div className={styles.container}>
+                <UserNavbar />
+                <div className={styles.contentWrapper}>
+                    {children}
+                </div>
             </div>
-        </div>
+        </UIProvider>
     );
 }

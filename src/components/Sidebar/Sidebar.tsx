@@ -36,6 +36,7 @@ interface SidebarProps {
   onDeleteCollection?: (id: string) => void;
   baseURL?: string;
   collectionName?: string;
+  isOpen?: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -52,6 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onDeleteCollection,
   baseURL,
   collectionName,
+  isOpen = false,
 }) => {
   // Initialize expanded state for collections - default to ALL expanded
   const [expandedCollections, setExpandedCollections] = React.useState<Set<string>>(new Set());
@@ -105,7 +107,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside className={styles.sidebar}>
+    <aside className={`${styles.sidebar} ${isOpen ? styles.open : ""}`}>
       <div className={styles.header}>
         <div className={styles.brand}>
           <Logo />
