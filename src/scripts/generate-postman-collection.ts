@@ -82,10 +82,11 @@ const mapToStandardIR = (
       if (!url) return;
 
       const finalUrl = normalizeApiUrl(url);
-      const pathParams = extractPostmanPathParams(finalUrl);
+      const [pathOnly] = finalUrl.split("?");
+      const pathParams = extractPostmanPathParams(pathOnly);
 
       // Normalize Path: :param -> ${param}
-      let normalizedPath = finalUrl;
+      let normalizedPath = pathOnly;
       pathParams.forEach((param) => {
         normalizedPath = normalizedPath.replace(`:${param}`, `\${${param}}`);
       });
@@ -95,7 +96,7 @@ const mapToStandardIR = (
       let genericQueryParams: GenericParam[] = [];
       if (queryParams && queryParams.length > 0) {
         genericQueryParams = queryParams.map((p: any) => ({
-          name: p.key,
+          name: decodeURIComponent(p.key),
           required: false,
           description: p.description
         }));

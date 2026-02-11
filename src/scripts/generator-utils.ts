@@ -365,9 +365,15 @@ export const generateInterfaceDefinition = (
 
     const fields = params.map((param) => {
         const sanitizedName = sanitizePropertyName(param.name);
-        const description = param.description ? ` // ${param.description}` : "";
         const requiredSymbol = param.required ? "" : "?";
-        return `  ${sanitizedName}${requiredSymbol}: string;${description}`;
+
+        if (param.description) {
+            // Clean up description newlines
+            const cleanDesc = param.description.trim().replace(/\n/g, "\n   * ");
+            return `  /** ${cleanDesc} */\n  ${sanitizedName}${requiredSymbol}: string;`;
+        }
+
+        return `  ${sanitizedName}${requiredSymbol}: string;`;
     });
 
     return `
@@ -495,19 +501,34 @@ export const generateModuleTemplate = (
         .map(funcName => `import { ${funcName} } from "../types/${moduleName}/${funcName}";`)
         .join("\n");
 
-    return `/* eslint-disable @typescript-eslint/no-explicit-any */
-import { ${allImports} } from "../config";
-${responseTypeImports}
+    // Build content parts
+    const contentParts: string[] = [];
 
-// --- Types ---
-${typeDefinitions.join("\n")}
+    // 1. Lint Disable (only if 'any' is used)
+    const combinedContent = [...typeDefinitions, ...functionDefinitions].join("");
+    // Use word boundaries to avoid false positives like "company_name"
+    if (/\bany\b/.test(combinedContent) || /\bunknown\b/.test(combinedContent)) {
+        contentParts.push("/* eslint-disable @typescript-eslint/no-explicit-any */");
+    }
 
-// --- API Definition ---
+    // 2. Imports
+    contentParts.push(`import { ${allImports} } from "../config";`);
+    if (responseTypeImports) contentParts.push(responseTypeImports);
 
-export const ${moduleName}Api = {
-${functionDefinitions.join("\n")}
-};
-`;
+    // 3. Type Definitions
+    if (typeDefinitions.length > 0) {
+        contentParts.push("");
+        contentParts.push(typeDefinitions.join("\n"));
+    }
+
+    // 4. API Definition
+    contentParts.push("");
+
+    contentParts.push(`export const ${moduleName}Api = {`);
+    contentParts.push(functionDefinitions.join("\n"));
+    contentParts.push("};");
+
+    return contentParts.join("\n") + "\n";
 };
 
 
@@ -825,8 +846,14 @@ export const generateTypesFromOpenAPISchema = (
             const isRequired = required.includes(key);
             const type = convertOpenAPITypeToTS(prop, spec);
             const optional = isRequired ? "" : "?";
-            const description = prop.description ? ` // ${prop.description}` : "";
-            fields.push(`  ${sanitizePropertyName(key)}${optional}: ${type};${description}`);
+
+            if (prop.description) {
+                // Clean up description newlines
+                const cleanDesc = prop.description.trim().replace(/\n/g, "\n   * ");
+                fields.push(`  /** ${cleanDesc} */\n  ${sanitizePropertyName(key)}${optional}: ${type};`);
+            } else {
+                fields.push(`  ${sanitizePropertyName(key)}${optional}: ${type};`);
+            }
         }
     );
 

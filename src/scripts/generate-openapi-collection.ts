@@ -86,8 +86,13 @@ const mapToStandardIR = (
 
       // Extract Path Params & Normalize Path
       // Convert /users/{id} -> /users/${id}
+      // Extract Path Params & Normalize Path
+      // Convert /users/{id} -> /users/${id}
       const pathParams = extractPathParams(path);
       let normalizedPath = normalizeApiUrl(path);
+      // Ensure no query params leak into the path
+      normalizedPath = normalizedPath.split("?")[0];
+
       pathParams.forEach((param) => {
         normalizedPath = normalizedPath.replace(`{${param}}`, `\${${param}}`);
       });
@@ -98,7 +103,7 @@ const mapToStandardIR = (
       if (hasQueryParams) {
         operation.parameters.filter((p: any) => p.in === "query").forEach((p: any) => {
           queryParams.push({
-            name: p.name,
+            name: decodeURIComponent(p.name),
             required: p.required,
             description: p.description
           });
