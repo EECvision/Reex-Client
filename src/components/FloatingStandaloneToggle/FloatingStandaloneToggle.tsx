@@ -1,11 +1,18 @@
 "use client";
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import { Power, RefreshCw } from 'lucide-react';
 import styles from './FloatingStandaloneToggle.module.css';
 import { useProject } from '@/providers/ProjectContext';
 
 const FloatingStandaloneToggle = () => {
+    const pathname = usePathname();
     const { isStandaloneMode, manualStandaloneMode, toggleStandaloneMode } = useProject();
+
+    // Only show on workspace (root)
+    if (pathname !== '/') {
+        return null;
+    }
 
     if (!isStandaloneMode) {
         // Project Mode -> Show "Switch to Standalone"

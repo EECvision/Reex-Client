@@ -17,12 +17,13 @@ export default function ReportIssuePage() {
 
     const isFormValid = subject.trim().length > 0 && description.trim().length > 0;
 
-    const handleSubmit = async (formData: FormData) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
         if (!isFormValid) return;
         setIsSubmitting(true);
         setError(null);
 
-        // Replace with trimmed values
+        const formData = new FormData();
         formData.set("subject", subject.trim());
         formData.set("description", description.trim());
 
@@ -63,7 +64,7 @@ export default function ReportIssuePage() {
                             </Button>
                         </div>
                     ) : (
-                        <form action={handleSubmit} className={styles.form}>
+                        <form onSubmit={handleSubmit} className={styles.form}>
                             {error && (
                                 <div className={styles.errorMessage}>
                                     {error}
