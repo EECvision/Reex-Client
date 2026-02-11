@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import styles from "./UserMenu.module.css";
 import { useAuth } from "@/providers/AuthContext";
 import { useSettings } from "@/providers/SettingsContext";
-import { User, LogOut, LogIn, Settings, CreditCard, LayoutDashboard, Sun, Moon, Monitor, Palette } from "lucide-react";
+import { User, LogOut, LogIn, Settings, CreditCard, LayoutDashboard, Sun, Moon, Monitor, Palette, Book, MessageSquareWarning } from "lucide-react";
 import LoginModal from "../LoginModal/LoginModal";
 import { useRouter } from "next/navigation";
 
@@ -78,14 +78,15 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top' }) => {
                                 <span className={styles.userEmail}>{user.email}</span>
                             </div>
                             <div className={styles.menu}>
-                                <button className={styles.menuItem} onClick={() => handleNavigate('/dashboard')}>
-                                    <LayoutDashboard size={14} />
-                                    <span>Dashboard</span>
+                                <button className={styles.menuItem} onClick={() => handleNavigate('/docs')}>
+                                    <Book size={14} />
+                                    <span>Docs</span>
                                 </button>
                                 <button className={styles.menuItem} onClick={() => handleNavigate('/subscription')}>
                                     <CreditCard size={14} />
                                     <span>Subscription</span>
                                 </button>
+                                <div className={styles.separator} />
                                 <button className={styles.menuItem} onClick={() => handleNavigate('/settings')}>
                                     <Settings size={14} />
                                     <span>Settings</span>
@@ -120,6 +121,11 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top' }) => {
                                     </div>
                                 </div>
                                 <div className={styles.separator} />
+                                <button className={styles.menuItem} onClick={() => handleNavigate('/report-issue')}>
+                                    <MessageSquareWarning size={14} />
+                                    <span>Report Issue</span>
+                                </button>
+                                <div className={styles.separator} />
                                 <button
                                     className={`${styles.menuItem} ${styles.menuItemDanger}`}
                                     onClick={handleSignOut}
@@ -136,6 +142,11 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top' }) => {
                                 <span className={styles.userEmail}>Not signed in</span>
                             </div>
                             <div className={styles.menu}>
+                                <button className={styles.menuItem} onClick={() => handleNavigate('/docs')}>
+                                    <Book size={14} />
+                                    <span>Docs</span>
+                                </button>
+                                <div className={styles.separator} />
                                 <div className={styles.themeRow}>
                                     <span className={styles.themeLabel}>
                                         <Palette size={14} />
