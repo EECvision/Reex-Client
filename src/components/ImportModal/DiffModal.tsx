@@ -2,6 +2,7 @@ import React from "react";
 import { diffLines, Change } from "diff";
 import { Button } from "../ui/Button/Button";
 import styles from "./DiffModal.module.css";
+import { createPortal } from "react-dom";
 
 export interface FunctionDiff {
     name: string;
@@ -146,7 +147,7 @@ const CustomDiffViewer = ({
 const DiffModal: React.FC<DiffModalProps> = ({ diff, onClose }) => {
     if (!diff) return null;
 
-    return (
+    return createPortal(
         <div className={styles.diffOverlay}>
             <div className={styles.diffModal} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.diffHeader}>
@@ -167,7 +168,8 @@ const DiffModal: React.FC<DiffModalProps> = ({ diff, onClose }) => {
                     />
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
