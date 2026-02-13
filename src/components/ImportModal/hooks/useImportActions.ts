@@ -116,17 +116,19 @@ export const useImportActions = ({
     const extractMetadataFromCode = (code: string): { url: string; requiresAuth: boolean; contentType?: string; client?: string } => {
         if (!code) return { url: '', requiresAuth: false };
 
-        // Extract URL from: const url = `/path/${param}`;  or  const url = '/path';
+        // Extract URL from inline apiClient.method(`/path`) calls
+        // Generated definitions use: apiClient.get(`/api/v1/path`)
+        //                        or: apiClient.post(`/api/v1/path/${id}`, payload)
         let url = '';
-        // Handle template literal: const url = `...`;
-        const templateMatch = code.match(/const\s+url\s*=\s*`([^`]*)`/);
-        if (templateMatch) {
-            url = templateMatch[1];
+        // Match: CLIENT.method(`/path`) or CLIENT.method(`/path/${param}/suffix`)
+        const inlineTemplateMatch = code.match(/\w+\.(get|post|put|delete|patch)\(\s*`([^`]*)`/);
+        if (inlineTemplateMatch) {
+            url = inlineTemplateMatch[2];
         } else {
-            // Handle string literal: const url = '...' or "..."
-            const stringMatch = code.match(/const\s+url\s*=\s*['"]([^'"]*)['"]/);
-            if (stringMatch) {
-                url = stringMatch[1];
+            // Match: CLIENT.method("/path") or CLIENT.method('/path')
+            const inlineStringMatch = code.match(/\w+\.(get|post|put|delete|patch)\(\s*['"]([^'"]*)['"]/);
+            if (inlineStringMatch) {
+                url = inlineStringMatch[2];
             }
         }
 
@@ -140,11 +142,9 @@ export const useImportActions = ({
             contentType = contentTypeMatch[1];
         }
 
-        // Extract client name from handleApiCall
-        // e.g. handleApiCall(() => AUTH_CLIENT.post(...))
-        // Use \s* to handle potential newlines from Prettier formatting
+        // Extract client name from inline CLIENT.method() calls
         let client: string | undefined;
-        const clientMatch = code.match(/handleApiCall\s*\(\s*\(\)\s*=>\s*([a-zA-Z0-9_]+)\./);
+        const clientMatch = code.match(/(\w+)\.(get|post|put|delete|patch)\(/);
         if (clientMatch) {
             client = clientMatch[1];
         }

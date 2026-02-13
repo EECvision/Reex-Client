@@ -415,18 +415,15 @@ export const generateFunctionSignature = (config: SignatureConfig): string => {
     const returnType = functionName.startsWith('delete_') ? 'any' : functionName;
 
     if (params.length === 0) {
-        return `  ${functionName}: async (): Promise<${returnType}> => {`;
+        return "  " + functionName + ": (): Promise<" + returnType + "> =>";
     } else if (params.length === 1) {
         const p = params[0];
-        if (p.isInterface) {
-            return `  ${functionName}: async (${p.name}: ${p.type}): Promise<${returnType}> => {`;
-        } else {
-            return `  ${functionName}: async ({${p.name}}: {${p.name}: ${p.type}}): Promise<${returnType}> => {`;
-        }
+        // Always use positional for single argument (whether interface or primitive)
+        return "  " + functionName + ": (" + p.name + ": " + p.type + "): Promise<" + returnType + "> =>";
     } else {
         const destructured = params.map((p) => p.name).join(", ");
-        const types = params.map((p) => `${p.name}: ${p.type}`).join(", ");
-        return `  ${functionName}: async ({${destructured}}: {${types}}): Promise<${returnType}> => {`;
+        const types = params.map((p) => p.name + ": " + p.type).join(", ");
+        return "  " + functionName + ": ({" + destructured + "}: {" + types + "}): Promise<" + returnType + "> =>";
     }
 };
 
@@ -436,34 +433,29 @@ export const generateAxiosCallBody = (
     urlVariableRaw: string,
     hasBody: boolean,
     hasQueryParams: boolean,
-    clientName: string = "BASE_CLIENT"
 ): string => {
     const methodLower = method.toLowerCase();
-    const lines: string[] = [];
 
-    if (hasQueryParams) {
-        lines.push(`    const queryString = params ? constructQueryParams(params) : '';`);
-        lines.push(`    const url = \`${urlVariableRaw}\${queryString}\`;`);
-    } else {
-        lines.push(`    const url = \`${urlVariableRaw}\`;`);
-    }
+    // Construct Arguments
+    // urlVariableRaw comes in as "/path/${param}"
+    // method(url, config) or method(url, data, config)
 
-    const payloadArg = (hasBody && ['post', 'put', 'patch'].includes(methodLower)) ? ", payload" : "";
+    const url = urlVariableRaw;
 
     if (methodLower === 'delete') {
-        lines.push(`    const res = await handleApiCall(() => ${clientName}.delete(url), "${functionName}");`);
-        lines.push(`    if (res.error) throw res.error;`);
-    } else {
-        lines.push(`    const res = await handleApiCall(() => ${clientName}.${methodLower}(url${payloadArg}), "${functionName}");`);
-        lines.push(`    if (res.error) throw res.error;`);
-        lines.push(`    if (res.data === undefined) {
-            throw new Error("API succeeded but yielded no data");
-        }`);
-        lines.push(`    return res.data;`);
+        return "    apiClient." + methodLower + "(`" + url + "`)";
     }
 
-    lines.push(`  },`);
-    return lines.join("\n");
+    if (methodLower === 'get') {
+        if (hasQueryParams) {
+            return "    apiClient." + methodLower + "(`" + url + "`, { params })";
+        }
+        return "    apiClient." + methodLower + "(`" + url + "`)";
+    }
+
+    // Post/Put/Patch
+    const payloadArg = (hasBody) ? ", payload" : ", {}";
+    return "    apiClient." + methodLower + "(`" + url + "`" + payloadArg + ")";
 };
 
 export const generateModuleTemplate = (
@@ -472,33 +464,10 @@ export const generateModuleTemplate = (
     functionDefinitions: string[],
     functionNames: string[]
 ): string => {
-    const usesQueryParams = functionDefinitions.some((def) => def.includes("constructQueryParams"));
-    const utilsImports = ["handleApiCall"];
-    if (usesQueryParams) utilsImports.unshift("constructQueryParams");
-
-    // Collect all used clients (hacky regex or better pass usedClients in)
-    // For now, let's just infer from function body or pass it in.
-    // Actually, looking at generateStandardModuleContent, we can do better.
-    // BUT to keep signature simple, let's just scrape the function definitions.
-    const potentialClients = new Set<string>();
-    functionDefinitions.forEach(def => {
-        const match = def.match(/handleApiCall\(\(\) => ([a-zA-Z0-9_]+)\./);
-        if (match && match[1]) potentialClients.add(match[1]);
-    });
-
-    // Default to BASE_CLIENT if nothing found (shouldn't happen with new logic)
-    if (potentialClients.size === 0) potentialClients.add("BASE_CLIENT");
-
-    // Combine clients and utils into one import list
-    const allImports = [
-        ...Array.from(potentialClients).sort(),
-        ...utilsImports
-    ].join(", ");
-
     // Response Type Imports (Exclude DELETE)
     const responseTypeImports = functionNames
         .filter(name => !name.startsWith('delete_'))
-        .map(funcName => `import { ${funcName} } from "../types/${moduleName}/${funcName}";`)
+        .map(funcName => 'import { ' + funcName + ' } from "../types/' + moduleName + '/' + funcName + '";')
         .join("\n");
 
     // Build content parts
@@ -512,7 +481,7 @@ export const generateModuleTemplate = (
     }
 
     // 2. Imports
-    contentParts.push(`import { ${allImports} } from "../config";`);
+    contentParts.push('import { apiClient } from "../config";');
     if (responseTypeImports) contentParts.push(responseTypeImports);
 
     // 3. Type Definitions
@@ -524,8 +493,8 @@ export const generateModuleTemplate = (
     // 4. API Definition
     contentParts.push("");
 
-    contentParts.push(`export const ${moduleName}Api = {`);
-    contentParts.push(functionDefinitions.join("\n"));
+    contentParts.push("export const " + moduleName + "Api = {");
+    contentParts.push(functionDefinitions.join(",\n\n"));
     contentParts.push("};");
 
     return contentParts.join("\n") + "\n";
@@ -698,8 +667,7 @@ export const generateStandardModuleContent = (
                 func.name,
                 func.path, // Pre-normalized path
                 hasPayloadType,
-                !!(func.queryParams && func.queryParams.length > 0),
-                func.clientName
+                !!(func.queryParams && func.queryParams.length > 0)
             );
 
             generatedFunctions.add(func.name);
@@ -708,13 +676,13 @@ export const generateStandardModuleContent = (
             const jsdocParts: string[] = [];
             if (func.requiresAuth) jsdocParts.push("@auth");
             if (func.contentType && func.contentType !== 'application/json') {
-                jsdocParts.push(`@contentType ${func.contentType}`);
+                jsdocParts.push("@contentType " + func.contentType);
             }
 
             const jsdocComment = jsdocParts.length > 0
-                ? `  /** ${jsdocParts.join(' ')} */\n`
+                ? "  /** " + jsdocParts.join(' ') + " */\n"
                 : "";
-            functionDefinitions.push(`${jsdocComment}${signature}\n${body}\n`);
+            functionDefinitions.push(jsdocComment + signature + "\n" + body + "\n");
         });
 
         generatedModules.push({
@@ -933,11 +901,7 @@ export const proposeClientForFunctions = (functions: StandardFunctionDefinition[
         // Apply to functions immediately
         unassignedFunctions.forEach(f => {
             f.clientName = candidateName;
-            // Trim the prefix from the function path
-            if (f.path.startsWith(commonPrefix)) {
-                f.path = f.path.slice(commonPrefix.length);
-                if (!f.path.startsWith('/')) f.path = '/' + f.path;
-            }
+            // Removed path stripping logic to preserve full URL for apiClient
         });
 
         return { name: candidateName, path: commonPrefix };

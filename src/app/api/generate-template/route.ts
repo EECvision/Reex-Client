@@ -1,19 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sendEvent, getBridgeUrl } from "@/app/api/utils";
-
-// Helper to send to Bridge
-async function bridgeCall(bridgeUrl: string, endpoint: string, body: any) {
-  const res = await fetch(`${bridgeUrl}/api/fs/${endpoint}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(`Bridge Error (${endpoint}): ${err.message || err.error || res.statusText}`);
-  }
-  return res.json();
-}
 
 function generateTemplateContent(moduleName: string) {
   // Capitalize first letter for type names
@@ -21,126 +6,77 @@ function generateTemplateContent(moduleName: string) {
     str.charAt(0).toUpperCase() + str.slice(1);
   const TypeName = capitalize(moduleName.replace(/s$/, "")); // Remove trailing 's' for singular
 
-  return `/* eslint-disable @typescript-eslint/no-explicit-any */
-import { BASE_CLIENT, constructQueryParams, handleApiCall } from "../config";
-import { get_list${TypeName}s } from "../types/${moduleName}/get_list${TypeName}s";
-import { get_${moduleName.slice(0, -1)}Detail } from "../types/${moduleName}/get_${moduleName.slice(0, -1)}Detail";
-import { post_create${TypeName} } from "../types/${moduleName}/post_create${TypeName}";
-import { put_update${TypeName} } from "../types/${moduleName}/put_update${TypeName}";
+  return [
+    "/* eslint-disable @typescript-eslint/no-explicit-any */",
+    "import { apiClient } from \"../config\";",
+    "import { get_list" + TypeName + "s } from \"../types/" + moduleName + "/get_list" + TypeName + "s\";",
+    "import { get_" + moduleName.slice(0, -1) + "Detail } from \"../types/" + moduleName + "/get_" + moduleName.slice(0, -1) + "Detail\";",
+    "import { post_create" + TypeName + " } from \"../types/" + moduleName + "/post_create" + TypeName + "\";",
+    "import { put_update" + TypeName + " } from \"../types/" + moduleName + "/put_update" + TypeName + "\";",
+    "",
+    "// --- Types ---",
+    "",
+    "interface " + TypeName + " {",
+    "  id: string;",
+    "  email: string;",
+    "  first_name: string;",
+    "  last_name: string;",
+    "  status: \"ACTIVE\" | \"INACTIVE\" | \"SUSPENDED\";",
+    "}",
+    "",
+    "interface Get" + TypeName + "sParams {",
+    "  search?: string;",
+    "  limit?: number;",
+    "  page_size?: string;",
+    "  status?: " + TypeName + "[\"status\"];",
+    "}",
+    "",
+    "interface Create" + TypeName + "Payload {",
+    "  email: string;",
+    "  first_name: string;",
+    "  last_name: string;",
+    "  status: " + TypeName + "[\"status\"];",
+    "}",
+    "",
+    "interface Update" + TypeName + "Params {",
+    "  id: string;",
+    "  payload: Partial<Create" + TypeName + "Payload>;",
+    "}",
+    "",
+    "// --- API Definition --- ",
+    "",
+    "export const " + moduleName + "Api = {",
+    "  get_list" + TypeName + "s: (",
+    "    params: Get" + TypeName + "sParams",
+    "  ): Promise<get_list" + TypeName + "s> =>",
+    "    apiClient.get('/path/to/" + moduleName + "', { params }),",
+    "",
+    "  get_" + moduleName.slice(0, -1) + "Detail: ({ id } : { id: string }): Promise<get_" + moduleName.slice(0, -1) + "Detail> =>",
+    "    apiClient.get(`/path/to/" + moduleName + "/${id}`),",
+    "",
+    "  post_create" + TypeName + ": (",
+    "    payload: Create" + TypeName + "Payload",
+    "  ): Promise<post_create" + TypeName + "> =>",
+    "    apiClient.post('/path/to/" + moduleName + "', payload),",
+    "",
+    "  put_update" + TypeName + ": ({",
+    "    id,",
+    "    payload,",
+    "  }: Update" + TypeName + "Params): Promise<put_update" + TypeName + "> =>",
+    "    apiClient.put(`/path/to/" + moduleName + "/${id}`, payload),",
+    "",
+    "  delete_remove" + TypeName + ": ({ id } : { id: string }): Promise<any> =>",
+    "    apiClient.delete(`/path/to/" + moduleName + "/${id}`),",
+    "};",
+    ""
+  ].join("\n");
 
-// --- Types ---
-
-interface ${TypeName} {
-  id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
-}
-
-interface Get${TypeName}sParams {
-  search?: string;
-  limit?: number;
-  page_size?: string;
-  status?: ${TypeName}["status"];
-}
-
-interface Create${TypeName}Payload {
-  email: string;
-  first_name: string;
-  last_name: string;
-  status: ${TypeName}["status"];
-}
-
-interface Update${TypeName}Params {
-  id: string;
-  payload: Partial<Create${TypeName}Payload>;
-}
-
-// --- API Definition --- 
-
-export const ${moduleName}Api = {
-  get_list${TypeName}s: async (
-    params: Get${TypeName}sParams
-  ): Promise<get_list${TypeName}s> => {
-    const queryString = constructQueryParams(params);
-    const url = \`/${moduleName}\${queryString}\`;
-
-    const res = await handleApiCall(
-      () => BASE_CLIENT.get(url),
-      "get_list${TypeName}s"
-    );
-    if (res.error) throw res.error;
-    if (res.data === undefined) {
-            throw new Error("API succeeded but yielded no data");
-        };
-    return res.data;
-  },
-
-  get_${moduleName.slice(0, -1)}Detail: async ({ id } : { id: string }): Promise<get_${moduleName.slice(0, -1)}Detail> => {
-    const url = \`/${moduleName}/\${id}\`;
-    const res = await handleApiCall(
-      () => BASE_CLIENT.get(url),
-      "get_${moduleName.slice(0, -1)}Detail"
-    );
-    if (res.error) throw res.error;
-    if (res.data === undefined) {
-            throw new Error("API succeeded but yielded no data");
-        };
-    return res.data;
-  },
-
-  post_create${TypeName}: async (
-    payload: Create${TypeName}Payload
-  ): Promise<post_create${TypeName}> => {
-    const url = "/${moduleName}";
-    const res = await handleApiCall(
-      () => BASE_CLIENT.post(url, payload),
-      "post_create${TypeName}"
-    );
-    if (res.error) throw res.error;
-    if (res.data === undefined) {
-            throw new Error("API succeeded but yielded no data");
-        };
-    return res.data;
-  },
-
-  put_update${TypeName}: async ({
-    id,
-    payload,
-  }: Update${TypeName}Params): Promise<put_update${TypeName}> => {
-    const url = \`/${moduleName}/\${id}\`;
-    const res = await handleApiCall(
-      () => BASE_CLIENT.put(url, payload),
-      "put_update${TypeName}"
-    );
-    if (res.error) throw res.error;
-    if (res.data === undefined) {
-            throw new Error("API succeeded but yielded no data");
-        };
-    return res.data;
-  },
-
-  delete_remove${TypeName}: async ({ id } : { id: string }): Promise<any> => {
-    const url = \`/${moduleName}/\${id}\`;
-    const res = await handleApiCall(() => BASE_CLIENT.delete(url), "delete_remove${TypeName}");
-    if (res.error) throw res.error;
-    if (res.data === undefined) {
-            throw new Error("API succeeded but yielded no data");
-        };
-    return res.data;
-  },
-};
-`;
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { moduleName, bridgeUrl, taskId: clientTaskId } = body;
-
-    // Use client provided taskId to prevent race conditions
-    const taskId = clientTaskId || Date.now().toString();
+    const { moduleName } = body;
 
     if (!moduleName) {
       return NextResponse.json({ success: false, error: "Module name required" }, { status: 400 });

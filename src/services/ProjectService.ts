@@ -95,35 +95,59 @@ class ProjectService {
                         let client = "UNKNOWN_CLIENT";
                         let url = "";
 
-                        // Look for: const url = "/path";
-                        const variableStatements = funcNode.getBody().getDescendantsOfKind(SyntaxKind.VariableStatement);
-                        for (const stmt of variableStatements) {
-                            const decl = stmt.getDeclarations()[0];
-                            if (decl.getName() === "url") {
-                                const init = decl.getInitializer();
-                                if (init) {
-                                    if (init.getKind() === SyntaxKind.StringLiteral || init.getKind() === SyntaxKind.NoSubstitutionTemplateLiteral) {
-                                        url = (init as StringLiteral | NoSubstitutionTemplateLiteral).getLiteralValue();
-                                    } else if (init.getKind() === SyntaxKind.TemplateExpression) {
-                                        // Handle `path${query}` -> extract "path"
-                                        url = (init as TemplateExpression).getHead().getLiteralText();
+                        // Extract URL and client from inline apiClient.method(`/path`) calls
+                        // Generated definitions use: apiClient.get(`/api/v1/path`)
+                        //                       or: apiClient.post(`/api/v1/path/${id}`, payload)
+                        const body = funcNode.getBody();
+                        const callExprs: CallExpression[] = [];
+                        // Concise arrow functions (no block body) have the CallExpression as the body itself
+                        // getDescendantsOfKind does NOT include the node itself, so we must check it explicitly
+                        if (body.getKind() === SyntaxKind.CallExpression) {
+                            callExprs.push(body as unknown as CallExpression);
+                        }
+                        callExprs.push(...body.getDescendantsOfKind(SyntaxKind.CallExpression));
+                        for (const call of callExprs) {
+                            const expr = call.getExpression();
+
+                            if (expr.getKind() === SyntaxKind.PropertyAccessExpression) {
+                                const propAccess = expr as PropertyAccessExpression;
+                                const methodName = propAccess.getName();
+                                const objectName = propAccess.getExpression().getText();
+
+                                // Match CLIENT.get/post/put/delete/patch calls
+                                if (["get", "post", "put", "delete", "patch"].includes(methodName)) {
+                                    client = objectName;
+
+                                    // Extract URL from first argument (template literal or string)
+                                    const firstArg = call.getArguments()[0];
+                                    if (firstArg) {
+                                        if (firstArg.getKind() === SyntaxKind.NoSubstitutionTemplateLiteral) {
+                                            url = (firstArg as NoSubstitutionTemplateLiteral).getLiteralValue();
+                                        } else if (firstArg.getKind() === SyntaxKind.TemplateExpression) {
+                                            // Handle `/path/${id}/retry` -> reconstruct with ${param} syntax
+                                            const tmpl = firstArg as TemplateExpression;
+                                            let reconstructed = tmpl.getHead().getLiteralText();
+                                            for (const span of tmpl.getTemplateSpans()) {
+                                                reconstructed += "${" + span.getExpression().getText() + "}" + span.getLiteral().getLiteralText();
+                                            }
+                                            url = reconstructed;
+                                        } else if (firstArg.getKind() === SyntaxKind.StringLiteral) {
+                                            url = (firstArg as StringLiteral).getLiteralValue();
+                                        }
                                     }
+                                    break; // Found the API call, stop searching
                                 }
                             }
-                        }
 
-                        // Look for: handleApiCall(() => CLIENT.method(url), ...)
-                        const callExprs = funcNode.getBody().getDescendantsOfKind(SyntaxKind.CallExpression);
-                        for (const call of callExprs) {
+                            // Legacy: handleApiCall(() => CLIENT.method(url), ...)
                             if (call.getExpression().getText() === "handleApiCall") {
-                                // First arg is arrow function: () => CLIENT.method(...)
                                 const firstArg = call.getArguments()[0];
                                 if (firstArg && (firstArg.getKind() === SyntaxKind.ArrowFunction || firstArg.getKind() === SyntaxKind.FunctionExpression)) {
-                                    const innerCall = (firstArg as ArrowFunction).getBody(); // CLIENT.method(url)
+                                    const innerCall = (firstArg as ArrowFunction).getBody();
                                     if (innerCall.getKind() === SyntaxKind.CallExpression) {
-                                        const expr = (innerCall as CallExpression).getExpression(); // CLIENT.method (PropertyAccessExpression)
-                                        if (expr.getKind() === SyntaxKind.PropertyAccessExpression) {
-                                            client = (expr as PropertyAccessExpression).getExpression().getText(); // CLIENT
+                                        const innerExpr = (innerCall as CallExpression).getExpression();
+                                        if (innerExpr.getKind() === SyntaxKind.PropertyAccessExpression) {
+                                            client = (innerExpr as PropertyAccessExpression).getExpression().getText();
                                         }
                                     }
                                 }
