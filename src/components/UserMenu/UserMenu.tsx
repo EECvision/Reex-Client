@@ -43,6 +43,8 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top' }) => {
 
     const popoverClass = `${styles.popover} ${placement === 'top' ? styles.popoverTop : styles.popoverBottom}`;
 
+    const isSubscribed = user?.subscription_status === 'active';
+
     return (
         <div className={styles.container} ref={containerRef}>
             <button
@@ -50,23 +52,25 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top' }) => {
                 onClick={() => setIsOpen(!isOpen)}
                 title={isAuthenticated ? (user?.name || user?.email || "User") : "Sign In"}
             >
-                {isAuthenticated && user ? (
-                    user.image ? (
-                        <img
-                            src={user.image}
-                            alt={user.name || "User"}
-                            className={styles.avatarImg}
-                        />
+                <div className={`${styles.avatarWrapper} ${isSubscribed ? styles.subscribed : ""}`}>
+                    {isAuthenticated && user ? (
+                        user.image ? (
+                            <img
+                                src={user.image}
+                                alt={user.name || "User"}
+                                className={styles.avatarImg}
+                            />
+                        ) : (
+                            <div className={styles.avatar}>
+                                <User size={18} />
+                            </div>
+                        )
                     ) : (
-                        <div className={styles.avatar}>
+                        <div className={styles.avatarPlaceholder}>
                             <User size={18} />
                         </div>
-                    )
-                ) : (
-                    <div className={styles.avatarPlaceholder}>
-                        <User size={18} />
-                    </div>
-                )}
+                    )}
+                </div>
             </button>
 
             {isOpen && (

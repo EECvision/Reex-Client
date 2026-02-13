@@ -29,7 +29,7 @@
 .avatar {
     width: 28px;
     height: 28px;
-    border-radius: 5px;
+    border-radius: 50%;
     background: var(--primary-color);
     color: white;
     font-size: 14px;
@@ -40,11 +40,45 @@
     overflow: hidden;
 }
 
+.avatarPlaceholder {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatarWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.subscribed {
+    padding: 2px;
+    background: conic-gradient(from 0deg,
+            #60a5fa 0deg 120deg,
+            /* blue */
+            #34d399 120deg 240deg,
+            /* teal-green bridge */
+            #22c55e 240deg 360deg
+            /* green */
+        );
+}
+
 .avatarImg {
     width: 28px;
     height: 28px;
     border-radius: 50%;
     object-fit: cover;
+    display: block;
+    background: var(--menu-bg);
 }
 
 .popover {
