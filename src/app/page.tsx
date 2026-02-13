@@ -214,7 +214,7 @@ const App = () => {
           selectedEndpoint={selectedEndpoint}
           onSelectEndpoint={(ep) => {
             setSelectedEndpoint(ep);
-            if (window.innerWidth <= 1140) setIsSidebarOpen(false);
+            if (window.innerWidth <= 980) setIsSidebarOpen(false);
           }}
           onDeleteModule={handleDeleteModule}
           onDeleteFunction={handleDeleteFunction}

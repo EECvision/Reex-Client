@@ -139,19 +139,7 @@ class ProjectService {
                                 }
                             }
 
-                            // Legacy: handleApiCall(() => CLIENT.method(url), ...)
-                            if (call.getExpression().getText() === "handleApiCall") {
-                                const firstArg = call.getArguments()[0];
-                                if (firstArg && (firstArg.getKind() === SyntaxKind.ArrowFunction || firstArg.getKind() === SyntaxKind.FunctionExpression)) {
-                                    const innerCall = (firstArg as ArrowFunction).getBody();
-                                    if (innerCall.getKind() === SyntaxKind.CallExpression) {
-                                        const innerExpr = (innerCall as CallExpression).getExpression();
-                                        if (innerExpr.getKind() === SyntaxKind.PropertyAccessExpression) {
-                                            client = (innerExpr as PropertyAccessExpression).getExpression().getText();
-                                        }
-                                    }
-                                }
-                            }
+
                         }
 
                         // Check for JSDoc @auth

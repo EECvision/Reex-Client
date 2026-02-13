@@ -80,7 +80,7 @@
     background-color: var(--hover-bg, #f3f4f6);
 }
 
-@media (max-width: 1140px) {
+@media (max-width: 980px) {
     .left {
         gap: 12px;
     }

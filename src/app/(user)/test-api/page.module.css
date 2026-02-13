@@ -48,7 +48,7 @@
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-@media (max-width: 1140px) {
+@media (max-width: 980px) {
     .sidebarOverlay {
         display: block;
         position: fixed;
