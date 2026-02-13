@@ -67,6 +67,9 @@ const App = () => {
 
   // Auth Token State
   const [authToken, setAuthToken] = useState<string>("");
+  // Custom Headers State
+  const [customHeaders, setCustomHeaders] = useState<Record<string, string>>({});
+
   // Selected Endpoint State (Hoisted to fix circular dependency)
   const [selectedEndpoint, setSelectedEndpoint] = useState<EndpointInfo | null>(null);
 
@@ -170,7 +173,9 @@ const App = () => {
     apiManifest,
     showToast,
     authToken,
+    customHeaders,
     isStandaloneMode,
+
     selectedEndpoint
   });
 
@@ -243,6 +248,9 @@ const App = () => {
           collectionName={activeCollectionName}
           authToken={authToken}
           onAuthTokenChange={setAuthToken}
+          customHeaders={customHeaders}
+          onCustomHeadersChange={setCustomHeaders}
+
           isStandaloneMode={isStandaloneMode}
           onBaseUrlChange={(newUrl) => {
             const oldBase = activeConfig?.baseURL || "";

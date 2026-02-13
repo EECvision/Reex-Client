@@ -23,6 +23,8 @@ interface NavbarProps {
   collectionName?: string;
   authToken?: string;
   onAuthTokenChange?: (token: string) => void;
+  customHeaders?: Record<string, string>;
+  onCustomHeadersChange?: (headers: Record<string, string>) => void;
   isStandaloneMode?: boolean;
   onBaseUrlChange?: (url: string) => void;
   onToggleSidebar?: () => void;
@@ -42,6 +44,8 @@ const Navbar: React.FC<NavbarProps> = ({
   collectionName,
   authToken,
   onAuthTokenChange,
+  customHeaders = {},
+  onCustomHeadersChange,
   isStandaloneMode = false,
   onBaseUrlChange,
   onToggleSidebar,
@@ -59,6 +63,9 @@ const Navbar: React.FC<NavbarProps> = ({
   const [isMobileFetchOpen, setIsMobileFetchOpen] = React.useState(false);
 
   const [draftToken, setDraftToken] = React.useState(authToken || "");
+  // Local state for headers: array of { id, key, value } for easy editing
+  const [draftHeaders, setDraftHeaders] = React.useState<{ id: string, key: string, value: string }[]>([]);
+
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -66,12 +73,23 @@ const Navbar: React.FC<NavbarProps> = ({
     return () => setMounted(false);
   }, []);
 
-  // Sync draft token when dropdown opens or prop changes
+  // Sync draft token and headers when dropdown opens or props change
   useEffect(() => {
     if (isAuthOpen) {
       setDraftToken(authToken || "");
+      // Convert customHeaders object to array
+      const headersArray = Object.entries(customHeaders).map(([key, value], index) => ({
+        id: `header-${index}-${Date.now()}`,
+        key,
+        value
+      }));
+      if (headersArray.length === 0) {
+        // ensure always one empty row? No, let user add.
+        // Actually, maybe cleaner start empty.
+      }
+      setDraftHeaders(headersArray);
     }
-  }, [isAuthOpen, authToken]);
+  }, [isAuthOpen, authToken, customHeaders]);
 
   useEffect(() => {
     localStorage.setItem("docs_url", url);
@@ -134,6 +152,70 @@ const Navbar: React.FC<NavbarProps> = ({
     return path;
   };
 
+  const handleHeaderChange = (id: string, field: 'key' | 'value', text: string) => {
+    setDraftHeaders(prev => prev.map(h => h.id === id ? { ...h, [field]: text } : h));
+  };
+
+  const addHeader = () => {
+    setDraftHeaders(prev => [...prev, { id: `new-${Date.now()}`, key: "", value: "" }]);
+  };
+
+  const removeHeader = (id: string) => {
+    setDraftHeaders(prev => prev.filter(h => h.id !== id));
+  };
+
+  const handleAuthorize = () => {
+    // 1. Token
+    if (authToken && draftToken === authToken && draftHeaders.length === 0 && Object.keys(customHeaders).length === 0) {
+      // Clear (if same token and no headers... logic is tricky)
+      // Actually "Authorize" implies saving current state.
+      // "Clear" button handles clearing. This is "Authorize" (Save).
+    }
+
+    if (onAuthTokenChange) onAuthTokenChange(draftToken);
+
+    // 2. Headers
+    if (onCustomHeadersChange) {
+      const headersObj: Record<string, string> = {};
+      draftHeaders.forEach(h => {
+        if (h.key.trim()) {
+          headersObj[h.key.trim()] = h.value;
+        }
+      });
+      onCustomHeadersChange(headersObj);
+    }
+
+    setIsAuthOpen(false);
+  };
+
+  const handleClearAuth = () => {
+    if (onAuthTokenChange) onAuthTokenChange("");
+    if (onCustomHeadersChange) onCustomHeadersChange({});
+    setDraftToken("");
+    setDraftHeaders([]);
+    setIsAuthOpen(false);
+  };
+
+  const hasChanges = () => {
+    // Check token
+    if (draftToken !== (authToken || "")) return true;
+
+    // Check headers
+    // Simple check: convert both to stringified entries logic or similar
+    // Or just check if draftHeaders differs from customHeaders
+    const currentHeaders = customHeaders || {};
+    // Filter out empty keys from draft
+    const validDrafts = draftHeaders.filter(h => h.key.trim());
+    if (validDrafts.length !== Object.keys(currentHeaders).length) return true;
+
+    for (const h of validDrafts) {
+      if (currentHeaders[h.key.trim()] !== h.value) return true;
+    }
+    return false;
+  };
+
+  const isAuthActive = !!authToken || (customHeaders && Object.keys(customHeaders).length > 0);
+
   return (
     <nav className={styles.navbar}>
       <div className={styles.leftSection}>
@@ -186,16 +268,16 @@ const Navbar: React.FC<NavbarProps> = ({
             <Button
               variant="ghost"
               onClick={() => setIsAuthOpen(!isAuthOpen)}
-              leftIcon={<Lock size={16} color={authToken ? "#10b981" : undefined} />}
-              title={authToken ? "" : "Set Auth Token"}
+              leftIcon={<Lock size={16} color={isAuthActive ? "#10b981" : undefined} />}
+              title={isAuthActive ? "" : "Set Auth Token & Headers"}
             >
               Auth
             </Button>
 
             {isAuthOpen && (
-              <div className={styles.fetchPopover} style={{ width: '300px' }}>
+              <div className={styles.fetchPopover} style={{ width: '380px' }}>
                 <div className={styles.popoverHeader}>AUTHORIZATION (BEARER)</div>
-                <div className={styles.popoverInputWrapper} style={{ position: 'relative' }}>
+                <div className={styles.popoverInputWrapper}>
                   <input
                     type="text"
                     placeholder="Enter token from auth/signin"
@@ -205,26 +287,69 @@ const Navbar: React.FC<NavbarProps> = ({
                     autoFocus
                   />
                 </div>
-                <Button
-                  onClick={() => {
-                    if (authToken && draftToken === authToken) {
-                      // Clear / Logout matches current state
-                      onAuthTokenChange("");
-                      setDraftToken("");
-                      setIsAuthOpen(false);
-                    } else {
-                      // Authorize (Save)
-                      if (!draftToken.trim()) return; // Double check
-                      onAuthTokenChange(draftToken);
-                      setIsAuthOpen(false);
-                    }
-                  }}
-                  variant={authToken && draftToken === authToken ? "danger" : "primary"}
-                  disabled={!authToken && !draftToken.trim() || (!!authToken && draftToken !== authToken && !draftToken.trim())}
-                  style={{ marginTop: '0px', width: '100%' }}
-                >
-                  {authToken && draftToken === authToken ? "Clear" : "Authorize"}
-                </Button>
+
+                <div className={styles.popoverHeader} style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>CUSTOM HEADERS</span>
+                  <Button variant="ghost" size="sm" onClick={addHeader} style={{ height: '24px', padding: '0 8px', fontSize: '12px' }}>
+                    <Plus size={12} style={{ marginRight: 4 }} /> Add
+                  </Button>
+                </div>
+
+                {draftHeaders.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                    {draftHeaders.map((header) => (
+                      <div key={header.id} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          placeholder="Key"
+                          className={styles.popoverInput}
+                          style={{ flex: 1, minWidth: 0 }}
+                          value={header.key}
+                          onChange={(e) => handleHeaderChange(header.id, 'key', e.target.value)}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Value"
+                          className={styles.popoverInput}
+                          style={{ flex: 1, minWidth: 0 }}
+                          value={header.value}
+                          onChange={(e) => handleHeaderChange(header.id, 'value', e.target.value)}
+                        />
+                        <button
+                          onClick={() => removeHeader(header.id)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ef4444', display: 'flex', alignItems: 'center' }}
+                          title="Remove Header"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '12px', color: '#6b7280', fontStyle: 'italic', marginBottom: '16px', textAlign: 'center' }}>
+                    No custom headers added
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {isAuthActive && (
+                    <Button
+                      onClick={handleClearAuth}
+                      variant="danger"
+                      style={{ flex: 1 }}
+                    >
+                      Clear All
+                    </Button>
+                  )}
+                  <Button
+                    onClick={handleAuthorize}
+                    variant="primary"
+                    disabled={!hasChanges() && !draftToken.trim() && draftHeaders.length === 0}
+                    style={{ flex: 1 }}
+                  >
+                    {isAuthActive && !hasChanges() ? "Close" : "Save Changes"}
+                  </Button>
+                </div>
               </div>
             )}
           </div>

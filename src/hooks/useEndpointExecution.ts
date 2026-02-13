@@ -10,6 +10,7 @@ interface UseEndpointExecutionProps {
     apiManifest: any;
     showToast: (type: "success" | "error", message: string) => void;
     authToken?: string;
+    customHeaders?: Record<string, string>;
     isStandaloneMode?: boolean;
     selectedEndpoint: EndpointInfo | null;
 }
@@ -28,7 +29,7 @@ type InputModeState = {
     [key: string]: InputMode;
 };
 
-export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, authToken, isStandaloneMode = false, selectedEndpoint }: UseEndpointExecutionProps) => {
+export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, authToken, customHeaders = {}, isStandaloneMode = false, selectedEndpoint }: UseEndpointExecutionProps) => {
     // Internal state for execution management
     const [params, setParams] = useState<ParamsState>({});
     const [rawPayloads, setRawPayloads] = useState<RawPayloadState>({});
@@ -218,7 +219,17 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
 
             let requestUrl = fullUrl;
             let requestData: Record<string, any> | FormData | undefined = remainingData;
-            let headers: Record<string, string> | undefined = authToken ? { 'Authorization': `Bearer ${authToken}` } : undefined;
+
+            // Prepare Request Headers
+            let headers: Record<string, string> = {};
+            if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+            if (customHeaders) {
+                Object.assign(headers, customHeaders);
+            }
+            // If empty, make undefined to match previous logic (though api service handles generic obj fine)
+            // But api.executeRequest signature expects headers? any.
 
             // Check if this is a multipart/form-data request
             const isMultipart = selectedEndpoint.contentType === 'multipart/form-data';
@@ -259,7 +270,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             let curlCmd = `curl -X '${method.toUpperCase()}' \\\n  '${requestUrl}'`;
             const curlHeaders: string[] = [];
 
-            if (headers) {
+            if (Object.keys(headers).length > 0) {
                 Object.entries(headers).forEach(([k, v]) => {
                     curlHeaders.push(`  -H '${k}: ${v}'`);
                 });
@@ -289,7 +300,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
                 url: requestUrl,
                 method,
                 data: requestData,
-                headers,
+                headers: Object.keys(headers).length > 0 ? headers : undefined,
                 useProxy: isStandaloneMode && !isFormDataRequest // Use proxy for non-FormData requests in standalone mode
             });
 
