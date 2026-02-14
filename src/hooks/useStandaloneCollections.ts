@@ -28,7 +28,7 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
         queryKey: QUERY_KEY,
         queryFn: async () => {
             if (!isPro) {
-                return ClientStorage.get<StandaloneCollection>(STANDALONE_KEY);
+                return await ClientStorage.get<StandaloneCollection>(STANDALONE_KEY);
             }
             return await getStandaloneCollections();
         },
@@ -39,12 +39,12 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
     const createCollectionMutation = useMutation({
         mutationFn: async (collection: StandaloneCollection) => {
             if (!isPro) {
-                const existing = ClientStorage.get<StandaloneCollection>(STANDALONE_KEY);
+                const existing = await ClientStorage.get<StandaloneCollection>(STANDALONE_KEY);
                 if (existing.length >= FREE_STANDALONE_LIMIT) {
                     return { error: `Collection limit reached (${FREE_STANDALONE_LIMIT}). Upgrade to Pro for more.` };
                 }
                 const newCol = { ...collection, id: collection.id || crypto.randomUUID() };
-                ClientStorage.add(STANDALONE_KEY, newCol);
+                await ClientStorage.add(STANDALONE_KEY, newCol);
                 return newCol;
             }
 
@@ -78,7 +78,7 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
     const updateCollectionMutation = useMutation({
         mutationFn: async ({ id, updates }: { id: string, updates: Partial<StandaloneCollection> }) => {
             if (!isPro) {
-                ClientStorage.update(STANDALONE_KEY, id, updates);
+                await ClientStorage.update(STANDALONE_KEY, id, updates);
                 return { id, updates };
             }
 
@@ -106,7 +106,7 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
     const deleteCollectionMutation = useMutation({
         mutationFn: async (id: string) => {
             if (!isPro) {
-                ClientStorage.delete(STANDALONE_KEY, id);
+                await ClientStorage.delete(STANDALONE_KEY, id);
                 return id;
             }
 
@@ -135,7 +135,7 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
         mutationFn: async () => {
             if (!isPro) {
                 if (typeof window !== 'undefined') {
-                    window.localStorage.removeItem(STANDALONE_KEY);
+                    await ClientStorage.clear(STANDALONE_KEY);
                 }
                 return;
             }

@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/useToast';
 import { FREE_RECENT_COLLECTION_LIMIT } from '@/lib/constants';
 
 const HISTORY_KEY = 'recent_collections';
+const EVICTION_ORDER = ['standalone_collections', 'test_collections'];
 
 export const useRecentCollections = () => {
     const queryClient = useQueryClient();
@@ -23,7 +24,8 @@ export const useRecentCollections = () => {
         queryKey: QUERY_KEY,
         queryFn: async () => {
             if (!isPro) {
-                return ClientStorage.get<HistoryItem>(HISTORY_KEY)
+                const items = await ClientStorage.get<HistoryItem>(HISTORY_KEY);
+                return items
                     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
                     .slice(0, FREE_RECENT_COLLECTION_LIMIT);
             }
@@ -35,7 +37,6 @@ export const useRecentCollections = () => {
     const addHistoryMutation = useMutation({
         mutationFn: async ({ name, content }: { name: string, content: any }) => {
             if (!isPro) {
-                // Upsert logic for local history
                 const newItem = {
                     id: crypto.randomUUID(),
                     name,
@@ -43,18 +44,20 @@ export const useRecentCollections = () => {
                     updated_at: new Date().toISOString()
                 };
 
-                // Custom upsert: match by name
-                const history = ClientStorage.get<HistoryItem>(HISTORY_KEY);
+                const history = await ClientStorage.get<HistoryItem>(HISTORY_KEY);
                 const index = history.findIndex(h => h.name === name);
 
                 if (index > -1) {
+                    // Update existing
                     history[index] = { ...history[index], content, updated_at: newItem.updated_at };
-                    ClientStorage.save(HISTORY_KEY, history);
+                    const saved = await ClientStorage.saveWithRetry(HISTORY_KEY, history, EVICTION_ORDER);
+                    if (!saved) return { error: 'This collection is too large for browser storage.' };
                 } else {
                     if (history.length >= FREE_RECENT_COLLECTION_LIMIT) {
                         return { error: `History limit reached (${FREE_RECENT_COLLECTION_LIMIT}). Upgrade to Pro for more.` };
                     }
-                    ClientStorage.add(HISTORY_KEY, newItem);
+                    const saved = await ClientStorage.saveWithRetry(HISTORY_KEY, [...history, newItem], EVICTION_ORDER);
+                    if (!saved) return { error: 'This collection is too large for browser storage.' };
                 }
                 return;
             }
@@ -80,7 +83,7 @@ export const useRecentCollections = () => {
     const deleteHistoryMutation = useMutation({
         mutationFn: async (id: string) => {
             if (!isPro) {
-                ClientStorage.delete(HISTORY_KEY, id);
+                await ClientStorage.delete(HISTORY_KEY, id);
                 return id;
             }
             const res = await deleteFromHistory(id);
@@ -95,7 +98,6 @@ export const useRecentCollections = () => {
                 return;
             }
             const deletedId = result as string;
-            // Optimistic update or just invalidate
             queryClient.setQueryData(QUERY_KEY, (old: HistoryItem[] = []) => {
                 return old.filter(item => item.id !== deletedId);
             });

@@ -39,7 +39,7 @@ export const useCollections = (userId?: string) => {
                 // Hobby: Load from LocalStorage
                 // Note: We might want to filter by user ID if multiple users share browser (rare but consistent)
                 // or just store everything under one key. Let's filter by userId just in case.
-                const all = ClientStorage.get<Collection>(COLLECTIONS_KEY);
+                const all = await ClientStorage.get<Collection>(COLLECTIONS_KEY);
                 // If we store with user_id attached? The Collection type might not have user_id on frontend.
                 // Let's assume local storage is private to the browser/device user. 
                 // But wait, the previous server logic filtered by user_id. 
@@ -57,7 +57,7 @@ export const useCollections = (userId?: string) => {
     const createCollectionMutation = useMutation({
         mutationFn: async (name: string) => {
             if (!isPro) {
-                const existing = ClientStorage.get<Collection>(COLLECTIONS_KEY);
+                const existing = await ClientStorage.get<Collection>(COLLECTIONS_KEY);
                 if (existing.length >= FREE_TEST_COLLECTION_LIMIT) {
                     return { error: `Collection limit reached (${FREE_TEST_COLLECTION_LIMIT}). Upgrade to Pro for more.` };
                 }
@@ -68,7 +68,7 @@ export const useCollections = (userId?: string) => {
                     isOpen: true,
                     auth: { type: 'none', token: '' }
                 };
-                ClientStorage.add(COLLECTIONS_KEY, newCol);
+                await ClientStorage.add(COLLECTIONS_KEY, newCol);
                 return newCol;
             }
 
@@ -96,7 +96,7 @@ export const useCollections = (userId?: string) => {
     const deleteCollectionMutation = useMutation({
         mutationFn: async (id: string) => {
             if (!isPro) {
-                ClientStorage.delete(COLLECTIONS_KEY, id);
+                await ClientStorage.delete(COLLECTIONS_KEY, id);
                 return id;
             }
             const res = await deleteCollection(id);
@@ -125,7 +125,7 @@ export const useCollections = (userId?: string) => {
     const createRequestMutation = useMutation({
         mutationFn: async ({ collectionId, name }: { collectionId: string, name: string }) => {
             if (!isPro) {
-                const collections = ClientStorage.get<Collection>(COLLECTIONS_KEY);
+                const collections = await ClientStorage.get<Collection>(COLLECTIONS_KEY);
                 const col = collections.find(c => c.id === collectionId);
                 if (col && col.requests.length >= FREE_TEST_REQUEST_LIMIT) {
                     return { error: `Request limit reached (${FREE_TEST_REQUEST_LIMIT}). Upgrade to Pro for more.` };
@@ -140,7 +140,7 @@ export const useCollections = (userId?: string) => {
 
                 if (col) {
                     col.requests.push(newReq as any);
-                    ClientStorage.update(COLLECTIONS_KEY, collectionId, col);
+                    await ClientStorage.update(COLLECTIONS_KEY, collectionId, col);
                 }
                 return newReq;
             }
@@ -173,7 +173,7 @@ export const useCollections = (userId?: string) => {
     const updateRequestMutation = useMutation({
         mutationFn: async ({ id, updates }: { id: string, updates: any }) => {
             if (!isPro) {
-                const collections = ClientStorage.get<Collection>(COLLECTIONS_KEY);
+                const collections = await ClientStorage.get<Collection>(COLLECTIONS_KEY);
                 // Find collection containing request
                 const col = collections.find(c => c.requests.some(r => r.id === id));
                 if (col) {
@@ -192,7 +192,7 @@ export const useCollections = (userId?: string) => {
                         if (updates.url) updatedReq.url = updates.url;
 
                         col.requests[reqIndex] = updatedReq;
-                        ClientStorage.update(COLLECTIONS_KEY, col.id, col);
+                        await ClientStorage.update(COLLECTIONS_KEY, col.id, col);
                     }
                 }
                 return { id, updates };
@@ -239,11 +239,11 @@ export const useCollections = (userId?: string) => {
     const deleteRequestMutation = useMutation({
         mutationFn: async ({ collectionId, requestId }: { collectionId: string, requestId: string }) => {
             if (!isPro) {
-                const collections = ClientStorage.get<Collection>(COLLECTIONS_KEY);
+                const collections = await ClientStorage.get<Collection>(COLLECTIONS_KEY);
                 const col = collections.find(c => c.id === collectionId);
                 if (col) {
                     col.requests = col.requests.filter(r => r.id !== requestId);
-                    ClientStorage.update(COLLECTIONS_KEY, collectionId, col);
+                    await ClientStorage.update(COLLECTIONS_KEY, collectionId, col);
                 }
                 return { collectionId, requestId };
             }
