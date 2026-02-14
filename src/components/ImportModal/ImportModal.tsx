@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styles from "./ImportModal.module.css";
+import { useAuth } from "@/providers/AuthContext";
 import { Button } from "../ui/Button/Button";
 import DiffModal, { FunctionDiff } from "./DiffModal";
 import { Modal } from "../ui/Modal/Modal";
@@ -14,8 +15,10 @@ import ReviewList from "./components/ReviewList";
 import { useFileHandler } from "./hooks/useFileHandler";
 import { useDiffSelection } from "./hooks/useDiffSelection";
 import { useImportActions } from "./hooks/useImportActions";
-import { useAuth } from "@/providers/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 import LoginModal from "../LoginModal/LoginModal";
+import { LimitReachedModal } from "./components/LimitReachedModal";
+import { FREE_PROJECT_IMPORT_LIMIT } from "@/lib/constants";
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -62,8 +65,11 @@ const ImportModal: React.FC<ImportModalProps> = ({
   hasHistory = false
 }) => {
   // Auth Check
+  // We use useSubscription here to get the real-time project_import_count
+  const { user, isPro } = useSubscription();
   const { isAuthenticated, login } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   // State for Diffs
   const [diffs, setDiffs] = useState<DiffResult[]>([]);
@@ -110,7 +116,13 @@ const ImportModal: React.FC<ImportModalProps> = ({
     targetDir,
     onUpdateStarted,
     onSuccess,
-    onError,
+    onError: (msg) => {
+      if (msg.includes("Free limit reached") || msg.includes("Limit Exceeded")) {
+        setShowLimitModal(true);
+      } else {
+        onError(msg);
+      }
+    },
     setDiffs,
     setSelectedModules,
     setSelectedFunctions,
@@ -207,11 +219,24 @@ const ImportModal: React.FC<ImportModalProps> = ({
   );
 
   const getTitle = () => {
-    if (step === "upload") return "Import API Collection";
-    if (step === "analyzing") return "Analyzing Collection...";
-    if (step === "review") return "Review Changes";
-    if (step === "updating") return "Updating Collection...";
-    return "Import API Collection";
+    let baseTitle = "Import API Collection";
+    if (step === "analyzing") baseTitle = "Analyzing Collection...";
+    if (step === "review") baseTitle = "Review Changes";
+    if (step === "updating") baseTitle = "Updating Collection...";
+
+    // Add Usage Badge for Hobby Users in Project Mode
+    if (!isStandaloneMode && !isPro && user?.project_import_count !== undefined) {
+      return (
+        <div className={styles.headerTitleWrapper}>
+          {baseTitle}
+          <span className={styles.usageBadge}>
+            {user.project_import_count}/{FREE_PROJECT_IMPORT_LIMIT} Free Imports
+          </span>
+        </div>
+      );
+    }
+
+    return baseTitle;
   };
 
   return (
@@ -298,6 +323,12 @@ const ImportModal: React.FC<ImportModalProps> = ({
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
         message="You need to be signed in to update cloud collections."
+      />
+
+      <LimitReachedModal
+        isOpen={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        limit={FREE_PROJECT_IMPORT_LIMIT}
       />
     </>
   );

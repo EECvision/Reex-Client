@@ -40,6 +40,7 @@
 }
 
 .valueText {
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: auto;
+    /* text-overflow: ellipsis; */
+    max-width: 400px;
 }

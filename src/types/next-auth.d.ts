@@ -12,6 +12,7 @@ declare module "next-auth" {
             subscription_id?: string
             customer_code?: string
             current_period_end?: string
+            project_import_count?: number
         } & DefaultSession["user"]
     }
 
@@ -21,6 +22,7 @@ declare module "next-auth" {
         subscription_id?: string
         customer_code?: string
         current_period_end?: string
+        project_import_count?: number
     }
 }
 
@@ -32,5 +34,6 @@ declare module "next-auth/jwt" {
         subscription_id?: string
         customer_code?: string
         current_period_end?: string
+        project_import_count?: number
     }
 }

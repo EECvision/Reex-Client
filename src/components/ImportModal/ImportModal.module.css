@@ -7,6 +7,23 @@
   flex-direction: column;
 }
 
+/* Header Override / Custom Title */
+.headerTitleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.usageBadge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background-color: var(--hover-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
 /* Footer Action Buttons */
 .footerActions {
   display: flex;

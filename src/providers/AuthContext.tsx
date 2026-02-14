@@ -10,6 +10,7 @@ interface AuthContextType {
     login: (provider: string) => void;
     logout: () => void;
     isLoading: boolean;
+    isPro: boolean;
 }
 
 // Re-export hook for backward compatibility with existing components
@@ -17,10 +18,16 @@ interface AuthContextType {
 export const useAuth = () => {
     const { data: session, status } = useSession();
 
+    // Check for "active" status and "Pro" plan (or others if you have more)
+    // Adjust based on your exact subscription schema
+    const isPro = session?.user?.subscription_status === 'active' &&
+        (session?.user?.subscription_plan === 'Pro' || session?.user?.subscription_plan === 'pro');
+
     return {
         user: session?.user || null,
         isAuthenticated: status === "authenticated",
         isLoading: status === "loading",
+        isPro,
         login: (provider: string) => signIn(provider),
         logout: () => signOut(),
     };
