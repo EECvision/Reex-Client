@@ -114,9 +114,9 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
         const endpointDef = apiManifest?.[apiKey]?.[fnName];
 
         const clientName = endpointDef?.client || "BASE_CLIENT";
-        const clientBase = projectConfig.clients?.[clientName] || projectConfig.baseURL;
+        const clientBase = (projectConfig.clients?.[clientName] || projectConfig.baseURL || "").trim();
         // Fallback to selectedEndpoint.url if endpointDef doesn't have the url
-        const path = endpointDef?.url || selectedEndpoint.url || "";
+        const path = (endpointDef?.url || selectedEndpoint.url || "").trim();
 
         console.log("[Execution] Computed:", { clientName, clientBase, path, full: `${clientBase}${path}` });
 
@@ -183,10 +183,10 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             let clientBase = "";
             if (projectConfig) {
                 const clientName = endpointDef?.client || "BASE_CLIENT";
-                clientBase = projectConfig.clients?.[clientName] || projectConfig.baseURL || "http://localhost:3000/api";
+                clientBase = (projectConfig.clients?.[clientName] || projectConfig.baseURL || "http://localhost:3000/api").trim();
             }
 
-            let urlTemplate = endpointDef?.url || selectedEndpoint.url || "";
+            let urlTemplate = (endpointDef?.url || selectedEndpoint.url || "").trim();
             let finalUrl = urlTemplate;
             const consumedParams = new Set<string>();
 
@@ -272,22 +272,22 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
 
             if (Object.keys(headers).length > 0) {
                 Object.entries(headers).forEach(([k, v]) => {
-                    curlHeaders.push(`  -H '${k}: ${v}'`);
+                    curlHeaders.push(`-H '${k}: ${v}'`);
                 });
             }
             // Always add accept header if not present (logic implies it might not be in 'headers' var but api adds it? api service usually adds it. 
             // In getGeneratedCurl we force added it. Let's force add it here for consistency if headers doesn't have it.
             // Actually, headers var is init with Auth only. Content-Type is distinct.
             if (!curlHeaders.some(h => h.toLowerCase().includes('accept:'))) {
-                curlHeaders.push("  -H 'accept: application/json'");
+                curlHeaders.push("-H 'accept: application/json'");
             }
 
             // Handle Body
             if (requestData && Object.keys(requestData).length > 0 && !isFormDataRequest) { // Simple JSON body
-                curlHeaders.push("  -H 'Content-Type: application/json'");
+                curlHeaders.push("-H 'Content-Type: application/json'");
                 curlCmd += ` \\\n${curlHeaders.join(" \\\n")}`;
                 const jsonData = JSON.stringify(requestData, null, 2);
-                curlCmd += ` \\\n  -d '${jsonData}'`;
+                curlCmd += ` \\\n-d '${jsonData}'`;
             } else {
                 if (curlHeaders.length > 0) {
                     curlCmd += ` \\\n${curlHeaders.join(" \\\n")}`;

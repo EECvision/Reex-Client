@@ -8,7 +8,8 @@ import { spawn } from "child_process";
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { url, method, data, headers } = body;
+        const { method, data, headers } = body;
+        const url = (body.url || "").trim();
 
         if (!url) {
             return NextResponse.json({ success: false, error: "URL is required" }, { status: 400 });

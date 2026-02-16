@@ -228,10 +228,10 @@ export const useCollections = (userId?: string) => {
                     return { ...c, requests: updatedRequests };
                 });
             });
-            showToast('success', 'Request saved');
+            // showToast('success', 'Request saved');
         },
         onError: (err: any) => {
-            showToast('error', err.message || 'Failed to save request');
+            // showToast('error', err.message || 'Failed to save request');
         }
     });
 

@@ -109,7 +109,7 @@ export default function RequestEditor({ data, onSave, requestName }: RequestEdit
 
         try {
             // 1. Construct URL with Query Params
-            let finalUrl = url;
+            let finalUrl = url.trim();
             const activeParams = queryParams.filter(p => p.active && p.key);
             if (activeParams.length > 0) {
                 const qs = activeParams.map(p => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`).join('&');
@@ -148,7 +148,7 @@ export default function RequestEditor({ data, onSave, requestName }: RequestEdit
             const paramHeaders: string[] = [];
 
             Object.entries(finalHeaders).forEach(([k, v]) => {
-                paramHeaders.push(`  -H '${k}: ${v}'`);
+                paramHeaders.push(`-H '${k}: ${v}'`);
             });
 
             if (paramHeaders.length > 0) {
@@ -157,7 +157,7 @@ export default function RequestEditor({ data, onSave, requestName }: RequestEdit
 
             if (requestData) {
                 const jsonData = JSON.stringify(requestData, null, 2);
-                curlCmd += ` \\\n  -d '${jsonData}'`;
+                curlCmd += ` \\\n-d '${jsonData}'`;
             }
             setExecutedCurl(curlCmd);
             // ---------------------
