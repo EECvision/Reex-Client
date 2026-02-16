@@ -16,7 +16,7 @@ export const CloudService = {
         }
     },
 
-    analyzeCollection: async (file: File, fileName: string | undefined, targetDir: string, clientMappings?: Record<string, string>) => {
+    analyzeCollection: async (file: File, fileName: string | undefined, targetDir: string, clientMappings?: Record<string, string>, isStandaloneMode?: boolean) => {
         const formData = new FormData();
 
         try {
@@ -44,15 +44,19 @@ export const CloudService = {
         formData.append('targetDir', targetDir);
         if (clientMappings) formData.append('clientMappings', JSON.stringify(clientMappings));
 
-        try {
-            const bridgeUrl = getLocalUrl();
-            const res = await fetch(`${bridgeUrl}/api/project/definitions`);
-            if (res.ok) {
-                const definitions = await res.json();
-                formData.append('existingModules', JSON.stringify(definitions));
+        // Only fetch existing definitions from bridge in Project Mode
+        // Standalone mode collections are independent and should not diff against project definitions
+        if (!isStandaloneMode) {
+            try {
+                const bridgeUrl = getLocalUrl();
+                const res = await fetch(`${bridgeUrl}/api/project/definitions`);
+                if (res.ok) {
+                    const definitions = await res.json();
+                    formData.append('existingModules', JSON.stringify(definitions));
+                }
+            } catch (e) {
+                console.warn("Could not fetch existing definitions from Bridge:", e);
             }
-        } catch (e) {
-            console.warn("Could not fetch existing definitions from Bridge:", e);
         }
 
         const res = await fetch(`${cloudUrl}/analyze-collection`, {

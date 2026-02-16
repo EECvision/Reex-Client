@@ -57,7 +57,7 @@ export const useImportActions = ({
         reader.readAsText(selectedFile);
 
         try {
-            const res = await api.analyzeCollection(selectedFile, selectedFile.name, targetDir, clientMappings);
+            const res = await api.analyzeCollection(selectedFile, selectedFile.name, targetDir, clientMappings, isStandaloneMode);
             const data = res;
 
             if (!res.success) throw new Error(res.error || "Analysis failed");
