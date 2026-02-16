@@ -193,7 +193,7 @@ export default function RequestEditor({ data, onSave, requestName }: RequestEdit
 
         } catch (err: any) {
             setError(err.message || "Unknown error occurred");
-            showToast('error', err.message);
+            showToast('error', "Error: Failed to fetch");
         } finally {
             setLoading(false);
         }
