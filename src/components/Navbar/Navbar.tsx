@@ -219,7 +219,7 @@ const Navbar: React.FC<NavbarProps> = ({
   return (
     <nav className={styles.navbar}>
       <div className={styles.leftSection}>
-        {onToggleSidebar && (
+        {onToggleSidebar && hasCollection && (
           <Button
             variant="ghost"
             className={styles.sidebarToggle}
