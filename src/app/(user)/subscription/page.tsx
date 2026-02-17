@@ -7,7 +7,8 @@ import { Check, Loader2 } from "lucide-react";
 import { Loading } from '@/components/ui/Loading/Loading';
 import { useRouter } from "next/navigation";
 import { useSubscription } from "@/hooks/useSubscription";
-import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
+import { closePaymentModal } from "flutterwave-react-v3";
+import { useFlutterwaveCustom } from "@/hooks/useFlutterwaveCustom";
 import { useQueryClient } from "@tanstack/react-query";
 import LoginModal from "@/components/LoginModal/LoginModal";
 
@@ -52,7 +53,7 @@ export default function SubscriptionPage() {
         },
     };
 
-    const handleFlutterPayment = useFlutterwave(config);
+    const handleFlutterPayment = useFlutterwaveCustom(config);
 
     const handlePayment = () => {
         if (!user?.email) {
