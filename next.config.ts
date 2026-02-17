@@ -11,14 +11,6 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/docs',
-        destination: 'http://localhost:5000/docs',
-      },
-      {
-        source: '/docs/:path*',
-        destination: 'http://localhost:5000/docs/:path*',
-      },
-      {
-        source: '/docs',
         destination: 'https://reex-api-docs.vercel.app/docs',
       },
       {
