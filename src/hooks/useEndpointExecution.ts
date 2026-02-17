@@ -118,7 +118,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
         // Fallback to selectedEndpoint.url if endpointDef doesn't have the url
         const path = (endpointDef?.url || selectedEndpoint.url || "").trim();
 
-        console.log("[Execution] Computed:", { clientName, clientBase, path, full: `${clientBase}${path}` });
+        // console.log("[Execution] Computed:", { clientName, clientBase, path, full: `${clientBase}${path}` });
 
         return `${clientBase}${path}`;
     };
@@ -129,7 +129,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
         setResult(null);
         setError(null);
         setLoading(true);
-        console.log("[Execution] Config at submit:", projectConfig);
+        // console.log("[Execution] Config at submit:", projectConfig);
 
         try {
             const key = `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}`;
@@ -215,7 +215,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             const cleanPath = finalUrl.startsWith("/") ? finalUrl : `/${finalUrl}`;
             const fullUrl = `${cleanBase}${cleanPath}`;
 
-            console.log("[Execution] URL Construction:", { clientBase, cleanBase, cleanPath, fullUrl });
+            // console.log("[Execution] URL Construction:", { clientBase, cleanBase, cleanPath, fullUrl });
 
             let requestUrl = fullUrl;
             let requestData: Record<string, any> | FormData | undefined = remainingData;

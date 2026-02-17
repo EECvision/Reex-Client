@@ -6,9 +6,8 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
         const { data, fnName } = body;
-        // Generate interface name logic
-        const baseName = fnName.replace(/^[a-z]+_/, '').replace(/_./g, (x: string) => x[1].toUpperCase()).replace(/^[a-z]/, (x: string) => x.toUpperCase());
-        const interfaceName = `${baseName}Response`;
+        // Use function name directly for interface name to match Generator
+        const interfaceName = fnName;
 
         const interfaceString = typeGenerator.generateInterface(interfaceName, data);
         return NextResponse.json({ success: true, interfaceString });
