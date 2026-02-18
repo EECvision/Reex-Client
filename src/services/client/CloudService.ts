@@ -59,6 +59,10 @@ export const CloudService = {
             }
         }
 
+        // Ensure filename has correct extension if possible
+        const cleanFileName = fileName || file.name;
+        if (!formData.has('fileName')) formData.append('fileName', cleanFileName);
+
         const res = await fetch(`${cloudUrl}/analyze-collection`, {
             method: 'POST',
             body: formData,

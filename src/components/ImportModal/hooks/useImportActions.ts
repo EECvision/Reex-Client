@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { api } from '../../../services/api';
 import { useSubscription } from '@/hooks/useSubscription';
 import { DiffResult, ImportStep } from '../importTypes';
+import yaml from 'js-yaml';
 
 interface UseImportActionsProps {
     selectedFile: File | null;
@@ -50,14 +51,34 @@ export const useImportActions = ({
         if (!selectedFile) return;
         setStep("analyzing");
 
+        let fileToAnalyze = selectedFile;
+        // Check for YAML and convert to JSON
+        const lowerName = selectedFile.name.toLowerCase();
+        const isYaml = lowerName.endsWith('.yaml') || lowerName.endsWith('.yml') || lowerName.endsWith('.openapi') || lowerName.endsWith('.postman');
+
+        if (isYaml) {
+            try {
+                const text = await selectedFile.text();
+                // If it looks like YAML (not starting with {), try to parse it
+                if (!text.trim().startsWith('{')) {
+                    const parsed = yaml.load(text);
+                    const jsonString = JSON.stringify(parsed, null, 2);
+                    const newFileName = selectedFile.name.replace(/\.(yaml|yml|openapi|postman)$/i, '') + '.json';
+                    fileToAnalyze = new File([jsonString], newFileName, { type: 'application/json' });
+                }
+            } catch (e) {
+                console.warn("Failed to parse/convert YAML to JSON", e);
+            }
+        }
+
         const reader = new FileReader();
         reader.onload = (e) => {
             if (e.target?.result) setFileContent(e.target.result as string);
         };
-        reader.readAsText(selectedFile);
+        reader.readAsText(fileToAnalyze);
 
         try {
-            const res = await api.analyzeCollection(selectedFile, selectedFile.name, targetDir, clientMappings, isStandaloneMode);
+            const res = await api.analyzeCollection(fileToAnalyze, fileToAnalyze.name, targetDir, clientMappings, isStandaloneMode);
             const data = res;
 
             if (!res.success) throw new Error(res.error || "Analysis failed");

@@ -13,20 +13,48 @@ export const useFileHandler = (onFileSelected?: (file: File) => void, onError?: 
         return new Promise((resolve) => {
             const reader = new FileReader();
             reader.onload = (e) => {
+                const result = e.target?.result as string;
+
+                // 1. Try parsing as JSON
                 try {
-                    const content = JSON.parse(e.target?.result as string);
-                    if (content.openapi || content.swagger) {
-                        resolve("openapi");
-                        return;
+                    const content = JSON.parse(result);
+
+                    // Case A: Valid JSON Object (Standard JSON import)
+                    if (typeof content === 'object' && content !== null) {
+                        if (content.openapi || content.swagger) {
+                            resolve("openapi");
+                            return;
+                        }
+                        if (content.info && content.item) {
+                            resolve("postman");
+                            return;
+                        }
                     }
-                    if (content.info && content.item) {
-                        resolve("postman");
-                        return;
+
+                    // Case B: JSON String (Fetched YAML wrapped in JSON)
+                    if (typeof content === 'string') {
+                        if (
+                            (content.includes("openapi:") || content.includes("swagger:")) &&
+                            (content.includes("info:") || content.includes("paths:"))
+                        ) {
+                            resolve("openapi");
+                            return;
+                        }
                     }
-                    resolve("unknown");
                 } catch {
-                    resolve("unknown");
+                    // Ignore parse errors, proceed to raw check
                 }
+
+                // Case C: Raw Text/YAML (Drag & Drop or Parse Failed)
+                if (
+                    (result.includes("openapi:") || result.includes("swagger:")) &&
+                    (result.includes("info:") || result.includes("paths:"))
+                ) {
+                    resolve("openapi");
+                    return;
+                }
+
+                resolve("unknown");
             };
             reader.readAsText(file);
         });
@@ -48,10 +76,11 @@ export const useFileHandler = (onFileSelected?: (file: File) => void, onError?: 
         setDragActive(false);
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
             const file = e.dataTransfer.files[0];
-            if (file.type === "application/json") {
+            const lowerName = file.name.toLowerCase();
+            if (file.type === "application/json" || lowerName.endsWith(".postman") || lowerName.endsWith(".openapi") || lowerName.endsWith(".yaml") || lowerName.endsWith(".yml")) {
                 await processFile(file);
             } else {
-                if (onError) onError("Please upload a JSON file");
+                if (onError) onError("Please upload a .json, .yaml, .yml, .postman or .openapi file");
             }
         }
     };

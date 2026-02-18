@@ -5,6 +5,7 @@ import * as prettier from "prettier";
 import { Project, SyntaxKind, PropertyAssignment } from "ts-morph";
 // @ts-ignore
 const { API_DEFINITIONS_DIR } = require("../paths");
+import yaml from 'js-yaml';
 import { generateOpenApi } from "./generate-openapi-collection";
 import { generatePostman } from "./generate-postman-collection";
 import { extractBaseUrl, extractCollectionName } from "./generator-utils";
@@ -223,7 +224,25 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
 // Exportable main function
 export const analyze = async (specContent: string, existingModules: Map<string, string> = new Map(), clientMappings?: Record<string, string>) => {
     try {
-        const specData = JSON.parse(specContent);
+        // Robust format detection: handles JSON, JSON-wrapped YAML strings, and raw YAML
+        let specData: any;
+        try {
+            const parsed = JSON.parse(specContent);
+            if (typeof parsed === 'string') {
+                // JSON-encoded string — likely YAML wrapped in JSON (from URL fetch)
+                // Try parsing the inner string as JSON first, then YAML
+                try {
+                    specData = JSON.parse(parsed);
+                } catch {
+                    specData = yaml.load(parsed) as any;
+                }
+            } else {
+                specData = parsed;
+            }
+        } catch {
+            // Not valid JSON at all — try YAML directly
+            specData = yaml.load(specContent) as any;
+        }
         const baseUrl = extractBaseUrl(specData);
         const collectionName = extractCollectionName(specData);
         console.log("[ANALYZE] Extracted baseURL from spec:", baseUrl);

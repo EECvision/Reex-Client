@@ -118,7 +118,10 @@ const Navbar: React.FC<NavbarProps> = ({
 
   const validateUrl = (val: string) => {
     if (!val.trim()) return "URL is required";
-    if (!val.toLowerCase().endsWith(".json")) return "URL must end with .json";
+    const lowerVal = val.toLowerCase();
+    if (!lowerVal.endsWith(".json") && !lowerVal.endsWith(".postman") && !lowerVal.endsWith(".openapi") && !lowerVal.endsWith(".yaml") && !lowerVal.endsWith(".yml")) {
+      return "URL must end with .json, .yaml, .yml, .postman or .openapi";
+    }
     return "";
   };
 

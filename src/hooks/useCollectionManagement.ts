@@ -65,9 +65,16 @@ export const useCollectionManagement = ({
                 type: "application/json",
             });
             const filename = url.split("/").pop() || "imported-collection.json";
+            const lowerFilename = filename.toLowerCase();
+            let finalName = filename;
+
+            if (!lowerFilename.endsWith(".json") && !lowerFilename.endsWith(".postman") && !lowerFilename.endsWith(".openapi") && !lowerFilename.endsWith(".yaml") && !lowerFilename.endsWith(".yml")) {
+                finalName = `${filename}.json`;
+            }
+
             const file = new File(
                 [blob],
-                filename.endsWith(".json") ? filename : `${filename}.json`,
+                finalName,
                 { type: "application/json" }
             );
 
