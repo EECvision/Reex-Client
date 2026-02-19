@@ -95,6 +95,17 @@ const Navbar: React.FC<NavbarProps> = ({
     localStorage.setItem("docs_url", url);
   }, [url]);
 
+  // Sync from localStorage when fetch is opened
+  useEffect(() => {
+    if (isFetchOpen || isMobileFetchOpen) {
+      const stored = localStorage.getItem("docs_url");
+      if (stored && stored !== url) {
+        setUrl(stored);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFetchOpen, isMobileFetchOpen]);
+
   // Reset mobile states when menu closes
   useEffect(() => {
     if (!isMobileMenuOpen) {

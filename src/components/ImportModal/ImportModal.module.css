@@ -50,3 +50,114 @@
 .historyBtn:hover {
   color: var(--primary-color);
 }
+
+/* URL Import Section */
+.urlSection {
+  width: 100%;
+}
+
+.urlDivider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.8125rem;
+}
+
+.urlDivider::before,
+.urlDivider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--border-color, #e5e7eb);
+  opacity: 0.6;
+}
+
+.urlInputRow {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.urlInputWrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.urlIcon {
+  position: absolute;
+  left: 14px;
+  color: var(--text-secondary, #9ca3af);
+  pointer-events: none;
+  width: 18px;
+  height: 18px;
+}
+
+.urlInput {
+  width: 100%;
+  height: 40px;
+  padding: 12px 12px 12px 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background-color: var(--input-bg, #fff);
+  color: var(--text-primary, #111827);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.urlInput:focus {
+  border-color: var(--primary-color, #3b82f6);
+}
+
+.urlInput::placeholder {
+  color: var(--text-secondary, #9ca3af);
+  opacity: 0.8;
+}
+
+.urlInputError {
+  border-color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.05);
+}
+
+.urlInputError:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.urlFetchBtn {
+  height: 40px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.urlError {
+  color: #ef4444;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  padding-left: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Spin Animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}

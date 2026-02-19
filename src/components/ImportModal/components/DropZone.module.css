@@ -1,6 +1,6 @@
 .dropZone {
-    margin: 2rem;
-    padding: 3rem;
+    margin-bottom: 1.5rem;
+    padding: 2rem;
     border: 2px dashed var(--border-color, #e5e7eb);
     border-radius: 12px;
     background-color: var(--card-bg, #f9fafb);
@@ -10,7 +10,7 @@
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    min-height: 260px;
+    min-height: 120px;
 }
 
 .dropZone:hover {
@@ -51,6 +51,9 @@
     text-align: center;
     pointer-events: none;
     color: var(--text-secondary, #6b7280);
+    font-size: 0.9rem;
+    /* Match URL input size */
+    font-family: inherit;
 }
 
 .placeholder span {

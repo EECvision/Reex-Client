@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import styles from "./ImportModal.module.css";
 import { useAuth } from "@/providers/AuthContext";
 import { Button } from "../ui/Button/Button";
+import { api } from "@/services/api";
+import { Loader2, Globe, History as HistoryIcon, AlertCircle } from "lucide-react";
 import DiffModal, { FunctionDiff } from "./DiffModal";
 import { Modal } from "../ui/Modal/Modal";
 import { DiffResult } from "./importTypes";
@@ -70,6 +72,23 @@ const ImportModal: React.FC<ImportModalProps> = ({
   const { isAuthenticated, login } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
+
+  // URL Fetch State
+  const [fetchUrl, setFetchUrl] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem("docs_url") || "";
+    }
+    return "";
+  });
+  const [isFetchingUrl, setIsFetchingUrl] = useState(false);
+  const [fetchError, setFetchError] = useState('');
+
+  // Persist URL to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("docs_url", fetchUrl);
+    }
+  }, [fetchUrl]);
 
   // State for Diffs
   const [diffs, setDiffs] = useState<DiffResult[]>([]);
@@ -149,6 +168,17 @@ const ImportModal: React.FC<ImportModalProps> = ({
     }
   }, [resumeTaskId, step, setStep]);
 
+  // Effect: Sync from localStorage when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const stored = localStorage.getItem("docs_url");
+      if (stored && stored !== fetchUrl) {
+        setFetchUrl(stored);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
   // Effect: Task Complete
   useEffect(() => {
     if (taskComplete && step === "updating") {
@@ -156,11 +186,65 @@ const ImportModal: React.FC<ImportModalProps> = ({
     }
   }, [taskComplete, step, setStep]);
 
+  const validateFetchUrl = (val: string) => {
+    if (!val.trim()) return 'URL is required';
+    const lowerVal = val.toLowerCase();
+    if (
+      !lowerVal.endsWith('.json') &&
+      !lowerVal.endsWith('.postman') &&
+      !lowerVal.endsWith('.openapi') &&
+      !lowerVal.endsWith('.yaml') &&
+      !lowerVal.endsWith('.yml')
+    ) {
+      return 'URL must end with .json, .yaml, .yml, .postman or .openapi';
+    }
+    return '';
+  };
+
+  const handleFetchFromUrl = async () => {
+    const validationError = validateFetchUrl(fetchUrl);
+    if (validationError) {
+      setFetchError(validationError);
+      return;
+    }
+    setFetchError('');
+    setIsFetchingUrl(true);
+    try {
+      const data = await api.fetchUrl(fetchUrl);
+      if (data.error) throw new Error(data.error);
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: 'application/json',
+      });
+      const filename = fetchUrl.split('/').pop() || 'imported-collection.json';
+      const lowerFilename = filename.toLowerCase();
+      let finalName = filename;
+      if (
+        !lowerFilename.endsWith('.json') &&
+        !lowerFilename.endsWith('.postman') &&
+        !lowerFilename.endsWith('.openapi') &&
+        !lowerFilename.endsWith('.yaml') &&
+        !lowerFilename.endsWith('.yml')
+      ) {
+        finalName = `${filename}.json`;
+      }
+
+      const file = new File([blob], finalName, { type: 'application/json' });
+      setFile(file);
+    } catch (err: any) {
+      setFetchError(err.message || 'Failed to fetch URL');
+    } finally {
+      setIsFetchingUrl(false);
+    }
+  };
+
   const handleReset = () => {
     setStep("upload");
     resetFile();
     setDiffs([]);
     resetSelection();
+    setFetchUrl('');
+    setFetchError('');
   };
 
   const handleModalClose = () => {
@@ -176,7 +260,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
       {step === "upload" && (
         <Button
           onClick={() => startAnalysis(clientMappings)}
-          disabled={!selectedFile || collectionType === "unknown"}
+          disabled={!selectedFile || collectionType === "unknown" || isFetchingUrl}
           variant="primary"
         >
           Analyze Changes
@@ -265,12 +349,56 @@ const ImportModal: React.FC<ImportModalProps> = ({
                 onChange={handleChange}
                 onClearFile={resetFile}
               />
+
+              {/* URL Import Section */}
+              <div className={styles.urlSection}>
+                <div className={styles.urlDivider}>
+                  <span>or import from URL</span>
+                </div>
+                <div className={styles.urlInputRow}>
+                  <div className={styles.urlInputWrapper}>
+                    <Globe size={18} className={styles.urlIcon} />
+                    <input
+                      type="text"
+                      placeholder="https://example.com/api-docs.json"
+                      className={`${styles.urlInput} ${fetchError ? styles.urlInputError : ''}`}
+                      value={fetchUrl}
+                      onChange={(e) => {
+                        setFetchUrl(e.target.value);
+                        if (fetchError) setFetchError('');
+                      }}
+                      onKeyDown={(e) => e.key === 'Enter' && handleFetchFromUrl()}
+                      disabled={isFetchingUrl}
+                    />
+                  </div>
+                  <Button
+                    onClick={handleFetchFromUrl}
+                    disabled={!fetchUrl.trim() || isFetchingUrl}
+                    variant="primary"
+                    className={styles.urlFetchBtn}
+                  >
+                    {isFetchingUrl ? (
+                      <><Loader2 size={16} className={styles.spin} /> Fetching...</>
+                    ) : (
+                      'Fetch'
+                    )}
+                  </Button>
+                </div>
+                {fetchError && (
+                  <div className={styles.urlError}>
+                    <AlertCircle size={14} />
+                    {fetchError}
+                  </div>
+                )}
+              </div>
+
               {onOpenHistory && hasHistory && (
                 <div className={styles.historyActions}>
                   <Button
                     variant="ghost"
                     className={styles.historyBtn}
                     onClick={onOpenHistory}
+                    leftIcon={<HistoryIcon size={16} />}
                   >
                     Import from recent collection
                   </Button>
