@@ -163,14 +163,12 @@ export default function RequestEditor({ data, onSave, requestName }: RequestEdit
             // ---------------------
 
             // 5. Execute
-            const isLocalhost = finalUrl.includes('localhost') || finalUrl.includes('127.0.0.1');
-
             const execRes: any = await api.executeRequest({
                 url: finalUrl,
                 method,
                 data: requestData,
                 headers: finalHeaders,
-                useProxy: !isLocalhost // Always use proxy except for localhost
+                useProxy: true // Always use server-side proxy to bypass CORS (also works for localhost when app runs locally)
             });
 
             if (!execRes.success) {
