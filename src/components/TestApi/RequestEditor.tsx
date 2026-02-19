@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Send, Layout, Pencil, Loader2, Check } from 'lucide-react';
+import { Send, Layout, Pencil, Loader2, Check, Terminal, Info } from 'lucide-react';
 import { api } from '@/services/api';
 import styles from './RequestEditor.module.css';
 import ResultSection from '@/components/ResultSection/ResultSection';
@@ -23,6 +23,18 @@ interface RequestEditorProps {
     data?: any; // The request data (method, url, etc)
     onSave: (name: string, config: any) => void;
     requestName: string;
+}
+
+const PROXY_PORT = 9876;
+const PROXY_URL = `http://localhost:${PROXY_PORT}`;
+
+function isLocalhostUrl(url: string): boolean {
+    try {
+        const parsed = new URL(url);
+        return parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+    } catch {
+        return url.includes('localhost') || url.includes('127.0.0.1');
+    }
 }
 
 export default function RequestEditor({ data, onSave, requestName }: RequestEditorProps) {
@@ -163,13 +175,33 @@ export default function RequestEditor({ data, onSave, requestName }: RequestEdit
             // ---------------------
 
             // 5. Execute
-            const execRes: any = await api.executeRequest({
-                url: finalUrl,
-                method,
-                data: requestData,
-                headers: finalHeaders,
-                useProxy: true // Always use server-side proxy to bypass CORS (also works for localhost when app runs locally)
-            });
+            const isLocal = isLocalhostUrl(finalUrl);
+            let execRes: any;
+
+            if (isLocal) {
+                // Route through user's local reex-proxy to reach localhost
+                try {
+                    const proxyRes = await fetch(`${PROXY_URL}/proxy`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: finalUrl, method, data: requestData, headers: finalHeaders })
+                    });
+                    execRes = await proxyRes.json();
+                } catch (e: any) {
+                    throw new Error(
+                        'Could not connect to the local proxy. Run `npx reex-proxy` in your terminal first.'
+                    );
+                }
+            } else {
+                // External URL — use server-side proxy to bypass CORS
+                execRes = await api.executeRequest({
+                    url: finalUrl,
+                    method,
+                    data: requestData,
+                    headers: finalHeaders,
+                    useProxy: true
+                });
+            }
 
             if (!execRes.success) {
                 throw new Error(execRes.error || "Request failed");
@@ -270,6 +302,18 @@ export default function RequestEditor({ data, onSave, requestName }: RequestEdit
                         Send
                     </Button>
                 </div>
+
+                {/* Localhost Info Banner */}
+                {isLocalhostUrl(url) && (
+                    <div className={styles.localhostBanner}>
+                        <Info size={16} className={styles.localhostBannerIcon} />
+                        <div>
+                            <span>To test localhost endpoints, run </span>
+                            <code className={styles.localhostCode}>npx reex-proxy</code>
+                            <span> in your terminal first.</span>
+                        </div>
+                    </div>
+                )}
 
                 {/* Config Tabs */}
                 <div>
