@@ -213,6 +213,7 @@ export const useImportActions = ({
                     args: fnData.params || fnData.args || [],
                     requiresAuth,
                     contentType,
+                    description: fnData.description,
                     inputType: fnData.inputType,
                     outputType: fnData.outputType
                 };

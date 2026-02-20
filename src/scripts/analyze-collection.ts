@@ -18,6 +18,7 @@ interface FunctionDiff {
     args?: any[];
     requiresAuth?: boolean;
     contentType?: string;
+    description?: string;
 }
 
 interface AnalysisResult {
@@ -108,7 +109,7 @@ const getReferencedDefs = (text: string, allTypes: Map<string, string>): string 
 };
 
 const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
-    const functions = new Map<string, { content: string, disabled: boolean, args: any[], requiresAuth?: boolean, contentType?: string }>();
+    const functions = new Map<string, { content: string, disabled: boolean, args: any[], requiresAuth?: boolean, contentType?: string, description?: string }>();
 
     // Extract all local types to check for dependencies
     const allTypes = getAllTypes(sourceFile);
@@ -139,6 +140,7 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
             let leadingComments = "";
             let requiresAuth = false;
             let contentType: string | undefined;
+            let description: string | undefined;
 
             // ts-morph PropertyAssignment has getLeadingCommentRanges
             for (const r of ranges) {
@@ -153,31 +155,127 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
                 if (contentTypeMatch) {
                     contentType = contentTypeMatch[1];
                 }
+                const descMatch = commentText.match(/@description\s+([\s\S]+?)(?=\s*@(?:auth|contentType)|\s*\*\/)/);
+                if (descMatch) {
+                    description = descMatch[1].trim();
+                }
                 // Capture all JSDoc comments (for @auth, @contentType, etc.)
                 leadingComments += commentText + "\n";
             }
 
             // Extract Args
             const args: any[] = [];
+            const paramDescriptions = new Map<string, string>();
+
+            // Extract @param descriptions from JSDoc
+            for (const r of ranges) {
+                const commentText = r.getText();
+                const paramRegex = /@param\s+(\S+)\s+([^@*]+)/g;
+                let paramMatch;
+                while ((paramMatch = paramRegex.exec(commentText)) !== null) {
+                    paramDescriptions.set(paramMatch[1].trim(), paramMatch[2].trim());
+                }
+            }
+
             const func = assignment.getInitializer();
             if (func && (func.getKind() === SyntaxKind.ArrowFunction || func.getKind() === SyntaxKind.FunctionExpression)) {
                 const callSig = func as any;
+
+                // Helper: resolve sub-properties from a ts-morph Type (handles arrays-of-objects and plain objects)
+                const resolveSubProperties = (type: any, depth = 0): any[] | undefined => {
+                    if (depth > 2) return undefined; // Limit nesting depth
+                    try {
+                        let targetType = type;
+
+                        // If array type, get the element type
+                        if (type.isArray?.()) {
+                            targetType = type.getArrayElementType?.();
+                            if (!targetType) return undefined;
+                        }
+
+                        // Check if the resolved type is an object with properties
+                        if (targetType.isObject?.()) {
+                            const props = targetType.getProperties?.();
+                            if (!props || props.length === 0) return undefined;
+
+                            return props.map((prop: any) => {
+                                const declaration = prop.getValueDeclaration();
+                                const isOptional = declaration
+                                    ? (declaration as any).hasQuestionToken?.()
+                                    : false;
+                                const propName = prop.getName();
+                                const propTypeText = declaration?.getTypeNode?.()?.getText?.();
+
+                                const propObj: any = {
+                                    name: propName,
+                                    isOptional: isOptional,
+                                    type: propTypeText || undefined
+                                };
+
+                                // Check for @param description matching this property
+                                const propDesc = paramDescriptions.get(propName);
+                                if (propDesc) propObj.description = propDesc;
+
+                                // Recurse: resolve sub-properties for this property's type
+                                try {
+                                    const propType = declaration?.getType?.();
+                                    if (propType) {
+                                        const subProps = resolveSubProperties(propType, depth + 1);
+                                        if (subProps && subProps.length > 0) {
+                                            propObj.properties = subProps;
+                                        }
+                                    }
+                                } catch (e) { /* ignore */ }
+
+                                return propObj;
+                            });
+                        }
+                    } catch (e) { /* ignore */ }
+                    return undefined;
+                };
+
                 callSig.getParameters().forEach((p: any) => {
                     const paramName = p.getName();
                     const isOptional = p.isOptional();
                     const typeNode = p.getTypeNode();
                     const arg: any = { name: paramName, isOptional };
 
+                    // Attach description from @param if available
+                    const paramDesc = paramDescriptions.get(paramName);
+                    if (paramDesc) arg.description = paramDesc;
+
+                    // Extract type text
                     if (typeNode) {
+                        arg.type = typeNode.getText();
+
                         if (typeNode.getKind() === SyntaxKind.TypeLiteral) {
                             arg.isObject = true;
                             arg.properties = [];
                             typeNode.getMembers().forEach((m: any) => {
                                 if (m.getKind() === SyntaxKind.PropertySignature) {
-                                    arg.properties.push({
-                                        name: m.getName(),
-                                        isOptional: m.hasQuestionToken()
-                                    });
+                                    const propName = m.getName();
+                                    const propTypeNode = m.getTypeNode?.();
+                                    const prop: any = {
+                                        name: propName,
+                                        isOptional: m.hasQuestionToken(),
+                                        type: propTypeNode ? propTypeNode.getText() : undefined
+                                    };
+                                    // Check for @param description matching this property
+                                    const propDesc = paramDescriptions.get(propName);
+                                    if (propDesc) prop.description = propDesc;
+
+                                    // Resolve sub-properties for complex types
+                                    try {
+                                        const memberType = m.getType?.();
+                                        if (memberType) {
+                                            const subProps = resolveSubProperties(memberType, 1);
+                                            if (subProps && subProps.length > 0) {
+                                                prop.properties = subProps;
+                                            }
+                                        }
+                                    } catch (e) { /* ignore */ }
+
+                                    arg.properties.push(prop);
                                 }
                             });
                         } else if (typeNode.getKind() === SyntaxKind.TypeReference) {
@@ -186,23 +284,11 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
                                 const type = typeNode.getType();
                                 if (type.isObject()) {
                                     arg.isObject = true;
-                                    arg.properties = [];
-                                    const props = type.getProperties();
-                                    props.forEach((prop: any) => {
-                                        const declaration = prop.getValueDeclaration();
-                                        const isOptional = declaration
-                                            ? (declaration as any).hasQuestionToken?.()
-                                            : false;
-
-                                        arg.properties.push({
-                                            name: prop.getName(),
-                                            isOptional: isOptional
-                                        });
-                                    });
+                                    const resolved = resolveSubProperties(type, 0);
+                                    if (resolved) arg.properties = resolved;
                                 }
                             } catch (e) {
                                 // Fallback or ignore if type resolution fails
-                                // console.warn("Could not resolve type for", paramName);
                             }
                         }
                     }
@@ -214,7 +300,7 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
             // Include leading comments so @auth and @contentType can be parsed
             const fullContent = leadingComments + functionBody + "\n" + dependencyDefs;
 
-            functions.set(name, { content: fullContent, disabled, args, requiresAuth, contentType });
+            functions.set(name, { content: fullContent, disabled, args, requiresAuth, contentType, description });
         }
     });
 
@@ -312,7 +398,8 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
                     const args = newFuncs.get(name)!.args;
                     const requiresAuth = newFuncs.get(name)!.requiresAuth;
                     const contentType = newFuncs.get(name)!.contentType;
-                    functionDiffs.push({ name, status: "new", newContent: formattedNew, args, requiresAuth, contentType });
+                    const description = newFuncs.get(name)!.description;
+                    functionDiffs.push({ name, status: "new", newContent: formattedNew, args, requiresAuth, contentType, description });
                 }
 
                 analysis.push({
@@ -358,14 +445,15 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
                                     newContent: formattedNew,
                                     args: newData.args,
                                     requiresAuth: newData.requiresAuth,
-                                    contentType: newData.contentType
+                                    contentType: newData.contentType,
+                                    description: newData.description
                                 });
                             } else {
                                 const { content: existingBody, disabled } = existingData;
                                 if (disabled) {
                                     const formattedOld = await formatCode(existingBody);
                                     const formattedNew = await formatCode(newBody);
-                                    functionDiffs.push({ name, status: "disabled", oldContent: formattedOld, newContent: formattedNew, args: newData.args });
+                                    functionDiffs.push({ name, status: "disabled", oldContent: formattedOld, newContent: formattedNew, args: newData.args, description: newData.description });
                                     processedExisting.add(name);
                                 } else if (normalize(existingBody) !== normalize(newBody)) {
                                     // It is modified based on normalization
@@ -375,7 +463,7 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
 
                                     // Safety check: if formatted versions are identical, mark as unchanged
                                     if (formattedOld === formattedNew) {
-                                        functionDiffs.push({ name, status: "unchanged", args: newData.args });
+                                        functionDiffs.push({ name, status: "unchanged", args: newData.args, description: newData.description });
                                         processedExisting.add(name);
                                     } else {
                                         functionDiffs.push({
@@ -385,7 +473,8 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
                                             newContent: formattedNew,
                                             args: newData.args,
                                             requiresAuth: newData.requiresAuth,
-                                            contentType: newData.contentType
+                                            contentType: newData.contentType,
+                                            description: newData.description
                                         });
                                         processedExisting.add(name);
                                     }
@@ -395,7 +484,8 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
                                         status: "unchanged",
                                         args: newData.args,
                                         requiresAuth: newData.requiresAuth,
-                                        contentType: newData.contentType
+                                        contentType: newData.contentType,
+                                        description: newData.description
                                     });
                                     processedExisting.add(name);
                                 }
@@ -438,14 +528,15 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
                         const functionDiffs: FunctionDiff[] = [];
                         existingFuncs.forEach((data, name) => {
                             if (data.disabled) {
-                                functionDiffs.push({ name, status: "disabled", args: data.args });
+                                functionDiffs.push({ name, status: "disabled", args: data.args, description: data.description });
                             } else {
                                 functionDiffs.push({
                                     name,
                                     status: "unchanged",
                                     args: data.args,
                                     requiresAuth: data.requiresAuth,
-                                    contentType: data.contentType
+                                    contentType: data.contentType,
+                                    description: data.description
                                 });
                             }
                         });

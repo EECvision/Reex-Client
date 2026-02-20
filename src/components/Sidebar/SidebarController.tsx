@@ -66,6 +66,7 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
                     method: methodDef.method,
                     requiresAuth: methodDef.requiresAuth,
                     contentType: methodDef.contentType,
+                    description: methodDef.description,
                 });
             }
         }

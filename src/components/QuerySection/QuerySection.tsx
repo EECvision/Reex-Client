@@ -13,14 +13,21 @@ const MonacoJsonEditor = dynamic(
 
 type InputMode = "form" | "raw";
 
+interface EndpointArgProperty {
+  name: string;
+  isOptional: boolean;
+  description?: string;
+  type?: string;
+  properties?: EndpointArgProperty[];
+}
+
 interface EndpointArg {
   name: string;
   isOptional: boolean;
+  description?: string;
+  type?: string;
   isObject?: boolean;
-  properties?: {
-    name: string;
-    isOptional: boolean;
-  }[];
+  properties?: EndpointArgProperty[];
 }
 
 interface EndpointInfo {
@@ -28,6 +35,7 @@ interface EndpointInfo {
   fnName: string;
   args: EndpointArg[];
   contentType?: string;
+  description?: string;
 }
 
 interface QuerySectionProps {
@@ -61,17 +69,55 @@ const QuerySection: React.FC<QuerySectionProps> = ({
 
   const isMultipart = selectedEndpoint.contentType === 'multipart/form-data';
 
-  // Generate default JSON template from endpoint args
+  // Generate default JSON template from endpoint args, using type info for correct structure
   const generateDefaultTemplate = () => {
-    const template: Record<string, string> = {};
+    // Build a value for a property based on its type and sub-properties
+    const buildValue = (prop: EndpointArgProperty): any => {
+      const isArray = prop.type?.includes('[]');
+      const hasSubs = prop.properties && prop.properties.length > 0;
+
+      if (hasSubs) {
+        // Build an object from sub-properties
+        const obj: Record<string, any> = {};
+        prop.properties!.forEach((sub) => {
+          obj[sub.name] = buildValue(sub);
+        });
+        return isArray ? [obj] : obj;
+      }
+
+      // Primitive defaults based on type
+      if (isArray) return [];
+      if (prop.type === 'number') return 0;
+      if (prop.type === 'boolean') return false;
+      return "";
+    };
+
+    const template: Record<string, any> = {};
 
     selectedEndpoint.args.forEach((arg) => {
       if (arg.isObject && Array.isArray(arg.properties)) {
+        // Payload type — expand top-level properties
         arg.properties.forEach((prop) => {
-          template[prop.name] = "";
+          template[prop.name] = buildValue(prop);
         });
       } else {
-        template[arg.name] = "";
+        // Direct parameter
+        const isArray = arg.type?.includes('[]');
+        if (arg.properties && arg.properties.length > 0) {
+          const obj: Record<string, any> = {};
+          arg.properties.forEach((sub) => {
+            obj[sub.name] = buildValue(sub);
+          });
+          template[arg.name] = isArray ? [obj] : obj;
+        } else if (isArray) {
+          template[arg.name] = [];
+        } else if (arg.type === 'number') {
+          template[arg.name] = 0;
+        } else if (arg.type === 'boolean') {
+          template[arg.name] = false;
+        } else {
+          template[arg.name] = "";
+        }
       }
     });
 
@@ -165,7 +211,7 @@ const QuerySection: React.FC<QuerySectionProps> = ({
         value={currentParams[name] ?? ""}
         onChange={(e) => onParamChange(name, e.target.value)}
         className={styles.paramInput}
-        placeholder={isOptional ? "Enter value (optional)" : "Enter value"}
+        placeholder={isOptional ? "Enter value" : "Enter value"}
       />
     );
   };
@@ -225,13 +271,50 @@ const QuerySection: React.FC<QuerySectionProps> = ({
           <div className={styles.paramList}>
             {selectedEndpoint.args.map((arg) => {
               if (arg.isObject && Array.isArray(arg.properties)) {
+                // Check if any property has sub-properties (complex nested types)
+                const hasNestedComplex = arg.properties.some(prop => prop.properties && prop.properties.length > 0);
+
+                if (hasNestedComplex) {
+                  // Render properties with expanded sub-property info
+                  return arg.properties.map((prop) => (
+                    <div key={prop.name} className={styles.paramField}>
+                      <label className={styles.paramLabel}>
+                        {prop.name}
+                        {!prop.isOptional && <span className={styles.required}>*</span>}
+                        {/* {prop.isOptional && <span className={styles.optional}>optional</span>} */}
+                        {prop.type && <span className={styles.paramType}>{prop.type}</span>}
+                      </label>
+                      {prop.description && (
+                        <span className={styles.paramDescription}>{prop.description}</span>
+                      )}
+                      {prop.properties && prop.properties.length > 0 && (
+                        <div className={styles.subProperties}>
+                          <span className={styles.subPropertiesLabel}>Properties:</span>
+                          {prop.properties.map((sub) => (
+                            <div key={sub.name} className={styles.subPropertyItem}>
+                              <span className={styles.subPropertyName}>{sub.name}</span>
+                              {sub.type && <span className={styles.subPropertyType}>{sub.type}</span>}
+                              {/* {sub.isOptional && <span className={styles.optional}>optional</span>} */}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {renderInput(prop.name, prop.isOptional)}
+                    </div>
+                  ));
+                }
+
                 return arg.properties.map((prop) => (
                   <div key={prop.name} className={styles.paramField}>
                     <label className={styles.paramLabel}>
                       {prop.name}
                       {!prop.isOptional && <span className={styles.required}>*</span>}
-                      {prop.isOptional && <span className={styles.optional}>optional</span>}
+                      {/* {prop.isOptional && <span className={styles.optional}>optional</span>} */}
+                      {prop.type && <span className={styles.paramType}>{prop.type}</span>}
                     </label>
+                    {prop.description && (
+                      <span className={styles.paramDescription}>{prop.description}</span>
+                    )}
                     {renderInput(prop.name, prop.isOptional)}
                   </div>
                 ));
@@ -242,8 +325,24 @@ const QuerySection: React.FC<QuerySectionProps> = ({
                   <label className={styles.paramLabel}>
                     {arg.name}
                     {!arg.isOptional && <span className={styles.required}>*</span>}
-                    {arg.isOptional && <span className={styles.optional}>optional</span>}
+                    {/* {arg.isOptional && <span className={styles.optional}>optional</span>} */}
+                    {arg.type && <span className={styles.paramType}>{arg.type}</span>}
                   </label>
+                  {arg.description && (
+                    <span className={styles.paramDescription}>{arg.description}</span>
+                  )}
+                  {arg.properties && arg.properties.length > 0 && (
+                    <div className={styles.subProperties}>
+                      <span className={styles.subPropertiesLabel}>Properties:</span>
+                      {arg.properties.map((sub) => (
+                        <div key={sub.name} className={styles.subPropertyItem}>
+                          <span className={styles.subPropertyName}>{sub.name}</span>
+                          {sub.type && <span className={styles.subPropertyType}>{sub.type}</span>}
+                          {/* {sub.isOptional && <span className={styles.optional}>optional</span>} */}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   {renderInput(arg.name, arg.isOptional)}
                 </div>
               );

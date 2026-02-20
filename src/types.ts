@@ -1,24 +1,32 @@
+export interface EndpointArgProperty {
+    name: string;
+    isOptional: boolean;
+    description?: string;
+    type?: string;
+    properties?: EndpointArgProperty[];
+}
+
 export interface EndpointArg {
     name: string;
     isOptional: boolean;
+    description?: string;
+    type?: string;
     isObject?: boolean;
-    properties?: {
-        name: string;
-        isOptional: boolean;
-    }[];
+    properties?: EndpointArgProperty[];
 }
 
 export interface EndpointInfo {
     apiKey: string;
     fnName: string;
     args: EndpointArg[];
-    url?: string;
-    method?: string;
+    url: string;
+    method: string;
     requiresAuth?: boolean;
     contentType?: string;
+    description?: string;
 }
 
-export type Methods = "ALL" | "GET" | "POST" | "DELETE" | "PATCH";
+export type Methods = "ALL" | "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 export interface ToastItem {
     id: number;

@@ -123,6 +123,11 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
                                 </div>
                             )}
                         </div>
+                        {selectedEndpoint.description && (
+                            <p className={styles.endpointDescription}>
+                                {selectedEndpoint.description}
+                            </p>
+                        )}
                         <br />
                         <QuerySection
                             selectedEndpoint={selectedEndpoint}

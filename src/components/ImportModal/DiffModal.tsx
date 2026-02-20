@@ -12,6 +12,7 @@ export interface FunctionDiff {
     args?: any[];
     requiresAuth?: boolean;
     contentType?: string;
+    description?: string;
 }
 
 interface DiffModalProps {

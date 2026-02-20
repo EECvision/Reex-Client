@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styles from "./ImportModal.module.css";
 import { useAuth } from "@/providers/AuthContext";
 import { Button } from "../ui/Button/Button";
@@ -42,6 +42,7 @@ interface ImportModalProps {
   addCollectionToHistory?: (name: string, content: any) => Promise<void>;
   onOpenHistory?: () => void;
   hasHistory?: boolean;
+  autoAnalyze?: boolean;
 }
 
 
@@ -64,7 +65,8 @@ const ImportModal: React.FC<ImportModalProps> = ({
   addCollection,
   addCollectionToHistory,
   onOpenHistory,
-  hasHistory = false
+  hasHistory = false,
+  autoAnalyze = false
 }) => {
   // Auth Check
   // We use useSubscription here to get the real-time project_import_count
@@ -82,6 +84,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
   });
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
   const [fetchError, setFetchError] = useState('');
+  const fetchTriggeredRef = useRef(false);
 
   // Persist URL to localStorage
   useEffect(() => {
@@ -156,6 +159,9 @@ const ImportModal: React.FC<ImportModalProps> = ({
   // Effect: Initialize from props
   useEffect(() => {
     if (initialFile) {
+      if (autoAnalyze) {
+        fetchTriggeredRef.current = true;
+      }
       setFile(initialFile);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -178,6 +184,14 @@ const ImportModal: React.FC<ImportModalProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  // Effect: Auto-analyze after URL fetch
+  useEffect(() => {
+    if (fetchTriggeredRef.current && selectedFile && collectionType !== "unknown") {
+      fetchTriggeredRef.current = false;
+      startAnalysis(clientMappings);
+    }
+  }, [selectedFile, collectionType]);
 
   // Effect: Task Complete
   useEffect(() => {
@@ -230,6 +244,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
       }
 
       const file = new File([blob], finalName, { type: 'application/json' });
+      fetchTriggeredRef.current = true;
       setFile(file);
     } catch (err: any) {
       setFetchError(err.message || 'Failed to fetch URL');

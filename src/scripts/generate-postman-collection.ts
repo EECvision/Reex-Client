@@ -147,12 +147,23 @@ const mapToStandardIR = (
       // Override if header is present (doubly sure)
       if (hasAuthHeader) requiresAuth = true;
 
+      // Path Variable Descriptions (from Postman url.variable array)
+      const pathParamDescriptions: Record<string, string> = {};
+      if (typeof request.url === "object" && Array.isArray(request.url.variable)) {
+        request.url.variable.forEach((v: any) => {
+          if (v.key && v.description) {
+            pathParamDescriptions[v.key] = typeof v.description === 'string' ? v.description : v.description.content || '';
+          }
+        });
+      }
+
       functions.push({
         name: functionName,
         method: method as any,
         path: finalPath, // Pre-normalized
-        description: request.description,
+        description: typeof request.description === 'string' ? request.description : request.description?.content,
         pathParams,
+        pathParamDescriptions: Object.keys(pathParamDescriptions).length > 0 ? pathParamDescriptions : undefined,
         queryParams: genericQueryParams,
         bodySchema,
         isPostman: true,

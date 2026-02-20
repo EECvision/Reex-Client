@@ -145,12 +145,23 @@ const mapToStandardIR = (
       // We will flag requiresAuth if there is AT LEAST one non-empty requirement.
       const requiresAuth = Array.isArray(security) && security.length > 0; // Simplified for now
 
+      // Path Param Descriptions (from OpenAPI parameters where in === 'path')
+      const pathParamDescriptions: Record<string, string> = {};
+      if (operation.parameters) {
+        operation.parameters.filter((p: any) => p.in === 'path').forEach((p: any) => {
+          if (p.name && p.description) {
+            pathParamDescriptions[p.name] = p.description;
+          }
+        });
+      }
+
       functions.push({
         name: functionName,
         method: method.toLowerCase() as any,
         path: finalPath, // Pre-normalized to ${param} syntax
         description: operation.summary || operation.description,
         pathParams,
+        pathParamDescriptions: Object.keys(pathParamDescriptions).length > 0 ? pathParamDescriptions : undefined,
         queryParams,
         bodySchema,
         isPostman: false,

@@ -139,6 +139,7 @@ const App = () => {
 
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [autoAnalyzeImport, setAutoAnalyzeImport] = useState(false);
 
   useEffect(() => {
     // Open sidebar by default on desktop
@@ -233,12 +234,14 @@ const App = () => {
           selectedEndpoint={selectedEndpoint}
           onImportClick={() => {
             resetImportTask();
+            setAutoAnalyzeImport(false);
             setShowImportModal(true);
           }}
           hasCollection={hasEndpoints}
           onDeleteClick={() => openDeleteModal()} // No arg = Delete All
           onFetchUrl={(url) => {
             resetImportTask();
+            setAutoAnalyzeImport(true);
             handleFetchUrl(url);
           }}
           isFetching={fetchingUrl}
@@ -291,6 +294,7 @@ const App = () => {
             onClose={() => {
               setShowImportModal(false);
               setImportFile(null);
+              setAutoAnalyzeImport(false);
               resetImportTask();
             }}
             initialFile={importFile}
@@ -309,6 +313,7 @@ const App = () => {
             addCollection={addCollection}
             addCollectionToHistory={addCollectionToHistory}
             hasHistory={recentCollections && recentCollections.length > 0}
+            autoAnalyze={autoAnalyzeImport}
             onOpenHistory={() => {
               setShowHistoryModal(true);
             }}

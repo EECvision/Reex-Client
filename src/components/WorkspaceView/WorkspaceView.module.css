@@ -76,3 +76,10 @@
         margin-top: 4px;
     }
 }
+
+.endpointDescription {
+    margin: 8px 0 0;
+    font-size: 13px;
+    color: var(--text-secondary, #6b7280);
+    line-height: 1.5;
+}

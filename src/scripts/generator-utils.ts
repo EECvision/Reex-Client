@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { Project, SyntaxKind, PropertyAssignment, SourceFile } from "ts-morph";
+import { Project, SyntaxKind, PropertyAssignment, SourceFile, InterfaceDeclaration } from "ts-morph";
 
 // --- Types ---
 
@@ -49,6 +49,7 @@ export interface StandardFunctionDefinition {
     path: string; // pre-normalized path with ${param} syntax
     description?: string;
     pathParams: string[];
+    pathParamDescriptions?: Record<string, string>; // param name -> description
     queryParams?: GenericParam[];
     bodySchema?: any; // Raw JSON (Postman) or OpenAPI Schema
     isPostman?: boolean;
@@ -566,9 +567,31 @@ export const processAndMergeModules = (
 
             // Cleanup unused interfaces
             const remainingCode = variableDecl.getInitializer()?.getText() || "";
-            sourceFile.getInterfaces().forEach(iface => {
-                if (!remainingCode.includes(iface.getName())) iface.remove();
+            const interfaces = sourceFile.getInterfaces();
+            const interfacesToRemove: InterfaceDeclaration[] = [];
+
+            interfaces.forEach(iface => {
+                const name = iface.getName();
+                const usedInApi = remainingCode.includes(name);
+
+                // If used in API object, keep it.
+                if (usedInApi) return;
+
+                // If not used in API, check if used in OTHER interfaces
+                let usedInOtherInterface = false;
+                for (const other of interfaces) {
+                    if (other.getName() !== name && other.getText().includes(name)) {
+                        usedInOtherInterface = true;
+                        break;
+                    }
+                }
+
+                if (!usedInOtherInterface) {
+                    interfacesToRemove.push(iface);
+                }
             });
+
+            interfacesToRemove.forEach(i => i.remove());
         }
 
         // Format the file using ts-morph's internal formatter
@@ -674,9 +697,23 @@ export const generateStandardModuleContent = (
 
             // Build JSDoc comments
             const jsdocParts: string[] = [];
+            if (func.description) jsdocParts.push("@description " + func.description.replace(/\n/g, " ").trim());
             if (func.requiresAuth) jsdocParts.push("@auth");
             if (func.contentType && func.contentType !== 'application/json') {
                 jsdocParts.push("@contentType " + func.contentType);
+            }
+            // Add @param tags for path params with descriptions
+            if (func.pathParamDescriptions) {
+                func.pathParams.forEach(param => {
+                    const desc = func.pathParamDescriptions?.[param];
+                    if (desc) jsdocParts.push(`@param ${param} ${desc.replace(/\n/g, " ").trim()}`);
+                });
+            }
+            // Add @param tags for query params with descriptions
+            if (func.queryParams) {
+                func.queryParams.forEach(qp => {
+                    if (qp.description) jsdocParts.push(`@param ${qp.name} ${qp.description.replace(/\n/g, " ").trim()}`);
+                });
             }
 
             const jsdocComment = jsdocParts.length > 0
@@ -867,19 +904,40 @@ export const generateTypesFromPostmanBody = (body: any, entityName: string): str
         }
     }
 
-    const fields: string[] = [];
-    Object.entries(parsed).forEach(([key, value]) => {
-        const type = inferTypeFromExample(value);
-        const optional = value === null || value === undefined ? "?" : "";
-        fields.push(`  ${sanitizePropertyName(key)}${optional}: ${type};`);
-    });
+    // Collect all generated interfaces (main + sub-interfaces)
+    const interfaces: string[] = [];
 
-    if (fields.length === 0) return "";
-    return `
-interface ${entityName}Payload {
-${fields.join("\n")}
-}
-`;
+    const generateInterface = (obj: Record<string, any>, interfaceName: string) => {
+        const fields: string[] = [];
+        Object.entries(obj).forEach(([key, value]) => {
+            const safeName = sanitizePropertyName(key);
+            const optional = value === null || value === undefined ? "?" : "";
+
+            if (Array.isArray(value) && value.length > 0 && typeof value[0] === "object" && value[0] !== null) {
+                // Array of objects → generate a sub-interface for the item
+                const itemInterfaceName = interfaceName + toPascalCase(key) + "Item";
+                generateInterface(value[0], itemInterfaceName);
+                fields.push(`  ${safeName}${optional}: ${itemInterfaceName}[];`);
+            } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+                // Nested object → generate a sub-interface
+                const subInterfaceName = interfaceName + toPascalCase(key);
+                generateInterface(value, subInterfaceName);
+                fields.push(`  ${safeName}${optional}: ${subInterfaceName};`);
+            } else {
+                const type = inferTypeFromExample(value);
+                fields.push(`  ${safeName}${optional}: ${type};`);
+            }
+        });
+
+        // Always push the interface, even if empty, to ensure references remain valid
+        interfaces.push(`\ninterface ${interfaceName} {\n${fields.join("\n")}\n}\n`);
+    };
+
+    generateInterface(parsed, entityName + "Payload");
+
+    if (interfaces.length === 0) return "";
+    // Return generated interfaces (sub-interfaces first, then root)
+    return interfaces.join("\n");
 };
 
 // --- Shared Logic ---
