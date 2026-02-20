@@ -495,7 +495,7 @@ export const generateModuleTemplate = (
     contentParts.push("");
 
     contentParts.push("export const " + moduleName + "Api = {");
-    contentParts.push(functionDefinitions.join(",\n\n"));
+    contentParts.push(functionDefinitions.join(",\n\n\n"));
     contentParts.push("};");
 
     return contentParts.join("\n") + "\n";
@@ -719,7 +719,7 @@ export const generateStandardModuleContent = (
             const jsdocComment = jsdocParts.length > 0
                 ? "  /** " + jsdocParts.join(' ') + " */\n"
                 : "";
-            functionDefinitions.push(jsdocComment + signature + "\n" + body + "\n");
+            functionDefinitions.push(jsdocComment + signature + "\n" + body);
         });
 
         generatedModules.push({
