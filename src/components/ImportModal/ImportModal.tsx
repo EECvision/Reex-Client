@@ -3,7 +3,7 @@ import styles from "./ImportModal.module.css";
 import { useAuth } from "@/providers/AuthContext";
 import { Button } from "../ui/Button/Button";
 import { api } from "@/services/api";
-import { Loader2, Globe, History as HistoryIcon, AlertCircle } from "lucide-react";
+import { Loader2, Globe, History as HistoryIcon, AlertCircle, X } from "lucide-react";
 import DiffModal, { FunctionDiff } from "./DiffModal";
 import { Modal } from "../ui/Modal/Modal";
 import { DiffResult } from "./importTypes";
@@ -69,11 +69,13 @@ const ImportModal: React.FC<ImportModalProps> = ({
   autoAnalyze = false
 }) => {
   // Auth Check
-  // We use useSubscription here to get the real-time project_import_count
   const { user, isPro } = useSubscription();
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'file' | 'url'>('file');
 
   // URL Fetch State
   const [fetchUrl, setFetchUrl] = useState(() => {
@@ -109,7 +111,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
     handleDrop,
     handleChange,
     resetFile,
-    setFile // Exposed process logic
+    setFile
   } = useFileHandler(undefined, onError);
 
   const {
@@ -246,6 +248,8 @@ const ImportModal: React.FC<ImportModalProps> = ({
       const file = new File([blob], finalName, { type: 'application/json' });
       fetchTriggeredRef.current = true;
       setFile(file);
+      // Switch to file tab so user can see the selected file
+      setActiveTab('file');
     } catch (err: any) {
       setFetchError(err.message || 'Failed to fetch URL');
     } finally {
@@ -260,6 +264,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
     resetSelection();
     setFetchUrl('');
     setFetchError('');
+    setActiveTab('file');
   };
 
   const handleModalClose = () => {
@@ -270,15 +275,21 @@ const ImportModal: React.FC<ImportModalProps> = ({
 
   if (!isOpen) return null;
 
-  const footerContent = (
+  // Usage info for footer
+  const remainingImports = !isStandaloneMode && !isPro && user?.project_import_count !== undefined
+    ? FREE_PROJECT_IMPORT_LIMIT - user.project_import_count
+    : null;
+
+  const footerCTA = (
     <>
       {step === "upload" && (
         <Button
           onClick={() => startAnalysis(clientMappings)}
           disabled={!selectedFile || collectionType === "unknown" || isFetchingUrl}
           variant="primary"
+          className={styles.analyzeBtn}
         >
-          Analyze Changes
+          Analyze Changes →
         </Button>
       )}
 
@@ -287,7 +298,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
           <Button
             onClick={() => {
               setStep("upload");
-              setDiffs([]); // Clear diffs when going back? logic choice.
+              setDiffs([]);
             }}
             variant="secondary"
           >
@@ -310,32 +321,16 @@ const ImportModal: React.FC<ImportModalProps> = ({
       )}
 
       {step === "success" && (
-        <Button onClick={handleModalClose} variant="primary">
-          Done
-        </Button>
+        <Button onClick={handleModalClose} variant="primary">Done</Button>
       )}
     </>
   );
 
   const getTitle = () => {
-    let baseTitle = "Import API Collection";
-    if (step === "analyzing") baseTitle = "Analyzing Collection...";
-    if (step === "review") baseTitle = "Review Changes";
-    if (step === "updating") baseTitle = "Updating Collection...";
-
-    // Add Usage Badge for Hobby Users in Project Mode
-    if (!isStandaloneMode && !isPro && user?.project_import_count !== undefined) {
-      return (
-        <div className={styles.headerTitleWrapper}>
-          {baseTitle}
-          <span className={styles.usageBadge}>
-            {user.project_import_count}/{FREE_PROJECT_IMPORT_LIMIT} Free Imports
-          </span>
-        </div>
-      );
-    }
-
-    return baseTitle;
+    if (step === "analyzing") return "Analyzing Collection...";
+    if (step === "review") return "Review Changes";
+    if (step === "updating") return "Updating Collection...";
+    return "Import API Collection";
   };
 
   return (
@@ -343,80 +338,140 @@ const ImportModal: React.FC<ImportModalProps> = ({
       <Modal
         isOpen={isOpen}
         onClose={handleModalClose}
-        title={getTitle()}
+        title={
+          <div className={styles.headerTitleWrapper}>
+            <span>{getTitle()}</span>
+            {!isStandaloneMode && !isPro && user?.project_import_count !== undefined && step === 'upload' && (
+              <span className={styles.usageBadge}>
+                <span className={styles.usageDots}>
+                  <span />
+                  <span />
+                  <span />
+                </span>
+                {user.project_import_count}/{FREE_PROJECT_IMPORT_LIMIT} imports used
+              </span>
+            )}
+          </div>
+        }
         size="lg"
-        footer={step !== "analyzing" && step !== "updating" ? footerContent : undefined}
+        footer={step !== "analyzing" && step !== "updating" ? (
+          <div className={styles.footerBar}>
+            <div className={styles.footerLeft}>
+              {remainingImports !== null && (
+                <>
+                  <span className={styles.footerUsage}>
+                    {remainingImports} import{remainingImports !== 1 ? 's' : ''} remaining
+                  </span>
+                  <span className={styles.footerDot}>·</span>
+                  <a href="#" className={styles.footerUpgrade}>Upgrade for unlimited</a>
+                </>
+              )}
+            </div>
+            <div className={styles.footerRight}>
+              {footerCTA}
+            </div>
+          </div>
+        ) : undefined}
         showCloseButton={step !== "analyzing" && step !== "updating"}
         closeOnOverlayClick={step !== "analyzing" && step !== "updating"}
       >
         <div className={styles.body}>
           {step === "upload" && (
             <>
-              <DropZone
-                dragActive={dragActive}
-                selectedFile={selectedFile}
-                collectionType={collectionType}
-                inputRef={inputRef as React.RefObject<HTMLInputElement>}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-                onChange={handleChange}
-                onClearFile={resetFile}
-              />
-
-              {/* URL Import Section */}
-              <div className={styles.urlSection}>
-                <div className={styles.urlDivider}>
-                  <span>or import from URL</span>
-                </div>
-                <div className={styles.urlInputRow}>
-                  <div className={styles.urlInputWrapper}>
-                    <Globe size={18} className={styles.urlIcon} />
-                    <input
-                      type="text"
-                      placeholder="https://example.com/api-docs.json"
-                      className={`${styles.urlInput} ${fetchError ? styles.urlInputError : ''}`}
-                      value={fetchUrl}
-                      onChange={(e) => {
-                        setFetchUrl(e.target.value);
-                        if (fetchError) setFetchError('');
-                      }}
-                      onKeyDown={(e) => e.key === 'Enter' && handleFetchFromUrl()}
-                      disabled={isFetchingUrl}
-                    />
-                  </div>
-                  <Button
-                    onClick={handleFetchFromUrl}
-                    disabled={!fetchUrl.trim() || isFetchingUrl}
-                    variant="primary"
-                    className={styles.urlFetchBtn}
-                  >
-                    {isFetchingUrl ? (
-                      <><Loader2 size={16} className={styles.spin} /> Fetching...</>
-                    ) : (
-                      'Fetch'
-                    )}
-                  </Button>
-                </div>
-                {fetchError && (
-                  <div className={styles.urlError}>
-                    <AlertCircle size={14} />
-                    {fetchError}
-                  </div>
-                )}
+              {/* Tab Bar */}
+              <div className={styles.tabBar}>
+                <button
+                  className={`${styles.tab} ${activeTab === 'file' ? styles.tabActive : ''}`}
+                  onClick={() => setActiveTab('file')}
+                >
+                  Upload File
+                </button>
+                <button
+                  className={`${styles.tab} ${activeTab === 'url' ? styles.tabActive : ''}`}
+                  onClick={() => setActiveTab('url')}
+                >
+                  From URL
+                </button>
               </div>
 
-              {onOpenHistory && hasHistory && (
-                <div className={styles.historyActions}>
-                  <Button
-                    variant="ghost"
-                    className={styles.historyBtn}
-                    onClick={onOpenHistory}
-                    leftIcon={<HistoryIcon size={16} />}
-                  >
-                    Import from recent collection
-                  </Button>
+              {activeTab === 'file' ? (
+                <>
+                  <DropZone
+                    dragActive={dragActive}
+                    selectedFile={selectedFile}
+                    collectionType={collectionType}
+                    inputRef={inputRef as React.RefObject<HTMLInputElement>}
+                    onDragEnter={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDragOver={handleDrag}
+                    onDrop={handleDrop}
+                    onChange={handleChange}
+                    onClearFile={resetFile}
+                  />
+
+                  {onOpenHistory && hasHistory && (
+                    <div className={styles.historyActions}>
+                      <Button
+                        variant="ghost"
+                        className={styles.historyBtn}
+                        onClick={onOpenHistory}
+                        leftIcon={<HistoryIcon size={14} />}
+                      >
+                        Import from recent collection
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* URL Tab */
+                <div className={styles.urlTab}>
+                  <div className={styles.urlInputRow}>
+                    <div className={styles.urlInputWrapper}>
+                      <Globe size={16} className={styles.urlIcon} />
+                      <input
+                        type="text"
+                        placeholder="https://api.example.com/docs.json"
+                        className={`${styles.urlInput} ${fetchError ? styles.urlInputError : ''}`}
+                        value={fetchUrl}
+                        onChange={(e) => {
+                          setFetchUrl(e.target.value);
+                          if (fetchError) setFetchError('');
+                        }}
+                        onKeyDown={(e) => e.key === 'Enter' && handleFetchFromUrl()}
+                        disabled={isFetchingUrl}
+                        autoFocus
+                      />
+                    </div>
+                    <Button
+                      onClick={handleFetchFromUrl}
+                      disabled={!fetchUrl.trim() || isFetchingUrl}
+                      variant="primary"
+                      className={styles.urlFetchBtn}
+                    >
+                      {isFetchingUrl ? (
+                        <><Loader2 size={15} className={styles.spin} /> Fetching...</>
+                      ) : 'Fetch'}
+                    </Button>
+                  </div>
+                  {fetchError && (
+                    <div className={styles.urlError}>
+                      <AlertCircle size={13} />
+                      {fetchError}
+                    </div>
+                  )}
+
+                  {onOpenHistory && hasHistory && (
+                    <div className={styles.historyActions}>
+                      <Button
+                        variant="ghost"
+                        className={styles.historyBtn}
+                        onClick={onOpenHistory}
+                        leftIcon={<HistoryIcon size={14} />}
+                      >
+                        Import from recent collection
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </>

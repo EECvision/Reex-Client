@@ -51,6 +51,16 @@ interface QuerySectionProps {
   onInputModeChange?: (mode: InputMode) => void;
 }
 
+const getTypeColor = (type: string) => {
+  const t = type.toLowerCase();
+  if (t.includes('string')) return '#059669'; // emerald-600
+  if (t.includes('int') || t.includes('number') || t.includes('float') || t.includes('double')) return '#2563eb'; // blue-600
+  if (t.includes('bool')) return '#dc2626'; // red-600
+  if (t.includes('array') || t.includes('[]') || t.includes('list')) return '#d97706'; // amber-600
+  if (t.includes('object') || t.includes('map') || t.includes('dict')) return '#7c3aed'; // violet-600
+  return '#64748b'; // slate-500
+};
+
 const QuerySection: React.FC<QuerySectionProps> = ({
   selectedEndpoint,
   currentParams,
@@ -282,7 +292,7 @@ const QuerySection: React.FC<QuerySectionProps> = ({
                         {prop.name}
                         {!prop.isOptional && <span className={styles.required}>*</span>}
                         {/* {prop.isOptional && <span className={styles.optional}>optional</span>} */}
-                        {prop.type && <span className={styles.paramType}>{prop.type}</span>}
+                        {prop.type && <span className={styles.paramType} style={{ color: getTypeColor(prop.type) }}>{prop.type}</span>}
                       </label>
                       {prop.description && (
                         <span className={styles.paramDescription}>{prop.description}</span>
@@ -293,7 +303,7 @@ const QuerySection: React.FC<QuerySectionProps> = ({
                           {prop.properties.map((sub) => (
                             <div key={sub.name} className={styles.subPropertyItem}>
                               <span className={styles.subPropertyName}>{sub.name}</span>
-                              {sub.type && <span className={styles.subPropertyType}>{sub.type}</span>}
+                              {sub.type && <span className={styles.subPropertyType} style={{ color: getTypeColor(sub.type) }}>{sub.type}</span>}
                               {/* {sub.isOptional && <span className={styles.optional}>optional</span>} */}
                             </div>
                           ))}
@@ -310,7 +320,7 @@ const QuerySection: React.FC<QuerySectionProps> = ({
                       {prop.name}
                       {!prop.isOptional && <span className={styles.required}>*</span>}
                       {/* {prop.isOptional && <span className={styles.optional}>optional</span>} */}
-                      {prop.type && <span className={styles.paramType}>{prop.type}</span>}
+                      {prop.type && <span className={styles.paramType} style={{ color: getTypeColor(prop.type) }}>{prop.type}</span>}
                     </label>
                     {prop.description && (
                       <span className={styles.paramDescription}>{prop.description}</span>
@@ -326,7 +336,7 @@ const QuerySection: React.FC<QuerySectionProps> = ({
                     {arg.name}
                     {!arg.isOptional && <span className={styles.required}>*</span>}
                     {/* {arg.isOptional && <span className={styles.optional}>optional</span>} */}
-                    {arg.type && <span className={styles.paramType}>{arg.type}</span>}
+                    {arg.type && <span className={styles.paramType} style={{ color: getTypeColor(arg.type) }}>{arg.type}</span>}
                   </label>
                   {arg.description && (
                     <span className={styles.paramDescription}>{arg.description}</span>
@@ -337,7 +347,7 @@ const QuerySection: React.FC<QuerySectionProps> = ({
                       {arg.properties.map((sub) => (
                         <div key={sub.name} className={styles.subPropertyItem}>
                           <span className={styles.subPropertyName}>{sub.name}</span>
-                          {sub.type && <span className={styles.subPropertyType}>{sub.type}</span>}
+                          {sub.type && <span className={styles.subPropertyType} style={{ color: getTypeColor(sub.type) }}>{sub.type}</span>}
                           {/* {sub.isOptional && <span className={styles.optional}>optional</span>} */}
                         </div>
                       ))}
