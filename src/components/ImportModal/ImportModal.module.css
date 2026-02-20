@@ -99,7 +99,7 @@
   padding-bottom: 0.5rem;
   /* Match DropZone min-height (approx 210px + padding) to prevent layout shift */
   min-height: 258px;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .urlInputRow {
