@@ -58,19 +58,18 @@ const DropZone: React.FC<DropZoneProps> = ({
 
             {selectedFile ? (
                 <div className={styles.fileInfo}>
+                    <button
+                        className={styles.clearBtnCorner}
+                        onClick={(e) => { e.stopPropagation(); onClearFile(); }}
+                        title="Remove file"
+                    >
+                        <X size={16} />
+                    </button>
                     <div className={styles.fileDetails}>
                         <span className={styles.fileName}>{selectedFile.name}</span>
                         {renderCollectionBadge(collectionType)}
                     </div>
                     <span className={styles.fileSize}>{(selectedFile.size / 1024).toFixed(1)} KB</span>
-                    <button
-                        className={styles.clearBtn}
-                        onClick={(e) => { e.stopPropagation(); onClearFile(); }}
-                        title="Remove file"
-                    >
-                        <X size={14} />
-                        Remove
-                    </button>
                 </div>
             ) : (
                 <div className={styles.placeholder}>

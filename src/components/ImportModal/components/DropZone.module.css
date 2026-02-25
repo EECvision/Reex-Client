@@ -12,6 +12,7 @@
     min-height: 210px;
     gap: 0.5rem;
     text-align: center;
+    position: relative;
 }
 
 .dropZone:hover {
@@ -136,23 +137,27 @@
     color: var(--text-muted, #64748b);
 }
 
-.clearBtn {
+.clearBtnCorner {
+    position: absolute;
+    top: 12px;
+    right: 12px;
     display: flex;
     align-items: center;
-    gap: 4px;
-    font-size: 0.75rem;
-    color: #ef4444;
-    background: none;
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    border-radius: 6px;
-    padding: 4px 10px;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    color: var(--text-secondary, #94a3b8);
+    background: transparent;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 50%;
     cursor: pointer;
-    margin-top: 0.25rem;
-    transition: background 0.15s;
+    transition: all 0.2s ease;
 }
 
-.clearBtn:hover {
+.clearBtnCorner:hover {
     background: rgba(239, 68, 68, 0.08);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
 }
 
 /* === Collection Type Badges === */

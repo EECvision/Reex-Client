@@ -911,7 +911,7 @@ export const generateTypesFromPostmanBody = (body: any, entityName: string): str
         const fields: string[] = [];
         Object.entries(obj).forEach(([key, value]) => {
             const safeName = sanitizePropertyName(key);
-            const optional = value === null || value === undefined ? "?" : "";
+            const optional = "?";
 
             if (Array.isArray(value) && value.length > 0 && typeof value[0] === "object" && value[0] !== null) {
                 // Array of objects → generate a sub-interface for the item

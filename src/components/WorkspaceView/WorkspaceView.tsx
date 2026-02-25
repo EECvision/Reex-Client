@@ -108,7 +108,7 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
         <div className={styles.workspace}>
             {selectedEndpoint ? (
                 <>
-                    <div style={{ padding: '1rem', height: '100%', overflowY: 'auto' }}>
+                    <div style={{ padding: '1rem 1rem 4rem 1rem', height: '100%', overflowY: 'auto' }}>
                         <div className={styles.badgeRow}>
                             <BadgeGroup
                                 label={method || ""}

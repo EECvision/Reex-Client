@@ -34,31 +34,16 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
     const [params, setParams] = useState<ParamsState>({});
     const [rawPayloads, setRawPayloads] = useState<RawPayloadState>({});
     const [inputModes, setInputModes] = useState<InputModeState>({});
-    const [result, setResult] = useState<any>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [results, setResults] = useState<Record<string, any>>({});
+    const [errors, setErrors] = useState<Record<string, string | null>>({});
     const [loading, setLoading] = useState(false);
 
-    const [interfacePreview, setInterfacePreview] = useState<string | null>(null);
+    const [interfacePreviews, setInterfacePreviews] = useState<Record<string, string | null>>({});
     const [savingInterface, setSavingInterface] = useState(false);
     const [copied, setCopied] = useState(false);
-    const [executedCurl, setExecutedCurl] = useState<string | null>(null);
+    const [executedCurls, setExecutedCurls] = useState<Record<string, string | null>>({});
 
-    const clearResult = () => {
-        setResult(null);
-        setError(null);
-        setInterfacePreview(null);
-        setExecutedCurl(null);
-    };
-
-    // Reset result when endpoint changes key
-    // We use a combination of apiKey + fnName as unique identity
-    const endpointKey = selectedEndpoint ? `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}` : null;
-
-    // We need useEffect to clear result when endpoint changes.
-    // However, we must be careful not to clear if it's the SAME endpoint object reference but no actual change?
-    // Using a key is safer.
-
-
+    const currentKey = selectedEndpoint ? `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}` : null;
 
     const tryParse = (value: any) => {
         // Don't try to parse File objects or non-strings
@@ -124,10 +109,10 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
     };
 
     const handleSubmit = async () => {
-        if (!selectedEndpoint) return;
+        if (!selectedEndpoint || !currentKey) return;
 
-        setResult(null);
-        setError(null);
+        setResults(prev => ({ ...prev, [currentKey]: null }));
+        setErrors(prev => ({ ...prev, [currentKey]: null }));
         setLoading(true);
         // console.log("[Execution] Config at submit:", projectConfig);
 
@@ -293,7 +278,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
                     curlCmd += ` \\\n${curlHeaders.join(" \\\n")}`;
                 }
             }
-            setExecutedCurl(curlCmd);
+            setExecutedCurls(prev => ({ ...prev, [currentKey]: curlCmd }));
             // -----------------------------
 
             const execRes: any = await api.executeRequest({
@@ -315,7 +300,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             const res = execRes.data;
             const payload = res?.data ?? res;
 
-            setResult(payload);
+            setResults(prev => ({ ...prev, [currentKey]: payload }));
 
             // Get interface preview
             if (payload) {
@@ -325,7 +310,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
                         fnName: selectedEndpoint.fnName,
                     });
                     if (previewData && previewData.success) {
-                        setInterfacePreview((previewData as any).interfaceString);
+                        setInterfacePreviews(prev => ({ ...prev, [currentKey]: (previewData as any).interfaceString }));
                     }
                 } catch (e) {
                     console.error("Failed to generate preview", e);
@@ -333,20 +318,21 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             }
         } catch (err: any) {
             console.error(err);
-            setError(err.message || "Unknown error");
+            setErrors(prev => ({ ...prev, [currentKey]: err.message || "Unknown error" }));
         } finally {
             setLoading(false);
         }
     };
 
     const handleSaveInterface = async () => {
-        if (!selectedEndpoint || !result) return;
+        const currentResult = currentKey ? results[currentKey] : null;
+        if (!selectedEndpoint || !currentResult) return;
         setSavingInterface(true);
         try {
             const data = await api.saveTypes({
                 apiKey: selectedEndpoint.apiKey,
                 fnName: selectedEndpoint.fnName,
-                data: result,
+                data: currentResult,
             });
 
             if (data && data.success) {
@@ -395,31 +381,22 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
     };
 
     const handleCopy = () => {
-        navigator.clipboard.writeText(JSON.stringify(result, null, 2));
+        const currentResult = currentKey ? results[currentKey] : null;
+        navigator.clipboard.writeText(JSON.stringify(currentResult, null, 2));
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
 
 
 
-    const prevKeyRef = useRef<string | null>(null);
-    const currentKey = selectedEndpoint ? `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}` : null;
-
-    useEffect(() => {
-        if (currentKey !== prevKeyRef.current) {
-            clearResult();
-            prevKeyRef.current = currentKey;
-        }
-    }, [currentKey]);
-
     return {
         selectedEndpoint,
         // selectEndpoint removed - controlled by parent
         params,
-        result,
-        error,
+        result: currentKey ? results[currentKey] : null,
+        error: currentKey ? errors[currentKey] : null,
         loading,
-        interfacePreview,
+        interfacePreview: currentKey ? interfacePreviews[currentKey] : null,
         savingInterface,
         copied,
         handleParamChange,
@@ -429,8 +406,8 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
         handleCopy,
         getComputedUrl,
         // generatedCurl replaced by executedCurl
-        generatedCurl: executedCurl || "",
-        getGeneratedCurl: () => executedCurl || "", // Backward compat if needed or just replace usage
+        generatedCurl: currentKey ? (executedCurls[currentKey] || "") : "",
+        getGeneratedCurl: () => currentKey ? (executedCurls[currentKey] || "") : "", // Backward compat if needed or just replace usage
         // Raw payload mode
         rawPayload: getCurrentRawPayload(),
         inputMode: getCurrentInputMode(),

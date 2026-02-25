@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
+import yaml from "js-yaml";
 
 export async function POST(req: NextRequest) {
     try {
@@ -15,10 +16,19 @@ export async function POST(req: NextRequest) {
             }
         });
 
-        const data = response.data;
+        let data = response.data;
+
+        // If it's a string, attempt to parse it as YAML (which also handles JSON)
+        if (typeof data === 'string') {
+            try {
+                data = yaml.load(data);
+            } catch (e) {
+                console.warn(`[FETCH-URL] Could not parse response string as YAML/JSON:`, e);
+            }
+        }
 
         // If OpenAPI spec has no servers, inject one from the source URL
-        if ((data.openapi || data.swagger) && !data.servers && !data.host) {
+        if (data && typeof data === 'object' && (data.openapi || data.swagger) && !data.servers && !data.host) {
             try {
                 const sourceUrl = new URL(url);
                 const baseUrl = `${sourceUrl.protocol}//${sourceUrl.host}`;

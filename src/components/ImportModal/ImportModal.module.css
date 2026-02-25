@@ -98,7 +98,7 @@
   gap: 0.75rem;
   padding-bottom: 0.5rem;
   /* Match DropZone min-height (approx 210px + padding) to prevent layout shift */
-  min-height: 258px;
+  min-height: 248px;
   justify-content: flex-start;
 }
 

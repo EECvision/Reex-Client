@@ -207,7 +207,6 @@ const Navbar: React.FC<NavbarProps> = ({
     if (onCustomHeadersChange) onCustomHeadersChange({});
     setDraftToken("");
     setDraftHeaders([]);
-    setIsAuthOpen(false);
   };
 
   const hasChanges = () => {
