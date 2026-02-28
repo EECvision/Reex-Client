@@ -123,8 +123,10 @@ export const calculateFunctionName = (method: string, operationId: string): stri
         // Remove leading HTTP method if present in different formats:
         // 1. "GET " (with space) - REST format
         .replace(/^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)\s+/i, "")
-        // 2. "getApi", "postApi", etc. - camelCase format with method prefix
-        .replace(/^(get|post|put|delete|patch|options|head)(?=Api)/i, "")
+        // 1.5. "get_", "post_" - snake_case format
+        .replace(/^(get|post|put|delete|patch|options|head)_/i, "")
+        // 2. "getWallet", "postUser" - camelCase format with ANY uppercase letter after it
+        .replace(/^(get|post|put|delete|patch|options|head)(?=[A-Z])/i, "")
         // Remove "api/vX/" or "api/" prefix (REST paths)
         .replace(/^api\/v\d+\//i, "")
         .replace(/^api\//i, "")
