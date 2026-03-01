@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import styles from "./Navbar.module.css";
 import { Button } from "../ui/Button/Button";
-import { ChevronDown, Download, Plus, Trash2, FileText, Loader2, Folder, Lock, X, Pencil, Menu } from "lucide-react";
+import { ChevronDown, Download, Plus, Trash2, FileText, Loader2, Folder, Lock, X, Pencil, Menu, PanelLeft } from "lucide-react";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
 import UserMenu from "../UserMenu/UserMenu";
 import { BaseUrlInput } from "./BaseUrlInput";
@@ -238,7 +238,7 @@ const Navbar: React.FC<NavbarProps> = ({
             className={styles.sidebarToggle}
             onClick={onToggleSidebar}
           >
-            <Menu size={16} />
+            <PanelLeft size={16} />
           </Button>
         )}
 

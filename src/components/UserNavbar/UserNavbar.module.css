@@ -63,7 +63,6 @@
 
 .sidebarToggle {
     display: flex;
-    /* Rendered conditionally via hasSidebar in JSX */
     align-items: center;
     justify-content: center;
     width: 36px;
@@ -73,6 +72,8 @@
     background: var(--card-bg, #fff);
     color: var(--text-primary, #374151);
     cursor: pointer;
+    margin-left: 8px;
+    padding: 0 !important;
     flex-shrink: 0;
 }
 

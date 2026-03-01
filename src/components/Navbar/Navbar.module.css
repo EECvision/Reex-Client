@@ -73,7 +73,7 @@
 }
 
 .sidebarToggle {
-  display: block !important;
+  display: flex !important;
   flex-shrink: 0;
 }
 
