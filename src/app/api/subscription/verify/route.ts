@@ -2,13 +2,12 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { createClient } from "@supabase/supabase-js";
 import axios from "axios";
-import { addMonths } from "date-fns";
-
-// Define your plans securely (avoid trusting client)
-const PRO_PLAN_ID = process.env.NEXT_PUBLIC_FLUTTERWAVE_PLAN_ID;
+import { addMonths, addYears } from "date-fns";
+import { PRICING, PLAN_IDS } from "@/config/pricing";
 
 const PLANS = {
-    ...(PRO_PLAN_ID ? { [PRO_PLAN_ID]: { amount: 10, currency: "USD" } } : {}),
+    ...(PLAN_IDS.monthly ? { [PLAN_IDS.monthly]: { amount: PRICING.monthly, currency: "USD" } } : {}),
+    ...(PLAN_IDS.yearly ? { [PLAN_IDS.yearly]: { amount: PRICING.yearly, currency: "USD" } } : {}),
 };
 
 export async function POST(req: Request) {
@@ -19,7 +18,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { transaction_id, plan_id } = body;
+        const { transaction_id, plan_id, billing_cycle } = body;
 
         if (!transaction_id || !plan_id) {
             return new NextResponse("Missing transaction_id or plan_id", { status: 400 });
@@ -77,8 +76,10 @@ export async function POST(req: Request) {
                 return new NextResponse("Transaction already processed", { status: 409 });
             }
 
-            // 4. DATE LOGIC: Use date-fns for accurate monthly calculation
-            const currentPeriodEnd = addMonths(new Date(), 1);
+            // 4. DATE LOGIC: Use date-fns for accurate calculation based on billing cycle
+            const currentPeriodEnd = billing_cycle === 'yearly'
+                ? addYears(new Date(), 1)
+                : addMonths(new Date(), 1);
 
             // 5. Update User
             const { error } = await supabase

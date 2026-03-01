@@ -3,6 +3,7 @@ import styles from "./InvoiceModal.module.css";
 import { Modal } from "@/components/ui/Modal/Modal";
 import { Button } from "@/components/ui/Button/Button";
 import { Download, CreditCard, Calendar, CheckCircle, XCircle } from "lucide-react";
+import { PLAN_IDS } from "@/config/pricing";
 
 interface InvoiceModalProps {
     isOpen: boolean;
@@ -65,7 +66,11 @@ export const InvoiceModal = ({ isOpen, onClose, invoice }: InvoiceModalProps) =>
                 <div className={styles.lineItems}>
                     <h4 className={styles.sectionTitle}>Line Items</h4>
                     <div className={styles.lineItem}>
-                        <span>{invoice.plan_id === process.env.NEXT_PUBLIC_FLUTTERWAVE_PLAN_ID ? "Pro Developer Plan" : invoice.plan_id || "Subscription"}</span>
+                        <span>{
+                            invoice.plan_id === PLAN_IDS.monthly ? "Pro Developer Plan (Monthly)" :
+                                invoice.plan_id === PLAN_IDS.yearly ? "Pro Developer Plan (Yearly)" :
+                                    invoice.plan_id || "Subscription"
+                        }</span>
                         <span>{invoice.currency} {invoice.amount}</span>
                     </div>
                     <div className={styles.total}>

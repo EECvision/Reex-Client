@@ -22,6 +22,50 @@
     font-size: 18px;
 }
 
+.billingToggle {
+    display: flex;
+    background: var(--card-bg, #f4f4f5);
+    border: 1px solid var(--border-color);
+    padding: 4px;
+    border-radius: 99px;
+    width: fit-content;
+    margin: 0 auto 48px auto;
+}
+
+.toggleBtn {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 99px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toggleBtn.active {
+    background: var(--primary-color, #2563eb);
+    color: white;
+}
+
+.saveBadge {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--success-color, #10b981);
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 99px;
+    font-weight: 700;
+}
+
+.toggleBtn.active .saveBadge {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
 .currentPlan {
     background: linear-gradient(135deg, var(--menu-bg) 0%, var(--hover-bg) 100%);
     border: 1px solid var(--border-color);

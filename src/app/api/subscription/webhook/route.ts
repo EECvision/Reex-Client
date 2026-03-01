@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { addMonths } from "date-fns";
+import { addMonths, addYears } from "date-fns";
+import { PLAN_IDS } from "@/config/pricing";
 
 export async function POST(req: Request) {
     const secretHash = process.env.FLUTTERWAVE_SECRET_HASH;
@@ -24,8 +25,13 @@ export async function POST(req: Request) {
             // Logic to handle successful recurrent charge
             // We need to find the user by customer email or customer code
             const email = data.customer.email;
-            // DATE LOGIC: Use date-fns to add exactly 1 month
-            const currentPeriodEnd = addMonths(new Date(), 1);
+
+            // Check plan ID from flutterwave data to determine the renewal duration
+            const planId = data.plan;
+            const isYearly = planId && planId === PLAN_IDS.yearly;
+
+            // DATE LOGIC: Use date-fns to add exact duration
+            const currentPeriodEnd = isYearly ? addYears(new Date(), 1) : addMonths(new Date(), 1);
 
             const { error } = await supabase
                 .from("users")

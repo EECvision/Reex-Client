@@ -13,6 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import LoginModal from "@/components/LoginModal/LoginModal";
 
 import { SubscriptionStatusModal } from "./_components/SubscriptionStatusModal";
+import { PRICING, PLAN_IDS } from "@/config/pricing";
 
 export default function SubscriptionPage() {
     const router = useRouter();
@@ -20,6 +21,7 @@ export default function SubscriptionPage() {
     const queryClient = useQueryClient();
     const [isProcessing, setIsProcessing] = useState(false);
     const [showLogin, setShowLogin] = useState(false);
+    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
     // Status Modal State
     const [statusModal, setStatusModal] = useState<{
@@ -37,10 +39,12 @@ export default function SubscriptionPage() {
     const config = {
         public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY || "",
         tx_ref: Date.now().toString(),
-        amount: 10, // Amount in USD
+        amount: PRICING[billingCycle], // Amount in USD
         currency: "USD",
         payment_options: "card,mobilemoney,ussd",
-        payment_plan: process.env.NEXT_PUBLIC_FLUTTERWAVE_PLAN_ID || "",
+        payment_plan: billingCycle === 'yearly'
+            ? PLAN_IDS.yearly
+            : PLAN_IDS.monthly,
         customer: {
             email: user?.email || "",
             phone_number: "",
@@ -74,7 +78,8 @@ export default function SubscriptionPage() {
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                                 transaction_id: response.transaction_id,
-                                plan_id: config.payment_plan
+                                plan_id: config.payment_plan,
+                                billing_cycle: billingCycle
                             }),
                         });
 
@@ -140,6 +145,21 @@ export default function SubscriptionPage() {
                 <p className={styles.subtitle}>Simple, transparent pricing for every developer.</p>
             </header>
 
+            <div className={styles.billingToggle}>
+                <button
+                    className={`${styles.toggleBtn} ${billingCycle === 'monthly' ? styles.active : ''}`}
+                    onClick={() => setBillingCycle('monthly')}
+                >
+                    Monthly
+                </button>
+                <button
+                    className={`${styles.toggleBtn} ${billingCycle === 'yearly' ? styles.active : ''}`}
+                    onClick={() => setBillingCycle('yearly')}
+                >
+                    Yearly <span className={styles.saveBadge}>Save 20%</span>
+                </button>
+            </div>
+
             <div className={styles.currentPlan}>
                 <div className={styles.planInfo}>
                     <h3>Current Plan</h3>
@@ -155,7 +175,7 @@ export default function SubscriptionPage() {
                 {/* Free Plan */}
                 <div className={styles.planCard}>
                     <h3 style={{ fontSize: 20, fontWeight: 600 }}>Hobby</h3>
-                    <div className={styles.price}>$0<span>/mo</span></div>
+                    <div className={styles.price}>$0<span>/{billingCycle === 'yearly' ? 'yr' : 'mo'}</span></div>
                     <ul className={styles.features}>
                         <li className={styles.feature}><Check size={18} className={styles.check} /> 3 Project Mode Imports</li>
                         <li className={styles.feature}><Check size={18} className={styles.check} /> 20 Active Collections</li>
@@ -173,7 +193,7 @@ export default function SubscriptionPage() {
                 <div className={`${styles.planCard} ${styles.featured}`}>
                     <div className={styles.featuredLabel}>RECOMMENDED</div>
                     <h3 style={{ fontSize: 20, fontWeight: 600 }}>Pro Developer</h3>
-                    <div className={styles.price}>$10<span>/mo</span></div>
+                    <div className={styles.price}>${PRICING[billingCycle]}<span>/{billingCycle === 'yearly' ? 'yr' : 'mo'}</span></div>
                     <ul className={styles.features}>
                         <li className={styles.feature}><Check size={18} className={styles.check} /> Everything in Hobby</li>
                         <li className={styles.feature}><Check size={18} className={styles.check} /> Unlimited Project Mode Imports</li>

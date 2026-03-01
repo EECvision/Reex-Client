@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useSubscription } from "@/hooks/useSubscription";
 import { InvoiceModal } from "@/components/InvoiceModal/InvoiceModal";
 import { FileText, Eye, Loader2 } from "lucide-react";
+import { PLAN_IDS } from "@/config/pricing";
 
 export default function SettingsPage() {
     const { user, logout } = useAuth();
@@ -158,7 +159,9 @@ export default function SettingsPage() {
                                                         </div>
                                                         <div className={styles.invoiceMeta}>
                                                             <p className={styles.invoiceTitle}>
-                                                                {invoice.plan_id === process.env.NEXT_PUBLIC_FLUTTERWAVE_PLAN_ID ? "Pro Plan" : "Subscription"}
+                                                                {invoice.plan_id === PLAN_IDS.monthly ? "Pro Plan (Monthly)" :
+                                                                    invoice.plan_id === PLAN_IDS.yearly ? "Pro Plan (Yearly)" :
+                                                                        "Subscription"}
                                                             </p>
                                                             <p className={styles.invoiceDate}>
                                                                 {new Date(invoice.created_at).toLocaleDateString()}
