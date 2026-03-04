@@ -5,6 +5,20 @@ import { spawn } from "child_process";
  * Simple HTTP proxy for standalone mode.
  * Executes the actual system `curl` command to bypass CORS and mimic terminal behavior.
  */
+const getCurlErrorMessage = (code: number | null): string => {
+    switch (code) {
+        case 1: return "Unsupported protocol.";
+        case 3: return "URL malformat. The syntax was not correct.";
+        case 6: return "Couldn't resolve host. The given remote host was not resolved.";
+        case 7: return "Failed to connect to host.";
+        case 28: return "Operation timeout. The specified time-out period was reached.";
+        case 35: return "A problem occurred somewhere in the SSL/TLS handshake.";
+        case 52: return "Nothing was returned from the server.";
+        case 60: return "Peer certificate cannot be authenticated with known CA certificates.";
+        default: return "Unknown curl error.";
+    }
+};
+
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
@@ -18,6 +32,7 @@ export async function POST(req: NextRequest) {
         // Prepare Curl Arguments
         const args: string[] = [
             '-s', // Silent mode (don't show progress meter)
+            '-S', // Show error message if it fails
             '-X', method?.toUpperCase() || 'GET',
             '-w', '\n%{http_code}', // Write HTTP status code at the end
             '--connect-timeout', '10', // 10s connection timeout
@@ -63,10 +78,12 @@ export async function POST(req: NextRequest) {
 
             child.on('close', (code) => {
                 if (code !== 0) {
+                    const description = getCurlErrorMessage(code);
+                    const errorDetails = stderr.trim() ? `Details: ${stderr.trim()}` : '';
                     console.error("Curl Error:", stderr);
                     resolve(NextResponse.json({
                         success: false,
-                        error: `Curl command failed with code ${code}. Error: ${stderr}`
+                        error: `Curl command failed with code ${code} (${description}). ${errorDetails}`.trim()
                     }, { status: 500 }));
                     return;
                 }
