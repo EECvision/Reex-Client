@@ -2,8 +2,13 @@
 import { useState, useEffect, useRef } from "react";
 import { api } from "@/services/api";
 import { EndpointInfo } from "@/types";
+import { isLocalhostUrl } from "@/lib/urlUtils";
 
 type InputMode = "form" | "raw";
+
+const PROXY_PORT = 9876;
+const PROXY_URL = `http://localhost:${PROXY_PORT}`;
+
 
 interface UseEndpointExecutionProps {
     projectConfig: any;
@@ -280,14 +285,40 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             }
             setExecutedCurls(prev => ({ ...prev, [currentKey]: curlCmd }));
             // -----------------------------
+            // -----------------------------
 
-            const execRes: any = await api.executeRequest({
-                url: requestUrl,
-                method,
-                data: requestData,
-                headers: Object.keys(headers).length > 0 ? headers : undefined,
-                useProxy: isStandaloneMode && !isFormDataRequest // Use proxy for non-FormData requests in standalone mode
-            });
+            let execRes: any;
+            const isLocal = isLocalhostUrl(requestUrl);
+
+            if (isStandaloneMode && isLocal && !isFormDataRequest) {
+                // Route through user's local reex-proxy to reach localhost
+                try {
+                    const proxyRes = await fetch(`${PROXY_URL}/proxy`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            url: requestUrl,
+                            method: method.toUpperCase(),
+                            data: requestData,
+                            headers: Object.keys(headers).length > 0 ? headers : undefined
+                        })
+                    });
+                    execRes = await proxyRes.json();
+                } catch (e: any) {
+                    throw new Error(
+                        'Could not connect to the local proxy. Run `npx reex-proxy` in your terminal first.'
+                    );
+                }
+            } else {
+                // External URL or Bridge Mode — use server-side proxy
+                execRes = await api.executeRequest({
+                    url: requestUrl,
+                    method,
+                    data: requestData,
+                    headers: Object.keys(headers).length > 0 ? headers : undefined,
+                    useProxy: isStandaloneMode && !isFormDataRequest // Use proxy for non-FormData requests in standalone mode
+                });
+            }
 
             if (!execRes.success) {
                 let errorMessage = execRes.error || "Execution failed";

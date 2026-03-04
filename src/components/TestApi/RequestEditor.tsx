@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/Button/Button';
 import { Select } from '@/components/ui/Select/Select';
 import DynamicParamTable, { ParamRow } from '@/components/TestApi/DynamicParamTable';
 import { useToast } from '@/hooks/useToast';
+import LocalhostBanner from '../LocalhostBanner/LocalhostBanner';
+import { isLocalhostUrl } from '@/lib/urlUtils';
 
 import CurlSection from '@/components/CurlSection/CurlSection';
 
@@ -27,15 +29,6 @@ interface RequestEditorProps {
 
 const PROXY_PORT = 9876;
 const PROXY_URL = `http://localhost:${PROXY_PORT}`;
-
-function isLocalhostUrl(url: string): boolean {
-    try {
-        const parsed = new URL(url);
-        return parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
-    } catch {
-        return url.includes('localhost') || url.includes('127.0.0.1');
-    }
-}
 
 export default function RequestEditor({ data, onSave, requestName }: RequestEditorProps) {
     const { showToast } = useToast();
@@ -305,14 +298,7 @@ export default function RequestEditor({ data, onSave, requestName }: RequestEdit
 
                 {/* Localhost Info Banner */}
                 {isLocalhostUrl(url) && (
-                    <div className={styles.localhostBanner}>
-                        <Info size={16} className={styles.localhostBannerIcon} />
-                        <div>
-                            <span>To test localhost endpoints, run </span>
-                            <code className={styles.localhostCode}>npx reex-proxy</code>
-                            <span> in your terminal first.</span>
-                        </div>
-                    </div>
+                    <LocalhostBanner />
                 )}
 
                 {/* Config Tabs */}

@@ -7,11 +7,13 @@ import EmptyState from "../EmptyState/EmptyState";
 import styles from "./WorkspaceView.module.css";
 import { EndpointInfo } from "@/types";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
-import { Lock } from "lucide-react";
+import { Lock, Info } from "lucide-react";
 import CurlSection from "../CurlSection/CurlSection";
 import { useAuth } from "@/providers/AuthContext";
 import LoginModal from "../LoginModal/LoginModal";
 import { HistoryItem } from "@/providers/ProjectContext";
+import LocalhostBanner from "../LocalhostBanner/LocalhostBanner";
+import { isLocalhostUrl } from "@/lib/urlUtils";
 
 // Dynamic import for Monaco
 // Monaco definition removed
@@ -127,6 +129,11 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
                             <p className={styles.endpointDescription}>
                                 {selectedEndpoint.description}
                             </p>
+                        )}
+
+                        {/* Localhost Info Banner */}
+                        {isStandaloneMode && isLocalhostUrl(computedUrl || "") && (
+                            <LocalhostBanner className={styles.localhostBannerMargin} />
                         )}
                         <br />
                         <QuerySection
