@@ -1,4 +1,7 @@
-import React from 'react';
+"use client";
+
+import React, { useState } from 'react';
+import { Copy, Check } from 'lucide-react';
 import styles from './BadgeGroup.module.css';
 
 interface BadgeGroupProps {
@@ -9,6 +12,7 @@ interface BadgeGroupProps {
     title?: string;
     valueClassName?: string;
     style?: React.CSSProperties;
+    showCopy?: boolean;
 }
 
 export const BadgeGroup: React.FC<BadgeGroupProps> = ({
@@ -17,8 +21,17 @@ export const BadgeGroup: React.FC<BadgeGroupProps> = ({
     color = "#6b7280", // default gray
     title,
     valueClassName,
-    style
+    style,
+    showCopy = true
 }) => {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = () => {
+        if (!value) return;
+        navigator.clipboard.writeText(value);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
     // We calculate background/border colors based on the main color
     // This matches the logic: backgroundColor: `${color}15`
     const LabelStyle = {
@@ -62,7 +75,7 @@ export const BadgeGroup: React.FC<BadgeGroupProps> = ({
             </div>
             <div
                 className={styles.value}
-                title={title}
+                title={title || value}
                 style={{
                     borderLeftColor: borderStyle
                 }}
@@ -71,6 +84,16 @@ export const BadgeGroup: React.FC<BadgeGroupProps> = ({
                     {value}
                 </span>
             </div>
+            {showCopy && (
+                <button
+                    className={styles.copyButton}
+                    onClick={handleCopy}
+                    title="Copy to clipboard"
+                    style={{ borderLeftColor: borderStyle }}
+                >
+                    {copied ? <Check size={14} color="#10b981" /> : <Copy size={14} />}
+                </button>
+            )}
         </div>
     );
 };

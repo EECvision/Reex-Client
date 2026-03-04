@@ -1,4 +1,5 @@
 .group {
+    width: auto;
     display: flex;
     align-items: stretch;
     height: 28px;
@@ -6,9 +7,7 @@
     border: 1px solid var(--border-color, #e5e7eb);
     overflow: hidden;
     font-family: 'Inter', sans-serif;
-    width: fit-content;
-    flex-shrink: 0;
-    /* Prevent shrinking in flex containers */
+    min-width: 200px;
     box-sizing: border-box;
     line-height: 1.5;
 }
@@ -21,6 +20,7 @@
     align-items: center;
     justify-content: center;
     min-width: 50px;
+    flex-shrink: 0;
     text-align: center;
     background-color: var(--hover-bg, #f3f4f6);
     color: var(--text-secondary, #6b7280);
@@ -37,10 +37,40 @@
     overflow: hidden;
     white-space: nowrap;
     border-left: 1px solid var(--border-color, #e5e7eb);
+    flex: 1;
+    min-width: 0;
 }
 
 .valueText {
-    overflow: auto;
-    /* text-overflow: ellipsis; */
-    max-width: 400px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    /* max-width: 400px; */
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.valueText::-webkit-scrollbar {
+    display: none;
+}
+
+.copyButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    background: var(--card-bg, #fff);
+    border: none;
+    border-left: 1px solid var(--border-color, #e5e7eb);
+    color: var(--text-muted, #9ca3af);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+.copyButton:hover {
+    color: var(--text-primary, #374151);
+    background-color: var(--hover-bg, #f3f4f6);
 }
