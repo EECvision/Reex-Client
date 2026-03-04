@@ -47,3 +47,22 @@ export const handleOperationResponse = async (res: Response) => {
 
     return data;
 };
+
+/**
+ * Helper to compress a file using the native browser CompressionStream.
+ * Returns { blob, fileName } to be appended to FormData, falling back to raw file if compression fails.
+ */
+export const compressFilePayload = async (file: File, originalFileName?: string): Promise<{ blob: Blob | File, fileName: string }> => {
+    const rawFileName = originalFileName || file.name;
+    try {
+        if (typeof CompressionStream !== 'undefined') {
+            const stream = file.stream().pipeThrough(new CompressionStream('gzip'));
+            const compressedBlob = await new Response(stream).blob();
+            const finalName = rawFileName.endsWith('.gz') ? rawFileName : `${rawFileName}.gz`;
+            return { blob: compressedBlob, fileName: finalName };
+        }
+    } catch (e) {
+        console.warn("Compression failed, falling back to raw upload", e);
+    }
+    return { blob: file, fileName: rawFileName };
+};

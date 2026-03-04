@@ -3,6 +3,9 @@ import path from "path";
 import { promisify } from "util";
 import EventEmitter from "events";
 
+// Direct import of generators (same as analyze)
+import { gunzipSync } from "zlib";
+
 // Use a global variable to persist the EventEmitter across module reloads in development
 const globalForEvents = global as unknown as { eventEmitter: EventEmitter };
 
@@ -82,4 +85,22 @@ export const getBridgeUrl = (override?: string) => {
 
 export const sendEvent = (id: string, type: string, message: string) => {
     eventEmitter.emit('event', { id, type, message });
+};
+
+/**
+ * Helper to decompress a file buffer if it is gzipped.
+ * Used by update-collection, analyze-collection, and sync-collection routes.
+ */
+export const decompressFilePayload = (fileName: string, fileBuffer: Buffer): Buffer => {
+    let contentBuffer = fileBuffer;
+    const isGzip = fileName.endsWith('.gz') || (contentBuffer.length >= 2 && contentBuffer[0] === 0x1f && contentBuffer[1] === 0x8b);
+
+    if (isGzip) {
+        try {
+            contentBuffer = gunzipSync(fileBuffer);
+        } catch (e) {
+            console.warn("Decompression failed, trying raw...", e);
+        }
+    }
+    return contentBuffer;
 };

@@ -1,5 +1,4 @@
-
-import { cloudUrl, getLocalUrl, handleOperationResponse } from "./utils";
+import { cloudUrl, getLocalUrl, handleOperationResponse, compressFilePayload } from "./utils";
 
 export const CloudService = {
     generateTemplate: async (data: any, targetDir: string, bridgeUrl?: string, taskId?: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
@@ -19,28 +18,10 @@ export const CloudService = {
     analyzeCollection: async (file: File, fileName: string | undefined, targetDir: string, clientMappings?: Record<string, string>, isStandaloneMode?: boolean) => {
         const formData = new FormData();
 
-        try {
-            // Compress the file to bypass 4.5MB Vercel Body Limit
-            // JSON compresses very well (90%+ reduction)
-            if (typeof CompressionStream !== 'undefined') {
-                const stream = file.stream().pipeThrough(new CompressionStream('gzip'));
-                const compressedBlob = await new Response(stream).blob();
+        const { blob, fileName: finalName } = await compressFilePayload(file, fileName);
+        formData.append('file', blob, finalName);
 
-                // Append with .gz extension so server knows to decompress
-                const safeName = fileName || file.name;
-                const finalName = safeName.endsWith('.gz') ? safeName : `${safeName}.gz`;
-
-                formData.append('file', compressedBlob, finalName);
-            } else {
-                // Fallback for very old browsers (unlikely in this stack)
-                formData.append('file', file);
-            }
-        } catch (e) {
-            console.warn("Compression failed, falling back to raw upload", e);
-            formData.append('file', file);
-        }
-
-        if (fileName && !formData.has('file')) formData.append('fileName', fileName); // Only if not already handled
+        if (fileName && !formData.has('fileName')) formData.append('fileName', fileName); // Only if not already handled
         formData.append('targetDir', targetDir);
         if (clientMappings) formData.append('clientMappings', JSON.stringify(clientMappings));
 
@@ -141,7 +122,14 @@ export const CloudService = {
 
     updateCollection: async (payload: any, targetDir: string, bridgeUrl?: string, taskId?: string) => {
         const formData = new FormData();
-        if (payload.file) formData.append('file', payload.file);
+
+        const file = payload.file;
+        let fileName = payload.fileName || (file ? file.name : undefined);
+
+        if (file) {
+            const { blob, fileName: finalName } = await compressFilePayload(file, fileName);
+            formData.append('file', blob, finalName);
+        }
         if (payload.modules) formData.append('modules', JSON.stringify(payload.modules));
         if (payload.deletedModules) formData.append('deletedModules', JSON.stringify(payload.deletedModules));
         if (payload.functions) formData.append('functions', typeof payload.functions === 'string' ? payload.functions : JSON.stringify(payload.functions));
@@ -149,7 +137,7 @@ export const CloudService = {
         if (payload.existingModules) formData.append('existingModules', JSON.stringify(payload.existingModules));
         if (payload.proposedClients) formData.append('proposedClients', JSON.stringify(payload.proposedClients));
         if (payload.baseUrl) formData.append('baseUrl', payload.baseUrl);
-        if (payload.fileName) formData.append('fileName', payload.fileName);
+        if (fileName) formData.append('fileName', fileName);
         formData.append('targetDir', targetDir);
         if (bridgeUrl) formData.append('bridgeUrl', bridgeUrl);
         if (taskId) formData.append('taskId', taskId);
@@ -178,11 +166,18 @@ export const CloudService = {
 
     syncCollection: async (payload: any, targetDir: string) => {
         const formData = new FormData();
-        if (payload.file) formData.append('file', payload.file);
+
+        const file = payload.file;
+        let fileName = payload.fileName || (file ? file.name : undefined);
+
+        if (file) {
+            const { blob, fileName: finalName } = await compressFilePayload(file, fileName);
+            formData.append('file', blob, finalName);
+        }
         if (payload.modules) formData.append('modules', JSON.stringify(payload.modules));
         if (payload.deletedModules) formData.append('deletedModules', JSON.stringify(payload.deletedModules));
         if (payload.functions) formData.append('functions', typeof payload.functions === 'string' ? payload.functions : JSON.stringify(payload.functions));
-        if (payload.fileName) formData.append('fileName', payload.fileName);
+        if (fileName) formData.append('fileName', fileName);
         formData.append('targetDir', targetDir);
 
         const res = await fetch(`${cloudUrl}/sync-collection`, {

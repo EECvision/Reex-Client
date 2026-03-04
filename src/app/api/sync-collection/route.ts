@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import os from "os";
-import { runCommand, getEnvWithOverride, sendEvent } from "@/app/api/utils";
+import { runCommand, getEnvWithOverride, sendEvent, decompressFilePayload } from "@/app/api/utils";
 
 export async function POST(req: NextRequest) {
     const taskId = Date.now().toString();
@@ -20,12 +20,14 @@ export async function POST(req: NextRequest) {
         const modules = modulesStr ? JSON.parse(modulesStr) : [];
         const deletedModules = deletedModulesStr ? JSON.parse(deletedModulesStr) : [];
 
-        const buffer = file ? Buffer.from(await file.arrayBuffer()) : Buffer.from("");
+        const fileBuffer = file ? Buffer.from(await file.arrayBuffer()) : Buffer.from("");
         const fileName = file ? file.name : "unknown";
+
+        const contentBuffer = decompressFilePayload(fileName, fileBuffer);
 
         if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
         filePath = path.join(uploadsDir, `${Date.now()}_sync_${fileName}`);
-        fs.writeFileSync(filePath, buffer);
+        fs.writeFileSync(filePath, contentBuffer);
 
         // Read & Parse Content
         const fileContent = fs.readFileSync(filePath, 'utf8');

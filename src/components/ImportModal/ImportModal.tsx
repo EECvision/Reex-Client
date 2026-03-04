@@ -289,7 +289,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
           variant="primary"
           className={styles.analyzeBtn}
         >
-          Analyze Changes →
+          Analyze Changes
         </Button>
       )}
 
