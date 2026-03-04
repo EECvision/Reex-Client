@@ -316,7 +316,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
                     method,
                     data: requestData,
                     headers: Object.keys(headers).length > 0 ? headers : undefined,
-                    useProxy: isStandaloneMode && !isFormDataRequest // Use proxy for non-FormData requests in standalone mode
+                    useProxy: !isLocal && !isFormDataRequest // Use proxy for non-FormData requests to external domains
                 });
             }
 
