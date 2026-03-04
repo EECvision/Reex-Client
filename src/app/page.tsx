@@ -225,6 +225,7 @@ const App = () => {
           onDeleteModule={handleDeleteModule}
           onDeleteFunction={handleDeleteFunction}
           onDeleteCollection={openDeleteModal}
+          onRenameCollection={(id, name) => updateCollection(id, { name })}
           isOpen={isSidebarOpen}
         />
       )}

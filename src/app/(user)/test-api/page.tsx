@@ -29,6 +29,7 @@ export default function TestApiPage() {
     isLoading,
     createCollection,
     deleteCollection,
+    renameCollection,
     createRequest,
     updateRequest,
     deleteRequest,
@@ -232,6 +233,7 @@ export default function TestApiPage() {
         onDeleteCollection={handleDeleteCollection}
         onDeleteRequest={handleDeleteRequest}
         onToggleCollection={handleToggleCollection}
+        onRenameCollection={(id, name) => renameCollection({ id, name })}
         isOpen={isSidebarOpen}
       />
 

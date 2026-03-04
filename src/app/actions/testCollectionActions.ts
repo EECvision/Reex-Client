@@ -175,6 +175,24 @@ export async function deleteCollection(id: string) {
     revalidatePath('/test-api');
 }
 
+export async function renameCollection(id: string, name: string) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: 'Unauthorized' };
+
+    const isPro = await verifyProStatus(session.user.id);
+    if (!isPro) return { error: 'Pro required' };
+
+    const { error } = await supabase
+        .from('test_collections')
+        .update({ name } as any)
+        .eq('id', id)
+        .eq('user_id', session.user.id); // enforce ownership
+
+    if (error) return { error: error.message };
+    revalidatePath('/test-api');
+    return { success: true };
+}
+
 export async function createRequest(collectionId: string, request: any) {
     const session = await auth();
     if (!session?.user?.id) return { error: 'Unauthorized' };

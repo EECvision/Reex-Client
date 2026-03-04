@@ -126,16 +126,21 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
                             )}
                         </div>
                         {selectedEndpoint.description && (
-                            <p className={styles.endpointDescription}>
-                                {selectedEndpoint.description}
-                            </p>
+                            <>
+                                <br />
+                                <p className={styles.endpointDescription}>
+                                    {selectedEndpoint.description}
+                                </p>
+                                <br />
+                            </>
                         )}
-
                         {/* Localhost Info Banner */}
                         {isStandaloneMode && isLocalhostUrl(computedUrl || "") && (
-                            <LocalhostBanner className={styles.localhostBannerMargin} />
+                            <>
+                                <LocalhostBanner className={styles.localhostBannerMargin} />
+                                <br />
+                            </>
                         )}
-                        <br />
                         <QuerySection
                             selectedEndpoint={selectedEndpoint}
                             currentParams={currentParams}

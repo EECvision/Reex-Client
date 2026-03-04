@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     Folder,
     Trash2,
     ChevronRight,
     ChevronDown,
     FolderPlus,
-    FilePlus
+    FilePlus,
+    Pencil
 } from 'lucide-react';
 import styles from './CollectionSidebar.module.css';
 
@@ -38,6 +39,7 @@ interface CollectionSidebarProps {
     onDeleteCollection: (collectionId: string) => void;
     onDeleteRequest: (collectionId: string, requestId: string) => void;
     onToggleCollection: (collectionId: string) => void;
+    onRenameCollection?: (collectionId: string, newName: string) => void;
     isOpen?: boolean;
 }
 
@@ -50,8 +52,29 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
     onDeleteCollection,
     onDeleteRequest,
     onToggleCollection,
+    onRenameCollection,
     isOpen = false
 }) => {
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingName, setEditingName] = useState('');
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const startEdit = (col: Collection, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setEditingId(col.id);
+        setEditingName(col.name);
+        setTimeout(() => inputRef.current?.select(), 0);
+    };
+
+    const commitEdit = () => {
+        if (editingId && editingName.trim()) {
+            onRenameCollection?.(editingId, editingName.trim());
+        }
+        setEditingId(null);
+    };
+
+    const cancelEdit = () => setEditingId(null);
+
     return (
         <div className={`${styles.sidebarContainer} ${isOpen ? styles.open : ''}`}>
             <div className={styles.sidebarHeader}>
@@ -81,7 +104,25 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
                             <div className={styles.collectionInfo}>
                                 {col.isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                                 <Folder size={14} className={styles.collectionIcon} />
-                                <span className={styles.collectionName}>{col.name}</span>
+                                {editingId === col.id ? (
+                                    <input
+                                        ref={inputRef}
+                                        className={styles.collectionNameInput}
+                                        value={editingName}
+                                        onChange={e => setEditingName(e.target.value)}
+                                        onBlur={commitEdit}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') { e.preventDefault(); commitEdit(); }
+                                            if (e.key === 'Escape') { e.preventDefault(); cancelEdit(); }
+                                        }}
+                                        onClick={e => e.stopPropagation()}
+                                        autoFocus
+                                    />
+                                ) : (
+                                    <span className={styles.collectionName} title={col.name}>
+                                        {col.name}
+                                    </span>
+                                )}
                             </div>
                             <div className={styles.collectionActions}>
                                 <button
@@ -93,6 +134,16 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
                                     title="Add Request"
                                 >
                                     <FilePlus size={14} />
+                                </button>
+                                <button
+                                    className={styles.actionBtn}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        startEdit(col, e);
+                                    }}
+                                    title="Rename Collection"
+                                >
+                                    <Pencil size={12} />
                                 </button>
                                 <button
                                     className={`${styles.actionBtn} ${styles.deleteAction}`}
@@ -140,8 +191,9 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
                             </div>
                         )}
                     </div>
-                ))}
-            </div>
+                ))
+                }
+            </div >
 
             <div className={styles.footerCredits}>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
@@ -151,7 +203,7 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
                     Powered by <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>ToolsHQ</span>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

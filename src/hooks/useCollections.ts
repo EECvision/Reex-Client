@@ -3,6 +3,7 @@ import {
     getCollections,
     createCollection,
     deleteCollection,
+    renameCollection as renameCollectionAction,
     createRequest,
     updateRequest,
     deleteRequest
@@ -118,6 +119,37 @@ export const useCollections = (userId?: string) => {
         },
         onError: (err: any) => {
             showToast('error', err.message || 'Failed to delete collection');
+        }
+    });
+
+    // Mutation: Rename Collection
+    const renameCollectionMutation = useMutation({
+        mutationFn: async ({ id, name }: { id: string; name: string }) => {
+            if (!isPro) {
+                const all = await ClientStorage.get<Collection>(COLLECTIONS_KEY);
+                const col = all.find(c => c.id === id);
+                if (col) {
+                    await ClientStorage.update(COLLECTIONS_KEY, id, { ...col, name });
+                }
+                return { id, name };
+            }
+            // Pro: persist to DB
+            const res = await renameCollectionAction(id, name);
+            if (res && res.error) return { error: res.error };
+            return { id, name };
+        },
+        onSuccess: (result) => {
+            if ((result as any).error) {
+                showToast('error', String((result as any).error));
+                return;
+            }
+            const { id, name } = result as { id: string; name: string };
+            queryClient.setQueryData(['collections', userId, isPro], (old: Collection[] = []) =>
+                old.map(c => c.id === id ? { ...c, name } : c)
+            );
+        },
+        onError: (err: any) => {
+            showToast('error', err.message || 'Failed to rename collection');
         }
     });
 
@@ -287,6 +319,7 @@ export const useCollections = (userId?: string) => {
         isLoading,
         createCollection: createCollectionMutation.mutateAsync,
         deleteCollection: deleteCollectionMutation.mutateAsync,
+        renameCollection: renameCollectionMutation.mutateAsync,
         createRequest: createRequestMutation.mutateAsync,
         updateRequest: updateRequestMutation.mutateAsync,
         deleteRequest: deleteRequestMutation.mutateAsync,

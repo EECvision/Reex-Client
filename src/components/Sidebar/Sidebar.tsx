@@ -1,7 +1,7 @@
-import React, { SetStateAction } from "react";
+import React, { SetStateAction, useState, useRef } from "react";
 import styles from "./Sidebar.module.css";
 import { EndpointInfo, Methods } from "@/types";
-import { Folder, Trash2, ChevronRight, ChevronDown, Lock, TestTube } from "lucide-react";
+import { Folder, Trash2, ChevronRight, ChevronDown, Lock, TestTube, Pencil } from "lucide-react";
 import Link from "next/link";
 import { Button } from "../ui/Button/Button";
 import { Select } from "../ui/Select/Select";
@@ -34,6 +34,7 @@ interface SidebarProps {
   onDeleteModule?: (moduleName: string) => void;
   onDeleteFunction?: (moduleName: string, functionName: string) => void;
   onDeleteCollection?: (id: string) => void;
+  onRenameCollection?: (id: string, newName: string) => void;
   baseURL?: string;
   collectionName?: string;
   isOpen?: boolean;
@@ -51,12 +52,35 @@ const Sidebar: React.FC<SidebarProps> = ({
   onDeleteModule,
   onDeleteFunction,
   onDeleteCollection,
+  onRenameCollection,
   baseURL,
   collectionName,
   isOpen = false,
 }) => {
   // Initialize expanded state for collections - default to ALL expanded
   const [expandedCollections, setExpandedCollections] = React.useState<Set<string>>(new Set());
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const originalNameRef = useRef<string>('');
+
+  const startRename = (id: string, currentName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    originalNameRef.current = currentName;
+    setEditingId(id);
+    setEditingName(currentName);
+    setTimeout(() => nameInputRef.current?.select(), 0);
+  };
+
+  const commitRename = () => {
+    const trimmed = editingName.trim();
+    if (editingId && trimmed && trimmed !== originalNameRef.current) {
+      onRenameCollection?.(editingId, trimmed);
+    }
+    setEditingId(null);
+  };
+
+  const cancelRename = () => setEditingId(null);
 
   // Effect to default expand all when groups change (initial load)
   // Track previous groups to auto-expand ONLY new ones
@@ -145,24 +169,53 @@ const Sidebar: React.FC<SidebarProps> = ({
                     </div>
                     <div className={styles.folderContent}>
                       <Folder size={14} className={`${styles.folderIcon} ${isExpanded ? styles.folderIconExpanded : ''}`} />
-                      <span className={`${styles.rootFolderName} ${isExpanded ? styles.rootFolderNameExpanded : ''}`} title={group.name}>{group.name}</span>
+                      {editingId === group.id ? (
+                        <input
+                          ref={nameInputRef}
+                          className={styles.collectionNameInput}
+                          value={editingName}
+                          onChange={e => setEditingName(e.target.value)}
+                          onBlur={commitRename}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') { e.preventDefault(); commitRename(); }
+                            if (e.key === 'Escape') { e.preventDefault(); cancelRename(); }
+                          }}
+                          onClick={e => e.stopPropagation()}
+                          autoFocus
+                        />
+                      ) : (
+                        <span className={`${styles.rootFolderName} ${isExpanded ? styles.rootFolderNameExpanded : ''}`} title={group.name}>{group.name}</span>
+                      )}
                     </div>
 
-                    {/* Delete Collection Buttton */}
-                    {onDeleteCollection && (
-                      <Button
-                        className={styles.deleteBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDeleteCollection(group.id);
-                        }}
-                        title="Delete Collection"
-                        variant="ghost"
-                        size="sm"
-                      >
-                        <Trash2 size={12} color="#ef4444" />
-                      </Button>
-                    )}
+                    <div className={styles.collectionHeaderActions}>
+                      {onRenameCollection && (
+                        <Button
+                          className={styles.renameBtn}
+                          onClick={(e) => startRename(group.id, group.name, e)}
+                          title="Rename Collection"
+                          variant="ghost"
+                          size="sm"
+                        >
+                          <Pencil size={12} />
+                        </Button>
+                      )}
+                      {/* Delete Collection Button */}
+                      {onDeleteCollection && (
+                        <Button
+                          className={styles.deleteBtn}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteCollection(group.id);
+                          }}
+                          title="Delete Collection"
+                          variant="ghost"
+                          size="sm"
+                        >
+                          <Trash2 size={12} />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -202,7 +255,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 variant="ghost"
                                 size="sm"
                               >
-                                <Trash2 size={12} color="#ef4444" />
+                                <Trash2 size={12} />
                               </Button>
                             )}
                           </div>
@@ -236,7 +289,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                       variant="ghost"
                                       size="sm"
                                     >
-                                      <Trash2 size={12} color="#ef4444" />
+                                      <Trash2 size={12} />
                                     </Button>
                                   )}
                                 </div>
