@@ -11,6 +11,7 @@ import Navbar from "@/components/Navbar/Navbar";
 import SidebarController from "@/components/Sidebar/SidebarController";
 import WorkspaceView from "@/components/WorkspaceView/WorkspaceView";
 import BackgroundNotification from "@/components/BackgroundNotification/BackgroundNotification";
+import { AuthModal } from "@/components/AuthModal/AuthModal";
 import styles from "./page.module.css";
 import { EndpointInfo } from "@/types";
 
@@ -65,26 +66,7 @@ const App = () => {
   // Move this call AFTER activeCollection derivation
 
 
-  // Auth Token State
-  const [authToken, setAuthToken] = useState<string>("");
-  // Custom Headers State
-  const [customHeaders, setCustomHeaders] = useState<Record<string, string>>({});
-
-  // Selected Endpoint State (Hoisted to fix circular dependency)
   const [selectedEndpoint, setSelectedEndpoint] = useState<EndpointInfo | null>(null);
-
-  useEffect(() => {
-    const savedToken = localStorage.getItem("auth_token");
-    if (savedToken) setAuthToken(savedToken);
-  }, []);
-
-  useEffect(() => {
-    if (authToken) {
-      localStorage.setItem("auth_token", authToken);
-    } else {
-      localStorage.removeItem("auth_token");
-    }
-  }, [authToken]);
 
   // Derived Active Config for Standalone Mode
   const getActiveCollection = () => {
@@ -138,6 +120,7 @@ const App = () => {
   });
 
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [autoAnalyzeImport, setAutoAnalyzeImport] = useState(false);
 
@@ -148,6 +131,23 @@ const App = () => {
     }
   }, []);
 
+  const handleSaveAuth = (collectionId: string, token: string, customHeaders: Record<string, string>) => {
+    const targetCol = collections.find(c => c.id === collectionId);
+    if (!targetCol) return;
+
+    updateCollection(collectionId, {
+      config: {
+        ...targetCol.config,
+        auth: {
+          token,
+          customHeaders
+        }
+      }
+    });
+
+    // Close modal on save
+    setShowAuthModal(false);
+  };
 
   const {
     params,
@@ -173,8 +173,8 @@ const App = () => {
     projectConfig: activeConfig, // Use Active Config
     apiManifest,
     showToast,
-    authToken,
-    customHeaders,
+    authToken: activeConfig?.auth?.token || "",
+    customHeaders: activeConfig?.auth?.customHeaders || {},
     isStandaloneMode,
 
     selectedEndpoint
@@ -250,11 +250,7 @@ const App = () => {
           baseURL={activeConfig?.baseURL}
           projectPath={projectPath}
           collectionName={activeCollectionName}
-          authToken={authToken}
-          onAuthTokenChange={setAuthToken}
-          customHeaders={customHeaders}
-          onCustomHeadersChange={setCustomHeaders}
-
+          onAuthClick={() => setShowAuthModal(true)}
           isStandaloneMode={isStandaloneMode}
           onBaseUrlChange={(newUrl) => {
             const oldBase = activeConfig?.baseURL || "";
@@ -382,6 +378,14 @@ const App = () => {
             targetDir={projectPath}
           />
         }
+
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          collections={collections}
+          activeCollectionId={activeCollection?.id}
+          onSave={handleSaveAuth}
+        />
 
         <WorkspaceView
           selectedEndpoint={selectedEndpoint}
