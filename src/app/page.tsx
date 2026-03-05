@@ -88,6 +88,7 @@ const App = () => {
   const activeCollection = getActiveCollection();
   const activeConfig = isStandaloneMode ? (activeCollection?.config || {}) : projectConfig;
   const activeCollectionName = isStandaloneMode ? (activeCollection?.name || "Collection") : projectConfig?.collectionName;
+  const hasAuthConfigured = !!(activeConfig?.auth?.token || (activeConfig?.auth?.customHeaders && Object.keys(activeConfig.auth.customHeaders).length > 0));
 
   const {
     showImportModal, setShowImportModal,
@@ -132,18 +133,28 @@ const App = () => {
   }, []);
 
   const handleSaveAuth = (collectionId: string, token: string, customHeaders: Record<string, string>) => {
-    const targetCol = collections.find(c => c.id === collectionId);
-    if (!targetCol) return;
+    if (isStandaloneMode) {
+      const targetCol = collections.find(c => c.id === collectionId);
+      if (!targetCol) return;
 
-    updateCollection(collectionId, {
-      config: {
-        ...targetCol.config,
+      updateCollection(collectionId, {
+        config: {
+          ...targetCol.config,
+          auth: {
+            token,
+            customHeaders
+          }
+        }
+      });
+    } else {
+      setConfig({
+        ...projectConfig,
         auth: {
           token,
           customHeaders
         }
-      }
-    });
+      });
+    }
 
     // Close modal on save
     setShowAuthModal(false);
@@ -252,6 +263,7 @@ const App = () => {
           collectionName={activeCollectionName}
           onAuthClick={() => setShowAuthModal(true)}
           isStandaloneMode={isStandaloneMode}
+          hasAuthConfigured={hasAuthConfigured}
           onBaseUrlChange={(newUrl) => {
             const oldBase = activeConfig?.baseURL || "";
             const updatedClients = { ...(activeConfig?.clients || {}) };
@@ -382,8 +394,14 @@ const App = () => {
         <AuthModal
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
-          collections={collections}
-          activeCollectionId={activeCollection?.id}
+          collections={isStandaloneMode ? collections : [{
+            id: 'project',
+            name: activeCollectionName || 'Project',
+            manifest: apiManifest,
+            modules: [],
+            config: projectConfig
+          }]}
+          activeCollectionId={isStandaloneMode ? activeCollection?.id : 'project'}
           onSave={handleSaveAuth}
         />
 

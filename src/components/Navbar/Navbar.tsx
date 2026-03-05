@@ -26,6 +26,7 @@ interface NavbarProps {
   onBaseUrlChange?: (url: string) => void;
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
+  hasAuthConfigured?: boolean;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -43,7 +44,8 @@ const Navbar: React.FC<NavbarProps> = ({
   isStandaloneMode = false,
   onBaseUrlChange,
   onToggleSidebar,
-  isSidebarOpen
+  isSidebarOpen,
+  hasAuthConfigured
 }) => {
   const [url, setUrl] = React.useState(() => localStorage.getItem("docs_url") || "");
   const [isFetchOpen, setIsFetchOpen] = React.useState(false);
@@ -187,7 +189,7 @@ const Navbar: React.FC<NavbarProps> = ({
             <Button
               variant="ghost"
               onClick={onAuthClick}
-              leftIcon={<Lock size={16} />}
+              leftIcon={<Lock size={16} color={hasAuthConfigured ? "#10b981" : undefined} />}
               title="Authorization Settings"
             >
               Auth
@@ -286,7 +288,7 @@ const Navbar: React.FC<NavbarProps> = ({
               <Button
                 variant="ghost"
                 onClick={() => { onAuthClick(); setIsMobileMenuOpen(false); }}
-                leftIcon={<Lock size={16} />}
+                leftIcon={<Lock size={16} color={hasAuthConfigured ? "#10b981" : undefined} />}
                 style={{ justifyContent: 'flex-start', width: '100%' }}
               >
                 Authorization Settings
