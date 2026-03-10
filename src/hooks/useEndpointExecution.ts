@@ -194,12 +194,26 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             }
 
             // 3. Prepare Payload / Query
-            const remainingData: Record<string, any> = {};
+            let remainingData: Record<string, any> = {};
             Object.keys(argsMap).forEach(k => {
                 if (!consumedParams.has(k)) {
                     remainingData[k] = argsMap[k];
                 }
             });
+
+            // Unwrap nested payload if it's the only remaining parameter
+            // and acts as the request body (named 'payload', 'data', or 'body')
+            const remainingKeys = Object.keys(remainingData);
+            if (
+                remainingKeys.length === 1 &&
+                ['payload', 'data', 'body'].includes(remainingKeys[0]) &&
+                typeof remainingData[remainingKeys[0]] === 'object' &&
+                remainingData[remainingKeys[0]] !== null &&
+                !(remainingData[remainingKeys[0]] instanceof File) &&
+                !Array.isArray(remainingData[remainingKeys[0]])
+            ) {
+                remainingData = remainingData[remainingKeys[0]];
+            }
 
             const cleanBase = clientBase.replace(/\/+$/, "");
             const cleanPath = finalUrl.startsWith("/") ? finalUrl : `/${finalUrl}`;
@@ -316,7 +330,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
                     method,
                     data: requestData,
                     headers: Object.keys(headers).length > 0 ? headers : undefined,
-                    useProxy: !isLocal && !isFormDataRequest // Use proxy for non-FormData requests to external domains
+                    useProxy: isStandaloneMode && !isLocal && !isFormDataRequest // Only use proxy for standalone mode external requests
                 });
             }
 
