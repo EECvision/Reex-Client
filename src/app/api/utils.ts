@@ -6,6 +6,13 @@ import EventEmitter from "events";
 // Direct import of generators (same as analyze)
 import { gunzipSync } from "zlib";
 
+import fs from "fs";
+
+export const getApiServicesDir = (targetDir: string) => {
+    const hasSrcFolder = fs.existsSync(path.join(targetDir, 'src'));
+    return hasSrcFolder ? "src/api-services" : "api-services";
+};
+
 // Use a global variable to persist the EventEmitter across module reloads in development
 const globalForEvents = global as unknown as { eventEmitter: EventEmitter };
 
@@ -30,23 +37,23 @@ export const runCommand = (cmd: string, options: any = {}) => {
 
 export const getApiTargetDir = (override?: string) => {
     // 1. Explicit override from Request (Highest Priority)
-    if (override) return path.join(override, 'src/api-services/definitions');
+    if (override) return path.join(override, getApiServicesDir(override), 'definitions');
 
     // 2. Env Var override (from Bridge or .env.local)
     if (process.env.API_TARGET_DIR) {
         // API_TARGET_DIR usually points to the PROJECT ROOT (e.g. d:\Dev\api-builder\api-next-server)
-        // or the src/api-services/definitions depending on how it was passed.
+        // or the ${getApiServicesDir(process.env.API_TARGET_DIR)}/definitions depending on how it was passed.
         // In the CLI Bridge (bin/index.js), targetDir was passed as the --dir argument (Project Root).
         // server.js mounted it as process.env.API_TARGET_DIR.
-        // But wait, server.js paths.js used API_TARGET_DIR as the PROJECT ROOT.
-        // Then it constructed paths like API_DEFINITIONS_DIR = path.join(API_TARGET_DIR, 'src/api-services/definitions').
+        // But wait, server.js paths.js used API_TARGET_DIR as the PROJECT Root.
+        // Then it constructed paths like API_DEFINITIONS_DIR = path.join(API_TARGET_DIR, `${getApiServicesDir(process.env.API_TARGET_DIR)}/definitions`).
 
         // So we should expect API_TARGET_DIR to be project root.
-        return path.join(process.env.API_TARGET_DIR, 'src/api-services/definitions');
+        return path.join(process.env.API_TARGET_DIR, getApiServicesDir(process.env.API_TARGET_DIR), 'definitions');
     }
 
     // 3. Default to self (Next.js Root)
-    return path.join(process.cwd(), 'src/api-services/definitions');
+    return path.join(process.cwd(), getApiServicesDir(process.cwd()), 'definitions');
 };
 
 export const getEnvWithOverride = (activeTargetDir?: string) => {

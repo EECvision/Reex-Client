@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getBridgeUrl } from "@/app/api/utils";
+import { getBridgeUrl, getApiServicesDir } from "@/app/api/utils";
 // @ts-ignore
 import typeGenerator from "@/services/type-generator";
 
@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
 
         // Path logic (relative to project root for Bridge)
         // src/api-services/types/API_KEY/FN_NAME.ts
-        const relativePath = `src/api-services/types/${apiKey}/${fnName}.ts`;
+        const API_SERVICES_DIR = getApiServicesDir(process.env.API_TARGET_DIR || process.cwd());
+        const relativePath = `${API_SERVICES_DIR}/types/${apiKey}/${fnName}.ts`;
 
         return NextResponse.json({
             success: true,

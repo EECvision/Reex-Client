@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getApiServicesDir } from "@/app/api/utils";
 
 function generateTemplateContent(moduleName: string) {
   // Capitalize first letter for type names
@@ -76,14 +77,16 @@ function generateTemplateContent(moduleName: string) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { moduleName } = body;
+    const { moduleName, targetDir } = body;
+
+    const API_SERVICES_DIR = getApiServicesDir(targetDir || process.env.API_TARGET_DIR || process.cwd());
 
     if (!moduleName) {
       return NextResponse.json({ success: false, error: "Module name required" }, { status: 400 });
     }
 
     const content = generateTemplateContent(moduleName);
-    const filePath = `src/api-services/definitions/${moduleName}.ts`;
+    const filePath = `${API_SERVICES_DIR}/definitions/${moduleName}.ts`;
 
     return NextResponse.json({
       success: true,

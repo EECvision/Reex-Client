@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sendEvent, getBridgeUrl } from "@/app/api/utils";
+import { sendEvent, getBridgeUrl, getApiServicesDir } from "@/app/api/utils";
 import { Project, SyntaxKind } from "ts-morph";
 
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { type, moduleName, functionName, existingContent } = body;
+        const { type, moduleName, functionName, existingContent, targetDir } = body;
 
         const operations: any[] = [];
+        const API_SERVICES_DIR = getApiServicesDir(targetDir || process.env.API_TARGET_DIR || process.cwd());
 
         if (type === 'module') {
             // 1. Delete Module File
-            operations.push({ type: 'delete', filePath: `src/api-services/definitions/${moduleName}.ts` });
-            operations.push({ type: 'delete', filePath: `src/api-services/types/${moduleName}` });
-            operations.push({ type: 'delete', filePath: `src/api-services/generated/${moduleName}.ts` });
+            operations.push({ type: 'delete', filePath: `${API_SERVICES_DIR}/definitions/${moduleName}.ts` });
+            operations.push({ type: 'delete', filePath: `${API_SERVICES_DIR}/types/${moduleName}` });
+            operations.push({ type: 'delete', filePath: `${API_SERVICES_DIR}/generated/${moduleName}.ts` });
 
         } else if (type === 'function') {
             if (!functionName) throw new Error("Function name required");
@@ -41,18 +42,18 @@ export async function POST(req: NextRequest) {
 
                     // If empty, delete module
                     if (initializer.getProperties().length === 0) {
-                        operations.push({ type: 'delete', filePath: `src/api-services/definitions/${moduleName}.ts` });
-                        operations.push({ type: 'delete', filePath: `src/api-services/types/${moduleName}` });
-                        operations.push({ type: 'delete', filePath: `src/api-services/generated/${moduleName}.ts` });
+                        operations.push({ type: 'delete', filePath: `${API_SERVICES_DIR}/definitions/${moduleName}.ts` });
+                        operations.push({ type: 'delete', filePath: `${API_SERVICES_DIR}/types/${moduleName}` });
+                        operations.push({ type: 'delete', filePath: `${API_SERVICES_DIR}/generated/${moduleName}.ts` });
                     } else {
                         // Save update
                         operations.push({
                             type: 'write',
-                            filePath: `src/api-services/definitions/${moduleName}.ts`,
+                            filePath: `${API_SERVICES_DIR}/definitions/${moduleName}.ts`,
                             content: sourceFile.getFullText()
                         });
                         // Delete specific type file for function
-                        operations.push({ type: 'delete', filePath: `src/api-services/types/${moduleName}/${functionName}.ts` });
+                        operations.push({ type: 'delete', filePath: `${API_SERVICES_DIR}/types/${moduleName}/${functionName}.ts` });
                     }
                 }
             } else {

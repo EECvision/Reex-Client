@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import os from "os";
-import { runCommand, getEnvWithOverride, sendEvent, decompressFilePayload } from "@/app/api/utils";
+import { runCommand, getEnvWithOverride, sendEvent, decompressFilePayload, getApiServicesDir, getBridgeUrl } from "@/app/api/utils";
 
 export async function POST(req: NextRequest) {
     const taskId = Date.now().toString();
@@ -16,6 +16,8 @@ export async function POST(req: NextRequest) {
         const deletedModulesStr = formData.get('deletedModules') as string;
         const functionsStr = formData.get('functions') as string;
         const targetDir = formData.get('targetDir') as string; // Extract targetDir
+        
+        const API_SERVICES_DIR = getApiServicesDir(targetDir);
 
         const modules = modulesStr ? JSON.parse(modulesStr) : [];
         const deletedModules = deletedModulesStr ? JSON.parse(deletedModulesStr) : [];
@@ -51,11 +53,13 @@ export async function POST(req: NextRequest) {
             // We can simulate that instruction or just simple file deletes.
             // Given sync usually implies full modules...
             for (const mod of deletedModules) {
-                operations.push({ type: 'delete', filePath: `src/api-services/definitions/${mod}.ts` });
-                // Best effort on others, client usually handles recursive if smart, or we explicit list:
-                operations.push({ type: 'delete', filePath: `src/api-services/types/${mod}` });
-                operations.push({ type: 'delete', filePath: `src/api-services/generated/${mod}.ts` });
+            if (mod) {
+                operations.push({ type: 'delete', filePath: `${API_SERVICES_DIR}/definitions/${mod}.ts` });
+                // Also try to delete generated types/files if known
+                operations.push({ type: 'delete', filePath: `${API_SERVICES_DIR}/types/${mod}` });
+                operations.push({ type: 'delete', filePath: `${API_SERVICES_DIR}/generated/${mod}.ts` });
             }
+        }
         }
 
         // 2. Generation
@@ -72,10 +76,10 @@ export async function POST(req: NextRequest) {
 
         operations = [...operations, ...genOps];
 
-        // Post-process operations to ensure correct paths
+        // Post-process operations to ensure correct paths (just a safety net)
         operations = operations.map(op => {
-            if (op.type === 'write' && !op.filePath.startsWith('src/api-services')) {
-                return { ...op, filePath: `src/api-services/${op.filePath}` };
+            if (op.type === 'write' && !op.filePath.startsWith(API_SERVICES_DIR)) {
+                return { ...op, filePath: `${API_SERVICES_DIR}/${op.filePath}` };
             }
             return op;
         });

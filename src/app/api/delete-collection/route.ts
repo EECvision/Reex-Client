@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import path from "path";
 import fs from "fs";
-import { sendEvent, getBridgeUrl } from "@/app/api/utils";
+import { sendEvent, getBridgeUrl, getApiServicesDir } from "@/app/api/utils";
 
 // Helper to send to Bridge
 async function sendToBridge(bridgeUrl: string, method: string, endpoint: string, body: any) {
@@ -36,11 +36,13 @@ export async function POST(req: NextRequest) {
     // However, calculation is fast. 
     // We will return the instructions to the client.
 
+    const API_SERVICES_DIR = getApiServicesDir(targetDir || process.env.API_TARGET_DIR || process.cwd());
+
     const pathsToDelete = [
-        'src/api-services/definitions',
-        'src/api-services/types',
-        'src/api-services/generated',
-        'src/api-services/index.ts'
+        `${API_SERVICES_DIR}/definitions`,
+        `${API_SERVICES_DIR}/types`,
+        `${API_SERVICES_DIR}/generated`,
+        `${API_SERVICES_DIR}/index.ts`
     ];
 
     // Note: We cannot reset local 'src/config/apiModules.ts' on Vercel ephemeral FS reliably.

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import os from "os";
-import { sendEvent, getBridgeUrl, decompressFilePayload } from "@/app/api/utils";
+import { sendEvent, getBridgeUrl, decompressFilePayload, getApiServicesDir } from "@/app/api/utils";
 
 // Direct import of generators (same as analyze)
 import { generateOpenApi } from "@/scripts/generate-openapi-collection";
@@ -20,6 +20,10 @@ export async function POST(req: NextRequest) {
         const functionsStr = formData.get('functions') as string;
         const forceOverwriteStr = formData.get('forceOverwrite') as string;
         const existingModulesStr = formData.get('existingModules') as string;
+        const targetDir = formData.get('targetDir') as string;
+        
+        const API_SERVICES_DIR = getApiServicesDir(targetDir);
+
         const returnOperations = formData.get('returnOperations') === 'true'; // New flag
 
         // Parse inputs
@@ -80,10 +84,10 @@ export async function POST(req: NextRequest) {
         // 0. Prepend Deletions (if any)
         if (deletedModules.length > 0) {
             for (const mod of deletedModules) {
-                operations.push({ type: 'delete', filePath: `src/api-services/definitions/${mod}.ts` });
+                operations.push({ type: 'delete', filePath: `${API_SERVICES_DIR}/definitions/${mod}.ts` });
                 // Also try to delete generated types/files if known, similar to sync-collection
-                operations.push({ type: 'delete', filePath: `src/api-services/types/${mod}` });
-                operations.push({ type: 'delete', filePath: `src/api-services/generated/${mod}.ts` });
+                operations.push({ type: 'delete', filePath: `${API_SERVICES_DIR}/types/${mod}` });
+                operations.push({ type: 'delete', filePath: `${API_SERVICES_DIR}/generated/${mod}.ts` });
             }
         }
 
@@ -105,8 +109,8 @@ export async function POST(req: NextRequest) {
 
         // Post-process operations to ensure correct paths
         operations = operations.map(op => {
-            if (op.type === 'write' && !op.filePath.startsWith('src/api-services')) {
-                return { ...op, filePath: `src/api-services/${op.filePath}` };
+            if (op.type === 'write' && !op.filePath.startsWith(API_SERVICES_DIR)) {
+                return { ...op, filePath: `${API_SERVICES_DIR}/${op.filePath}` };
             }
             return op;
         });
