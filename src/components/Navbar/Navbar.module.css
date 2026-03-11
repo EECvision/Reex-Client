@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 48px;
-  padding: 0 16px;
+  padding: 0 8px;
   background-color: var(--card-bg, #fff);
   border-bottom: 1px solid var(--border-color, #e5e7eb);
   position: relative;
