@@ -101,7 +101,7 @@ try {
     // 2. Run Type Generation (gen:types -> generate-types.js)
     // This should AUTO-TRIGGER generate-manifest.ts because apiManifest.ts is missing!
     console.log("\n--- Step 2: Generating Types ---");
-    execSync(`npx tsx "${path.join(scriptsDir, 'generate-types.js')}"`, {
+    execSync(`npx tsx "${path.join(scriptsDir, 'generate-types.ts')}"`, {
         env,
         stdio: 'inherit',
         cwd: process.cwd()

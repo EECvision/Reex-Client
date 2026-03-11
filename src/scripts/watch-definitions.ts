@@ -1,8 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
+const { API_SERVICES_DIR } = require('../paths');
 
-const definitionsDir = path.join(process.cwd(), 'src', 'api-services', 'definitions');
+const definitionsDir = path.join(API_SERVICES_DIR, 'definitions');
 const debounceTime = 1000; // 1 second debounce
 let timeout: NodeJS.Timeout | null = null;
 let isRunning = false;

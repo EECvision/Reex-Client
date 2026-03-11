@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 
 // root is src/.. which is api-next-server root
 const LOCAL_ROOT = process.cwd();
@@ -8,7 +9,8 @@ const PROJECT_ROOT = process.env.API_TARGET_DIR || LOCAL_ROOT;
 
 // The client/server IS the project root in this context
 const CLIENT_ROOT = PROJECT_ROOT;
-const CLIENT_SRC = path.join(PROJECT_ROOT, 'src');
+const hasClientSrcFolderPath = fs.existsSync(path.join(PROJECT_ROOT, 'src'));
+const CLIENT_SRC = hasClientSrcFolderPath ? path.join(PROJECT_ROOT, 'src') : PROJECT_ROOT;
 const LOCAL_SRC = path.join(LOCAL_ROOT, 'src');
 
 module.exports = {

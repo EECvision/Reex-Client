@@ -1,7 +1,5 @@
 import { cloudUrl, getLocalUrl, handleOperationResponse, compressFilePayload } from "./utils";
 
-const API_SERVICES_DIR = "src/api-services";
-
 export const CloudService = {
     generateTemplate: async (data: any, targetDir: string, bridgeUrl?: string, taskId?: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
         try {
@@ -94,8 +92,15 @@ export const CloudService = {
             // We can fetch directly using utils/getLocalUrl
             if (itemInfo.type === 'function' && !contentToAdd) {
                 try {
-                    const filePath = `${API_SERVICES_DIR}/definitions/${itemInfo.moduleName}.ts`;
+                    // Ask Bridge where the definitions are
                     const url = bridgeUrl || getLocalUrl();
+                    const pathsRes = await fetch(`${url}/api/project/paths`);
+                    let definitionsDir = "api-services/definitions";
+                    if (pathsRes.ok) {
+                        const paths = await pathsRes.json();
+                        definitionsDir = paths.API_DEFINITIONS_DIR || definitionsDir;
+                    }
+                    const filePath = `${definitionsDir}/${itemInfo.moduleName}.ts`;
                     const readRes = await fetch(`${url}/api/fs/read`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
