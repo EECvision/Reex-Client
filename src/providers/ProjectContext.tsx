@@ -26,6 +26,7 @@ interface ProjectContextType {
   modules: any[];
   config: any;
   projectPath: string;
+  apiServicesDir: string;
   loading: boolean;
   error: string | null;
   isStandaloneMode: boolean;
@@ -58,6 +59,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [modules, setModules] = useState<any[]>([]);
   const [config, setConfig] = useState<any>(null);
   const [projectPath, setProjectPath] = useState<string>("");
+  const [apiServicesDir, setApiServicesDir] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isStandaloneMode, setIsStandaloneMode] = useState(false);
@@ -142,6 +144,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       // Fetch Config from Bridge (Source of Truth for Target Dir)
       const bridgeStatus = await api.fetchBridgeStatus();
       const realTargetDir = bridgeStatus?.targetDir;
+      const bridgeApiServicesDir = bridgeStatus?.apiServicesDir || "";
 
       if (!realTargetDir) {
         // No bridge connected - enter standalone mode
@@ -149,6 +152,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         // Hook handles fetching now
 
         setProjectPath("");
+        setApiServicesDir("");
         setError(null);
         return;
       }
@@ -156,6 +160,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       // Bridge is connected
       setIsStandaloneMode(false);
       setProjectPath(realTargetDir);
+      setApiServicesDir(bridgeApiServicesDir);
 
       // Fetch Data from Bridge directly
       const bridgeUrl = api.getBridgeUrl();
@@ -237,6 +242,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       modules,
       config,
       projectPath,
+      apiServicesDir,
       loading: isStandaloneMode ? isLoadingStandalone : loading, // Use standalone loading when appropriate
       error,
       isStandaloneMode,

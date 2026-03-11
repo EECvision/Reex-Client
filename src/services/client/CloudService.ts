@@ -1,9 +1,10 @@
-import { cloudUrl, getLocalUrl, handleOperationResponse, compressFilePayload } from "./utils";
+import { cloudUrl, getLocalUrl, handleOperationResponse, compressFilePayload, getApiServicesDir } from "./utils";
 
 export const CloudService = {
     generateTemplate: async (data: any, targetDir: string, bridgeUrl?: string, taskId?: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
         try {
-            const payload = { ...data, targetDir, bridgeUrl, taskId };
+            const apiServicesDir = await getApiServicesDir();
+            const payload = { ...data, targetDir, bridgeUrl, taskId, apiServicesDir };
             const res = await fetch(`${cloudUrl}/generate-template`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -23,6 +24,8 @@ export const CloudService = {
 
         if (fileName && !formData.has('fileName')) formData.append('fileName', fileName); // Only if not already handled
         formData.append('targetDir', targetDir);
+        const apiServicesDir = await getApiServicesDir();
+        if (apiServicesDir) formData.append('apiServicesDir', apiServicesDir);
         if (clientMappings) formData.append('clientMappings', JSON.stringify(clientMappings));
 
         // Only fetch existing definitions from bridge in Project Mode
@@ -71,10 +74,11 @@ export const CloudService = {
 
     deleteCollection: async (targetDir: string, bridgeUrl?: string, taskId?: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
         try {
+            const apiServicesDir = await getApiServicesDir();
             const res = await fetch(`${cloudUrl}/delete-collection`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ targetDir, bridgeUrl, taskId }),
+                body: JSON.stringify({ targetDir, bridgeUrl, taskId, apiServicesDir }),
             });
             return handleOperationResponse(res);
         } catch (error: any) {
@@ -115,7 +119,8 @@ export const CloudService = {
                 }
             }
 
-            const payload = { ...itemInfo, existingContent: contentToAdd, targetDir, bridgeUrl, taskId };
+            const apiServicesDir = await getApiServicesDir();
+            const payload = { ...itemInfo, existingContent: contentToAdd, targetDir, bridgeUrl, taskId, apiServicesDir };
             const res = await fetch(`${cloudUrl}/delete-item`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -146,6 +151,8 @@ export const CloudService = {
         if (payload.baseUrl) formData.append('baseUrl', payload.baseUrl);
         if (fileName) formData.append('fileName', fileName);
         formData.append('targetDir', targetDir);
+        const apiServicesDir = await getApiServicesDir();
+        if (apiServicesDir) formData.append('apiServicesDir', apiServicesDir);
         if (bridgeUrl) formData.append('bridgeUrl', bridgeUrl);
         if (taskId) formData.append('taskId', taskId);
         formData.append('returnOperations', 'true');
@@ -160,10 +167,11 @@ export const CloudService = {
 
     saveTypes: async (data: any) => {
         try {
+            const apiServicesDir = await getApiServicesDir();
             const res = await fetch(`${cloudUrl}/save-types`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
+                body: JSON.stringify({ ...data, apiServicesDir }),
             });
             return handleOperationResponse(res);
         } catch (error: any) {
@@ -186,6 +194,8 @@ export const CloudService = {
         if (payload.functions) formData.append('functions', typeof payload.functions === 'string' ? payload.functions : JSON.stringify(payload.functions));
         if (fileName) formData.append('fileName', fileName);
         formData.append('targetDir', targetDir);
+        const apiServicesDir = await getApiServicesDir();
+        if (apiServicesDir) formData.append('apiServicesDir', apiServicesDir);
 
         const res = await fetch(`${cloudUrl}/sync-collection`, {
             method: 'POST',

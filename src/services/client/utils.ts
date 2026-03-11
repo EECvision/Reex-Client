@@ -8,6 +8,38 @@ export const getLocalUrl = () => {
 
 export const cloudUrl = "/api";
 
+// Cached apiServicesDir - resolves once from bridge health, then reused
+let _cachedApiServicesDir: string | null = null;
+let _apiServicesDirPromise: Promise<string> | null = null;
+
+export const getApiServicesDir = async (): Promise<string> => {
+    if (_cachedApiServicesDir !== null) return _cachedApiServicesDir;
+    if (_apiServicesDirPromise) return _apiServicesDirPromise;
+
+    _apiServicesDirPromise = (async (): Promise<string> => {
+        try {
+            const res = await fetch(`${getLocalUrl()}/api/health`);
+            if (res.ok) {
+                const data = await res.json();
+                const dir = data.apiServicesDir || "";
+                _cachedApiServicesDir = dir;
+                return dir;
+            }
+        } catch (e) {
+            console.warn("Could not fetch apiServicesDir from bridge:", e);
+        }
+        _cachedApiServicesDir = "";
+        return "";
+    })();
+
+    return _apiServicesDirPromise;
+};
+
+export const resetApiServicesDirCache = () => {
+    _cachedApiServicesDir = null;
+    _apiServicesDirPromise = null;
+};
+
 export const handleOperationResponse = async (res: Response) => {
     let data;
     try {
