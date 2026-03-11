@@ -380,7 +380,7 @@ export const generateInterfaceDefinition = (
     });
 
     return `
-interface ${interfaceName} {
+export interface ${interfaceName} {
 ${fields.join("\n")}
 }
 `;
@@ -866,7 +866,7 @@ export const generateTypesFromOpenAPISchema = (
 
     if (fields.length === 0) return "";
     return `
-interface ${entityName}${suffix} {
+export interface ${entityName}${suffix} {
 ${fields.join("\n")}
 }
 `;
@@ -932,7 +932,7 @@ export const generateTypesFromPostmanBody = (body: any, entityName: string): str
         });
 
         // Always push the interface, even if empty, to ensure references remain valid
-        interfaces.push(`\ninterface ${interfaceName} {\n${fields.join("\n")}\n}\n`);
+        interfaces.push(`\nexport interface ${interfaceName} {\n${fields.join("\n")}\n}\n`);
     };
 
     generateInterface(parsed, entityName + "Payload");
