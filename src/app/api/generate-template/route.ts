@@ -77,9 +77,9 @@ function generateTemplateContent(moduleName: string) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { moduleName, targetDir } = body;
+    const { moduleName, targetDir, apiServicesDir } = body;
 
-    const API_SERVICES_DIR = getApiServicesDir(targetDir || process.env.API_TARGET_DIR || process.cwd());
+    const API_SERVICES_DIR = getApiServicesDir(targetDir || process.env.API_TARGET_DIR || process.cwd(), apiServicesDir);
 
     if (!moduleName) {
       return NextResponse.json({ success: false, error: "Module name required" }, { status: 400 });

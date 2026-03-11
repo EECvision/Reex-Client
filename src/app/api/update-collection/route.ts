@@ -21,8 +21,9 @@ export async function POST(req: NextRequest) {
         const forceOverwriteStr = formData.get('forceOverwrite') as string;
         const existingModulesStr = formData.get('existingModules') as string;
         const targetDir = formData.get('targetDir') as string;
+        const apiServicesDir = formData.get('apiServicesDir') as string;
         
-        const API_SERVICES_DIR = getApiServicesDir(targetDir);
+        const API_SERVICES_DIR = getApiServicesDir(targetDir, apiServicesDir);
 
         const returnOperations = formData.get('returnOperations') === 'true'; // New flag
 

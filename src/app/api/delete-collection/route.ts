@@ -21,12 +21,14 @@ export async function POST(req: NextRequest) {
     let targetDir = null;
     let bridgeUrl = getBridgeUrl();
     let taskId = Date.now().toString();
+    let apiServicesDir: string | undefined;
 
     try {
         const body = await req.json();
         targetDir = body.targetDir;
         if (body.bridgeUrl) bridgeUrl = body.bridgeUrl;
         if (body.taskId) taskId = body.taskId;
+        apiServicesDir = body.apiServicesDir;
     } catch (e) {
         // Body might be empty
     }
@@ -36,7 +38,7 @@ export async function POST(req: NextRequest) {
     // However, calculation is fast. 
     // We will return the instructions to the client.
 
-    const API_SERVICES_DIR = getApiServicesDir(targetDir || process.env.API_TARGET_DIR || process.cwd());
+    const API_SERVICES_DIR = getApiServicesDir(targetDir || process.env.API_TARGET_DIR || process.cwd(), apiServicesDir);
 
     const pathsToDelete = [
         `${API_SERVICES_DIR}/definitions`,

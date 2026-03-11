@@ -8,7 +8,11 @@ import { gunzipSync } from "zlib";
 
 import fs from "fs";
 
-export const getApiServicesDir = (targetDir: string) => {
+export const getApiServicesDir = (targetDir: string, explicitApiServicesDir?: string) => {
+    // If the client (bridge) explicitly tells us the relative dir, trust it.
+    // This is critical for cloud mode where the server can't access the user's local filesystem.
+    if (explicitApiServicesDir) return explicitApiServicesDir;
+    
     const hasSrcFolder = fs.existsSync(path.join(targetDir, 'src'));
     return hasSrcFolder ? "src/api-services" : "api-services";
 };

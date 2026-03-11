@@ -6,7 +6,7 @@ import typeGenerator from "@/services/type-generator";
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { apiKey, fnName, data } = body;
+        const { apiKey, fnName, data, apiServicesDir } = body;
 
         // Use function name directly for interface name to match Generator
         const interfaceName = fnName;
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
         // Path logic (relative to project root for Bridge)
         // src/api-services/types/API_KEY/FN_NAME.ts
-        const API_SERVICES_DIR = getApiServicesDir(process.env.API_TARGET_DIR || process.cwd());
+        const API_SERVICES_DIR = getApiServicesDir(process.env.API_TARGET_DIR || process.cwd(), apiServicesDir);
         const relativePath = `${API_SERVICES_DIR}/types/${apiKey}/${fnName}.ts`;
 
         return NextResponse.json({

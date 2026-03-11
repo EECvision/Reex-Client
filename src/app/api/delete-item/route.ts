@@ -5,10 +5,10 @@ import { Project, SyntaxKind } from "ts-morph";
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { type, moduleName, functionName, existingContent, targetDir } = body;
+        const { type, moduleName, functionName, existingContent, targetDir, apiServicesDir } = body;
 
         const operations: any[] = [];
-        const API_SERVICES_DIR = getApiServicesDir(targetDir || process.env.API_TARGET_DIR || process.cwd());
+        const API_SERVICES_DIR = getApiServicesDir(targetDir || process.env.API_TARGET_DIR || process.cwd(), apiServicesDir);
 
         if (type === 'module') {
             // 1. Delete Module File

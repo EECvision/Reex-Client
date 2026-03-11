@@ -16,8 +16,9 @@ export async function POST(req: NextRequest) {
         const deletedModulesStr = formData.get('deletedModules') as string;
         const functionsStr = formData.get('functions') as string;
         const targetDir = formData.get('targetDir') as string; // Extract targetDir
+        const apiServicesDir = formData.get('apiServicesDir') as string;
         
-        const API_SERVICES_DIR = getApiServicesDir(targetDir);
+        const API_SERVICES_DIR = getApiServicesDir(targetDir, apiServicesDir);
 
         const modules = modulesStr ? JSON.parse(modulesStr) : [];
         const deletedModules = deletedModulesStr ? JSON.parse(deletedModulesStr) : [];
