@@ -470,7 +470,7 @@ export const generateModuleTemplate = (
     // Response Type Imports (Exclude DELETE)
     const responseTypeImports = functionNames
         .filter(name => !name.startsWith('delete_'))
-        .map(funcName => 'import { ' + funcName + ' } from "../types/' + moduleName + '/' + funcName + '";')
+        .map(funcName => 'import { type ' + funcName + ' } from "../types/' + moduleName + '/' + funcName + '";')
         .join("\n");
 
     // Build content parts
