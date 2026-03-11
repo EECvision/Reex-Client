@@ -330,7 +330,8 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
                     method,
                     data: requestData,
                     headers: Object.keys(headers).length > 0 ? headers : undefined,
-                    useProxy: isStandaloneMode && !isLocal && !isFormDataRequest // Only use proxy for standalone mode external requests
+                    useProxy: isStandaloneMode && !isLocal && !isFormDataRequest, // Only use proxy for standalone mode external requests
+                    isStandaloneMode // Pass flag to executeRequest so it can conditionally perform CORS fallback
                 });
             }
 

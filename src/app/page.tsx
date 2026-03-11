@@ -198,6 +198,11 @@ const App = () => {
     }
   }, [apiManifest]);
 
+  // Reset workspace to empty state when switching between project/standalone modes
+  useEffect(() => {
+    setSelectedEndpoint(null);
+  }, [isStandaloneMode]);
+
   const hasEndpoints = apiManifest && Object.keys(apiManifest).length > 0;
 
   if (projectLoading) {

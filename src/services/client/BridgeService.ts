@@ -43,9 +43,9 @@ export const BridgeService = {
     },
 
     // Execution could be viewed as separate, but often runs client-side making request
-    executeRequest: async (config: { url: string; method: string; data?: any; headers?: any; useProxy?: boolean }) => {
+    executeRequest: async (config: { url: string; method: string; data?: any; headers?: any; useProxy?: boolean; isStandaloneMode?: boolean }) => {
         try {
-            const { url, method, data, headers, useProxy } = config;
+            const { url, method, data, headers, useProxy, isStandaloneMode } = config;
 
             // Use proxy for standalone mode to bypass CORS
             if (useProxy) {
@@ -73,7 +73,23 @@ export const BridgeService = {
                 options.body = isFormData ? data : JSON.stringify(data);
             }
 
-            const res = await fetch(url, options);
+            let res;
+            try {
+                res = await fetch(url, options);
+            } catch (fetchError: any) {
+                // If direct fetch fails due to network/CORS error in Project Mode, try falling back to Proxy
+                // Browsers throw a TypeError for CORS blocks and connection refused
+                if (!isStandaloneMode && !isFormData && fetchError instanceof TypeError) {
+                    console.warn(`[CORS Fallback] Direct request to ${url} failed. Retrying via proxy...`);
+                    const proxyRes = await fetch('/api/cors-proxy', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url, method, data, headers })
+                    });
+                    return proxyRes.json();
+                }
+                throw fetchError;
+            }
 
             // Try to parse JSON
             let responseData;
