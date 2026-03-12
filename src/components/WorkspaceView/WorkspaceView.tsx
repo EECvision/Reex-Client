@@ -135,7 +135,7 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
                             </>
                         )}
                         {/* Localhost Info Banner */}
-                        {isStandaloneMode && isLocalhostUrl(computedUrl || "") && (
+                        {isLocalhostUrl(computedUrl || "") && (
                             <>
                                 <LocalhostBanner className={styles.localhostBannerMargin} />
                                 <br />
