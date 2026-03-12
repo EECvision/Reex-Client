@@ -171,7 +171,21 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       ]);
       setManifest(manifestData);
       setModules(modulesData);
-      setConfig(configData);
+
+      // Restore persisted auth settings from localStorage (project mode only)
+      let finalConfig = configData;
+      if (typeof window !== 'undefined') {
+        const savedAuth = localStorage.getItem('reex_project_auth');
+        if (savedAuth) {
+          try {
+            const auth = JSON.parse(savedAuth);
+            if (auth.token || (auth.customHeaders && Object.keys(auth.customHeaders).length > 0)) {
+              finalConfig = { ...configData, auth };
+            }
+          } catch { /* ignore parse errors */ }
+        }
+      }
+      setConfig(finalConfig);
 
       setError(null);
     } catch (err: any) {
