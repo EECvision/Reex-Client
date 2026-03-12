@@ -19,11 +19,21 @@ export async function GET() {
             .from("users")
             .select("subscription_status, subscription_plan, current_period_end, subscription_id, project_import_count")
             .eq("id", session.user.id)
-            .single();
+            .maybeSingle();
 
         if (error) {
             console.error("Error fetching subscription status:", error);
-            return new NextResponse("Database Error", { status: 500 });
+            return NextResponse.json({ error: "Database Error" }, { status: 500 });
+        }
+
+        if (!user) {
+            return NextResponse.json({
+                subscription_status: null,
+                subscription_plan: null,
+                current_period_end: null,
+                subscription_id: null,
+                project_import_count: 0
+            });
         }
 
         return NextResponse.json(user);

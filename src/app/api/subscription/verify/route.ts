@@ -14,14 +14,14 @@ export async function POST(req: Request) {
     try {
         const session = await auth();
         if (!session?.user) {
-            return new NextResponse("Unauthorized", { status: 401 });
+            return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
         }
 
         const body = await req.json();
         const { transaction_id, plan_id, billing_cycle } = body;
 
         if (!transaction_id || !plan_id) {
-            return new NextResponse("Missing transaction_id or plan_id", { status: 400 });
+            return NextResponse.json({ success: false, message: "Missing transaction_id or plan_id" }, { status: 400 });
         }
 
         // validate plan
@@ -38,16 +38,22 @@ export async function POST(req: Request) {
 
         const FLUTTERWAVE_SECRET_KEY = process.env.FLUTTERWAVE_SECRET_KEY;
         if (!FLUTTERWAVE_SECRET_KEY) {
-            return new NextResponse("Server Configuration Error", { status: 500 });
+            return NextResponse.json({ success: false, message: "Server Configuration Error" }, { status: 500 });
         }
 
         // 1. Verify transaction with Flutterwave
-        const response = await axios.get(
-            `https://api.flutterwave.com/v3/transactions/${transaction_id}/verify`,
-            {
-                headers: { Authorization: `Bearer ${FLUTTERWAVE_SECRET_KEY}` },
-            }
-        );
+        let response;
+        try {
+            response = await axios.get(
+                `https://api.flutterwave.com/v3/transactions/${transaction_id}/verify`,
+                {
+                    headers: { Authorization: `Bearer ${FLUTTERWAVE_SECRET_KEY}` },
+                }
+            );
+        } catch (axiosError: any) {
+            console.error("Flutterwave API error:", axiosError?.response?.data || axiosError.message);
+            return NextResponse.json({ success: false, message: "Failed to reach Flutterwave API" }, { status: 502 });
+        }
 
         const data = response.data;
         const fwData = data.data;
@@ -57,7 +63,7 @@ export async function POST(req: Request) {
             // 2. SECURITY CHECK: Verify Amount & Currency
             // Only check if we have a matching plan config
             if (expectedAmount && (fwData.amount < expectedAmount || fwData.currency !== expectedCurrency)) {
-                return new NextResponse("Payment amount mismatch", { status: 400 });
+                return NextResponse.json({ success: false, message: "Payment amount mismatch" }, { status: 400 });
             }
 
             const supabase = createClient(
@@ -70,10 +76,10 @@ export async function POST(req: Request) {
                 .from("payments")
                 .select("id")
                 .eq("transaction_id", transaction_id)
-                .single();
+                .maybeSingle();
 
             if (existingTx) {
-                return new NextResponse("Transaction already processed", { status: 409 });
+                return NextResponse.json({ success: false, message: "Transaction already processed" }, { status: 409 });
             }
 
             // 4. DATE LOGIC: Use date-fns for accurate calculation based on billing cycle
@@ -88,14 +94,15 @@ export async function POST(req: Request) {
                     subscription_status: "active",
                     subscription_plan: plan_id,
                     subscription_id: fwData.id,
-                    customer_code: fwData.customer.customer_code,
+                    // customer_code is not returned by the transaction verify endpoint;
+                    // it is updated later via webhook when Flutterwave sends charge.completed
                     current_period_end: currentPeriodEnd.toISOString(),
                 })
                 .eq("id", session.user.id);
 
             if (error) {
                 console.error("Error updating user subscription:", error);
-                return new NextResponse("Database Error", { status: 500 });
+                return NextResponse.json({ success: false, message: "Database Error" }, { status: 500 });
             }
 
             // 6. Log Transaction (To prevent reuse)
@@ -114,6 +121,6 @@ export async function POST(req: Request) {
         }
     } catch (error) {
         console.error("Subscription verification error:", error);
-        return new NextResponse("Internal Server Error", { status: 500 });
+        return NextResponse.json({ success: false, message: "Internal Server Error" }, { status: 500 });
     }
 }
