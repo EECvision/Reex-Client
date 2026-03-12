@@ -1,5 +1,6 @@
 
 import { getLocalUrl, cloudUrl } from "./utils";
+import { isLocalhostUrl } from "@/lib/urlUtils";
 
 export const BridgeService = {
     readFile: async (filePath: string, bridgeUrl?: string) => {
@@ -46,15 +47,24 @@ export const BridgeService = {
     executeRequest: async (config: { url: string; method: string; data?: any; headers?: any; useProxy?: boolean; isStandaloneMode?: boolean }) => {
         try {
             const { url, method, data, headers, useProxy, isStandaloneMode } = config;
+            const isLocal = isLocalhostUrl(url);
 
             // Use proxy for standalone mode to bypass CORS
             if (useProxy) {
-                const proxyRes = await fetch('/api/cors-proxy', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url, method, data, headers })
-                });
-                return proxyRes.json();
+                const proxyUrl = isLocal ? 'http://localhost:9876/proxy' : '/api/cors-proxy';
+                try {
+                    const proxyRes = await fetch(proxyUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url, method, data, headers })
+                    });
+                    return await proxyRes.json();
+                } catch (e: any) {
+                    if (isLocal) {
+                        return { success: false, error: 'Could not connect to the local proxy. Run `npx reex-proxy` in your terminal first.' };
+                    }
+                    throw e;
+                }
             }
 
             const isFormData = data instanceof FormData;
@@ -80,13 +90,21 @@ export const BridgeService = {
                 // If direct fetch fails due to network/CORS error in Project Mode, try falling back to Proxy
                 // Browsers throw a TypeError for CORS blocks and connection refused
                 if (!isStandaloneMode && !isFormData && fetchError instanceof TypeError) {
-                    console.warn(`[CORS Fallback] Direct request to ${url} failed. Retrying via proxy...`);
-                    const proxyRes = await fetch('/api/cors-proxy', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ url, method, data, headers })
-                    });
-                    return proxyRes.json();
+                    const fallbackProxyUrl = isLocal ? 'http://localhost:9876/proxy' : '/api/cors-proxy';
+                    console.warn(`[CORS Fallback] Direct request to ${url} failed. Retrying via proxy (${fallbackProxyUrl})...`);
+                    try {
+                        const proxyRes = await fetch(fallbackProxyUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url, method, data, headers })
+                        });
+                        return await proxyRes.json();
+                    } catch (e: any) {
+                        if (isLocal) {
+                            return { success: false, error: 'Request blocked by CORS (or server unreachable). We tried using the local proxy but it failed. Run `npx reex-proxy` in your terminal to bypass CORS for localhost.' };
+                        }
+                        throw e;
+                    }
                 }
                 throw fetchError;
             }
