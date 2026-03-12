@@ -38,7 +38,7 @@ export default function SubscriptionPage() {
 
     const config = {
         public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY || "",
-        tx_ref: Date.now().toString(),
+        tx_ref: `reexapibuilder_${Date.now()}`,
         amount: PRICING[billingCycle], // Amount in USD
         currency: "USD",
         payment_options: "card,mobilemoney,ussd",
@@ -50,6 +50,9 @@ export default function SubscriptionPage() {
             phone_number: "",
             name: user?.name || "",
         },
+        meta: [
+            { metaname: "app", metavalue: "reexapibuilder" }
+        ],
         customizations: {
             title: "Reex API Builder Pro",
             description: "Upgrade to Pro for unlimited access",
