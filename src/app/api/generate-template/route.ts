@@ -9,11 +9,11 @@ function generateTemplateContent(moduleName: string) {
 
   return [
     "/* eslint-disable @typescript-eslint/no-explicit-any */",
-    "import { apiClient } from \"../config\";",
-    "import { get_list" + TypeName + "s } from \"../types/" + moduleName + "/get_list" + TypeName + "s\";",
-    "import { get_" + moduleName.slice(0, -1) + "Detail } from \"../types/" + moduleName + "/get_" + moduleName.slice(0, -1) + "Detail\";",
-    "import { post_create" + TypeName + " } from \"../types/" + moduleName + "/post_create" + TypeName + "\";",
-    "import { put_update" + TypeName + " } from \"../types/" + moduleName + "/put_update" + TypeName + "\";",
+    "import { apiClient } from \"../api-client\";",
+    "import { type get_list" + TypeName + "s } from \"../types/" + moduleName + "/get_list" + TypeName + "s\";",
+    "import { type get_" + moduleName.slice(0, -1) + "Detail } from \"../types/" + moduleName + "/get_" + moduleName.slice(0, -1) + "Detail\";",
+    "import { type post_create" + TypeName + " } from \"../types/" + moduleName + "/post_create" + TypeName + "\";",
+    "import { type put_update" + TypeName + " } from \"../types/" + moduleName + "/put_update" + TypeName + "\";",
     "",
     "// --- Types ---",
     "",

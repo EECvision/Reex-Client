@@ -199,6 +199,7 @@
 
 .spin {
   animation: spin 1s linear infinite;
+  color: #3b82f6;
 }
 
 .authActive {
