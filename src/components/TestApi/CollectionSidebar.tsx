@@ -196,9 +196,9 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
             </div >
 
             <div className={styles.footerCredits}>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                {/* <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                     Built by <a href="https://github.com/EECvision" target="_blank" rel="noopener noreferrer" className={styles.devLink}>EECvision</a>
-                </div>
+                </div> */}
                 <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
                     Powered by <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>ToolsHQ</span>
                 </div>
