@@ -198,10 +198,31 @@ const App = () => {
     selectedEndpoint
   });
 
-  // Reset selected endpoint if manifest becomes empty
+  // Reset selected endpoint if manifest becomes empty, else update it with new args
   useEffect(() => {
     if (apiManifest && Object.keys(apiManifest).length === 0) {
       setSelectedEndpoint(null);
+    } else if (selectedEndpoint && apiManifest) {
+      // Keep selectedEndpoint in sync with manifest updates
+      const { apiKey, fnName } = selectedEndpoint;
+      const endpointDef = apiManifest?.[apiKey]?.[fnName];
+      if (endpointDef) {
+        // Re-create the endpoint info with fresh data from the updated manifest
+        const methodPrefix = fnName.split("_")[0].toUpperCase();
+        setSelectedEndpoint({
+          apiKey,
+          fnName,
+          args: endpointDef.args || [],
+          url: endpointDef.url,
+          method: endpointDef.method || methodPrefix,
+          requiresAuth: endpointDef.requiresAuth,
+          contentType: endpointDef.contentType,
+          description: endpointDef.description,
+        });
+      } else {
+        // Endpoint was removed from manifest
+        setSelectedEndpoint(null);
+      }
     }
   }, [apiManifest]);
 

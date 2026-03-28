@@ -113,6 +113,24 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
         return `${clientBase}${path}`;
     };
 
+    // Clear cached raw payload when selectedEndpoint changes (e.g. manifest update)
+    // This forces QuerySection to regenerate the default JSON template with new definitions
+    const prevEndpointRef = useRef<EndpointInfo | null>(null);
+    useEffect(() => {
+        if (!selectedEndpoint || !currentKey) return;
+        const prev = prevEndpointRef.current;
+        // If the endpoint identity is the same but the reference changed (manifest update),
+        // clear the cached raw payload so the template regenerates
+        if (prev && prev.apiKey === selectedEndpoint.apiKey && prev.fnName === selectedEndpoint.fnName && prev !== selectedEndpoint) {
+            setRawPayloads(p => {
+                const n = { ...p };
+                delete n[currentKey];
+                return n;
+            });
+        }
+        prevEndpointRef.current = selectedEndpoint;
+    }, [selectedEndpoint, currentKey]);
+
     const handleSubmit = async () => {
         if (!selectedEndpoint || !currentKey) return;
 
