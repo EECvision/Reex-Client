@@ -1,4 +1,4 @@
-import React, { SetStateAction, useState, useRef } from "react";
+import React, { SetStateAction, useState, useRef, useEffect, useCallback } from "react";
 import styles from "./Sidebar.module.css";
 import { EndpointInfo, Methods } from "@/types";
 import { Folder, Trash2, ChevronRight, ChevronDown, Lock, TestTube, Pencil } from "lucide-react";
@@ -82,6 +82,42 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const cancelRename = () => setEditingId(null);
 
+  // --- Resizing Logic ---
+  const [sidebarWidth, setSidebarWidth] = useState(260);
+  const isResizing = useRef(false);
+
+  const startResizing = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+    document.addEventListener("mousemove", resize);
+    document.addEventListener("mouseup", stopResizing);
+    document.body.style.cursor = "col-resize"; // enforce cursor during drag
+  }, []);
+
+  const resize = useCallback((e: MouseEvent) => {
+    if (isResizing.current) {
+      let newWidth = e.clientX;
+      if (newWidth < 200) newWidth = 200;
+      if (newWidth > 600) newWidth = 600;
+      setSidebarWidth(newWidth);
+    }
+  }, []);
+
+  const stopResizing = useCallback(() => {
+    isResizing.current = false;
+    document.removeEventListener("mousemove", resize);
+    document.removeEventListener("mouseup", stopResizing);
+    document.body.style.cursor = "";
+  }, [resize]);
+
+  useEffect(() => {
+    return () => {
+      document.removeEventListener("mousemove", resize);
+      document.removeEventListener("mouseup", stopResizing);
+    };
+  }, [resize, stopResizing]);
+  // -----------------------
+
   // Effect to default expand all when groups change (initial load)
   // Track previous groups to auto-expand ONLY new ones
   const prevGroupIdsRef = React.useRef<string[]>([]);
@@ -131,7 +167,14 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside className={`${styles.sidebar} ${isOpen ? styles.open : ""}`}>
+    <aside 
+      className={`${styles.sidebar} ${isOpen ? styles.open : ""}`}
+      style={{ width: isOpen ? sidebarWidth : undefined }}
+    >
+      <div 
+        className={`${styles.resizer} ${isResizing.current ? styles.resizerActive : ""}`} 
+        onMouseDown={startResizing} 
+      />
       <div className={styles.header}>
         <div className={styles.brand}>
           <Logo />

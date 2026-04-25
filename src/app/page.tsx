@@ -14,6 +14,7 @@ import BackgroundNotification from "@/components/BackgroundNotification/Backgrou
 import { AuthModal } from "@/components/AuthModal/AuthModal";
 import styles from "./page.module.css";
 import { EndpointInfo } from "@/types";
+import CodeViewerModal from "@/components/CodeViewerModal/CodeViewerModal";
 
 // Hooks
 import { useToast } from "@/hooks/useToast";
@@ -124,6 +125,7 @@ const App = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [autoAnalyzeImport, setAutoAnalyzeImport] = useState(false);
+  const [showCodeViewerModal, setShowCodeViewerModal] = useState(false);
 
   useEffect(() => {
     // Open sidebar by default on desktop
@@ -247,6 +249,7 @@ const App = () => {
   // Note: projectError is no longer blocking - standalone mode handles missing bridge
 
   return (
+    <>
     <div className={`${styles.container} ${isSidebarOpen ? styles.sidebarOpen : ""}`}>
 
       <BackgroundNotification
@@ -297,6 +300,7 @@ const App = () => {
           onAuthClick={() => setShowAuthModal(true)}
           isStandaloneMode={isStandaloneMode}
           hasAuthConfigured={hasAuthConfigured}
+          onViewCodeClick={hasEndpoints ? () => setShowCodeViewerModal(true) : undefined}
           onBaseUrlChange={(newUrl) => {
             const oldBase = activeConfig?.baseURL || "";
             const updatedClients = { ...(activeConfig?.clients || {}) };
@@ -359,6 +363,7 @@ const App = () => {
             onOpenHistory={() => {
               setShowHistoryModal(true);
             }}
+            onViewCodeClick={() => setShowCodeViewerModal(true)}
           />
         )}
 
@@ -421,6 +426,7 @@ const App = () => {
             onSuccess={(msg) => showToast("success", msg)}
             onTaskStarted={registerTaskId}
             targetDir={projectPath}
+            onViewCodeClick={() => setShowCodeViewerModal(true)}
           />
         }
 
@@ -478,6 +484,20 @@ const App = () => {
         />
       </div>
     </div>
+
+    {showCodeViewerModal && (
+      <CodeViewerModal
+        isOpen={showCodeViewerModal}
+        onClose={() => setShowCodeViewerModal(false)}
+        manifest={apiManifest}
+        isStandaloneMode={isStandaloneMode}
+        projectPath={projectPath}
+        apiServicesDir={projectConfig?.apiServicesDir || "src/api-services"}
+        activeCollectionId={isStandaloneMode ? activeCollection?.id : undefined}
+        activeCollectionName={isStandaloneMode ? activeCollection?.name : undefined}
+      />
+    )}
+    </>
   );
 };
 
