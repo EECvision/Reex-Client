@@ -43,7 +43,6 @@ interface ImportModalProps {
   onOpenHistory?: () => void;
   hasHistory?: boolean;
   autoAnalyze?: boolean;
-  onViewCodeClick?: () => void;
 }
 
 
@@ -67,8 +66,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
   addCollectionToHistory,
   onOpenHistory,
   hasHistory = false,
-  autoAnalyze = false,
-  onViewCodeClick
+  autoAnalyze = false
 }) => {
   // Auth Check
   const { user, isPro } = useSubscription();
@@ -323,17 +321,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
       )}
 
       {step === "success" && (
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          {onViewCodeClick && (
-            <Button
-              onClick={() => { onViewCodeClick(); handleModalClose(); }}
-              variant="secondary"
-            >
-              View Generated Code →
-            </Button>
-          )}
-          <Button onClick={handleModalClose} variant="primary">Done</Button>
-        </div>
+        <Button onClick={handleModalClose} variant="primary">Done</Button>
       )}
     </>
   );

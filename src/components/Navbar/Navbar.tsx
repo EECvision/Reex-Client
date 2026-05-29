@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import styles from "./Navbar.module.css";
 import { Button } from "../ui/Button/Button";
-import { ChevronDown, Download, Plus, Trash2, FileText, Loader2, Folder, Lock, X, Pencil, Menu, PanelLeft, Code2 } from "lucide-react";
+import { ChevronDown, Download, Plus, Trash2, FileText, Loader2, Folder, Lock, X, Pencil, Menu, PanelLeft } from "lucide-react";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
 import UserMenu from "../UserMenu/UserMenu";
 import { BaseUrlInput } from "./BaseUrlInput";
@@ -27,7 +27,6 @@ interface NavbarProps {
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
   hasAuthConfigured?: boolean;
-  onViewCodeClick?: () => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -46,8 +45,7 @@ const Navbar: React.FC<NavbarProps> = ({
   onBaseUrlChange,
   onToggleSidebar,
   isSidebarOpen,
-  hasAuthConfigured,
-  onViewCodeClick
+  hasAuthConfigured
 }) => {
   const [url, setUrl] = React.useState(() => localStorage.getItem("docs_url") || "");
   const [isFetchOpen, setIsFetchOpen] = React.useState(false);
@@ -254,15 +252,6 @@ const Navbar: React.FC<NavbarProps> = ({
           )
         }
 
-        {/* View Code button - show when collection is loaded */}
-        {
-          onViewCodeClick && hasCollection && (
-            <Button variant="ghost" onClick={onViewCodeClick} leftIcon={<Code2 size={16} />}>
-              View Code
-            </Button>
-          )
-        }
-
         {
           hasCollection && (
             <Button
@@ -359,17 +348,6 @@ const Navbar: React.FC<NavbarProps> = ({
                 style={{ justifyContent: 'flex-start', width: '100%' }}
               >
                 Generate
-              </Button>
-            )}
-
-            {onViewCodeClick && hasCollection && (
-              <Button
-                variant="ghost"
-                onClick={() => { onViewCodeClick(); setIsMobileMenuOpen(false); }}
-                leftIcon={<Code2 size={16} />}
-                style={{ justifyContent: 'flex-start', width: '100%' }}
-              >
-                View Generated Code
               </Button>
             )}
 

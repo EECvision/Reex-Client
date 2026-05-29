@@ -1,22 +1,19 @@
 .sidebar {
   position: sticky;
   top: 0;
-  width: 260px; /* Default, overridden by inline style */
+  width: 260px;
   height: 100vh;
   background-color: var(--sidebar-bg, #fff);
   border-right: 1px solid var(--sidebar-border, #e5e7eb);
   display: flex;
   flex-direction: column;
-  transition:
-    transform 0.3s ease,
-    opacity 0.3s ease;
+  transition: width 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
   z-index: 1000;
   overflow: hidden;
-  position: relative;
 }
 
 .sidebar:not(.open) {
-  width: 0 !important;
+  width: 0;
   border-right-color: transparent;
   transform: translateX(-10px);
   opacity: 0;
@@ -24,35 +21,10 @@
 }
 
 .sidebar.open {
+  width: 260px;
   opacity: 1;
   transform: translateX(0);
   pointer-events: auto;
-}
-
-.resizer {
-  position: absolute;
-  top: 0;
-  right: -3px;
-  width: 6px;
-  height: 100%;
-  cursor: col-resize;
-  z-index: 1001;
-}
-
-.resizer::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 2px;
-  width: 2px;
-  background-color: transparent;
-  transition: background-color 0.2s;
-}
-
-.resizer:hover::after,
-.resizerActive::after {
-  background-color: var(--primary-color, #3b82f6);
 }
 
 .header {
@@ -69,6 +41,8 @@
   align-items: center;
   justify-content: flex-start;
 }
+
+
 
 /* Filter Section */
 .testApiLink {
@@ -150,7 +124,7 @@
 
 .folderIconExpanded {
   color: var(--primary-color, #3b82f6);
-  fill: var(--active-bg, #ebf5ff);
+  fill: var(--active-bg, #EBF5FF);
 }
 
 .rootFolderIcon {
@@ -225,7 +199,7 @@
 }
 
 .fileActive::before {
-  content: "";
+  content: '';
   position: absolute;
   left: 0;
   top: 0;
@@ -362,7 +336,7 @@
 }
 
 .footerUrl {
-  font-family: "JetBrains Mono", monospace;
+  font-family: 'JetBrains Mono', monospace;
   word-break: break-all;
   line-height: 1.4;
 }

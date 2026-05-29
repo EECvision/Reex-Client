@@ -12,10 +12,9 @@ interface GenerateTemplateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (message: string) => void;
-  onGenerated?: () => void;
+  onGenerated?: () => void; // Optional callback after successful generation
   onTaskStarted?: (taskId: string) => void;
-  targetDir: string;
-  onViewCodeClick?: () => void;
+  targetDir: string; // REQUIRED
 }
 
 const GenerateTemplateModal: React.FC<GenerateTemplateModalProps> = ({
@@ -24,8 +23,7 @@ const GenerateTemplateModal: React.FC<GenerateTemplateModalProps> = ({
   onGenerated,
   onSuccess,
   onTaskStarted,
-  targetDir,
-  onViewCodeClick
+  targetDir // REQUIRED
 }) => {
   const [moduleName, setModuleName] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -94,45 +92,13 @@ const GenerateTemplateModal: React.FC<GenerateTemplateModalProps> = ({
     }
   };
 
-  const footerContent = generating ? (
+  const footerContent = (
     <>
-      <Button onClick={handleClose} variant="secondary" disabled={generating}>
-        Cancel
-      </Button>
-      <Button onClick={handleGenerate} disabled={generating} isLoading={generating} variant="primary">
-        Generate
-      </Button>
-    </>
-  ) : moduleName && !generating ? (
-    // After successful generation (generating=false, moduleName still set, no error)
-    <>
-      {onViewCodeClick && (
-        <Button
-          onClick={() => { onViewCodeClick(); handleClose(); }}
-          variant="secondary"
-        >
-          View Generated Code →
-        </Button>
-      )}
       <Button
         onClick={handleClose}
         variant="secondary"
         disabled={generating}
       >
-        Cancel
-      </Button>
-      <Button
-        onClick={handleGenerate}
-        disabled={generating || !moduleName.trim()}
-        isLoading={generating}
-        variant="primary"
-      >
-        Generate
-      </Button>
-    </>
-  ) : (
-    <>
-      <Button onClick={handleClose} variant="secondary" disabled={generating}>
         Cancel
       </Button>
       <Button
