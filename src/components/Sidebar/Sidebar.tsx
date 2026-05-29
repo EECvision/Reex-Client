@@ -1,7 +1,7 @@
 import React, { SetStateAction, useState, useRef } from "react";
 import styles from "./Sidebar.module.css";
 import { EndpointInfo, Methods } from "@/types";
-import { Folder, Trash2, ChevronRight, ChevronDown, Lock, TestTube, Pencil } from "lucide-react";
+import { Folder, Trash2, ChevronRight, ChevronDown, Lock, TestTube, Pencil, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { Button } from "../ui/Button/Button";
 import { Select } from "../ui/Select/Select";
@@ -35,6 +35,7 @@ interface SidebarProps {
   onDeleteFunction?: (moduleName: string, functionName: string) => void;
   onDeleteCollection?: (id: string) => void;
   onRenameCollection?: (id: string, newName: string) => void;
+  onUpdateCollection?: (id: string) => void;
   baseURL?: string;
   collectionName?: string;
   isOpen?: boolean;
@@ -53,6 +54,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onDeleteFunction,
   onDeleteCollection,
   onRenameCollection,
+  onUpdateCollection,
   baseURL,
   collectionName,
   isOpen = false,
@@ -189,6 +191,20 @@ const Sidebar: React.FC<SidebarProps> = ({
                     </div>
 
                     <div className={styles.collectionHeaderActions}>
+                      {onUpdateCollection && (
+                        <Button
+                          className={styles.renameBtn}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onUpdateCollection(group.id);
+                          }}
+                          title="Update Collection"
+                          variant="ghost"
+                          size="sm"
+                        >
+                          <RefreshCw size={12} />
+                        </Button>
+                      )}
                       {onRenameCollection && (
                         <Button
                           className={styles.renameBtn}

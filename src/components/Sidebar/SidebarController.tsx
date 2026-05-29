@@ -14,6 +14,7 @@ interface SidebarControllerProps {
     onDeleteFunction: (moduleName: string, functionName: string) => void;
     onDeleteCollection: (id: string) => void;
     onRenameCollection?: (id: string, newName: string) => void;
+    onUpdateCollection?: (id: string) => void;
     isOpen?: boolean;
 }
 
@@ -27,6 +28,7 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
     onDeleteFunction,
     onDeleteCollection,
     onRenameCollection,
+    onUpdateCollection,
     isOpen = false,
 }) => {
     const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
@@ -147,7 +149,9 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
             onDeleteFunction={isStandaloneMode ? undefined : onDeleteFunction}
             onDeleteCollection={isStandaloneMode ? onDeleteCollection : undefined}
             onRenameCollection={isStandaloneMode ? onRenameCollection : undefined}
-            collectionName={config?.collectionName} // Legacy
+            onUpdateCollection={isStandaloneMode ? onUpdateCollection : undefined}
+            baseURL={config?.baseURL}
+            collectionName={config?.collectionName}
             isOpen={isOpen}
         />
     );

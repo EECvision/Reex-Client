@@ -19,6 +19,8 @@ interface UseImportActionsProps {
     onManifestUpdate?: (manifest: any) => void;
     onConfigUpdate?: (config: any) => void;
     addCollection?: (collection: any) => void;
+    updateCollection?: (id: string, updates: any) => void;
+    existingCollection?: any;
     addCollectionToHistory?: (name: string, content: any) => Promise<void>;
 }
 
@@ -36,6 +38,8 @@ export const useImportActions = ({
     onManifestUpdate,
     onConfigUpdate,
     addCollection,
+    updateCollection,
+    existingCollection,
     addCollectionToHistory
 }: UseImportActionsProps) => {
     const { isPro, update: updateSession } = useSubscription();
@@ -46,6 +50,30 @@ export const useImportActions = ({
     // Store full analysis data for standalone mode
     const [analysisData, setAnalysisData] = useState<any>(null);
     const [fileContent, setFileContent] = useState<string | null>(null);
+
+    // Reconstruct TypeScript code from a manifest object
+    const reconstructCodeFromManifest = (manifest: any): Record<string, string> => {
+        if (!manifest) return {};
+        const modules: Record<string, string> = {};
+        
+        for (const [moduleName, endpoints] of Object.entries(manifest)) {
+            let code = `export const ${moduleName}Api = {\n`;
+            for (const [fnName, ep] of Object.entries(endpoints as Record<string, any>)) {
+                // Ensure correct case for the extracted URL handling
+                const method = ep.method?.toLowerCase() || 'get';
+                const url = ep.url || '';
+                const client = ep.client || 'BASE_CLIENT';
+                const requiresAuthStr = ep.requiresAuth ? '\n   * @auth' : '';
+                const contentTypeStr = ep.contentType ? `\n   * @contentType ${ep.contentType}` : '';
+                
+                code += `  /**${requiresAuthStr}${contentTypeStr}\n   */\n`;
+                code += `  ${fnName}: () => ${client}.${method}(\`${url}\`),\n`;
+            }
+            code += `};\n`;
+            modules[moduleName] = code;
+        }
+        return modules;
+    };
 
     const startAnalysis = async (clientMappings?: Record<string, string>) => {
         if (!selectedFile) return;
@@ -78,7 +106,10 @@ export const useImportActions = ({
         reader.readAsText(fileToAnalyze);
 
         try {
-            const res = await api.analyzeCollection(fileToAnalyze, fileToAnalyze.name, targetDir, clientMappings, isStandaloneMode);
+            // Pass the exact saved existing modules directly to the diff engine
+            const existingModules = existingCollection?.modules;
+            const existingManifest = existingCollection?.manifest;
+            const res = await api.analyzeCollection(fileToAnalyze, fileToAnalyze.name, targetDir, clientMappings, isStandaloneMode, existingModules, existingManifest);
             const data = res;
 
             if (!res.success) throw new Error(res.error || "Analysis failed");
@@ -179,13 +210,14 @@ export const useImportActions = ({
     const buildManifestFromDiffs = (diffs: DiffResult[], selectedModules: Set<string>, selectedFunctions: Map<string, Set<string>>): any => {
         const manifest: any = {};
 
+        // 1. Process all selected diffs (new, modified, unchanged present in new analysis)
         diffs.forEach((diff) => {
             if (!selectedModules.has(diff.module)) return;
 
             const moduleFunctions = selectedFunctions.get(diff.module);
             if (!moduleFunctions || moduleFunctions.size === 0) return;
 
-            manifest[diff.module] = {};
+            if (!manifest[diff.module]) manifest[diff.module] = {};
 
             diff.functions?.forEach((fn) => {
                 if (!moduleFunctions.has(fn.name)) return;
@@ -193,36 +225,62 @@ export const useImportActions = ({
                 // Cast to any to access optional metadata fields from analysis response
                 const fnData = fn as any;
                 const fnCode = fnData.newContent || '';
+                const existingFnMeta = existingCollection?.manifest?.[diff.module]?.[fn.name];
 
                 // Extract metadata from generated code (mirrors ProjectService.extractMetadata)
                 const extractedMeta = extractMetadataFromCode(fnCode);
 
-                // Use extracted values, falling back to any data already available
-                const url = fnData.path || fnData.url || extractedMeta.url;
-                const requiresAuth = fnData.requiresAuth ?? extractedMeta.requiresAuth;
-                const contentType = fnData.contentType || extractedMeta.contentType;
-                const client = fnData.client || extractedMeta.client || "BASE_CLIENT";
+                // Use extracted values, falling back to analyzer data, then to existing manifest
+                const url = fnData.path || fnData.url || extractedMeta.url || existingFnMeta?.url || '';
+                const requiresAuth = fnData.requiresAuth ?? extractedMeta.requiresAuth ?? existingFnMeta?.requiresAuth ?? false;
+                const contentType = fnData.contentType || extractedMeta.contentType || existingFnMeta?.contentType;
+                const client = fnData.client || extractedMeta.client || existingFnMeta?.client || "BASE_CLIENT";
+                const method = fnData.method || extractedMeta.url ? extractMethodFromName(fn.name) : (existingFnMeta?.method || extractMethodFromName(fn.name));
 
                 // Build endpoint info from function data
                 manifest[diff.module][fn.name] = {
                     fnName: fn.name,
                     apiKey: diff.module,
-                    method: fnData.method || extractMethodFromName(fn.name),
+                    method,
                     url, // Use 'url' to match SidebarController and getComputedUrl expectations
                     client,
-                    args: fnData.params || fnData.args || [],
+                    args: fnData.params || fnData.args || existingFnMeta?.args || [],
                     requiresAuth,
                     contentType,
-                    description: fnData.description,
-                    inputType: fnData.inputType,
-                    outputType: fnData.outputType
+                    description: fnData.description || existingFnMeta?.description,
+                    inputType: fnData.inputType || existingFnMeta?.inputType,
+                    outputType: fnData.outputType || existingFnMeta?.outputType
                 };
             });
+        });
 
-            // Remove empty modules
-            if (Object.keys(manifest[diff.module]).length === 0) {
-                delete manifest[diff.module];
-            }
+        // 2. Persist existing modules and functions that weren't in the diffs but are still checked
+        // This happens if a user updates using a partial swagger/postman file.
+        if (existingCollection?.manifest) {
+            Object.entries(existingCollection.manifest).forEach(([modName, endpoints]: [string, any]) => {
+                if (!selectedModules.has(modName)) return; // Exclude if unchecked
+
+                if (!manifest[modName]) manifest[modName] = {};
+
+                const moduleFunctions = selectedFunctions.get(modName);
+                if (!moduleFunctions) return;
+
+                Object.entries(endpoints).forEach(([fnName, meta]) => {
+                    if (!moduleFunctions.has(fnName)) return; // Exclude if unchecked
+                    
+                    // Only copy if it wasn't already processed by the diff engine
+                    if (!manifest[modName][fnName]) {
+                         manifest[modName][fnName] = meta;
+                    }
+                });
+            });
+        }
+
+        // 3. Remove empty modules
+        Object.keys(manifest).forEach(modName => {
+             if (Object.keys(manifest[modName]).length === 0) {
+                 delete manifest[modName];
+             }
         });
 
         return manifest;
@@ -259,6 +317,29 @@ export const useImportActions = ({
             try {
                 const manifest = buildManifestFromDiffs(diffs, selectedModules, selectedFunctions);
 
+                // Build the new modules record from the selected diffs
+                const newModulesRecord: Record<string, string> = existingCollection?.modules ? { ...existingCollection.modules } : {};
+                
+                // 1. Delete modules that the user unchecked
+                if (existingCollection?.modules) {
+                    Object.keys(existingCollection.modules).forEach(modName => {
+                        if (!selectedModules.has(modName)) {
+                            delete newModulesRecord[modName];
+                        }
+                    });
+                }
+
+                // 2. Process diffs for additions, updates, and engine-flagged deletions
+                diffs.forEach(diff => {
+                    if (!selectedModules.has(diff.module)) {
+                        delete newModulesRecord[diff.module];
+                    } else if (diff.status === "deleted") {
+                         delete newModulesRecord[diff.module];
+                    } else if (diff.newContent) {
+                        newModulesRecord[diff.module] = diff.newContent;
+                    }
+                });
+
                 const derivedClients: Record<string, string> = {};
                 if (proposedClients && baseUrl) {
                     Object.entries(proposedClients).forEach(([name, prefix]) => {
@@ -268,13 +349,25 @@ export const useImportActions = ({
                     });
                 }
 
-                if (addCollection) {
+                if (existingCollection && updateCollection) {
+                    // Update Flow
+                    updateCollection(existingCollection.id, {
+                        manifest, // Use the rebuilt manifest exactly as is; do NOT shallow merge
+                        modules: newModulesRecord,
+                        config: {
+                            ...existingCollection.config,
+                            baseURL: baseUrl || existingCollection.config.baseURL,
+                            clientPrefixes: { ...existingCollection.config.clientPrefixes, ...proposedClients },
+                            clients: { ...existingCollection.config.clients, ...derivedClients }
+                        }
+                    });
+                } else if (addCollection) {
                     // New Multi-Collection Flow
                     const newCollection = {
                         id: crypto.randomUUID(), // Or Date.now().toString() if crypto not avail
                         name: collectionName || 'Imported Collection',
                         manifest,
-                        modules: [], // Can generate modules list from manifest keys if needed by UI
+                        modules: newModulesRecord,
                         config: {
                             baseURL: baseUrl || '',
                             collectionName: collectionName || 'Imported Collection',

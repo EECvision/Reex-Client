@@ -10,7 +10,7 @@ export interface StandaloneCollection {
   id: string;
   name: string;
   manifest: any;
-  modules: any[];
+  modules: Record<string, string>;
   config: any;
 }
 

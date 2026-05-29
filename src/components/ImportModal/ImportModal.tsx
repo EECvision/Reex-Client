@@ -39,7 +39,10 @@ interface ImportModalProps {
   onManifestUpdate?: (manifest: any) => void;
   onConfigUpdate?: (config: any) => void;
   addCollection?: (collection: any) => void;
+  updateCollection?: (id: string, updates: any) => void;
   addCollectionToHistory?: (name: string, content: any) => Promise<void>;
+  targetCollectionId?: string;
+  collections?: any[];
   onOpenHistory?: () => void;
   hasHistory?: boolean;
   autoAnalyze?: boolean;
@@ -63,11 +66,17 @@ const ImportModal: React.FC<ImportModalProps> = ({
   onManifestUpdate,
   onConfigUpdate,
   addCollection,
+  updateCollection,
+  targetCollectionId,
+  collections,
   addCollectionToHistory,
   onOpenHistory,
   hasHistory = false,
   autoAnalyze = false
 }) => {
+  // Find existing collection if updating
+  const existingCollection = targetCollectionId && collections ? collections.find(c => c.id === targetCollectionId) : undefined;
+
   // Auth Check
   const { user, isPro } = useSubscription();
   const { isAuthenticated } = useAuth();
@@ -155,6 +164,8 @@ const ImportModal: React.FC<ImportModalProps> = ({
     onManifestUpdate,
     onConfigUpdate,
     addCollection,
+    updateCollection,
+    existingCollection,
     addCollectionToHistory
   });
 

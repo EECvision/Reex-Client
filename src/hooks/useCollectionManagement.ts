@@ -36,6 +36,14 @@ export const useCollectionManagement = ({
     const [importFile, setImportFile] = useState<File | null>(null);
     const [fetchingUrl, setFetchingUrl] = useState(false);
 
+    // Update State
+    const [collectionToUpdate, setCollectionToUpdate] = useState<string | null>(null);
+
+    const openUpdateModal = (collectionId: string) => {
+        setCollectionToUpdate(collectionId);
+        setShowImportModal(true);
+    };
+
     // Delete Collection State
     const [deleting, setDeleting] = useState(false);
     const [collectionToDelete, setCollectionToDelete] = useState<string | null>(null);
@@ -198,6 +206,7 @@ export const useCollectionManagement = ({
         showDeleteItemModal, setShowDeleteItemModal,
         importFile, setImportFile,
         fetchingUrl,
+        collectionToUpdate, setCollectionToUpdate, openUpdateModal,
         deleting, setDeleting,
         deletingItem, setDeletingItem,
         deleteItemInfo, setDeleteItemInfo,

@@ -1,13 +1,16 @@
 .sidebar {
   position: sticky;
   top: 0;
-  width: 260px;
+  width: 460px;
   height: 100vh;
   background-color: var(--sidebar-bg, #fff);
   border-right: 1px solid var(--sidebar-border, #e5e7eb);
   display: flex;
   flex-direction: column;
-  transition: width 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+  transition:
+    width 0.3s ease,
+    transform 0.3s ease,
+    opacity 0.3s ease;
   z-index: 1000;
   overflow: hidden;
 }
@@ -21,7 +24,7 @@
 }
 
 .sidebar.open {
-  width: 260px;
+  width: 460px;
   opacity: 1;
   transform: translateX(0);
   pointer-events: auto;
@@ -41,8 +44,6 @@
   align-items: center;
   justify-content: flex-start;
 }
-
-
 
 /* Filter Section */
 .testApiLink {
@@ -124,7 +125,7 @@
 
 .folderIconExpanded {
   color: var(--primary-color, #3b82f6);
-  fill: var(--active-bg, #EBF5FF);
+  fill: var(--active-bg, #ebf5ff);
 }
 
 .rootFolderIcon {
@@ -199,7 +200,7 @@
 }
 
 .fileActive::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 0;
@@ -297,10 +298,10 @@
   flex-shrink: 0;
 }
 
-.folderHeader:hover .deleteBtn,
-.folderHeader:hover .renameBtn,
-.file:hover .deleteBtn {
-  opacity: 1;
+.folderHeader .deleteBtn,
+.folderHeader .renameBtn,
+.file .deleteBtn {
+  opacity: 1; /* Made always visible as requested */
 }
 
 /* Inline rename input */
@@ -336,7 +337,7 @@
 }
 
 .footerUrl {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   word-break: break-all;
   line-height: 1.4;
 }

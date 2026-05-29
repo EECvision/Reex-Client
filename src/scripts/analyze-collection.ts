@@ -26,6 +26,7 @@ interface AnalysisResult {
     status: "new" | "modified" | "deleted" | "unchanged" | "disabled";
     functions?: FunctionDiff[];
     diff?: string; // Optional: detailed diff
+    newContent?: string;
 }
 
 // Check for write-disable lock at the module level (top-level statements)
@@ -308,7 +309,7 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
 };
 
 // Exportable main function
-export const analyze = async (specContent: string, existingModules: Map<string, string> = new Map(), clientMappings?: Record<string, string>) => {
+export const analyze = async (specContent: string, existingModules: Map<string, string> = new Map(), clientMappings?: Record<string, string>, existingManifest?: any) => {
     try {
         // Robust format detection: handles JSON, JSON-wrapped YAML strings, and raw YAML
         let specData: any;
@@ -405,6 +406,7 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
                 analysis.push({
                     module: mod.name,
                     status: "new",
+                    newContent: mod.content,
                     functions: functionDiffs.length > 0 ? functionDiffs : undefined
                 });
             } else {
@@ -421,11 +423,25 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
                     const result: AnalysisResult = {
                         module: mod.name,
                         status: isModified ? "modified" : "unchanged",
+                        newContent: mod.content,
                     };
 
                     if (isModified || true) { // Always check for disabled functions even if content seems same
                         const sourceFileNew = project.createSourceFile("new.ts", mod.content, { overwrite: true });
                         const existingFuncs = getFunctionsFromModule(sourceFileExisting, mod.name);
+                        
+                        // Filter existingFuncs based on manifest:
+                        // Treat any function NOT in the manifest as if it doesn't exist in the DB
+                        // This allows them to show up as "new" if they are in the new spec.
+                        if (existingManifest && existingManifest[mod.name]) {
+                            const selectedFnNames = new Set(Object.keys(existingManifest[mod.name]));
+                            for (const fnName of existingFuncs.keys()) {
+                                if (!selectedFnNames.has(fnName)) {
+                                    existingFuncs.delete(fnName);
+                                }
+                            }
+                        }
+
                         const newFuncs = getFunctionsFromModule(sourceFileNew, mod.name);
 
                         const functionDiffs: FunctionDiff[] = [];

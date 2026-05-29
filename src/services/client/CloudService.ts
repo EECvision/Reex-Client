@@ -16,7 +16,7 @@ export const CloudService = {
         }
     },
 
-    analyzeCollection: async (file: File, fileName: string | undefined, targetDir: string, clientMappings?: Record<string, string>, isStandaloneMode?: boolean) => {
+    analyzeCollection: async (file: File, fileName: string | undefined, targetDir: string, clientMappings?: Record<string, string>, isStandaloneMode?: boolean, existingModules?: Record<string, string>, existingManifest?: any) => {
         const formData = new FormData();
 
         const { blob, fileName: finalName } = await compressFilePayload(file, fileName);
@@ -28,9 +28,15 @@ export const CloudService = {
         if (apiServicesDir) formData.append('apiServicesDir', apiServicesDir);
         if (clientMappings) formData.append('clientMappings', JSON.stringify(clientMappings));
 
+        // In Standalone Mode with existingModules, append them directly
+        if (isStandaloneMode && existingModules) {
+            formData.append('existingModules', JSON.stringify(existingModules));
+            if (existingManifest) {
+                formData.append('existingManifest', JSON.stringify(existingManifest));
+            }
+        }
         // Only fetch existing definitions from bridge in Project Mode
-        // Standalone mode collections are independent and should not diff against project definitions
-        if (!isStandaloneMode) {
+        else if (!isStandaloneMode) {
             try {
                 const bridgeUrl = getLocalUrl();
                 const res = await fetch(`${bridgeUrl}/api/project/definitions`);

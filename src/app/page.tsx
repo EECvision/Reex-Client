@@ -97,6 +97,7 @@ const App = () => {
     showDeleteItemModal, setShowDeleteItemModal,
     importFile, setImportFile,
     fetchingUrl,
+    collectionToUpdate, setCollectionToUpdate, openUpdateModal,
     deleting,
     deletingItem,
     deleteItemInfo, setDeleteItemInfo,
@@ -270,6 +271,7 @@ const App = () => {
           onDeleteFunction={handleDeleteFunction}
           onDeleteCollection={openDeleteModal}
           onRenameCollection={(id, name) => updateCollection(id, { name })}
+          onUpdateCollection={openUpdateModal}
           isOpen={isSidebarOpen}
         />
       )}
@@ -337,6 +339,7 @@ const App = () => {
               setShowImportModal(false);
               setImportFile(null);
               setAutoAnalyzeImport(false);
+              setCollectionToUpdate(null);
               resetImportTask();
             }}
             initialFile={importFile}
@@ -345,6 +348,7 @@ const App = () => {
             isEmptyWorkspace={!hasEndpoints}
             onUpdateStarted={registerTaskId}
             targetDir={projectPath}
+            targetCollectionId={collectionToUpdate || undefined}
             taskComplete={importTaskComplete}
             progressMessage={activeTaskMessage}
             resumeTaskId={activeTaskId}
@@ -353,6 +357,8 @@ const App = () => {
             onManifestUpdate={setManifest}
             onConfigUpdate={setConfig}
             addCollection={addCollection}
+            updateCollection={updateCollection}
+            collections={collections}
             addCollectionToHistory={addCollectionToHistory}
             hasHistory={recentCollections && recentCollections.length > 0}
             autoAnalyze={autoAnalyzeImport}
@@ -431,7 +437,7 @@ const App = () => {
             id: 'project',
             name: activeCollectionName || 'Project',
             manifest: apiManifest,
-            modules: [],
+            modules: {} as Record<string, string>,
             config: projectConfig
           }]}
           activeCollectionId={isStandaloneMode ? activeCollection?.id : 'project'}

@@ -8,6 +8,7 @@ export interface DiffResult {
     module: string;
     status: "new" | "modified" | "deleted" | "unchanged" | "disabled";
     functions?: FunctionDiff[];
+    newContent?: string;
 }
 export interface AnalysisResponse {
     diffs: DiffResult[];

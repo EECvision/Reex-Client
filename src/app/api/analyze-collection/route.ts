@@ -9,6 +9,7 @@ export async function POST(req: NextRequest) {
         const formData = await req.formData();
         const file = formData.get('file') as File;
         const existingModulesJson = formData.get('existingModules') as string;
+        const existingManifestJson = formData.get('existingManifest') as string;
         const clientMappingsJson = formData.get('clientMappings') as string;
 
         if (!file) throw new Error("No file provided");
@@ -30,6 +31,16 @@ export async function POST(req: NextRequest) {
             }
         }
 
+        // Parse existing manifest
+        let existingManifest: any = undefined;
+        if (existingManifestJson) {
+            try {
+                existingManifest = JSON.parse(existingManifestJson);
+            } catch (e) {
+                console.warn("Failed to parse existingManifest", e);
+            }
+        }
+
         // Parse client mappings
         let clientMappings: Record<string, string> | undefined;
         if (clientMappingsJson) {
@@ -40,8 +51,8 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Run analysis
-        const data = await analyze(specContent, existingModules, clientMappings);
+        // Perform analysis
+        const data = await analyze(specContent, existingModules, clientMappings, existingManifest);
 
         return NextResponse.json({ success: true, data });
 
