@@ -15,7 +15,7 @@ const FloatingTestButton = () => {
 
     return (
         <Link href="/test-api" className={styles.fab}>
-            <span className={styles.label}>Test API</span>
+            <span className={styles.label}>Sandbox</span>
             <TestTube size={16} style={{ flexShrink: 0 }} />
         </Link>
     );

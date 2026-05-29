@@ -20,9 +20,9 @@ const FloatingStandaloneToggle = () => {
             <button
                 onClick={toggleStandaloneMode}
                 className={styles.fab}
-                title="Switch to Standalone Mode"
+                title="Switch to Preview"
             >
-                <span className={styles.label}>Standalone</span>
+                <span className={styles.label}>Preview</span>
                 <Power size={16} style={{ flexShrink: 0 }} />
             </button>
         );

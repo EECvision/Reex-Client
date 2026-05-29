@@ -1,4 +1,4 @@
-import React, { SetStateAction, useState, useRef } from "react";
+import React, { SetStateAction, useState, useRef, useEffect, useCallback } from "react";
 import styles from "./Sidebar.module.css";
 import { EndpointInfo, Methods } from "@/types";
 import { Folder, Trash2, ChevronRight, ChevronDown, Lock, TestTube, Pencil, RefreshCw } from "lucide-react";

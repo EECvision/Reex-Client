@@ -155,7 +155,7 @@ const Navbar: React.FC<NavbarProps> = ({
         {isStandaloneMode ? (
           <div className={styles.projectContainer} title="Not connected to a project">
             <Folder size={18} className={styles.projectIcon} strokeWidth={2} />
-            <span style={{ color: '#f59e0b' }}>Standalone Mode</span>
+            <span style={{ color: '#f59e0b' }}>Preview</span>
           </div>
         ) : (
           <div className={styles.projectContainer} title={projectPath}>

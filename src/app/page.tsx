@@ -154,7 +154,7 @@ const App = () => {
         auth: authData
       });
 
-      // Persist auth to localStorage for project mode
+      // Persist auth to localStorage for dev mode
       if (typeof window !== 'undefined') {
         if (token || Object.keys(customHeaders).length > 0) {
           localStorage.setItem('reex_project_auth', JSON.stringify(authData));

@@ -5,6 +5,8 @@ import React, { useState, useMemo } from "react";
 import Sidebar from "./Sidebar";
 import { EndpointInfo, Methods } from "@/types";
 import { useProject } from "@/providers/ProjectContext";
+import { ResizablePanel } from "@/components/ui/ResizablePanel";
+import styles from "./Sidebar.module.css";
 
 interface SidebarControllerProps {
     apiManifest: any;
@@ -136,24 +138,32 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
     }, [endpoints, isStandaloneMode, collections, config]);
 
     return (
-        <Sidebar
-            groupedEndpoints={{}} // Deprecated/Unused if collectionGroups provided
-            collectionGroups={collectionGroups}
-            expandedFolders={expandedFolders}
-            selectedEndpoint={selectedEndpoint}
-            methodFilter={methodFilter}
-            onToggleFolder={toggleFolder}
-            onSelectEndpoint={onSelectEndpoint}
-            setMethodFilter={setMethodFilter}
-            onDeleteModule={isStandaloneMode ? undefined : onDeleteModule}
-            onDeleteFunction={isStandaloneMode ? undefined : onDeleteFunction}
-            onDeleteCollection={isStandaloneMode ? onDeleteCollection : undefined}
-            onRenameCollection={isStandaloneMode ? onRenameCollection : undefined}
-            onUpdateCollection={isStandaloneMode ? onUpdateCollection : undefined}
-            baseURL={config?.baseURL}
-            collectionName={config?.collectionName}
-            isOpen={isOpen}
-        />
+        <ResizablePanel 
+            isOpen={isOpen} 
+            defaultWidth={260}
+            minWidth={220}
+            maxWidth={600}
+            className={styles.sidebarWrapper}
+        >
+            <Sidebar
+                groupedEndpoints={{}} // Deprecated/Unused if collectionGroups provided
+                collectionGroups={collectionGroups}
+                expandedFolders={expandedFolders}
+                selectedEndpoint={selectedEndpoint}
+                methodFilter={methodFilter}
+                onToggleFolder={toggleFolder}
+                onSelectEndpoint={onSelectEndpoint}
+                setMethodFilter={setMethodFilter}
+                onDeleteModule={isStandaloneMode ? undefined : onDeleteModule}
+                onDeleteFunction={isStandaloneMode ? undefined : onDeleteFunction}
+                onDeleteCollection={isStandaloneMode ? onDeleteCollection : undefined}
+                onRenameCollection={isStandaloneMode ? onRenameCollection : undefined}
+                onUpdateCollection={isStandaloneMode ? onUpdateCollection : undefined}
+                baseURL={config?.baseURL}
+                collectionName={config?.collectionName}
+                isOpen={true} // Always "open" from Sidebar's internal CSS perspective since parent handles it
+            />
+        </ResizablePanel>
     );
 };
 

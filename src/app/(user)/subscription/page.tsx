@@ -180,7 +180,7 @@ export default function SubscriptionPage() {
                     <h3 style={{ fontSize: 20, fontWeight: 600 }}>Hobby</h3>
                     <div className={styles.price}>$0<span>/{billingCycle === 'yearly' ? 'yr' : 'mo'}</span></div>
                     <ul className={styles.features}>
-                        <li className={styles.feature}><Check size={18} className={styles.check} /> 3 Project Mode Imports</li>
+                        <li className={styles.feature}><Check size={18} className={styles.check} /> 3 Dev Mode Imports</li>
                         <li className={styles.feature}><Check size={18} className={styles.check} /> 20 Active Collections</li>
                         <li className={styles.feature}><Check size={18} className={styles.check} /> 20 Requests per Collection</li>
                         <li className={styles.feature}><Check size={18} className={styles.check} /> Unlimited Requests</li>

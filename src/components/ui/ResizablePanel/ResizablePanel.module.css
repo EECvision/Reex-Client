@@ -1,0 +1,66 @@
+.container {
+  position: relative;
+  height: 100vh;
+  flex-shrink: 0;
+  z-index: 1000; /* Matching sidebar default */
+}
+
+/* Apply transitions ONLY when we are NOT actively resizing */
+.container.withTransition {
+  transition: width 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+}
+
+.container.closed {
+  width: 0 !important;
+  opacity: 0;
+  transform: translateX(-10px);
+  pointer-events: none;
+}
+
+.content {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.resizer {
+  position: absolute;
+  top: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 1001;
+}
+
+.resizer.right {
+  right: -3px;
+}
+
+.resizer.left {
+  left: -3px;
+}
+
+.resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: transparent;
+  transition: background-color 0.2s;
+}
+
+.resizer.right::after {
+  left: 2px;
+}
+
+.resizer.left::after {
+  right: 2px;
+}
+
+.resizer:hover::after,
+.resizerActive::after {
+  background-color: var(--primary-color, #3b82f6);
+}
