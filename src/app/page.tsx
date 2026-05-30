@@ -14,6 +14,7 @@ import BackgroundNotification from "@/components/BackgroundNotification/Backgrou
 import { AuthModal } from "@/components/AuthModal/AuthModal";
 import styles from "./page.module.css";
 import { EndpointInfo } from "@/types";
+import { openInCodeSandbox } from "@/utils/codesandbox/index";
 
 // Hooks
 import { useToast } from "@/hooks/useToast";
@@ -272,6 +273,17 @@ const App = () => {
           onDeleteCollection={openDeleteModal}
           onRenameCollection={(id, name) => updateCollection(id, { name })}
           onUpdateCollection={openUpdateModal}
+          onOpenSandbox={(id) => {
+            const col = collections.find(c => c.id === id);
+            if (col && activeConfig) {
+              openInCodeSandbox(
+                col.name,
+                activeConfig.baseURL,
+                col.modules || {},
+                { ...activeConfig, manifest: col.manifest }
+              );
+            }
+          }}
           isOpen={isSidebarOpen}
         />
       )}

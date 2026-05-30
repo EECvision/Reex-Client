@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import styles from "./Navbar.module.css";
 import { Button } from "../ui/Button/Button";
-import { ChevronDown, Download, Plus, Trash2, FileText, Loader2, Folder, Lock, X, Pencil, Menu, PanelLeft } from "lucide-react";
+import { ChevronDown, Download, Plus, Trash2, FileText, Loader2, Folder, Lock, X, Pencil, Menu, PanelLeft, Code } from "lucide-react";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
 import UserMenu from "../UserMenu/UserMenu";
 import { BaseUrlInput } from "./BaseUrlInput";
@@ -27,6 +27,7 @@ interface NavbarProps {
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
   hasAuthConfigured?: boolean;
+  onCodeSandboxClick?: () => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -45,7 +46,8 @@ const Navbar: React.FC<NavbarProps> = ({
   onBaseUrlChange,
   onToggleSidebar,
   isSidebarOpen,
-  hasAuthConfigured
+  hasAuthConfigured,
+  onCodeSandboxClick
 }) => {
   const [url, setUrl] = React.useState(() => localStorage.getItem("docs_url") || "");
   const [isFetchOpen, setIsFetchOpen] = React.useState(false);
@@ -184,6 +186,17 @@ const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       <div className={styles.rightSection}>
+        {onCodeSandboxClick && isStandaloneMode && hasCollection && (
+          <Button
+             variant="ghost"
+             onClick={onCodeSandboxClick}
+             leftIcon={<Code size={16} />}
+             title="Preview Generated SDK in CodeSandbox"
+          >
+             Sandbox
+          </Button>
+        )}
+
         {onAuthClick && hasCollection && (
           <div className={styles.actionGroup}>
             <Button

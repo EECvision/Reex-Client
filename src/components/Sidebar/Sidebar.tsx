@@ -1,11 +1,14 @@
-import React, { SetStateAction, useState, useRef, useEffect, useCallback } from "react";
+import React, { SetStateAction, useState, useRef, useEffect } from "react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import styles from "./Sidebar.module.css";
 import { EndpointInfo, Methods } from "@/types";
-import { Folder, Trash2, ChevronRight, ChevronDown, Lock, TestTube, Pencil, RefreshCw } from "lucide-react";
+import { Folder, Trash2, ChevronRight, ChevronDown, Lock, TestTube, Pencil, RefreshCw, MoreVertical, Code } from "lucide-react";
 import Link from "next/link";
 import { Button } from "../ui/Button/Button";
 import { Select } from "../ui/Select/Select";
 import Logo from "../Logo/Logo";
+
+// ... existing code ...
 
 const METHOD_OPTIONS = [
   { value: "ALL", label: "ALL METHODS" },
@@ -36,6 +39,7 @@ interface SidebarProps {
   onDeleteCollection?: (id: string) => void;
   onRenameCollection?: (id: string, newName: string) => void;
   onUpdateCollection?: (id: string) => void;
+  onOpenSandbox?: (id: string) => void;
   baseURL?: string;
   collectionName?: string;
   isOpen?: boolean;
@@ -55,6 +59,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onDeleteCollection,
   onRenameCollection,
   onUpdateCollection,
+  onOpenSandbox,
   baseURL,
   collectionName,
   isOpen = false,
@@ -63,6 +68,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [expandedCollections, setExpandedCollections] = React.useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  
   const nameInputRef = useRef<HTMLInputElement>(null);
   const originalNameRef = useRef<string>('');
 
@@ -191,46 +197,53 @@ const Sidebar: React.FC<SidebarProps> = ({
                     </div>
 
                     <div className={styles.collectionHeaderActions}>
-                      {onUpdateCollection && (
-                        <Button
-                          className={styles.renameBtn}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onUpdateCollection(group.id);
-                          }}
-                          title="Update Collection"
-                          variant="ghost"
-                          size="sm"
-                        >
-                          <RefreshCw size={12} />
-                        </Button>
-                      )}
-                      {onRenameCollection && (
-                        <Button
-                          className={styles.renameBtn}
-                          onClick={(e) => startRename(group.id, group.name, e)}
-                          title="Rename Collection"
-                          variant="ghost"
-                          size="sm"
-                        >
-                          <Pencil size={12} />
-                        </Button>
-                      )}
-                      {/* Delete Collection Button */}
-                      {onDeleteCollection && (
-                        <Button
-                          className={styles.deleteBtn}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDeleteCollection(group.id);
-                          }}
-                          title="Delete Collection"
-                          variant="ghost"
-                          size="sm"
-                        >
-                          <Trash2 size={12} />
-                        </Button>
-                      )}
+                      <DropdownMenu.Root>
+                        <DropdownMenu.Trigger asChild>
+                          <Button
+                            className={styles.moreBtn}
+                            onClick={(e) => e.stopPropagation()}
+                            variant="ghost"
+                            size="sm"
+                            title="Options"
+                          >
+                            <MoreVertical size={14} />
+                          </Button>
+                        </DropdownMenu.Trigger>
+
+                        <DropdownMenu.Portal>
+                          <DropdownMenu.Content 
+                            className={styles.dropdownMenu} 
+                            sideOffset={5} 
+                            align="end"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {onUpdateCollection && (
+                              <DropdownMenu.Item className={styles.dropdownItem} onClick={(e) => { e.stopPropagation(); onUpdateCollection(group.id); }}>
+                                <RefreshCw size={14} />
+                                Update Collection
+                              </DropdownMenu.Item>
+                            )}
+                            {onOpenSandbox && (
+                              <DropdownMenu.Item className={styles.dropdownItem} onClick={(e) => { e.stopPropagation(); onOpenSandbox(group.id); }}>
+                                <Code size={14} />
+                                Open in Sandbox
+                              </DropdownMenu.Item>
+                            )}
+                            {onRenameCollection && (
+                              <DropdownMenu.Item className={styles.dropdownItem} onClick={(e) => { e.stopPropagation(); startRename(group.id, group.name, e); }}>
+                                <Pencil size={14} />
+                                Rename Collection
+                              </DropdownMenu.Item>
+                            )}
+                            {onDeleteCollection && (
+                              <DropdownMenu.Item className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`} onClick={(e) => { e.stopPropagation(); onDeleteCollection(group.id); }}>
+                                <Trash2 size={14} />
+                                Delete Collection
+                              </DropdownMenu.Item>
+                            )}
+                          </DropdownMenu.Content>
+                        </DropdownMenu.Portal>
+                      </DropdownMenu.Root>
                     </div>
                   </div>
                 </div>
