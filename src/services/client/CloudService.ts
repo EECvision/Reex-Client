@@ -104,12 +104,8 @@ export const CloudService = {
                 try {
                     // Ask Bridge where the definitions are
                     const url = bridgeUrl || getLocalUrl();
-                    const pathsRes = await fetch(`${url}/api/project/paths`);
-                    let definitionsDir = "api-services/definitions";
-                    if (pathsRes.ok) {
-                        const paths = await pathsRes.json();
-                        definitionsDir = paths.API_DEFINITIONS_DIR || definitionsDir;
-                    }
+                    const cachedApiServicesDir = await getApiServicesDir();
+                    const definitionsDir = cachedApiServicesDir ? `${cachedApiServicesDir}/definitions` : "api-services/definitions";
                     const filePath = `${definitionsDir}/${itemInfo.moduleName}.ts`;
                     const readRes = await fetch(`${url}/api/fs/read`, {
                         method: 'POST',
