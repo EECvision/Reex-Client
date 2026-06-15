@@ -167,6 +167,40 @@
   font-size: 0.8rem;
 }
 
+/* === Postman Tab === */
+.postmanInputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-bottom: 1rem;
+}
+
+.postmanLabel {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary, #334155);
+}
+
+.postmanHelperText {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #64748b);
+  margin: 0;
+  padding-left: 2px;
+}
+
+.postmanHelperText a {
+  color: var(--primary-color, #3b82f6);
+  text-decoration: none;
+}
+
+.postmanHelperText a:hover {
+  text-decoration: underline;
+}
+
+:global([data-theme="dark"]) .postmanLabel {
+  color: var(--text-primary);
+}
+
 /* === History link === */
 .historyActions {
   display: flex;

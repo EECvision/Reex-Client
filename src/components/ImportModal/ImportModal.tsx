@@ -3,7 +3,7 @@ import styles from "./ImportModal.module.css";
 import { useAuth } from "@/providers/AuthContext";
 import { Button } from "../ui/Button/Button";
 import { api } from "@/services/api";
-import { Loader2, Globe, History as HistoryIcon, AlertCircle, X } from "lucide-react";
+import { Loader2, Globe, History as HistoryIcon, AlertCircle, X, Lock } from "lucide-react";
 import DiffModal, { FunctionDiff } from "./DiffModal";
 import { Modal } from "../ui/Modal/Modal";
 import { DiffResult } from "./importTypes";
@@ -85,7 +85,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
   const [showLimitModal, setShowLimitModal] = useState(false);
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<'file' | 'url'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'file' | 'url' | 'postman'>(initialTab);
 
   // URL Fetch State
   const [fetchUrl, setFetchUrl] = useState(() => {
@@ -104,6 +104,35 @@ const ImportModal: React.FC<ImportModalProps> = ({
       localStorage.setItem("docs_url", fetchUrl);
     }
   }, [fetchUrl]);
+
+  // Postman Fetch State
+  const [postmanUrl, setPostmanUrl] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem("postman_url") || "";
+    }
+    return "";
+  });
+  const [postmanApiKey, setPostmanApiKey] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem("postman_api_key") || "";
+    }
+    return "";
+  });
+  const [isFetchingPostman, setIsFetchingPostman] = useState(false);
+  const [postmanError, setPostmanError] = useState('');
+
+  // Persist Postman state to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("postman_url", postmanUrl);
+    }
+  }, [postmanUrl]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("postman_api_key", postmanApiKey);
+    }
+  }, [postmanApiKey]);
 
   // State for Diffs
   const [diffs, setDiffs] = useState<DiffResult[]>([]);
@@ -225,6 +254,11 @@ const ImportModal: React.FC<ImportModalProps> = ({
   const validateFetchUrl = (val: string) => {
     if (!val.trim()) return 'URL is required';
     const lowerVal = val.toLowerCase();
+    
+    if (lowerVal.includes('postman.com/collections/') || lowerVal.includes('getpostman.com/collections/')) {
+      return '';
+    }
+
     if (
       !lowerVal.endsWith('.json') &&
       !lowerVal.endsWith('.postman') &&
@@ -232,7 +266,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
       !lowerVal.endsWith('.yaml') &&
       !lowerVal.endsWith('.yml')
     ) {
-      return 'URL must end with .json, .yaml, .yml, .postman or .openapi';
+      return 'URL must end with .json, .yaml, .yml, .postman, .openapi or be a valid Postman collection link';
     }
     return '';
   };
@@ -274,6 +308,35 @@ const ImportModal: React.FC<ImportModalProps> = ({
       setFetchError(err.message || 'Failed to fetch URL');
     } finally {
       setIsFetchingUrl(false);
+    }
+  };
+
+  const handleFetchFromPostman = async () => {
+    if (!postmanUrl.trim() || !postmanApiKey.trim()) {
+      setPostmanError('API Key and Collection URL/ID are required');
+      return;
+    }
+    setPostmanError('');
+    setIsFetchingPostman(true);
+    try {
+      const response = await fetch('/api/postman/fetch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: postmanApiKey, urlOrId: postmanUrl }),
+      });
+      
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to fetch Postman collection');
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const file = new File([blob], 'postman-collection.json', { type: 'application/json' });
+      fetchTriggeredRef.current = true;
+      setFile(file);
+      setActiveTab('file');
+    } catch (err: any) {
+      setPostmanError(err.message || 'Failed to fetch from Postman');
+    } finally {
+      setIsFetchingPostman(false);
     }
   };
 
@@ -423,6 +486,12 @@ const ImportModal: React.FC<ImportModalProps> = ({
                 >
                   From URL
                 </button>
+                <button
+                  className={`${styles.tab} ${activeTab === 'postman' ? styles.tabActive : ''}`}
+                  onClick={() => setActiveTab('postman')}
+                >
+                  Postman
+                </button>
               </div>
 
               {activeTab === 'file' ? (
@@ -453,7 +522,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
                     </div>
                   )}
                 </>
-              ) : (
+              ) : activeTab === 'url' ? (
                 /* URL Tab */
                 <div className={styles.urlTab}>
                   <div className={styles.urlInputRow}>
@@ -501,6 +570,70 @@ const ImportModal: React.FC<ImportModalProps> = ({
                       >
                         Import from recent collection
                       </Button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Postman Tab */
+                <div className={styles.urlTab}>
+                  <div className={styles.postmanInputGroup}>
+                    <label className={styles.postmanLabel}>Postman API Key</label>
+                    <div className={styles.urlInputRow}>
+                      <div className={styles.urlInputWrapper}>
+                        <Lock size={16} className={styles.urlIcon} />
+                        <input
+                          type="password"
+                          placeholder="PMAK-..."
+                          className={styles.urlInput}
+                          value={postmanApiKey}
+                          onChange={(e) => {
+                            setPostmanApiKey(e.target.value);
+                            if (postmanError) setPostmanError('');
+                          }}
+                          disabled={isFetchingPostman}
+                        />
+                      </div>
+                    </div>
+                    <p className={styles.postmanHelperText}>
+                      Get your API key from <a href="https://postman.co/settings/me/api-keys" target="_blank" rel="noopener noreferrer">Postman Account Settings</a>.
+                    </p>
+                  </div>
+
+                  <div className={styles.postmanInputGroup}>
+                    <label className={styles.postmanLabel}>Collection URL or ID</label>
+                    <div className={styles.urlInputRow}>
+                      <div className={styles.urlInputWrapper}>
+                        <Globe size={16} className={styles.urlIcon} />
+                        <input
+                          type="text"
+                          placeholder="https://futurecity-7743.postman.co/workspace/..."
+                          className={`${styles.urlInput} ${postmanError ? styles.urlInputError : ''}`}
+                          value={postmanUrl}
+                          onChange={(e) => {
+                            setPostmanUrl(e.target.value);
+                            if (postmanError) setPostmanError('');
+                          }}
+                          onKeyDown={(e) => e.key === 'Enter' && handleFetchFromPostman()}
+                          disabled={isFetchingPostman}
+                        />
+                      </div>
+                      <Button
+                        onClick={handleFetchFromPostman}
+                        disabled={!postmanUrl.trim() || !postmanApiKey.trim() || isFetchingPostman}
+                        variant="primary"
+                        className={styles.urlFetchBtn}
+                      >
+                        {isFetchingPostman ? (
+                          <><Loader2 size={15} className={styles.spin} /> Fetching...</>
+                        ) : 'Import'}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {postmanError && (
+                    <div className={styles.urlError}>
+                      <AlertCircle size={13} />
+                      {postmanError}
                     </div>
                   )}
                 </div>
