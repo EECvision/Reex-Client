@@ -198,6 +198,11 @@
   background-color: #fef2f2;
 }
 
+:global([data-theme="dark"]) .markedForRemoval {
+  background-color: var(--error-bg, rgba(239, 68, 68, 0.1));
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
 .markedForRemoval:hover {
   box-shadow: none;
 }
@@ -220,6 +225,11 @@
 .removeBtnInner:hover:not(:disabled) {
   /* color: #dc2626; */
   background-color: transparent;
+}
+
+:global([data-theme="dark"]) .removeBtnInner:hover:not(:disabled) {
+  color: var(--error-color, #f87171);
+  background-color: var(--error-bg, rgba(239, 68, 68, 0.1));
 }
 
 .removedFunction .functionName {

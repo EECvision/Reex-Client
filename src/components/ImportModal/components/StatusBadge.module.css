@@ -43,3 +43,31 @@
     background-color: #fee2e2;
     color: #dc2626;
 }
+
+/* Dark Mode Overrides */
+:global([data-theme="dark"]) .statusNew {
+    background-color: rgba(16, 185, 129, 0.15); /* Emerald 500 */
+    color: #34d399; /* Emerald 400 */
+}
+
+:global([data-theme="dark"]) .statusModified {
+    background-color: rgba(245, 158, 11, 0.15); /* Amber 500 */
+    color: #fbbf24; /* Amber 400 */
+}
+
+:global([data-theme="dark"]) .statusDeleted,
+:global([data-theme="dark"]) .statusRemove {
+    background-color: var(--error-bg, rgba(239, 68, 68, 0.1));
+    color: var(--error-color, #f87171);
+}
+
+:global([data-theme="dark"]) .statusUnchanged {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+}
+
+:global([data-theme="dark"]) .statusDisabled {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+}
