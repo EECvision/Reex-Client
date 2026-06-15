@@ -290,6 +290,7 @@ const App = () => {
             }
           }}
           isOpen={isSidebarOpen}
+          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         />
       )}
 
@@ -357,6 +358,7 @@ const App = () => {
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
           isSidebarOpen={isSidebarOpen}
           onAssistantClick={() => setIsAssistantOpen(true)}
+          isAssistantOpen={isAssistantOpen}
         />
 
         {showImportModal && (

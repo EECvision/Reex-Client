@@ -26,6 +26,64 @@
     color: var(--text-primary);
 }
 
+.containerExpanded {
+    width: 100%;
+}
+
+.triggerExpanded {
+    width: 100%;
+    padding: 6px;
+    justify-content: flex-start;
+    gap: 12px;
+    height: auto;
+    border-radius: 8px;
+    text-align: left;
+}
+
+.triggerUserInfo {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+.triggerUserName {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.triggerUserPlan {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.upgradeBtn {
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color, #d1d5db);
+    border-radius: 12px;
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.2s;
+}
+
+.upgradeBtn:hover {
+    background: var(--hover-bg, #f3f4f6);
+}
+
+.triggerChevron {
+    color: var(--text-muted);
+}
+
 .avatar {
     width: 28px;
     height: 28px;
@@ -83,7 +141,7 @@
 
 .popover {
     position: absolute;
-    width: 240px;
+    width: 280px;
     background: var(--menu-bg);
     border: 1px solid var(--border-color);
     border-radius: 8px;

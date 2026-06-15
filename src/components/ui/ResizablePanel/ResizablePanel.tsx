@@ -9,6 +9,7 @@ interface ResizablePanelProps {
   isOpen?: boolean;
   className?: string;
   resizerPosition?: 'right' | 'left';
+  collapsedWidth?: number;
 }
 
 export const ResizablePanel: React.FC<ResizablePanelProps> = ({
@@ -18,7 +19,8 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
   defaultWidth = 260,
   isOpen = true,
   className = '',
-  resizerPosition = 'right'
+  resizerPosition = 'right',
+  collapsedWidth = 0
 }) => {
   const [width, setWidth] = useState(defaultWidth);
   const [isDragging, setIsDragging] = useState(false);
@@ -66,7 +68,7 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
   return (
     <div 
       className={`${styles.container} ${!isDragging ? styles.withTransition : ''} ${!isOpen ? styles.closed : ''} ${className}`}
-      style={{ width: isOpen ? width : undefined }}
+      style={{ width: isOpen ? width : collapsedWidth }}
     >
       <div className={styles.content}>
         {children}

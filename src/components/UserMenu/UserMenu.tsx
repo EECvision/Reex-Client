@@ -4,15 +4,16 @@ import React, { useState, useRef, useEffect } from "react";
 import styles from "./UserMenu.module.css";
 import { useAuth } from "@/providers/AuthContext";
 import { useSettings } from "@/providers/SettingsContext";
-import { User, LogOut, LogIn, Settings, CreditCard, LayoutDashboard, Sun, Moon, Monitor, Palette, Book, MessageSquareWarning } from "lucide-react";
+import { User, LogOut, LogIn, Settings, CreditCard, LayoutDashboard, Sun, Moon, Monitor, Palette, Book, MessageSquareWarning, ChevronsUpDown } from "lucide-react";
 import LoginModal from "../LoginModal/LoginModal";
 import { useRouter } from "next/navigation";
 
 interface UserMenuProps {
     placement?: 'top' | 'bottom';
+    expanded?: boolean;
 }
 
-const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top' }) => {
+const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top', expanded = false }) => {
     const { user, isAuthenticated, logout } = useAuth();
     const { theme, setTheme } = useSettings();
     const [isOpen, setIsOpen] = useState(false);
@@ -46,9 +47,9 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top' }) => {
     const isSubscribed = user?.subscription_status === 'active';
 
     return (
-        <div className={styles.container} ref={containerRef}>
+        <div className={`${styles.container} ${expanded ? styles.containerExpanded : ''}`} ref={containerRef}>
             <button
-                className={styles.trigger}
+                className={`${styles.trigger} ${expanded ? styles.triggerExpanded : ''}`}
                 onClick={() => setIsOpen(!isOpen)}
                 title={isAuthenticated ? (user?.name || user?.email || "User") : "Sign In"}
             >
@@ -71,6 +72,40 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top' }) => {
                         </div>
                     )}
                 </div>
+                {expanded && (
+                    <>
+                        {isAuthenticated && user ? (
+                            <>
+                                <div className={styles.triggerUserInfo}>
+                                    <span className={styles.triggerUserName}>{user.name || user.email?.split('@')[0] || "User"}</span>
+                                    <span className={styles.triggerUserPlan}>{isSubscribed ? "Pro" : "Free"}</span>
+                                </div>
+                                {!isSubscribed ? (
+                                    <div 
+                                        className={styles.upgradeBtn}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsOpen(false);
+                                            handleNavigate('/subscription');
+                                        }}
+                                    >
+                                        Upgrade
+                                    </div>
+                                ) : (
+                                    <ChevronsUpDown size={16} className={styles.triggerChevron} />
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <div className={styles.triggerUserInfo}>
+                                    <span className={styles.triggerUserName}>Guest</span>
+                                    <span className={styles.triggerUserPlan}>Sign in</span>
+                                </div>
+                                <ChevronsUpDown size={16} className={styles.triggerChevron} />
+                            </>
+                        )}
+                    </>
+                )}
             </button>
 
             {isOpen && (

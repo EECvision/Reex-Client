@@ -11,10 +11,8 @@
 }
 
 .container.closed {
-  width: 0 !important;
-  opacity: 0;
-  transform: translateX(-10px);
-  pointer-events: none;
+  /* Let inline styles dictate width. */
+  transform: translateX(0);
 }
 
 .content {

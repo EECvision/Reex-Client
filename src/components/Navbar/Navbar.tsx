@@ -27,7 +27,6 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
-import UserMenu from "../UserMenu/UserMenu";
 import { BaseUrlInput } from "./BaseUrlInput";
 
 interface NavbarProps {
@@ -55,6 +54,7 @@ interface NavbarProps {
   hasAuthConfigured?: boolean;
   onCodeSandboxClick?: () => void;
   onAssistantClick?: () => void;
+  isAssistantOpen?: boolean;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -79,6 +79,7 @@ const Navbar: React.FC<NavbarProps> = ({
   hasAuthConfigured,
   onCodeSandboxClick,
   onAssistantClick,
+  isAssistantOpen,
 }) => {
   const router = useRouter();
   const [url, setUrl] = React.useState(() => {
@@ -141,15 +142,6 @@ const Navbar: React.FC<NavbarProps> = ({
   return (
     <nav className={styles.navbar}>
       <div className={styles.leftSection}>
-        {onToggleSidebar && hasCollection && (
-          <Button
-            variant="ghost"
-            className={styles.sidebarToggle}
-            onClick={onToggleSidebar}
-          >
-            <PanelLeft size={16} />
-          </Button>
-        )}
 
         {/* Workspace Switcher */}
         <DropdownMenu.Root>
@@ -376,7 +368,7 @@ const Navbar: React.FC<NavbarProps> = ({
           </Button>
         )}
 
-        {onAssistantClick && (
+        {onAssistantClick && !isAssistantOpen && (
           <Button
             variant="ghost"
             onClick={onAssistantClick}
@@ -386,10 +378,6 @@ const Navbar: React.FC<NavbarProps> = ({
             Ask Assistant
           </Button>
         )}
-
-        <div className={styles.separator} />
-
-        <UserMenu placement="bottom" />
 
         {/* Mobile Menu Toggle */}
         <Button

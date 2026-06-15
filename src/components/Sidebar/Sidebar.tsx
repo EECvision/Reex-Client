@@ -13,11 +13,13 @@ import {
   RefreshCw,
   MoreVertical,
   Code,
+  PanelLeft,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "../ui/Button/Button";
 import { Select } from "../ui/Select/Select";
 import Logo from "../Logo/Logo";
+import UserMenu from "../UserMenu/UserMenu";
 
 // ... existing code ...
 
@@ -54,6 +56,7 @@ interface SidebarProps {
   baseURL?: string;
   collectionName?: string;
   isOpen?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -74,6 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   baseURL,
   collectionName,
   isOpen = false,
+  onToggleSidebar,
 }) => {
   // Initialize expanded state for collections - default to ALL expanded
   const [expandedCollections, setExpandedCollections] = React.useState<
@@ -156,11 +160,27 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside className={`${styles.sidebar} ${isOpen ? styles.open : ""}`}>
+    <aside className={`${styles.sidebar} ${!isOpen ? styles.railMode : ""}`}>
       <div className={styles.header}>
         <div className={styles.brand}>
           <Logo />
         </div>
+        {onToggleSidebar && (
+          <Button
+            variant="ghost"
+            onClick={onToggleSidebar}
+            style={{
+              padding: "8px",
+              height: "36px",
+              width: "36px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <PanelLeft size={16} color="#6b7280" />
+          </Button>
+        )}
       </div>
 
       <div className={styles.filterSection}>
@@ -426,16 +446,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             ))}
       </div>
 
-      <div className={styles.footerCredits}>
-        {/* <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-          Built by <a href="https://github.com/EECvision" target="_blank" rel="noopener noreferrer" className={styles.devLink}>EECvision</a>
-        </div> */}
-        <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
-          Powered by{" "}
-          <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>
-            ToolsHQ
-          </span>
-        </div>
+      <div className={styles.sidebarBottom}>
+        <UserMenu placement="top" expanded={isOpen} />
       </div>
     </aside>
   );

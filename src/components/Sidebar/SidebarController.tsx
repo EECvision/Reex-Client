@@ -18,6 +18,7 @@ interface SidebarControllerProps {
   onUpdateCollection?: (id: string) => void;
   onOpenSandbox?: (id: string) => void;
   isOpen?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 type ApiKey = string;
@@ -33,6 +34,7 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
   onUpdateCollection,
   onOpenSandbox,
   isOpen = false,
+  onToggleSidebar,
 }) => {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set(),
@@ -157,6 +159,7 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
       defaultWidth={320}
       minWidth={280}
       maxWidth={600}
+      collapsedWidth={60}
       className={styles.sidebarWrapper}
     >
       <Sidebar
@@ -176,7 +179,8 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
         onOpenSandbox={isStandaloneMode ? onOpenSandbox : undefined}
         baseURL={config?.baseURL}
         collectionName={config?.collectionName}
-        isOpen={true} // Always "open" from Sidebar's internal CSS perspective since parent handles it
+        isOpen={isOpen}
+        onToggleSidebar={onToggleSidebar}
       />
     </ResizablePanel>
   );
