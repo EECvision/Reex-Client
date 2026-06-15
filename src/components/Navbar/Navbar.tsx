@@ -142,7 +142,6 @@ const Navbar: React.FC<NavbarProps> = ({
   return (
     <nav className={styles.navbar}>
       <div className={styles.leftSection}>
-
         {/* Workspace Switcher */}
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
@@ -163,7 +162,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 </span>
                 <span className={styles.workspaceSub}>
                   {isStandaloneMode
-                    ? "Standalone environment"
+                    ? "Standard API client"
                     : formatProjectPath(projectPath)}
                 </span>
               </div>

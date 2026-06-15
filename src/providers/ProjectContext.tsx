@@ -75,7 +75,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     // If enabling manual standalone, force switch immediately
     if (nextMode) {
       setIsStandaloneMode(true);
-      setProjectPath("");
     } else {
       // If disabling, retry fetching bridge to revert to project mode if available
       // Pass false to ignoreManual because manual mode state update might be async/batched
@@ -133,16 +132,16 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const fetchProjectData = async (silent = false, ignoreManual = false) => {
-    // If manual mode is ON and we are not ignoring it (e.g. initial load), force standalone
-    if (manualStandaloneMode && !ignoreManual) {
-      setIsStandaloneMode(true);
-      setLoading(false);
-      return;
-    }
     try {
       if (!silent) setLoading(true);
-      // Fetch Config from Bridge (Source of Truth for Target Dir)
-      const bridgeStatus = await api.fetchBridgeStatus();
+      
+      let bridgeStatus;
+      try {
+        bridgeStatus = await api.fetchBridgeStatus();
+      } catch (e) {
+        // Fallback handled below
+      }
+      
       const realTargetDir = bridgeStatus?.targetDir;
       const bridgeApiServicesDir = bridgeStatus?.apiServicesDir || "";
 
@@ -158,9 +157,17 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       }
 
       // Bridge is connected
-      setIsStandaloneMode(false);
       setProjectPath(realTargetDir);
       setApiServicesDir(bridgeApiServicesDir);
+
+      // If manual mode is ON and we are not ignoring it (e.g. initial load), force standalone
+      if (manualStandaloneMode && !ignoreManual) {
+        setIsStandaloneMode(true);
+        setLoading(false);
+        return;
+      }
+
+      setIsStandaloneMode(false);
 
       // Fetch Data from Bridge directly
       const bridgeUrl = api.getBridgeUrl();

@@ -39,7 +39,8 @@
   flex: 0 0 auto;
 }
 
-.workspaceSwitcherTrigger:hover, .workspaceSwitcherTrigger[data-state="open"] {
+.workspaceSwitcherTrigger:hover,
+.workspaceSwitcherTrigger[data-state="open"] {
   background-color: var(--hover-bg, #f3f4f6);
   border-color: var(--border-color, #e5e7eb);
 }
@@ -54,7 +55,7 @@
   border-radius: 6px;
   background: var(--card-bg, #fff);
   border: 1px solid var(--border-color, #e5e7eb);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .workspaceTextColumn {
@@ -91,7 +92,9 @@
   background-color: var(--menu-bg, #ffffff);
   border: 1px solid var(--border-light, #e5e7eb);
   border-radius: 10px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
   padding: 6px;
   min-width: 260px;
   z-index: 1050;
@@ -111,7 +114,8 @@
   transition: all 0.15s;
 }
 
-.workspaceOption:hover, .workspaceOption:focus {
+.workspaceOption:hover,
+.workspaceOption:focus {
   background-color: var(--hover-bg, #f3f4f6);
 }
 
@@ -240,7 +244,9 @@
   background: var(--card-bg, white);
   border: 1px solid var(--border-color, #e5e7eb);
   border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
   padding: 16px;
   width: 320px;
   z-index: 50;
@@ -415,7 +421,6 @@
   color: var(--text-primary, #111827);
 }
 
-
 .baseUrlInput:focus {
   background: transparent;
 }
@@ -474,8 +479,6 @@
   }
 }
 
-
-
 @keyframes scaleIn {
   from {
     opacity: 0;
@@ -487,7 +490,6 @@
     transform: scale(1) translateY(0);
   }
 }
-
 
 .toggleModeBtn {
   display: flex;
@@ -540,7 +542,7 @@
     display: flex;
   }
 
-  .rightSection>button:not(.mobileMenuBtn),
+  .rightSection > button:not(.mobileMenuBtn),
   .rightSection .actionGroup,
   .rightSection .separator {
     display: none;
