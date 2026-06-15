@@ -46,8 +46,8 @@ interface ImportModalProps {
   onOpenHistory?: () => void;
   hasHistory?: boolean;
   autoAnalyze?: boolean;
+  initialTab?: 'file' | 'url';
 }
-
 
 const ImportModal: React.FC<ImportModalProps> = ({
   isOpen,
@@ -72,7 +72,8 @@ const ImportModal: React.FC<ImportModalProps> = ({
   addCollectionToHistory,
   onOpenHistory,
   hasHistory = false,
-  autoAnalyze = false
+  autoAnalyze = false,
+  initialTab = 'file'
 }) => {
   // Find existing collection if updating
   const existingCollection = targetCollectionId && collections ? collections.find(c => c.id === targetCollectionId) : undefined;
@@ -84,7 +85,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
   const [showLimitModal, setShowLimitModal] = useState(false);
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<'file' | 'url'>('file');
+  const [activeTab, setActiveTab] = useState<'file' | 'url'>(initialTab);
 
   // URL Fetch State
   const [fetchUrl, setFetchUrl] = useState(() => {

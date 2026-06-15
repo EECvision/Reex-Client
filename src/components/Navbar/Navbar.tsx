@@ -2,7 +2,8 @@ import React, { useRef, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import styles from "./Navbar.module.css";
 import { Button } from "../ui/Button/Button";
-import { ChevronDown, Download, Plus, Trash2, FileText, Loader2, Folder, Lock, X, Pencil, Menu, PanelLeft, Code } from "lucide-react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { ChevronDown, Download, Plus, Trash2, FileText, Loader2, Folder, Lock, X, Pencil, Menu, PanelLeft, Code, Link } from "lucide-react";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
 import UserMenu from "../UserMenu/UserMenu";
 import { BaseUrlInput } from "./BaseUrlInput";
@@ -16,6 +17,7 @@ interface NavbarProps {
   hasCollection: boolean;
   onDeleteClick: () => void;
   onFetchUrl: (url: string) => void;
+  onOpenFetchModal?: () => void;
   isFetching: boolean;
   onGenerateClick?: () => void;
   baseURL?: string;
@@ -36,6 +38,7 @@ const Navbar: React.FC<NavbarProps> = ({
   hasCollection,
   onDeleteClick,
   onFetchUrl,
+  onOpenFetchModal,
   isFetching,
   onGenerateClick,
   baseURL,
@@ -49,10 +52,14 @@ const Navbar: React.FC<NavbarProps> = ({
   hasAuthConfigured,
   onCodeSandboxClick
 }) => {
-  const [url, setUrl] = React.useState(() => localStorage.getItem("docs_url") || "");
-  const [isFetchOpen, setIsFetchOpen] = React.useState(false);
+  const [url, setUrl] = React.useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("docs_url") || "";
+    }
+    return "";
+  });
+  
   const [isMobileAuthOpen, setIsMobileAuthOpen] = React.useState(false);
-  const [isMobileFetchOpen, setIsMobileFetchOpen] = React.useState(false);
 
   const [mounted, setMounted] = useState(false);
 
@@ -62,69 +69,25 @@ const Navbar: React.FC<NavbarProps> = ({
   }, []);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
-  const [error, setError] = React.useState("");
-  const fetchContainerRef = useRef<HTMLDivElement>(null);
 
+  // Sync from localStorage if changed
   useEffect(() => {
-    localStorage.setItem("docs_url", url);
-  }, [url]);
-
-  // Sync from localStorage when fetch is opened
-  useEffect(() => {
-    if (isFetchOpen || isMobileFetchOpen) {
+    const handleStorageChange = () => {
       const stored = localStorage.getItem("docs_url");
-      if (stored && stored !== url) {
+      if (stored !== null && stored !== url) {
         setUrl(stored);
       }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFetchOpen, isMobileFetchOpen]);
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [url]);
 
   // Reset mobile states when menu closes
   useEffect(() => {
     if (!isMobileMenuOpen) {
       setIsMobileAuthOpen(false);
-      setIsMobileFetchOpen(false);
     }
   }, [isMobileMenuOpen]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (fetchContainerRef.current && !fetchContainerRef.current.contains(event.target as Node)) {
-        setIsFetchOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const validateUrl = (val: string) => {
-    if (!val.trim()) return "URL is required";
-    const lowerVal = val.toLowerCase();
-    if (!lowerVal.endsWith(".json") && !lowerVal.endsWith(".postman") && !lowerVal.endsWith(".openapi") && !lowerVal.endsWith(".yaml") && !lowerVal.endsWith(".yml")) {
-      return "URL must end with .json, .yaml, .yml, .postman or .openapi";
-    }
-    return "";
-  };
-
-  const handleFetch = () => {
-    const validationError = validateUrl(url);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-    setError("");
-    if (url.trim()) {
-      onFetchUrl(url);
-      setIsFetchOpen(false);
-      setIsMobileMenuOpen(false);
-    }
-  };
-
-  const handleInputCheck = (val: string) => {
-    setUrl(val);
-    if (error) setError("");
-  }
 
   // Helper to format project path
   const formatProjectPath = (path?: string) => {
@@ -135,6 +98,15 @@ const Navbar: React.FC<NavbarProps> = ({
       return `${parts[parts.length - 1]}`;
     }
     return path;
+  };
+
+  const formatUrlDomain = (urlStr: string) => {
+    try {
+      const parsed = new URL(urlStr);
+      return parsed.hostname;
+    } catch {
+      return "URL";
+    }
   };
 
   // We don't have direct access to isAuthActive here anymore, but could pass it as a prop
@@ -212,58 +184,41 @@ const Navbar: React.FC<NavbarProps> = ({
 
         {hasCollection && <div className={styles.separator}></div>}
 
-        {/* Fetch Action */}
-        <div className={styles.actionGroup} ref={fetchContainerRef}>
-          <Button
-            variant="ghost"
-            onClick={() => setIsFetchOpen(!isFetchOpen)}
-            leftIcon={isFetching ? <Loader2 size={16} className={styles.spin} /> : <FileText size={16} color={url ? "#10b981" : undefined} />}
-            rightIcon={<ChevronDown size={16} />}
-          >
-            Fetch
-          </Button>
-
-          {isFetchOpen && (
-            <div className={styles.fetchPopover}>
-              <div className={styles.popoverHeader}>SAVED DOCS URL</div>
-              <div className={styles.popoverInputWrapper}>
-                <input
-                  type="text"
-                  placeholder="Enter docs URL..."
-                  className={`${styles.popoverInput} ${error ? styles.inputError : ''}`}
-                  value={url}
-                  onChange={(e) => handleInputCheck(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleFetch()}
-                  autoFocus
-                />
-              </div>
-              {error && <div className={styles.errorMessage}>{error}</div>}
-
-              <Button
-                onClick={handleFetch}
-                disabled={!url || isFetching}
-                isLoading={isFetching}
-                variant="primary"
-                className={styles.popoverFetchBtn}
-              >
-                Fetch
-              </Button>
-            </div>
-          )}
-        </div>
-
-        <Button variant="ghost" onClick={onImportClick} leftIcon={<Download size={16} />}>
-          Import
-        </Button>
-
-        {/* Generate button - only show when connected to bridge */}
-        {
-          onGenerateClick && !isStandaloneMode && (
-            <Button variant="ghost" onClick={onGenerateClick} leftIcon={<Plus size={16} />}>
-              Generate
+        {/* Add API Dropdown */}
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <Button variant="ghost" leftIcon={<Plus size={16} />}>
+              Add Collection
             </Button>
-          )
-        }
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content className={styles.dropdownMenu} sideOffset={5} align="end">
+              <DropdownMenu.Item className={styles.dropdownItem} onClick={onImportClick}>
+                <Download size={16} />
+                Import File
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                className={styles.dropdownItem}
+                onClick={() => {
+                  if (url) {
+                    onFetchUrl(url);
+                  } else if (onOpenFetchModal) {
+                    onOpenFetchModal();
+                  }
+                }}
+              >
+                {isFetching ? <Loader2 size={16} className={styles.spin} /> : <Link size={16} />}
+                {url ? `Fetch from ${formatUrlDomain(url)}` : 'Fetch from URL'}
+              </DropdownMenu.Item>
+              {onGenerateClick && !isStandaloneMode && (
+                <DropdownMenu.Item className={styles.dropdownItem} onClick={onGenerateClick}>
+                  <Code size={16} />
+                  Generate Template
+                </DropdownMenu.Item>
+              )}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
 
         {
           hasCollection && (
@@ -310,39 +265,19 @@ const Navbar: React.FC<NavbarProps> = ({
 
             <Button
               variant="ghost"
-              onClick={() => { setIsMobileFetchOpen(!isMobileFetchOpen); }}
-              leftIcon={<FileText size={16} color={url ? "#10b981" : undefined} />}
+              onClick={() => {
+                if (url) {
+                  onFetchUrl(url);
+                } else if (onOpenFetchModal) {
+                  onOpenFetchModal();
+                }
+                setIsMobileMenuOpen(false);
+              }}
+              leftIcon={isFetching ? <Loader2 size={16} className={styles.spin} /> : <Link size={16} />}
               style={{ justifyContent: 'flex-start', width: '100%' }}
             >
-              Fetch Docs
+              {url ? `Fetch from ${formatUrlDomain(url)}` : 'Fetch from URL'}
             </Button>
-
-            {isMobileFetchOpen && (
-              <div className={styles.mobileSubMenu}>
-                <div className={styles.popoverHeader}>DOCS URL</div>
-                <input
-                  type="text"
-                  placeholder="Enter docs URL..."
-                  className={`${styles.popoverInput} ${error ? styles.inputError : ''}`}
-                  value={url}
-                  onChange={(e) => handleInputCheck(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleFetch()}
-                />
-                {error && <div className={styles.errorMessage}>{error}</div>}
-                <Button
-                  onClick={() => {
-                    handleFetch();
-                    if (url.trim()) setIsMobileFetchOpen(false);
-                  }}
-                  disabled={!url || isFetching}
-                  isLoading={isFetching}
-                  variant="primary"
-                  style={{ width: '100%' }}
-                >
-                  Fetch
-                </Button>
-              </div>
-            )}
 
             <Button
               variant="ghost"
@@ -350,7 +285,7 @@ const Navbar: React.FC<NavbarProps> = ({
               leftIcon={<Download size={16} />}
               style={{ justifyContent: 'flex-start', width: '100%' }}
             >
-              Import
+              Import File
             </Button>
 
             {onGenerateClick && !isStandaloneMode && (
@@ -360,7 +295,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 leftIcon={<Plus size={16} />}
                 style={{ justifyContent: 'flex-start', width: '100%' }}
               >
-                Generate
+                Generate Template
               </Button>
             )}
 

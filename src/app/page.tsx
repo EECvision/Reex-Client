@@ -126,6 +126,7 @@ const App = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [autoAnalyzeImport, setAutoAnalyzeImport] = useState(false);
+  const [importModalTab, setImportModalTab] = useState<'file' | 'url'>('file');
 
   useEffect(() => {
     // Open sidebar by default on desktop
@@ -294,6 +295,7 @@ const App = () => {
           onImportClick={() => {
             resetImportTask();
             setAutoAnalyzeImport(false);
+            setImportModalTab('file');
             setShowImportModal(true);
           }}
           hasCollection={hasEndpoints}
@@ -302,6 +304,12 @@ const App = () => {
             resetImportTask();
             setAutoAnalyzeImport(true);
             handleFetchUrl(url);
+          }}
+          onOpenFetchModal={() => {
+            resetImportTask();
+            setAutoAnalyzeImport(false);
+            setImportModalTab('url');
+            setShowImportModal(true);
           }}
           isFetching={fetchingUrl}
           onGenerateClick={() => setShowGenerateModal(true)}
@@ -355,6 +363,7 @@ const App = () => {
               resetImportTask();
             }}
             initialFile={importFile}
+            initialTab={importModalTab}
             onSuccess={(msg) => showToast("success", msg || "Collection imported successfully")}
             onError={(msg) => showToast("error", msg)}
             isEmptyWorkspace={!hasEndpoints}
