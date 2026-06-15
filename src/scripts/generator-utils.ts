@@ -875,8 +875,18 @@ ${fields.join("\n")}
 // --- Postman Specific Helpers ---
 
 export const extractPostmanPathParams = (url: string): string[] => {
-    const matches = url.match(/:([a-zA-Z_][a-zA-Z0-9_]*)/g);
-    return matches ? matches.map((m) => m.slice(1)) : [];
+    const params: string[] = [];
+    // Match :param syntax (Postman path variables)
+    const colonMatches = url.match(/:([a-zA-Z_][a-zA-Z0-9_]*)/g);
+    if (colonMatches) {
+        colonMatches.forEach(m => params.push(m.slice(1)));
+    }
+    // Match {{param}} syntax (Postman environment/collection variables in paths)
+    const mustacheMatches = url.match(/\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g);
+    if (mustacheMatches) {
+        mustacheMatches.forEach(m => params.push(m.slice(2, -2)));
+    }
+    return [...new Set(params)]; // Deduplicate
 };
 
 export const inferTypeFromExample = (value: any): string => {

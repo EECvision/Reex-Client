@@ -85,10 +85,11 @@ const mapToStandardIR = (
       const [pathOnly] = finalUrl.split("?");
       const pathParams = extractPostmanPathParams(pathOnly);
 
-      // Normalize Path: :param -> ${param}
+      // Normalize Path: :param and {{param}} -> ${param}
       let normalizedPath = pathOnly;
       pathParams.forEach((param) => {
         normalizedPath = normalizedPath.replace(`:${param}`, `\${${param}}`);
+        normalizedPath = normalizedPath.replace(`{{${param}}}`, `\${${param}}`);
       });
 
       // Query Params
