@@ -14,6 +14,12 @@ export const useDiffSelection = () => {
     // Force Overwrite functions: Set<"moduleName.functionName">
     const [forceOverwriteFunctions, setForceOverwriteFunctions] = useState<Set<string>>(new Set());
 
+    // Modules explicitly marked for removal from the collection
+    const [removedModules, setRemovedModules] = useState<Set<string>>(new Set());
+
+    // Individual functions explicitly marked for removal: Map<moduleName, Set<functionName>>
+    const [removedFunctions, setRemovedFunctions] = useState<Map<string, Set<string>>>(new Map());
+
     const toggleForceOverwrite = (moduleName: string, functionName: string) => {
         const key = `${moduleName}.${functionName}`;
         setForceOverwriteFunctions((prev) => {
@@ -99,11 +105,118 @@ export const useDiffSelection = () => {
         });
     };
 
+    const toggleRemoveModule = (moduleName: string, diff?: DiffResult) => {
+        const isRemoved = removedModules.has(moduleName);
+
+        setRemovedModules((prev) => {
+            const next = new Set(prev);
+            if (isRemoved) next.delete(moduleName);
+            else next.add(moduleName);
+            return next;
+        });
+
+        if (isRemoved) {
+            // Un-marking: re-add to selectedModules and re-select all non-deleted functions
+            setSelectedModules((prev) => {
+                const next = new Set(prev);
+                next.add(moduleName);
+                return next;
+            });
+            if (diff?.functions) {
+                setSelectedFunctions((prev) => {
+                    const next = new Map(prev);
+                    const funcs = new Set<string>();
+                    diff.functions?.forEach((f) => {
+                        if (f.status !== "deleted") funcs.add(f.name);
+                    });
+                    next.set(moduleName, funcs);
+                    return next;
+                });
+            }
+            // Clear any per-function removals for this module
+            setRemovedFunctions((prev) => {
+                const next = new Map(prev);
+                next.delete(moduleName);
+                return next;
+            });
+        } else {
+            // Marking for removal: remove from selected
+            setSelectedModules((prev) => {
+                const next = new Set(prev);
+                next.delete(moduleName);
+                return next;
+            });
+            setSelectedFunctions((prev) => {
+                const next = new Map(prev);
+                next.delete(moduleName);
+                return next;
+            });
+        }
+    };
+
+    const toggleRemoveFunction = (moduleName: string, functionName: string) => {
+        setRemovedFunctions((prev) => {
+            const next = new Map(prev);
+            const currentSet = new Set(prev.get(moduleName) || []);
+
+            if (currentSet.has(functionName)) {
+                currentSet.delete(functionName);
+            } else {
+                currentSet.add(functionName);
+            }
+
+            if (currentSet.size === 0) {
+                next.delete(moduleName);
+            } else {
+                next.set(moduleName, currentSet);
+            }
+            return next;
+        });
+
+        // Also remove from selectedFunctions if marking for removal
+        const isCurrentlyRemoved = removedFunctions.get(moduleName)?.has(functionName);
+        if (!isCurrentlyRemoved) {
+            // Marking for removal: deselect the function
+            setSelectedFunctions((prev) => {
+                const next = new Map(prev);
+                const currentSet = new Set(prev.get(moduleName) || []);
+                currentSet.delete(functionName);
+                if (currentSet.size === 0) {
+                    next.delete(moduleName);
+                    setSelectedModules((prevMod) => {
+                        const nextMod = new Set(prevMod);
+                        nextMod.delete(moduleName);
+                        return nextMod;
+                    });
+                } else {
+                    next.set(moduleName, currentSet);
+                }
+                return next;
+            });
+        } else {
+            // Un-marking: re-select the function
+            setSelectedFunctions((prev) => {
+                const next = new Map(prev);
+                const currentSet = new Set(prev.get(moduleName) || []);
+                currentSet.add(functionName);
+                next.set(moduleName, currentSet);
+                return next;
+            });
+            setSelectedModules((prev) => {
+                const next = new Set(prev);
+                next.add(moduleName);
+                return next;
+            });
+        }
+    };
+
     const resetSelection = () => {
         setSelectedModules(new Set());
         setSelectedFunctions(new Map());
         setExpandedModules(new Set());
         setForceOverwriteFunctions(new Set());
+        setRemovedModules(new Set());
+        setRemovedFunctions(new Map());
     };
 
     const selectAll = (diffs: DiffResult[]) => {
@@ -125,6 +238,8 @@ export const useDiffSelection = () => {
         });
         setSelectedModules(newSet);
         setSelectedFunctions(newFuncs);
+        setRemovedModules(new Set());
+        setRemovedFunctions(new Map());
     };
 
     const deselectAll = () => {
@@ -146,6 +261,12 @@ export const useDiffSelection = () => {
         setSelectedFunctions,
         setExpandedModules,
         forceOverwriteFunctions,
-        toggleForceOverwrite
+        toggleForceOverwrite,
+        removedModules,
+        removedFunctions,
+        setRemovedModules,
+        setRemovedFunctions,
+        toggleRemoveModule,
+        toggleRemoveFunction
     };
 };

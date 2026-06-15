@@ -27,6 +27,10 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, onClick }) => {
         className = styles.statusDisabled;
         label = "Locked";
     }
+    if (status === "remove") {
+        className = styles.statusRemove;
+        label = "Remove";
+    }
 
     return (
         <span

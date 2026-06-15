@@ -38,3 +38,8 @@
     color: #9ca3af;
     text-decoration: line-through;
 }
+
+.statusRemove {
+    background-color: #fee2e2;
+    color: #dc2626;
+}

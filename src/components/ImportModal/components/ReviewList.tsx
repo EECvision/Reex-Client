@@ -4,6 +4,7 @@ import { Button } from '../../ui/Button/Button';
 import { DiffResult } from '../importTypes';
 import ModuleItem from './ModuleItem';
 import { FunctionDiff } from '../DiffModal';
+import { AlertCircle } from 'lucide-react';
 
 interface ReviewListProps {
     diffs: DiffResult[];
@@ -18,6 +19,10 @@ interface ReviewListProps {
     onViewChanges: (func: FunctionDiff) => void;
     forceOverwriteFunctions: Set<string>;
     onToggleForceOverwrite: (module: string, func: string) => void;
+    removedModules: Set<string>;
+    removedFunctions: Map<string, Set<string>>;
+    onToggleRemoveModule: (moduleName: string, diff?: DiffResult) => void;
+    onToggleRemoveFunction: (moduleName: string, funcName: string) => void;
 }
 
 const ReviewList: React.FC<ReviewListProps> = ({
@@ -32,8 +37,14 @@ const ReviewList: React.FC<ReviewListProps> = ({
     onToggleExpand,
     onViewChanges,
     forceOverwriteFunctions,
-    onToggleForceOverwrite
+    onToggleForceOverwrite,
+    removedModules,
+    removedFunctions,
+    onToggleRemoveModule,
+    onToggleRemoveFunction
 }) => {
+    const hasExistingModules = diffs.some(d => d.status === "modified" || d.status === "unchanged" || d.status === "deleted");
+
     return (
         <div className={styles.reviewList}>
             <div className={styles.reviewHeader}>
@@ -58,6 +69,12 @@ const ReviewList: React.FC<ReviewListProps> = ({
                     </Button>
                 </div>
             </div>
+            {hasExistingModules && (
+                <div className={styles.infoText}>
+                    <AlertCircle size={13} />
+                    <span>Trash icon marks an existing module for removal from your collection.</span>
+                </div>
+            )}
             <div className={styles.moduleGrid}>
                 {diffs.map((diff) => (
                     <ModuleItem
@@ -72,6 +89,10 @@ const ReviewList: React.FC<ReviewListProps> = ({
                         onViewChanges={onViewChanges}
                         forceOverwriteFunctions={forceOverwriteFunctions}
                         onToggleForceOverwrite={onToggleForceOverwrite}
+                        isMarkedForRemoval={removedModules.has(diff.module)}
+                        onToggleRemoveModule={() => onToggleRemoveModule(diff.module, diff)}
+                        removedFunctions={removedFunctions.get(diff.module) || new Set()}
+                        onToggleRemoveFunction={(func) => onToggleRemoveFunction(diff.module, func)}
                     />
                 ))}
             </div>

@@ -136,7 +136,13 @@ const ImportModal: React.FC<ImportModalProps> = ({
     setSelectedModules,
     setSelectedFunctions,
     forceOverwriteFunctions,
-    toggleForceOverwrite
+    toggleForceOverwrite,
+    removedModules,
+    removedFunctions,
+    setRemovedModules,
+    setRemovedFunctions,
+    toggleRemoveModule,
+    toggleRemoveFunction
   } = useDiffSelection();
 
   const {
@@ -158,7 +164,9 @@ const ImportModal: React.FC<ImportModalProps> = ({
     },
     setDiffs,
     setSelectedModules,
+    setRemovedModules,
     setSelectedFunctions,
+    setRemovedFunctions,
     forceOverwriteFunctions,
     isStandaloneMode,
     onManifestUpdate,
@@ -304,32 +312,43 @@ const ImportModal: React.FC<ImportModalProps> = ({
         </Button>
       )}
 
-      {step === "review" && (
-        <div className={styles.footerActions}>
-          <Button
-            onClick={() => {
-              setStep("upload");
-              setDiffs([]);
-            }}
-            variant="secondary"
-          >
-            Back
-          </Button>
-          <Button
-            onClick={() => {
-              if (isStandaloneMode && !isAuthenticated) {
-                setShowLoginModal(true);
-                return;
-              }
-              handleUpdate(diffs, selectedModules, selectedFunctions)
-            }}
-            disabled={selectedModules.size === 0}
-            variant="primary"
-          >
-            Update Selected
-          </Button>
-        </div>
-      )}
+      {step === "review" && (() => {
+          const addCount = diffs.filter(d => d.status === "new" && selectedModules.has(d.module)).length;
+          const updateCount = diffs.filter(d => (d.status === "modified" || d.status === "unchanged") && selectedModules.has(d.module) && !removedModules.has(d.module)).length;
+          const removeCount = removedModules.size;
+          const segments: string[] = [];
+          if (addCount > 0) segments.push(`Add ${addCount}`);
+          if (updateCount > 0) segments.push(`Update ${updateCount}`);
+          if (removeCount > 0) segments.push(`Remove ${removeCount}`);
+          const buttonLabel = segments.length > 0 ? segments.join(' · ') : 'Update Selected';
+
+          return (
+            <div className={styles.footerActions}>
+              <Button
+                onClick={() => {
+                  setStep("upload");
+                  setDiffs([]);
+                }}
+                variant="secondary"
+              >
+                Back
+              </Button>
+              <Button
+                onClick={() => {
+                  if (isStandaloneMode && !isAuthenticated) {
+                    setShowLoginModal(true);
+                    return;
+                  }
+                  handleUpdate(diffs, selectedModules, selectedFunctions, removedModules, removedFunctions)
+                }}
+                disabled={selectedModules.size === 0 && removedModules.size === 0}
+                variant="primary"
+              >
+                {buttonLabel}
+              </Button>
+            </div>
+          );
+        })()}
 
       {step === "success" && (
         <Button onClick={handleModalClose} variant="primary">Done</Button>
@@ -508,6 +527,10 @@ const ImportModal: React.FC<ImportModalProps> = ({
               onViewChanges={setDiffFunction}
               forceOverwriteFunctions={forceOverwriteFunctions}
               onToggleForceOverwrite={toggleForceOverwrite}
+              removedModules={removedModules}
+              removedFunctions={removedFunctions}
+              onToggleRemoveModule={toggleRemoveModule}
+              onToggleRemoveFunction={toggleRemoveFunction}
             />
           )}
 

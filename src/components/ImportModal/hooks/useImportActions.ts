@@ -11,7 +11,9 @@ interface UseImportActionsProps {
     onSuccess?: (message: string) => void;
     setDiffs: (diffs: DiffResult[]) => void;
     setSelectedModules: (modules: Set<string>) => void;
+    setRemovedModules: (modules: Set<string>) => void;
     setSelectedFunctions: (funcs: Map<string, Set<string>>) => void;
+    setRemovedFunctions: (funcs: Map<string, Set<string>>) => void;
     forceOverwriteFunctions: Set<string>;
     onError: (message: string) => void;
     // Standalone mode props
@@ -32,7 +34,9 @@ export const useImportActions = ({
     onError,
     setDiffs,
     setSelectedModules,
+    setRemovedModules,
     setSelectedFunctions,
+    setRemovedFunctions,
     forceOverwriteFunctions,
     isStandaloneMode = false,
     onManifestUpdate,
@@ -138,7 +142,9 @@ export const useImportActions = ({
             const newFunctions = new Map<string, Set<string>>();
 
             diffs.forEach((d: DiffResult) => {
-                newModules.add(d.module);
+                if (d.status !== "deleted") {
+                    newModules.add(d.module);
+                }
                 if (d.functions && d.functions.length > 0) {
                     const funcs = new Set<string>();
                     d.functions.forEach((f) => {
@@ -155,7 +161,9 @@ export const useImportActions = ({
             });
 
             setSelectedModules(newModules);
+            setRemovedModules(new Set());
             setSelectedFunctions(newFunctions);
+            setRemovedFunctions(new Map());
             setStep("review");
         } catch (err) {
             console.error(err);
@@ -207,20 +215,24 @@ export const useImportActions = ({
     };
 
     // Build manifest from diffs for standalone mode
-    const buildManifestFromDiffs = (diffs: DiffResult[], selectedModules: Set<string>, selectedFunctions: Map<string, Set<string>>): any => {
+    const buildManifestFromDiffs = (diffs: DiffResult[], selectedModules: Set<string>, selectedFunctions: Map<string, Set<string>>, removedModules: Set<string>, removedFunctions: Map<string, Set<string>>): any => {
         const manifest: any = {};
 
         // 1. Process all selected diffs (new, modified, unchanged present in new analysis)
         diffs.forEach((diff) => {
             if (!selectedModules.has(diff.module)) return;
+            if (removedModules.has(diff.module)) return;
 
             const moduleFunctions = selectedFunctions.get(diff.module);
             if (!moduleFunctions || moduleFunctions.size === 0) return;
+
+            const removedModFuncs = removedFunctions.get(diff.module);
 
             if (!manifest[diff.module]) manifest[diff.module] = {};
 
             diff.functions?.forEach((fn) => {
                 if (!moduleFunctions.has(fn.name)) return;
+                if (removedModFuncs?.has(fn.name)) return;
 
                 // Cast to any to access optional metadata fields from analysis response
                 const fnData = fn as any;
@@ -254,19 +266,18 @@ export const useImportActions = ({
             });
         });
 
-        // 2. Persist existing modules and functions that weren't in the diffs but are still checked
-        // This happens if a user updates using a partial swagger/postman file.
+        // 2. Persist existing modules and functions not in the diffs
+        // Skip modules/functions explicitly marked for removal
         if (existingCollection?.manifest) {
             Object.entries(existingCollection.manifest).forEach(([modName, endpoints]: [string, any]) => {
-                if (!selectedModules.has(modName)) return; // Exclude if unchecked
+                if (removedModules.has(modName)) return; // Exclude if explicitly removed
 
                 if (!manifest[modName]) manifest[modName] = {};
 
-                const moduleFunctions = selectedFunctions.get(modName);
-                if (!moduleFunctions) return;
+                const removedModFuncs = removedFunctions.get(modName);
 
                 Object.entries(endpoints).forEach(([fnName, meta]) => {
-                    if (!moduleFunctions.has(fnName)) return; // Exclude if unchecked
+                    if (removedModFuncs?.has(fnName)) return; // Exclude if explicitly removed
                     
                     // Only copy if it wasn't already processed by the diff engine
                     if (!manifest[modName][fnName]) {
@@ -308,34 +319,30 @@ export const useImportActions = ({
         }
     };
 
-    const handleUpdate = async (diffs: DiffResult[], selectedModules: Set<string>, selectedFunctions: Map<string, Set<string>>) => {
+    const handleUpdate = async (diffs: DiffResult[], selectedModules: Set<string>, selectedFunctions: Map<string, Set<string>>, removedModules: Set<string>, removedFunctions: Map<string, Set<string>>) => {
         if (!selectedFile) return;
         setStep("updating");
 
         // Standalone mode: Build manifest locally and update context
         if (isStandaloneMode) {
             try {
-                const manifest = buildManifestFromDiffs(diffs, selectedModules, selectedFunctions);
+                const manifest = buildManifestFromDiffs(diffs, selectedModules, selectedFunctions, removedModules, removedFunctions);
 
                 // Build the new modules record from the selected diffs
                 const newModulesRecord: Record<string, string> = existingCollection?.modules ? { ...existingCollection.modules } : {};
                 
-                // 1. Delete modules that the user unchecked
+                // 1. Delete modules that the user explicitly marked for removal
                 if (existingCollection?.modules) {
-                    Object.keys(existingCollection.modules).forEach(modName => {
-                        if (!selectedModules.has(modName)) {
-                            delete newModulesRecord[modName];
-                        }
+                    removedModules.forEach(modName => {
+                        delete newModulesRecord[modName];
                     });
                 }
 
-                // 2. Process diffs for additions, updates, and engine-flagged deletions
+                // 2. Process diffs for additions and updates
                 diffs.forEach(diff => {
-                    if (!selectedModules.has(diff.module)) {
+                    if (removedModules.has(diff.module)) {
                         delete newModulesRecord[diff.module];
-                    } else if (diff.status === "deleted") {
-                         delete newModulesRecord[diff.module];
-                    } else if (diff.newContent) {
+                    } else if (selectedModules.has(diff.module) && diff.newContent) {
                         newModulesRecord[diff.module] = diff.newContent;
                     }
                 });
@@ -416,14 +423,8 @@ export const useImportActions = ({
                 }
             });
 
-            const deletedModules = diffs
-                .filter(
-                    (d) =>
-                        d.status !== "new" &&
-                        !selectedModules.has(d.module) &&
-                        d.status !== "disabled"
-                )
-                .map((d) => d.module);
+            // Only delete modules explicitly marked for removal
+            const deletedModules = Array.from(removedModules);
 
             // Fetch existing definitions for preservation
             let existingModules = {};

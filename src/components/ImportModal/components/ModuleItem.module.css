@@ -1,194 +1,234 @@
 /* Module Item */
 .authIconWrapper {
-    display: flex;
-    align-items: center;
-    cursor: help;
+  display: flex;
+  align-items: center;
+  cursor: help;
 }
 
 .moduleWrapper {
-    border: 1px solid var(--border-color, #e5e7eb);
-    border-radius: 8px;
-    background-color: var(--card-bg, white);
-    overflow: hidden;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-    transition: all 0.2s;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  background-color: var(--card-bg, white);
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s;
 }
 
 .moduleWrapper:hover {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-
 .selected {
-    background-color: var(--hover-bg, #f8fafc);
+  background-color: var(--hover-bg, #f8fafc);
 }
 
 .moduleMainRow {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    padding: 16px;
-    cursor: pointer;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 16px;
+  cursor: pointer;
 }
 
 .moduleMainRow:hover {
-    background-color: var(--hover-bg, #f9fafb);
+  background-color: var(--hover-bg, #f9fafb);
 }
 
 :global([data-theme="dark"]) .moduleMainRow:hover {
-    background-color: rgba(59, 130, 246, 0.1);
+  background-color: rgba(59, 130, 246, 0.1);
 }
 
 .chevronWrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    margin-right: 8px;
-    color: var(--text-secondary, #6b7280);
-    border-radius: 6px;
-    transition: all 0.2s;
-    cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-right: 8px;
+  color: var(--text-secondary, #6b7280);
+  border-radius: 6px;
+  transition: all 0.2s;
+  cursor: pointer;
 }
 
 .chevronWrapper:hover {
-    background-color: var(--hover-bg, #f3f4f6);
-    color: var(--text-primary, #4b5563);
+  background-color: var(--hover-bg, #f3f4f6);
+  color: var(--text-primary, #4b5563);
 }
 
 .moduleName {
-    font-weight: 500;
-    color: var(--text-primary, #374151);
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    flex: 1;
-    min-width: 0;
-    margin-right: 12px;
+  font-weight: 500;
+  color: var(--text-primary, #374151);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  margin-right: 12px;
 }
 
 .truncateText {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .functionCountBadge {
-    font-size: 11px;
-    color: var(--text-muted, #9ca3af);
-    background-color: var(--hover-bg, #f3f4f6);
-    padding: 2px 6px;
-    border-radius: 99px;
-    /* Pill shape */
-    margin-left: 8px;
-    font-weight: 500;
+  font-size: 11px;
+  color: var(--text-muted, #9ca3af);
+  background-color: var(--hover-bg, #f3f4f6);
+  padding: 2px 6px;
+  border-radius: 99px;
+  /* Pill shape */
+  margin-left: 8px;
+  font-weight: 500;
 }
 
 .moduleCheckboxWrapper {
-    display: flex;
-    align-items: center;
-    margin-right: 2px;
+  display: flex;
+  align-items: center;
+  margin-right: 2px;
 }
 
 .checkbox {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-    accent-color: #3b82f6;
-    border-radius: 4px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+  border-radius: 4px;
 }
 
 /* Function List within Module */
 .functionList {
-    background-color: var(--hover-bg, #f9fafb);
-    border-top: 1px solid var(--border-light, #f3f4f6);
+  background-color: var(--hover-bg, #f9fafb);
+  border-top: 1px solid var(--border-light, #f3f4f6);
 }
 
 .functionItem {
-    display: flex;
-    align-items: center;
-    padding: 0.65rem 1rem 0.65rem 3.5rem;
-    font-size: 0.875rem;
-    cursor: pointer;
-    color: var(--text-secondary, #4b5563);
-    transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  padding: 0.65rem 1rem 0.65rem 3.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  color: var(--text-secondary, #4b5563);
+  transition: background 0.15s;
 }
 
 .functionItem:hover {
-    background-color: var(--active-bg, #eff6ff);
-    color: var(--text-primary, #1f2937);
+  background-color: var(--active-bg, #eff6ff);
+  color: var(--text-primary, #1f2937);
 }
 
 :global([data-theme="dark"]) .functionItem:hover {
-    background-color: rgba(59, 130, 246, 0.1);
+  background-color: rgba(59, 130, 246, 0.1);
 }
 
 .functionItem input {
-    margin-right: 0.75rem;
-    accent-color: #3b82f6;
+  margin-right: 0.75rem;
+  accent-color: #3b82f6;
 }
 
 .functionName {
-    flex: 1;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: var(--text-primary, #374151);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    min-width: 0;
-    padding-right: 8px;
+  flex: 1;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary, #374151);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  padding-right: 8px;
 }
 
 .authIcon {
-    margin-right: 8px;
-    color: var(--text-muted, #9ca3af);
-    min-width: 12px;
+  margin-right: 8px;
+  color: var(--text-muted, #9ca3af);
+  min-width: 12px;
 }
 
 .overwriteAction {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-left: 12px;
-    background-color: #fefce8;
-    /* Light yellow bg to group them */
-    border: 1px solid #fef08a;
-    border-radius: 6px;
-    padding: 2px 6px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 12px;
+  background-color: #fefce8;
+  /* Light yellow bg to group them */
+  border: 1px solid #fef08a;
+  border-radius: 6px;
+  padding: 2px 6px;
 }
 
 .overwriteLabel {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    cursor: pointer;
-    font-size: 11px;
-    font-weight: 500;
-    color: #b45309;
-    user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  color: #b45309;
+  user-select: none;
 }
 
 .overwriteText {
-    transform: translateY(1px);
+  transform: translateY(1px);
 }
 
 .viewChangesBtn {
-    background: var(--card-bg, white);
-    border: 1px solid var(--border-color, #e5e7eb);
-    color: var(--text-primary, #374151);
-    font-size: 11px;
-    padding: 3px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-left: 10px;
-    font-weight: 500;
-    transition: all 0.15s;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  background: var(--card-bg, white);
+  border: 1px solid var(--border-color, #e5e7eb);
+  color: var(--text-primary, #374151);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 10px;
+  font-weight: 500;
+  transition: all 0.15s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .viewChangesBtn:hover {
-    border-color: var(--border-color, #d1d5db);
-    background-color: var(--hover-bg, #f9fafb);
+  border-color: var(--border-color, #d1d5db);
+  background-color: var(--hover-bg, #f9fafb);
+}
+
+/* Removal State */
+.markedForRemoval {
+  border-color: #fca5a5;
+  background-color: #fef2f2;
+}
+
+.markedForRemoval:hover {
+  box-shadow: none;
+}
+
+.removeBtn {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+  padding-left: 8px;
+  border-left: 1px solid var(--border-color, #e5e7eb);
+}
+
+.removeBtnInner {
+  color: var(--text-muted, #9ca3af);
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.removeBtnInner:hover:not(:disabled) {
+  /* color: #dc2626; */
+  background-color: transparent;
+}
+
+.removedFunction .functionName {
+  text-decoration: line-through;
+  color: var(--text-muted, #9ca3af);
+}
+
+.functionRemoveBtn {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
 }
