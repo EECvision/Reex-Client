@@ -271,7 +271,8 @@ export const getExistingFunctions = (sourceFile: SourceFile, moduleName: string)
             initializer.getProperties().forEach((prop) => {
                 if (prop.getKind() === SyntaxKind.PropertyAssignment) {
                     const name = (prop as PropertyAssignment).getName();
-                    existing.set(name, prop.getText());
+                    // Use getFullText() to preserve leading JSDoc comments (@auth, @param, etc.)
+                    existing.set(name, prop.getFullText().trimStart());
                 }
             });
         }
