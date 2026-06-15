@@ -65,7 +65,7 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
                 // Check if already exists (optimistic update handling)
                 const exists = old.find(c => c.id === collection.id);
                 if (exists) return old.map(c => c.id === collection.id ? collection : c);
-                return [collection, ...old];
+                return [...old, collection];
             });
             showToast('success', 'Collection created');
         },
