@@ -93,7 +93,7 @@
   white-space: pre-wrap;
   color: #b91c1c;
   margin: 0;
-  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-family: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
   font-size: 0.8125rem;
   line-height: 1.6;
   background-color: rgba(255, 255, 255, 0.5);
@@ -128,7 +128,10 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.875rem 1rem;
-  background: var(--hover-bg, linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%));
+  background: var(
+    --hover-bg,
+    linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)
+  );
   border-bottom: 1px solid var(--border-color, #e2e8f0);
 }
 
@@ -159,38 +162,6 @@
 
 .updateButton {
   font-size: 0.75rem;
-}
-
-.resultContent {
-  margin: 0;
-  padding: 1rem;
-  overflow-x: auto;
-  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
-  font-size: 0.8125rem;
-  line-height: 1.6;
-  color: var(--text-primary, #1e293b);
-  white-space: pre-wrap;
-  max-height: 450px;
-  overflow-y: auto;
-  background-color: var(--card-bg, #fff);
-}
-
-.resultContent::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.resultContent::-webkit-scrollbar-track {
-  background: var(--hover-bg, #f1f5f9);
-}
-
-.resultContent::-webkit-scrollbar-thumb {
-  background: var(--border-color, #cbd5e1);
-  border-radius: 3px;
-}
-
-.resultContent::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted, #94a3b8);
 }
 
 .emptyResults {
