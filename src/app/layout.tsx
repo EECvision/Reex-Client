@@ -20,11 +20,8 @@ export const metadata: Metadata = {
 import { ProjectProvider } from "@/providers/ProjectContext";
 import { SettingsProvider } from "@/providers/SettingsContext";
 import { AuthProvider } from "@/providers/AuthContext";
-import FloatingTestButton from "@/components/FloatingTestButton/FloatingTestButton";
 import QueryProvider from "@/providers/QueryProvider";
 import { ToastProvider } from "@/providers/ToastContext";
-
-import FloatingStandaloneToggle from "@/components/FloatingStandaloneToggle/FloatingStandaloneToggle";
 
 export default function RootLayout({
   children,
@@ -40,8 +37,6 @@ export default function RootLayout({
               <ToastProvider>
                 <ProjectProvider>
                   {children}
-                  <FloatingTestButton />
-                  <FloatingStandaloneToggle />
                 </ProjectProvider>
               </ToastProvider>
             </QueryProvider>

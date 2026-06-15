@@ -33,6 +33,8 @@ const App = () => {
     projectPath,
     config: projectConfig,
     isStandaloneMode,
+    toggleStandaloneMode,
+    manualStandaloneMode,
     setManifest,
     setConfig,
     collections,
@@ -320,6 +322,8 @@ const App = () => {
           collectionName={activeCollectionName}
           onAuthClick={() => setShowAuthModal(true)}
           isStandaloneMode={isStandaloneMode}
+          manualStandaloneMode={manualStandaloneMode}
+          onToggleStandaloneMode={toggleStandaloneMode}
           hasAuthConfigured={hasAuthConfigured}
           onBaseUrlChange={(newUrl) => {
             const oldBase = activeConfig?.baseURL || "";

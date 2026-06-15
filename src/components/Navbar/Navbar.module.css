@@ -25,29 +25,151 @@
   font-weight: 600;
 }
 
-.projectContainer {
+.workspaceSwitcherTrigger {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  color: var(--text-primary, #374151);
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  transition: background-color 0.2s;
-  user-select: none;
-  cursor: default;
+  gap: 12px;
+  padding: 6px 12px;
+  border-radius: 8px;
   border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  background-color: transparent;
   flex: 0 0 auto;
 }
 
-.projectContainer:hover {
+.workspaceSwitcherTrigger:hover, .workspaceSwitcherTrigger[data-state="open"] {
   background-color: var(--hover-bg, #f3f4f6);
   border-color: var(--border-color, #e5e7eb);
 }
 
-.projectIcon {
+.workspaceIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.workspaceTextColumn {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.workspaceTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  line-height: 1.2;
+}
+
+.workspaceSub {
+  font-size: 11px;
+  color: var(--text-secondary, #6b7280);
+  line-height: 1.2;
+  margin-top: 2px;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.workspaceChevron {
+  color: #9ca3af;
+  margin-left: 8px;
+}
+
+/* Workspace Dropdown Styles */
+.workspaceDropdown {
+  background-color: var(--menu-bg, #ffffff);
+  border: 1px solid var(--border-light, #e5e7eb);
+  border-radius: 10px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 6px;
+  min-width: 260px;
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  animation: scaleIn 0.15s ease-out;
+}
+
+.workspaceOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s;
+}
+
+.workspaceOption:hover, .workspaceOption:focus {
+  background-color: var(--hover-bg, #f3f4f6);
+}
+
+.workspaceOption[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.workspaceOptionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3b82f6; /* Blue icon for items */
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #eff6ff; /* Light blue bg */
+  flex-shrink: 0;
+}
+
+.workspaceOptionContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.workspaceOptionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+}
+
+.workspaceOptionSub {
+  font-size: 11px;
+  color: var(--text-secondary, #6b7280);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.workspaceOptionCheck {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  color: #10b981; /* Green checkmark */
+  flex-shrink: 0;
+}
+
+.workspaceSeparator {
+  height: 1px;
+  background-color: var(--border-color, #e5e7eb);
+  margin: 6px 0;
+}
+
+.externalIcon {
   color: #9ca3af;
 }
 
@@ -271,6 +393,7 @@
   z-index: 1050;
   display: flex;
   flex-direction: column;
+  animation: scaleIn 0.15s ease-out;
 }
 
 .dropdownItem {
