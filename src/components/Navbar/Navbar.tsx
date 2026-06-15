@@ -70,24 +70,21 @@ const Navbar: React.FC<NavbarProps> = ({
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
-  // Sync from localStorage if changed
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const stored = localStorage.getItem("docs_url");
-      if (stored !== null && stored !== url) {
-        setUrl(stored);
-      }
-    };
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, [url]);
-
   // Reset mobile states when menu closes
   useEffect(() => {
     if (!isMobileMenuOpen) {
       setIsMobileAuthOpen(false);
+    } else {
+      syncUrl();
     }
   }, [isMobileMenuOpen]);
+
+  const syncUrl = () => {
+    const stored = localStorage.getItem("docs_url");
+    if (stored !== null && stored !== url) {
+      setUrl(stored);
+    }
+  };
 
   // Helper to format project path
   const formatProjectPath = (path?: string) => {
@@ -185,7 +182,7 @@ const Navbar: React.FC<NavbarProps> = ({
         {hasCollection && <div className={styles.separator}></div>}
 
         {/* Add API Dropdown */}
-        <DropdownMenu.Root>
+        <DropdownMenu.Root onOpenChange={(open) => { if (open) syncUrl(); }}>
           <DropdownMenu.Trigger asChild>
             <Button variant="ghost" leftIcon={<Plus size={16} />}>
               Add Collection
