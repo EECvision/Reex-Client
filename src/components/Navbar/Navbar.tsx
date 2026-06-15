@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import styles from "./Navbar.module.css";
 import { Button } from "../ui/Button/Button";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown, Download, Plus, Trash2, FileText, Loader2, Folder, Lock, X, Pencil, Menu, PanelLeft, Code, Link } from "lucide-react";
+import { ChevronDown, Download, Plus, Trash2, FileText, Loader2, Folder, Lock, X, Pencil, Menu, PanelLeft, Code, Link, Sparkles } from "lucide-react";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
 import UserMenu from "../UserMenu/UserMenu";
 import { BaseUrlInput } from "./BaseUrlInput";
@@ -30,6 +30,7 @@ interface NavbarProps {
   isSidebarOpen?: boolean;
   hasAuthConfigured?: boolean;
   onCodeSandboxClick?: () => void;
+  onAssistantClick?: () => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -50,7 +51,8 @@ const Navbar: React.FC<NavbarProps> = ({
   onToggleSidebar,
   isSidebarOpen,
   hasAuthConfigured,
-  onCodeSandboxClick
+  onCodeSandboxClick,
+  onAssistantClick
 }) => {
   const [url, setUrl] = React.useState(() => {
     if (typeof window !== "undefined") {
@@ -229,6 +231,17 @@ const Navbar: React.FC<NavbarProps> = ({
             </Button>
           )
         }
+
+        {onAssistantClick && (
+          <Button
+            variant="ghost"
+            onClick={onAssistantClick}
+            leftIcon={<Sparkles size={16} />}
+            title="Ask Assistant"
+          >
+            Ask Assistant
+          </Button>
+        )}
 
         <div className={styles.separator} />
 

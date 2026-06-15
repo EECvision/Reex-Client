@@ -12,6 +12,7 @@ import SidebarController from "@/components/Sidebar/SidebarController";
 import WorkspaceView from "@/components/WorkspaceView/WorkspaceView";
 import BackgroundNotification from "@/components/BackgroundNotification/BackgroundNotification";
 import { AuthModal } from "@/components/AuthModal/AuthModal";
+import { Assistant } from "@/components/Assistant/Assistant";
 import styles from "./page.module.css";
 import { EndpointInfo } from "@/types";
 import { openInCodeSandbox } from "@/utils/codesandbox/index";
@@ -127,6 +128,7 @@ const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [autoAnalyzeImport, setAutoAnalyzeImport] = useState(false);
   const [importModalTab, setImportModalTab] = useState<'file' | 'url'>('file');
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
 
   useEffect(() => {
     // Open sidebar by default on desktop
@@ -350,6 +352,7 @@ const App = () => {
           }}
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
           isSidebarOpen={isSidebarOpen}
+          onAssistantClick={() => setIsAssistantOpen(true)}
         />
 
         {showImportModal && (
@@ -504,6 +507,11 @@ const App = () => {
           onHistoryDelete={removeCollectionFromHistory}
         />
       </div>
+
+      <Assistant 
+        isOpen={isAssistantOpen} 
+        onClose={() => setIsAssistantOpen(false)} 
+      />
     </div>
   );
 };

@@ -1,0 +1,2086 @@
+## Introduction & Philosophy
+---
+# Introduction & Philosophy
+
+### What is Reex API Builder?
+
+Reex API Builder is an intelligent API client built to bridge the gap between backend and frontend teams. It provides a robust, standardized environment for developers to test APIs and manage collections, while being meticulously designed to eliminate frontend integration boilerplate.
+
+Import your API collection, and it instantly generates a clean, standardized, and fully typed REST API layer. Complete with React Query hooks, TypeScript types, and session-ready auth management, it is the fastest way to connect your frontend to any API.
+
+---
+
+Reex API Builder eliminates this boilerplate.
+
+- **No more manual typing**: We generate your API collections for you.
+- **No more interface mismatch**: We generate TypeScript interfaces automatically.
+- **Seamless Integration**: The tool runs alongside your code, injecting the necessary logic directly into your project structure.
+
+---
+
+## ✨ Features
+
+* **Standardized Testing:** Test your endpoints (even on localhost) in a clean, intuitive UI.
+* **Zero-Boilerplate Generation:** Instantly transform API collections into tested REST API code, React Query hooks, and TypeScript interfaces.
+* **Intelligent Two-Way Sync:** Your code and the tool's UI are always aligned. Edit in your IDE or tweak in the tool—changes reflect perfectly on both sides.
+* **Smart API Diffing:** Never get caught off guard by a backend update. Re-import a collection and instantly see exactly what endpoints, payloads, or types were added or removed before you integrate.
+* **Drop-in Authentication:** Seamlessly manage user sessions with pre-built hooks for LocalStorage, Cookies, or Next-Auth for React and Next.js developers.
+
+### Core Modules
+
+Reex API Builder is composed of three powerful modules to suit different stages of development:
+
+        Project Module
+
+        Directly integrate API collections into your React application.
+
+        Standalone Module
+
+      Import and manage collections independently.
+
+        Test Module
+
+        Rapidly test local and remote API endpoints.
+
+## Project Module > Architecture
+---
+# Architecture
+
+When you run the generator, Reex API Builder creates a structured `api-services` directory in the `src` folder of your project. Understanding this structure is key to leveraging the tool effectively.
+
+### Folder Structure Diagram
+
+Here is the folder structure that gets generated:
+
+```
+src/
+└── api-services/
+    ├── api-client/       # Core HTTP configuration and proxy
+    ├── auth/             # Modular authentication strategies & guards
+    ├── definitions/      # Your API implementations (editable)
+    ├── generated/        # Auto-generated React Query hooks
+    ├── hooks/            # Authentication & custom hooks
+    ├── providers/        # Application providers (e.g. QueryProvider)
+    ├── types/            # TypeScript interfaces
+    ├── user-config/      # User configuration files
+    ├── index.ts          # Main barrel export
+    └── ...
+```
+
+### `api-client/` - Core API Client
+
+This folder contains the core Axios configuration and the interceptors.
+
+    **`index.ts`**: The main API client that dynamically uses the active strategy.
+
+    View code
+
+    ```typescript filename="api-client/index.ts"
+    import { createApiClient } from "./core";
+    import { proxyTokenProvider } from "../auth/manager";
+
+    /**
+     * The globally configured API client instance.
+     * It dynamically uses the Active Strategy defined in the AuthProvider.
+     */
+    export const apiClient = createApiClient(proxyTokenProvider);
+    ```
+
+    **`core.ts`**: Request interceptors & auth logic.
+
+    View code
+
+    ```typescript filename="api-client/core.ts"
+    // @internal — No changes needed
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    import axios, {
+      type AxiosInstance,
+      type InternalAxiosRequestConfig,
+      AxiosError,
+      type AxiosRequestConfig,
+    } from "axios";
+    import { baseURL } from "../user-config/constants";
+    import type { TokenProvider, ApiError } from "../auth/types";
+
+    const API_TIMEOUT = 30000;
+    const REFRESH_TIMEOUT = 10000;
+
+    const DEFAULT_CONFIG: AxiosRequestConfig = {
+      baseURL: baseURL,
+      timeout: API_TIMEOUT,
+      headers: { "Content-Type": "application/json" },
+    };
+
+    /** Creates an Axios client with auto token injection and 401 refresh/retry */
+    export const createApiClient = (
+      tokenProvider?: TokenProvider,
+    ): AxiosInstance => {
+      const client = axios.create(DEFAULT_CONFIG);
+
+      let isRefreshing = false;
+      let failedQueue: Array<{
+        resolve: (token: string | null) => void;
+        reject: (error: any) => void;
+      }> = [];
+
+      const processQueue = (error: any, token: string | null = null) => {
+        failedQueue.forEach((prom) => {
+          if (error) {
+            prom.reject(error);
+          } else {
+            prom.resolve(token);
+          }
+        });
+        failedQueue = [];
+      };
+
+      // Request interceptor: inject token + custom headers
+      client.interceptors.request.use(
+        async (config: InternalAxiosRequestConfig) => {
+          if (tokenProvider) {
+            const token = await tokenProvider.getToken();
+            if (token && config.headers) {
+              config.headers.Authorization = `Bearer ${token}`;
+            }
+
+            const customHeaders = await tokenProvider.getCustomHeaders?.();
+            if (customHeaders && config.headers) {
+              Object.entries(customHeaders).forEach(([key, value]) => {
+                if (typeof config.headers.set === "function") {
+                  config.headers.set(key, value);
+                } else {
+                  config.headers[key] = value;
+                }
+              });
+            }
+          }
+
+          if (process.env.NODE_ENV === "development") {
+            console.log(
+              `[API Request] ${config.method?.toUpperCase()} ${config.url}`,
+              config.params || config.data,
+            );
+          }
+
+          return config;
+        },
+        (error) => Promise.reject(error),
+      );
+
+      // Response interceptor: unwrap data, handle 401 refresh, normalize errors
+      client.interceptors.response.use(
+        (response) => {
+          const res = response?.data?.data ?? response?.data;
+
+          if (process.env.NODE_ENV === "development") {
+            console.log(
+              `[API Success] ${response.config.method?.toUpperCase()} ${response.config.url}`,
+              res,
+            );
+          }
+
+          return res;
+        },
+        async (error: AxiosError) => {
+          const originalRequest = error.config as InternalAxiosRequestConfig & {
+            _retry?: boolean;
+          };
+
+          // Handle 401 with token refresh
+          if (
+            error.response?.status === 401 &&
+            !originalRequest._retry &&
+            tokenProvider?.refreshToken
+          ) {
+            if (isRefreshing) {
+              return new Promise((resolve, reject) => {
+                const timeoutId = setTimeout(() => {
+                  reject(
+                    new Error("Token refresh timeout - request took too long"),
+                  );
+                }, REFRESH_TIMEOUT);
+
+                failedQueue.push({
+                  resolve: (token) => {
+                    clearTimeout(timeoutId);
+                    resolve(token);
+                  },
+                  reject: (err) => {
+                    clearTimeout(timeoutId);
+                    reject(err);
+                  },
+                });
+              })
+                .then((token) => {
+                  if (token && originalRequest.headers) {
+                    originalRequest.headers.Authorization = `Bearer ${token}`;
+                  }
+                  return client(originalRequest);
+                })
+                .catch((err) => Promise.reject(err));
+            }
+
+            originalRequest._retry = true;
+            isRefreshing = true;
+
+            try {
+              const newToken = await tokenProvider.refreshToken();
+
+              if (newToken && originalRequest.headers) {
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                processQueue(null, newToken);
+                return client(originalRequest);
+              }
+
+              throw new Error("Refresh failed to return a valid token");
+            } catch (refreshError) {
+              processQueue(refreshError, null);
+
+              // Dispatch logout event on refresh failure
+              if (typeof window !== "undefined") {
+                window.dispatchEvent(new Event("auth:logout"));
+              }
+              return Promise.reject(refreshError);
+            } finally {
+              isRefreshing = false;
+            }
+          }
+
+          // Normalize error
+          const responseData = error.response?.data as any;
+          const apiError: ApiError = {
+            message:
+              responseData?.message ||
+              error.message ||
+              "An unexpected error occurred",
+            code: responseData?.code,
+            statusCode: error.response?.status,
+            originalError: error,
+          };
+
+          if (originalRequest) {
+            const endpoint = `${originalRequest.method?.toUpperCase()} ${originalRequest.url}`;
+            console.error(`[API ERROR - ${endpoint}]`, {
+              message: apiError.message,
+              code: apiError.code,
+              statusCode: apiError.statusCode,
+            });
+          }
+
+          throw apiError;
+        },
+      );
+
+      return client;
+    };
+    ```
+
+### `auth/` - Authentication Strategies
+
+Provides modular authentication strategies and guards.
+
+    **`AuthProvider.tsx`**: Sets the global strategy and provides the guards.
+
+    View code
+
+    ```tsx filename="auth/AuthProvider.tsx"
+    "use client";
+    import React, { useState } from "react";
+    import { CookieAuthGuard } from "./cookie-auth/CookieAuthGuard";
+    import { NextAuthGuard } from "./next-auth/NextAuthGuard";
+    import { LocalStorageAuthGuard } from "./localstorage-auth/LocalStorageAuthGuard";
+    import { setActiveStrategy, type AuthStrategy } from "./manager";
+
+    export const AuthProvider = ({ strategy, children }: { strategy: AuthStrategy; children: React.ReactNode }) => {
+      useState(() => {
+        setActiveStrategy(strategy);
+        return true;
+      });
+
+      switch (strategy) {
+        case "cookie": return {children};
+        case "next-auth": return {children};
+        case "localstorage": return {children};
+        default: return {children};
+      }
+    };
+    ```
+
+    **`manager.ts`**: Strategy switcher and dynamic proxy.
+
+    View code
+
+    ```typescript filename="auth/manager.ts"
+    import { type TokenProvider } from "./types";
+    import { cookieTokenProvider } from "./cookie-auth/provider";
+    import { nextAuthTokenProvider } from "./next-auth/provider";
+    import { localStorageTokenProvider } from "./localstorage-auth/provider";
+
+    export type AuthStrategy = "cookie" | "next-auth" | "localstorage";
+    export let activeTokenProvider: any = localStorageTokenProvider;
+
+    export const setActiveStrategy = (strategy: AuthStrategy) => {
+      switch (strategy) {
+        case "cookie": activeTokenProvider = cookieTokenProvider; break;
+        case "next-auth": activeTokenProvider = nextAuthTokenProvider; break;
+        case "localstorage": activeTokenProvider = localStorageTokenProvider; break;
+      }
+    };
+
+    export const proxyTokenProvider: TokenProvider = {
+      getToken: () => activeTokenProvider.getToken(),
+      get refreshToken() { return activeTokenProvider.refreshToken; },
+      get getCustomHeaders() { return activeTokenProvider.getCustomHeaders; },
+      get setCustomHeaders() { return activeTokenProvider.setCustomHeaders; },
+    };
+    ```
+
+    **`types.ts`**: Auth-related interfaces.
+
+    View code
+
+    ```typescript filename="auth/types.ts"
+    export interface TokenProvider {
+      getToken: () => Promise | string | null;
+      refreshToken?: () => Promise;
+      getCustomHeaders?: () => Promise<Record<string, string>> | Record<string, string>;
+      setCustomHeaders?: (headers: Record<string, string>) => void;
+    }
+
+    export interface ApiError {
+      message: string;
+      code?: string;
+      statusCode?: number;
+      originalError?: unknown;
+    }
+    ```
+
+    **Cookie Auth Strategy**
+
+    View code
+
+    ```tsx filename="cookie-auth/CookieAuthGuard.tsx"
+
+// @internal — No changes needed
+"use client";
+
+/\*\*
+
+- Restores the user session on mount via the refresh endpoint.
+  \*/
+
+    children,
+}: {
+    children: React.ReactNode;
+}) => {
+    // Configure API client synchronously on mount
+    useState(() => {
+        apiClient.defaults.withCredentials = true;
+        return true;
+    });
+
+    const [isReady, setIsReady] = useState(false);
+
+    useEffect(() => {
+        // Attempt to restore access token from refresh cookie or localStorage
+        const initAuth = async () => {
+            try {
+                await cookieTokenProvider.refreshToken?.();
+            } catch (error) {
+                console.warn("Auth initialization failed:", error);
+            } finally {
+                setIsReady(true);
+            }
+        };
+
+        initAuth();
+    }, []);
+
+    // Listen for auth:logout events dispatched by core.ts when token refresh fails
+    useEffect(() => {
+        const handleLogout = () => {
+            cookieTokenProvider.clearTokens();
+            setIsReady(true); // Keep app rendered (in unauthenticated state)
+        };
+
+        window.addEventListener("auth:logout", handleLogout);
+        return () => window.removeEventListener("auth:logout", handleLogout);
+    }, []);
+
+    // Replace with your app's loading component
+    if (!isReady) {
+        return Loading...;
+    }
+
+    return <>{children}</>;
+
+};
+
+````
+
+    ```typescript filename="cookie-auth/provider.ts"
+// @internal — No changes needed
+
+let isCookieAuthActive: boolean = false;
+let customHeaders: Record<string, string> | null = null;
+
+// Used to track auth status across tabs, without exposing the actual token to JS
+const COOKIE_FLAG_KEY = "is_cookie_auth_active";
+
+interface CookieTokenProvider extends TokenProvider {
+  setTokens: (params: { accessToken?: string; refreshToken?: string }) => void;
+  clearTokens: () => void;
+  setCustomHeaders: (headers: Record<string, string>) => void;
+  getCustomHeaders: () => Record<string, string>;
+}
+
+/**
+ * Cookie-Only Token Provider
+ * - Access Token: Managed securely by the browser via HttpOnly cookies
+ * - Refresh Mechanism: Automatic via HttpOnly cookies
+ * - Frontend State: Maintained via a simple boolean flag
+ */
+
+  getToken: () => {
+    // Return a proxy value so `useIsAuthenticated` knows we are logged in.
+    // The actual token is sent automatically by the browser via cookies.
+    if (isCookieAuthActive) return "cookie-active";
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(COOKIE_FLAG_KEY) === "true" ? "cookie-active" : null;
+    }
+    return null;
+  },
+
+  getCustomHeaders: () => {
+    if (customHeaders) return customHeaders;
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("custom_headers");
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch {
+          return {};
+        }
+      }
+    }
+    return {};
+  },
+
+  setCustomHeaders: (headers) => {
+    customHeaders = headers;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("custom_headers", JSON.stringify(headers));
+    }
+  },
+
+  setTokens: () => {
+    // The actual token is set by the backend via Set-Cookie headers.
+    // We just set a primitive flag so the frontend knows the user is logged in.
+    isCookieAuthActive = true;
+    if (typeof window !== "undefined") {
+      localStorage.setItem(COOKIE_FLAG_KEY, "true");
+    }
+  },
+
+  clearTokens: () => {
+    isCookieAuthActive = false;
+    customHeaders = null;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(COOKIE_FLAG_KEY);
+      localStorage.removeItem("custom_headers");
+    }
+  },
+
+  refreshToken: async () => {
+    try {
+      await authConfig.refreshWithCookie();
+
+      // If the refresh succeeds, the browser now has the updated cookie.
+      isCookieAuthActive = true;
+      if (typeof window !== "undefined") {
+        localStorage.setItem(COOKIE_FLAG_KEY, "true");
+      }
+
+      return "cookie-active";
+    } catch {
+      // Refresh failed, clear the session flag
+      isCookieAuthActive = false;
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(COOKIE_FLAG_KEY);
+      }
+      return null;
+    }
+  },
+};
+````
+
+    **Local Storage Strategy**
+
+    View code
+
+```typescript filename="localstorage-auth/LocalStorageAuthGuard.ts"
+// @internal — No changes needed
+
+"use client";
+
+/**
+ * Restores the user session on mount by exchanging the stored refresh token.
+ */
+
+    children,
+}: {
+    children: React.ReactNode;
+}) => {
+    const [isReady, setIsReady] = useState(false);
+
+    useEffect(() => {
+        // Attempt to restore session from stored tokens
+        const initAuth = async () => {
+            const hasRefreshToken = !!localStorage.getItem(authConfig.refreshTokenKey);
+            const hasAccessToken = !!localStorage.getItem(authConfig.accessTokenKey);
+
+            if (hasRefreshToken && localStorageTokenProvider?.refreshToken) {
+                try {
+                    await localStorageTokenProvider.refreshToken();
+                } catch (error) {
+                    console.warn("Session restoration failed:", error);
+                }
+            } else if (hasAccessToken && localStorageTokenProvider?.refreshToken) {
+                // Access-token-only fallback: let the provider restore from storage
+                await localStorageTokenProvider.refreshToken();
+            }
+
+            setIsReady(true);
+        };
+
+        initAuth();
+    }, []);
+
+    // Listen for auth:logout events dispatched by core.ts when token refresh fails
+    useEffect(() => {
+        const handleLogout = () => {
+            localStorageTokenProvider.clearTokens();
+            setIsReady(true); // Keep app rendered (in unauthenticated state)
+        };
+
+        window.addEventListener("auth:logout", handleLogout);
+        return () => window.removeEventListener("auth:logout", handleLogout);
+    }, []);
+
+    // Replace with your app's loading component
+    if (!isReady) return Loading...;
+
+    return <>{children}</>;
+};
+```
+
+```typescript filename="localstorage-auth/provider.ts"
+// @internal — No changes needed
+
+/**
+ * LocalStorage Token Provider
+ * - Access Token & Refresh Token: Persisted in localStorage
+ *
+ * Edit `authConfig.ts` to customize routes, storage keys, and refresh payload.
+ */
+
+let accessToken: string | null = null;
+let customHeaders: Record<string, string> | null = null;
+
+interface LocalStorageTokenProvider extends TokenProvider {
+  setTokens: (params: { accessToken: string; refreshToken?: string }) => void;
+  clearTokens: () => void;
+  setCustomHeaders: (headers: Record<string, string>) => void;
+  getCustomHeaders: () => Record<string, string>;
+}
+
+  getToken: () => {
+    if (accessToken) return accessToken;
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(authConfig.accessTokenKey);
+    }
+    return null;
+  },
+
+  getCustomHeaders: () => {
+    if (customHeaders) return customHeaders;
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("custom_headers");
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch {
+          return {};
+        }
+      }
+    }
+    return {};
+  },
+
+  setCustomHeaders: (headers) => {
+    customHeaders = headers;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("custom_headers", JSON.stringify(headers));
+    }
+  },
+
+  // Called on login/signup success
+  setTokens: ({ accessToken: newAccessToken, refreshToken }) => {
+    accessToken = newAccessToken;
+    if (typeof window !== "undefined") {
+      if (refreshToken) {
+        localStorage.setItem(authConfig.refreshTokenKey, refreshToken);
+        localStorage.removeItem(authConfig.accessTokenKey);
+      } else {
+        localStorage.setItem(authConfig.accessTokenKey, newAccessToken);
+        localStorage.removeItem(authConfig.refreshTokenKey);
+      }
+    }
+  },
+
+  // Called on logout
+  clearTokens: () => {
+    accessToken = null;
+    customHeaders = null;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(authConfig.refreshTokenKey);
+      localStorage.removeItem(authConfig.accessTokenKey);
+      localStorage.removeItem("custom_headers");
+    }
+  },
+
+  // Exchange refresh token for a new access token
+  refreshToken: async () => {
+    try {
+      if (typeof window === "undefined") return null;
+
+      const storedRefreshToken = localStorage.getItem(
+        authConfig.refreshTokenKey,
+      );
+
+      // Fallback: use stored access token if no refresh token
+      if (!storedRefreshToken) {
+        const storedAccessToken = localStorage.getItem(
+          authConfig.accessTokenKey,
+        );
+        if (storedAccessToken) {
+          accessToken = storedAccessToken;
+          return accessToken;
+        }
+        throw new Error("No refresh token found");
+      }
+
+      const response = await authConfig.refreshWithToken(storedRefreshToken);
+
+      // Safely check if this is a raw Axios response wrapper
+      const isRawAxiosResponse =
+        response?.config && response?.headers && response?.status;
+
+      const unwrappedData = isRawAxiosResponse ? response.data : response;
+      const responseData = unwrappedData?.data ?? unwrappedData;
+
+      const { accessToken: newAccess, refreshToken: newRefresh } = responseData;
+      accessToken = newAccess;
+
+      if (newRefresh) {
+        localStorage.setItem(authConfig.refreshTokenKey, newRefresh);
+      }
+
+      return accessToken;
+    } catch {
+      console.warn("Refresh failed, logging out...");
+      accessToken = null;
+      localStorage.removeItem(authConfig.refreshTokenKey);
+      localStorage.removeItem(authConfig.accessTokenKey);
+      return null;
+    }
+  },
+};
+```
+
+    **NextAuth Strategy**
+
+    View code
+
+```typescript filename="next-auth/provider.ts"
+// @internal — No changes needed
+
+// Extend the Session type to include accessToken
+declare module "next-auth" {
+  interface Session {
+    accessToken?: string;
+  }
+}
+let customHeaders: Record<string, string> | null = null;
+
+// TokenProvider for NextAuth.js - retrieves token from session
+interface NextAuthTokenProvider extends TokenProvider {
+  setTokens: (params: { accessToken: string; refreshToken?: string }) => void;
+  clearTokens: () => void;
+  setCustomHeaders: (headers: Record<string, string>) => void;
+  getCustomHeaders: () => Record<string, string>;
+}
+
+  getToken: async () => {
+    const session = await getSession();
+    return (session?.accessToken as string) || null;
+  },
+
+  getCustomHeaders: () => {
+    if (customHeaders) return customHeaders;
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("custom_headers");
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch {
+          return {};
+        }
+      }
+    }
+    return {};
+  },
+
+  setCustomHeaders: (headers) => {
+    customHeaders = headers;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("custom_headers", JSON.stringify(headers));
+    }
+  },
+
+  refreshToken: undefined,
+
+  // Placeholder methods for compatibility with other providers
+  // NextAuth manages these internally via session
+  setTokens: () => {
+    if (process.env.NODE_ENV === "development") {
+      console.warn(
+        "[NextAuthTokenProvider] setTokens is a no-op. NextAuth manages tokens via session.",
+      );
+    }
+  },
+  clearTokens: () => {
+    customHeaders = null;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("custom_headers");
+    }
+    if (process.env.NODE_ENV === "development") {
+      console.warn(
+        "[NextAuthTokenProvider] clearTokens token part is a no-op. Use signOut() from next-auth/react instead.",
+      );
+    }
+  },
+};
+```
+
+```tsx filename="next-auth/NextAuthGuard.tsx"
+// @internal — No changes needed
+"use client";
+
+/**
+ * Authentication guard wrapper for NextAuth.js
+ */
+
+  return (
+
+      {children}
+
+  );
+};
+
+const NextAuthGuardInner = ({ children }: { children: React.ReactNode }) => {
+  // Listen for auth:logout events dispatched by core.ts when token refresh fails
+  useEffect(() => {
+    const handleLogout = () => {
+      import("next-auth/react").then(({ signOut }) => signOut());
+    };
+
+    window.addEventListener("auth:logout", handleLogout);
+    return () => window.removeEventListener("auth:logout", handleLogout);
+  }, []);
+
+  return <>{children}</>;
+};
+```
+
+### `definitions/` - REST API Endpoints
+
+This folder contains `sample` API endpoint definitions.
+
+- **Editable**: You can make changes to these files to match your API.
+- **Two-Way Sync**: Changes here are reflected in the Reex API Builder UI.
+
+    **`authentication.ts`**: Authentication endpoints (Refresh, Signup, Login, Logout).
+
+    View code
+
+    ```typescript filename="definitions/authentication.ts"
+    import { apiClient } from "../api-client";
+    import { type post_authRefresh } from "../types/authentication/post_authRefresh";
+    import { type post_authSignup } from "../types/authentication/post_authSignup";
+    import { type post_authLogin } from "../types/authentication/post_authLogin";
+    import { type post_authLogout } from "../types/authentication/post_authLogout";
+
+    export interface AuthSignupPayload {
+      username: string;
+      password: string;
+    }
+
+    export interface AuthLoginPayload {
+      username: string;
+      password: string;
+    }
+
+    export const authenticationApi = {
+      /** @description Refresh access token */
+      post_authRefresh: (): Promise<post_authRefresh> =>
+        apiClient.post(`/auth/refresh`, {}),
+
+      /** @description Register a new user */
+      post_authSignup: (payload: AuthSignupPayload): Promise<post_authSignup> =>
+        apiClient.post(`/auth/signup`, payload),
+
+      /** @description Login a user */
+      post_authLogin: (payload: AuthLoginPayload): Promise<post_authLogin> =>
+        apiClient.post(`/auth/login`, payload),
+
+      /** @description Logout a user */
+      post_authLogout: (): Promise<post_authLogout> =>
+        apiClient.post(`/auth/logout`, {})
+    };
+    ```
+
+    **`todos.ts`**: CRUD operations for Todos.
+
+    View code
+
+    ```typescript filename="definitions/todos.ts"
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    import { apiClient } from "../api-client";
+    import { type get_todos } from "../types/todos/get_todos";
+    import { type post_todos } from "../types/todos/post_todos";
+    import { type put_todos } from "../types/todos/put_todos";
+
+    export interface TodosPayload {
+      task: string;
+      priority?: number;
+    }
+
+    export const todosApi = {
+      /** @description Retrieve a list of todos for the authenticated user @auth */
+      get_todos: (): Promise<get_todos> =>
+        apiClient.get(`/todos`),
+
+      /** @description Create a new todo @auth */
+      post_todos: (payload: TodosPayload): Promise<post_todos> =>
+        apiClient.post(`/todos`, payload),
+
+      /** @description Update a todo @auth @param id The todo ID */
+      put_todos: (id: string): Promise<put_todos> =>
+        apiClient.put(`/todos/${id}`, {}),
+
+      /** @description Delete a todo @auth @param id The todo ID */
+      delete_todos: (id: string): Promise =>
+        apiClient.delete(`/todos/${id}`)
+    };
+    ```
+
+### `generated/` - React Query Hooks
+
+Auto-generated hooks based on your `definitions/`. These are regenerated whenever you save changes in definitions.
+
+    **`index.ts`**: React Query wrapper hooks.
+
+    View code
+
+    ```typescript filename="generated/index.ts"
+    // Generated file - DO NOT EDIT
+    import {
+      type QueryKey,
+      type UseMutationOptions,
+      type UseQueryOptions,
+      type UseQueryResult,
+      type DefaultError,
+      useMutation,
+      useQuery,
+    } from "@tanstack/react-query";
+
+    // 1. Mutation Wrapper
+    export const useApiMutation = <
+      TData = unknown,
+      TVariables = void,
+      TError = DefaultError,
+      TContext = unknown,
+    >(
+      mutationFn: (variables: TVariables) => Promise,
+      options?: Omit<
+        UseMutationOptions<TData, TError, TVariables, TContext>,
+        "mutationFn"
+      >,
+    ) => {
+      return useMutation<TData, TError, TVariables, TContext>({
+        mutationFn,
+        ...options,
+      });
+    };
+
+    // 2. Query Wrapper
+    export const useApiQuery = <
+      TQueryFnData = unknown,
+      TError = DefaultError,
+      TData = TQueryFnData,
+      TQueryKey extends QueryKey = QueryKey,
+    >(
+      queryKey: TQueryKey,
+      queryFn: () => Promise,
+      options?: Omit<
+        UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
+        "queryKey" | "queryFn"
+      >,
+    ): UseQueryResult<TData, TError> => {
+      return useQuery<TQueryFnData, TError, TData, TQueryKey>({
+        queryKey,
+        queryFn,
+        refetchOnWindowFocus: false,
+        retry: 1,
+        ...options,
+      });
+    };
+
+    export * from "./useAuthenticationQueries";
+    export * from "./useTodosQueries";
+    ```
+
+    **`useAuthenticationQueries.ts`**: Hooks for Authentication.
+
+    View code
+
+    ```typescript filename="generated/useAuthenticationQueries.ts"
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    // Generated file - DO NOT EDIT
+    import { useQueryClient, type UseMutationOptions } from "@tanstack/react-query";
+    import { authenticationApi } from "../definitions/authentication";
+    import { useApiMutation } from ".";
+
+    // Helper Types
+    type ApiData any> = Awaited<ReturnType>;
+    type ApiVars any> = Parameters[0];
+
+    export const authenticationKeys = {
+      all: ["authentication"] as const,
+    };
+
+    export const usePostAuthSignupMutation = (
+      options?: Omit<
+        UseMutationOptions<ApiData, Error, ApiVars>,
+        "mutationFn"
+      >
+    ) => {
+      const queryClient = useQueryClient();
+
+      return useApiMutation(authenticationApi.post_authSignup, {
+        ...options,
+        onSuccess: (data, variables, context) => {
+          queryClient.invalidateQueries({ queryKey: authenticationKeys.all });
+          (options?.onSuccess as any)?.(data, variables, context);
+        },
+      });
+    };
+
+    export const usePostAuthLoginMutation = (
+      options?: Omit<
+        UseMutationOptions<ApiData, Error, ApiVars>,
+        "mutationFn"
+      >
+    ) => {
+      const queryClient = useQueryClient();
+
+      return useApiMutation(authenticationApi.post_authLogin, {
+        ...options,
+        onSuccess: (data, variables, context) => {
+          queryClient.invalidateQueries({ queryKey: authenticationKeys.all });
+          (options?.onSuccess as any)?.(data, variables, context);
+        },
+      });
+    };
+
+    export const usePostAuthLogoutMutation = (
+      options?: Omit<
+        UseMutationOptions<ApiData, Error, ApiVars>,
+        "mutationFn"
+      >
+    ) => {
+      const queryClient = useQueryClient();
+
+      return useApiMutation(authenticationApi.post_authLogout, {
+        ...options,
+        onSuccess: (data, variables, context) => {
+          queryClient.invalidateQueries({ queryKey: authenticationKeys.all });
+          (options?.onSuccess as any)?.(data, variables, context);
+        },
+      });
+    };
+    ```
+
+    **`useTodosQueries.ts`**: Hooks for Todos.
+
+    View code
+
+    ```typescript filename="generated/useTodosQueries.ts"
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    // Generated file - DO NOT EDIT
+    import { useQueryClient, type UseMutationOptions, type UseQueryOptions } from "@tanstack/react-query";
+    import { todosApi } from "../definitions/todos";
+    import { useApiQuery, useApiMutation } from ".";
+
+    // Helper Types
+    type ApiData any> = Awaited<ReturnType>;
+    type ApiVars any> = Parameters[0];
+
+    export const todosKeys = {
+      all: ["todos"] as const,
+      get_todos: (params?: ApiVars) => [...todosKeys.all, "get_todos", params] as const,
+    };
+
+    export const useGetTodosQuery = >(
+      options?: Omit<
+        UseQueryOptions<ApiData, Error, TData>,
+        "queryKey" | "queryFn"
+      >
+    ) =>
+      useApiQuery(
+        todosKeys.get_todos(),
+        () => todosApi.get_todos(),
+        options
+      );
+
+    export const usePostTodosMutation = (
+      options?: Omit<
+        UseMutationOptions<ApiData, Error, ApiVars>,
+        "mutationFn"
+      >
+    ) => {
+      const queryClient = useQueryClient();
+
+      return useApiMutation(todosApi.post_todos, {
+        ...options,
+        onSuccess: (data, variables, context) => {
+          queryClient.invalidateQueries({ queryKey: todosKeys.all });
+          (options?.onSuccess as any)?.(data, variables, context);
+        },
+      });
+    };
+    ```
+
+### `hooks/` - Custom Hooks
+
+    **`useAuth.ts`**: Managed login/logout state and events.
+
+    View code
+
+    ```typescript filename="hooks/useAuth.ts"
+    // @internal — No changes needed
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    import { useCallback, useState, useEffect } from "react";
+    import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
+    import { activeTokenProvider } from "../auth/manager";
+    import { apiClient } from "../api-client";
+    import { authConfig } from "../user-config/auth";
+
+    /**
+     * Login hook that stores tokens on success via the active provider.
+     */
+    export const useLogin = (
+      options?: Omit<UseMutationOptions<any, any, any, any>, "mutationFn">,
+    ) => {
+      const mutation = useMutation({
+        mutationFn: async (credentials: any) => {
+          const response = await apiClient.post(authConfig.loginUrl, credentials);
+          const isRawAxiosResponse =
+            response?.config && response?.headers && response?.status;
+          const unwrappedData = isRawAxiosResponse ? response.data : response;
+          return unwrappedData?.data ?? unwrappedData;
+        },
+        ...options,
+        onSuccess: (data: any, variables, context) => {
+          const accessToken = data?.accessToken ?? data?.access_token ?? data?.token;
+          const refreshToken = data?.refreshToken ?? data?.refresh_token ?? data?.refresh;
+
+          activeTokenProvider?.setTokens?.({ accessToken, refreshToken });
+
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("auth:login"));
+          }
+
+          if (options?.onSuccess) {
+            (options.onSuccess as any)(data, variables, context);
+          }
+        },
+      });
+
+      return {
+        login: mutation.mutate,
+        loginAsync: mutation.mutateAsync,
+        ...mutation,
+      };
+    };
+
+    /**
+     * Logout hook that clears tokens and optionally calls the server logout endpoint.
+     */
+    export const useLogout = (options?: { callServer?: boolean }) => {
+      const { callServer = true } = options ?? {};
+      const logout = useCallback(async () => {
+        try {
+          if (callServer) {
+            if (authConfig.logoutMethod === "POST") {
+              await apiClient.post(authConfig.logoutUrl);
+            } else {
+              await apiClient.get(authConfig.logoutUrl);
+            }
+          }
+          activeTokenProvider?.clearTokens?.();
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("auth:logout"));
+          }
+        } catch (error) {
+          console.error("[useLogout] Logout failed:", error);
+          activeTokenProvider?.clearTokens?.();
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("auth:logout"));
+          }
+        }
+      }, [callServer]);
+
+      return { logout };
+    };
+
+    /**
+     * Hook to check if the user is currently authenticated.
+     */
+    export const useIsAuthenticated = () => {
+      const [isAuthenticated, setIsAuthenticated] = useState(false);
+      const [isLoading, setIsLoading] = useState(true);
+
+      useEffect(() => {
+        const checkAuth = async () => {
+          try {
+            const token = await activeTokenProvider?.getToken?.();
+            setIsAuthenticated(!!token);
+          } catch {
+            setIsAuthenticated(false);
+          } finally {
+            setIsLoading(false);
+          }
+        };
+        checkAuth();
+
+        const handleLogin = () => setIsAuthenticated(true);
+        const handleLogout = () => setIsAuthenticated(false);
+        if (typeof window !== "undefined") {
+          window.addEventListener("auth:login", handleLogin);
+          window.addEventListener("auth:logout", handleLogout);
+        }
+
+        return () => {
+          if (typeof window !== "undefined") {
+            window.removeEventListener("auth:login", handleLogin);
+            window.removeEventListener("auth:logout", handleLogout);
+          }
+        };
+      }, []);
+
+      return { isAuthenticated, isLoading };
+    };
+    ```
+
+### `providers/` - Query Provider
+
+    View code
+
+    ```tsx filename="providers/QueryProvider.tsx"
+    "use client";
+    import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+    import { useState } from "react";
+
+    export function QueryProvider({ children }: { children: React.ReactNode }) {
+      const [queryClient] = useState(() => new QueryClient());
+      return {children};
+    }
+    ```
+
+### `types/` - TypeScript Interfaces
+
+View Authentication Types
+
+```typescript filename="types/authentication/post_authLogin.ts"
+
+```
+
+```typescript filename="types/authentication/post_authLogout.ts"
+
+```
+
+```typescript filename="types/authentication/post_authRefresh.ts"
+
+```
+
+```typescript filename="types/authentication/post_authSignup.ts"
+
+```
+
+View Todo Types
+
+```typescript filename="types/todos/get_todos.ts"
+
+```
+
+```typescript filename="types/todos/post_todos.ts"
+
+```
+
+### `user-config/` - User Configuration
+
+This folder is designed specifically for you to edit. It contains constants and mappings customized to your backend settings.
+
+    **`auth.ts`**: Centralized authentication configuration.
+
+    View code
+
+    ```typescript filename="user-config/auth.ts"
+    // @user-config — changes needed: Update routes, keys, and endpoints to match your backend
+    import axios from "axios";
+    import { baseURL } from "./constants";
+
+    /**
+     * Centralized Authentication Configuration
+     *
+     * Customize these values and functions to match your backend's
+     * authentication requirements.
+     */
+    export const authConfig = {
+      /** Redirect path for unauthenticated users */
+      loginUrl: "/auth/login",
+
+      /** Server-side logout endpoint */
+      logoutUrl: "/auth/logout",
+
+      /** HTTP Method for logout endpoint (e.g., "GET", "POST") */
+      logoutMethod: "POST" as "GET" | "POST",
+
+      /** localStorage key for access token */
+      accessTokenKey: "access_token",
+
+      /** localStorage key for refresh token (if applicable) */
+      refreshTokenKey: "refresh_token",
+
+      /** Refresh token endpoint */
+      refreshEndpoint: `${baseURL}/auth/refresh`,
+
+      /** Refresh via httpOnly cookie. Edit the method/headers to match your backend. */
+      refreshWithCookie: async () => {
+        return await axios.post(authConfig.refreshEndpoint, undefined, { withCredentials: true });
+      },
+
+      /** Refresh via stored token payload. Edit the property name to match your backend. */
+      refreshWithToken: async (storedRefreshToken: string) => {
+        return await axios.post(authConfig.refreshEndpoint, {
+          refreshToken: storedRefreshToken,
+        });
+      },
+    };
+    ```
+
+    **`constants.ts`**: Base URLs and environment config.
+
+    View code
+
+    ```typescript filename="user-config/constants.ts"
+    export const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+    ```
+
+### `index.ts` - Main Export
+
+This file serves as the main entry point to all of your API definitions. It merges all defined API modules into a single `api` object.
+
+    **`index.ts`**: The main barrel export.
+
+    View code
+
+    ```typescript filename="index.ts"
+    import { authenticationApi } from "./definitions/authentication";
+    import { todosApi } from "./definitions/todos";
+
+    export const api = {
+      ...authenticationApi,
+      ...todosApi,
+    };
+    ```
+
+## Project Module > Auth Strategies
+---
+# AuthProvider
+
+The `AuthProvider` wraps your application with the authentication context required by the generated hooks. Without it, API generation and query hooks will work as expected, but the authentication hooks (`useLogin`, `useLogout`, `useIsAuthenticated`) will not be available — you will have to manually store and manage user sessions.
+
+Import both providers from `api-services` and wrap your root layout:
+
+```typescript filename="app/layout.tsx"
+
+  return (
+
+                                    {/* Required for query hooks */}
+            {/* Required for auth hooks */}
+            {children}
+
+  );
+}
+```
+
+### Auth Strategies
+
+The `AuthProvider` accepts a `strategy` prop that determines how tokens are stored and sessions are managed. Three strategies are available:
+
+---
+
+#### `localstorage`
+
+> Use this strategy if your backend returns an `access_token` and/or `refresh_token` in the login response. Reex API Builder will automatically store these tokens, attach them to outgoing requests, and handle silent refresh when the access token expires.
+
+```typescript filename="app/layout.tsx"
+
+  {children}
+
+```
+
+---
+
+#### `cookie`
+
+> Use this strategy if your backend manages authentication through httpOnly cookies. In this setup, the server sets and rotates the refresh token directly via `Set-Cookie` headers — no tokens are returned in the response body. The provider handles silent refresh by sending credentialed requests to your refresh endpoint, and the browser manages the cookie automatically.
+
+```typescript filename="app/layout.tsx"
+
+  {children}
+
+```
+
+---
+
+#### `next-auth`
+
+> Use this strategy if you are building a Next.js application and using Auth.js (NextAuth) for authentication and session management. In this setup, NextAuth owns the session lifecycle — Reex API Builder reads the `accessToken` from the active session and attaches it to outgoing requests.
+
+Since Reex API Builder needs access to the `accessToken` from the NextAuth session, you must extend the NextAuth types and configure its callbacks to expose the token:
+
+```typescript
+// Extend NextAuth types to include accessToken
+declare module "next-auth" {
+  interface User {
+    accessToken?: string;
+  }
+}
+
+// In your NextAuth config
+callbacks: {
+  async jwt({ token, user }) {
+    // On initial sign-in, persist the accessToken into the JWT
+    if (user?.accessToken) {
+      token.accessToken = user.accessToken;
+    }
+    return token;
+  },
+  async session({ session, token }) {
+    // Expose accessToken on the client-side session
+    (session as any).accessToken = token.accessToken;
+    return session;
+  },
+},
+```
+
+Then wrap your layout as usual:
+
+```typescript filename="app/layout.tsx"
+
+  {children}
+
+```
+
+> **Note:** When using the `next-auth` strategy, the `useLogin` and `useLogout` hooks are no-ops. Authentication is managed entirely by NextAuth — use `signIn()` and `signOut()` from `next-auth/react` directly.
+
+---
+
+### Configuring Your Backend
+
+Regardless of the strategy, open `api-services/user-config/auth.ts` and update the values to match your backend:
+
+```typescript filename="user-config/auth.ts"
+
+  /** Redirect path for unauthenticated users */
+  loginUrl: "/auth/login",
+
+  /** Server-side logout endpoint */
+  logoutUrl: "/auth/logout",
+
+  /** HTTP method for the logout endpoint */
+  logoutMethod: "POST" as "GET" | "POST",
+
+  /** localStorage key for the access token */
+  accessTokenKey: "access_token",
+
+  /** localStorage key for the refresh token */
+  refreshTokenKey: "refresh_token",
+
+  /** Refresh token endpoint */
+  refreshEndpoint: `${baseURL}/auth/refresh`,
+
+  /** Cookie strategy: refresh via httpOnly cookie */
+  refreshWithCookie: async () => {
+    return await axios.post(authConfig.refreshEndpoint, undefined, {
+      withCredentials: true,
+    });
+  },
+
+  /** localstorage strategy: refresh via stored token payload */
+  refreshWithToken: async (storedRefreshToken: string) => {
+    return await axios.post(authConfig.refreshEndpoint, {
+      refreshToken: storedRefreshToken,
+    });
+  },
+};
+```
+
+## Project Module > Getting Started
+---
+# Getting Started
+
+Getting up and running with Reex API Builder is designed to be frictionless. The tool handles dependency installation and infrastructure setup in your React application automatically.
+
+### Prerequisites
+
+Before installing, ensure your environment meets the following requirements:
+
+- **Node.js**: Installed and configured.
+- **React**: Your project must be a React-based application (e.g., Next.js, Vite, React Router).
+- **TypeScript**: Your project must be a TypeScript application.
+- **Package Manager**: `npm`, `yarn`, or `pnpm`.
+
+### Step 1: Install the CLI
+
+Reex API Builder relies on a global CLI package to bridge the connection between the Reex API Builder UI and your local project files.
+
+Open your terminal and install it globally:
+
+```bash
+npm install -g reex-api-builder
+```
+
+### Step 2: Initialize Your Project
+
+Navigate to the root directory of your React project and run:
+
+```bash
+reex-build
+```
+
+Running this command triggers a health check. Reex API Builder detects any missing dependencies and installs them automatically:
+
+- **Axios**: For handling HTTP requests.
+- **TanStack Query (React Query)**: For server state management.
+- **next-auth**: For authentication and session management in Next.js applications.
+- **cookies-next**: For cookie management on both client and server sides.
+
+It also generates an `api-services` directory in your project root, containing your API hooks, models, authentication guards, and providers.
+
+The application then launches and automatically opens your browser to:  
+**[https://reex-api-builder.toolshq.app/?localPort=4000](https://reex-api-builder.toolshq.app/?localPort=4000)**
+
+On first launch, you will be prompted to grant **Local Network** permissions to enable communication between Reex API Builder and your local project files.
+
+![Local Network Permission Prompt](../../../assets/localport.png)
+
+> **Note:** To run multiple projects simultaneously, switch ports using the `-p` flag:
+>
+> ```bash
+> reex-build -p 4002
+> ```
+
+### Step 3: Import a Collection & Configure Authentication
+
+Navigate to the Reex API Builder UI and import the API collection you want to integrate.
+
+After importing, the `api-services` directory will be updated with the following:
+
+- **`definitions/`**: A structured REST API definition based on the imported collection.
+- **`generated/`**: React Query hooks for all REST endpoints defined in the collection.
+- **`types/`**: TypeScript type definitions for all endpoint responses. Types default to `unknown` until explicitly updated by calling the endpoint and saving the interface in the Reex API Builder UI. Manual edits are possible but not recommended — if you do, strictly follow the existing naming convention, as deviating from it will break your code.
+
+### Step 4: Configure the Providers
+
+Reex API Builder generates dedicated provider components to manage query client context and authentication. Wrap your application with these providers to enable the generated hooks, manage API state, and handle user sessions.
+
+1. Open your project's root file (e.g., `layout.tsx` for Next.js App Router, or `root.tsx`, `main.tsx` for standard React).
+2. Import `QueryProvider` and your chosen `AuthProvider` from the `api-services` directory.
+3. Wrap your root layout or component with both providers.
+
+Here is a sample configuration for a Next.js app:
+
+```tsx
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+  title: "Create Next App",
+  description: "Generated by create next app",
+};
+
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+
+          {children}
+
+  );
+}
+```
+
+- **QueryProvider**: Enables TanStack queries.
+- **AuthProvider**: Manages user sessions and authentication. Supports three strategies: `localstorage`, `cookie`, and `next-auth`. Defaults to `localstorage`.
+
+For a deeper look at the auth provider, see the [architecture](../architecture) section.
+
+> **Important:** After importing your collection, update the `auth.ts` file in `api-services/user-config` with your backend-specific details.
+
+### Step 5: Test Your Endpoints
+
+Open the Reex API Builder UI and test your endpoints. For every successful request, a response and a corresponding interface are generated. Click **Save Interface** to persist the interface to your project's `types` folder.
+
+### Step 6: Start Consuming Your APIs
+
+Your setup is complete. You can now start using the generated hooks and services in your project.
+
+## Project Module > Hooks
+---
+# Authentication Hooks
+
+Reex API Builder generates a set of authentication hooks to make managing user sessions straightforward. Unless you are using the `next-auth` strategy which handles authentication internally via its own session management, it is highly recommended to use these hooks for all authentication flows. They are wired to automatically set the required authentication headers on login and clear them on logout.
+
+The hooks are available from `api-services/hooks/useAuth`.
+
+### Available Hooks
+
+- **`useLogin`**: Handles login and exposes a `setCustomHeaders` callback for setting custom request headers on successful authentication (e.g. tenant IDs or API keys your backend requires).
+- **`useLogout`**: Clears all stored tokens and authentication headers.
+- **`useIsAuthenticated`**: Returns a boolean indicating whether the current user has an active session. Useful for conditionally enabling queries or protecting UI.
+
+### Usage
+
+```typescript filename="app/page.tsx"
+
+  const { login, setCustomHeaders } = useLogin();
+  const { logout } = useLogout();
+  const { isAuthenticated } = useIsAuthenticated();
+
+  const { data } = useGetTodosQuery({ enabled: isAuthenticated });
+
+  return (
+
+          login({ username: "user", password: "user123" }, {
+            onSuccess: (res) => {
+              // Set custom headers your backend requires after login
+              setCustomHeaders({
+                "x-test-header": "test-value",
+              });
+            },
+          })
+        }
+      >
+        Login
+
+      Logout
+
+  );
+}
+```
+
+> **Note:** If your backend does not require custom headers, you can omit the `onSuccess` callback and `setCustomHeaders` call entirely — token storage and header injection are handled automatically.
+
+## Project Module > Key Features
+---
+# Key Features
+
+### Frontend-First Approach
+
+Reex API Builder is designed with the frontend developer in mind, automatically generating the boilerplate code needed to integrate APIs into your React application.
+
+### Type Safety
+
+All generated code is fully typed using TypeScript, ensuring compile-time safety and excellent IDE autocomplete support.
+
+### Smart Caching & Invalidation
+
+Generated TanStack Query hooks include intelligent cache invalidation strategies, keeping your UI in sync with server state.
+
+### Two-Way Sync
+
+Edit your API definitions in the Reex API Builder UI or directly in your IDE - changes are synchronized bidirectionally.
+
+### Conflict Resolution
+
+When APIs change, Reex API Builder shows you exactly what's different through a Git-style diff view, giving you full control over what to accept or reject.
+
+## Project Module
+---
+# Project Module
+
+The Project Module is the flagship experience of Reex API Builder. It establishes a direct link between the Reex API Builder UI and your local React application.
+
+In this mode, Reex API Builder acts as a companion app that lives alongside your development server. It installs necessary dependencies for API integration, and injects generated API code directly into your project.
+
+## Project Module > Workflow
+---
+# The Project Workflow
+
+Project Mode connects the Reex API Builder UI directly to your local codebase, creating a live link between your API specifications and your frontend logic.
+
+### Two-Way Sync
+
+Reex API Builder maintains a live link between the UI and your code.
+
+- **UI to Code**: Actions in the UI are automatically written to your local files. Generated interfaces are saved to your `types` files, while actions like deleting an API, module, or collection, or generating an API template, update your `definitions` files.
+- **Code to UI**: `definitions` is the single source of truth. Any changes made to files in the `definitions` folder — whether editing or deleting — are automatically reflected in the UI.
+
+Two files influence the UI:
+
+- **`config/constants`** — update the `baseURL` value to change the base URL across all requests.
+- **`definitions` files** — update individual API request functions directly. Each endpoint function must accept exactly one parameter: either a single primitive (e.g., `id: string`) or a single object (e.g., `{ id, payload }: { id: string, payload: UpdatePayload }`).
+
+```typescript
+// ❌ Not acceptable — multiple parameters
+post_sendMessage: (channelId: string, payload: MessagePayload): Promise =>
+  apiClient.post(`/channels/${channelId}/messages`, payload);
+
+// ✅ Acceptable — single object parameter
+post_sendMessage: ({
+  channelId,
+  payload,
+}: {
+  channelId: string;
+  payload: MessagePayload;
+}): Promise => apiClient.post(`/channels/${channelId}/messages`, payload);
+```
+
+### Handling Updates (Diff View)
+
+APIs change. When you re-import a collection, Reex API Builder protects your existing code from silent overwrites.
+
+- **Conflict Detection**: The tool compares the incoming collection against your current definitions.
+- **Diff View**: A side-by-side, Git-style diff view shows exactly what changed — for example, a new `firstName` field added to a payload — so you can accept or reject each update individually.
+
+## Standalone Module > Getting Started
+---
+# Getting Started with Standalone Mode
+
+Reex API Builder defaults to Standalone Mode when no project is connected. The app operates in one of three modes at any time: **Project Mode**, **Standalone Mode** or **Test Mode**.
+
+### Launching Standalone Mode
+
+Visit the web app directly to launch in Standalone Mode:
+
+[https://reex-api-builder.toolshq.app/](https://reex-api-builder.toolshq.app/)
+
+No setup is required — the app is ready for you to import and test collections immediately.
+
+### Switching from Project Mode
+
+If you are currently in Project Mode, click the **"Switch to Standalone Mode"** button in the bottom-right corner of the app.
+
+## Standalone Module > Multiple Collections
+---
+# Working with Multiple Collections
+
+Standalone Mode supports working with multiple collections simultaneously — perfect for microservices architectures or comparing different API versions.
+
+### Managing Multiple Collections
+
+**Importing Multiple Collections:**
+
+1. Import your first collection (e.g., "User Service").
+2. Click **Import** again.
+3. Import your second collection (e.g., "Payment Service").
+4. Both collections appear as separate folders in the sidebar.
+
+Each collection maintains its own base URL and authentication settings. Click any collection to expand and browse its endpoints.
+
+**Example Sidebar Structure:**
+
+```text
+📁 User Service API v1
+  ├── GET /users
+  ├── POST /users
+  └── GET /users/{id}
+
+📁 Payment Service API v2
+  ├── GET /payments
+  ├── POST /payments
+  └── GET /invoices
+
+📁 Notification Service
+  ├── POST /notify
+  └── GET /templates
+```
+
+---
+
+### Standalone Mode vs. Project Mode
+
+|                             | Standalone Mode | Project Mode |
+| --------------------------- | --------------- | ------------ |
+| Exploring a new API         | ✅              |              |
+| Debugging in isolation      | ✅              |              |
+| Verifying API documentation | ✅              |              |
+| Working with multiple APIs  | ✅              |              |
+| Generated hooks and types   |                 | ✅           |
+| Codebase sync               |                 | ✅           |
+| Version control             |                 | ✅           |
+| CI/CD integration           |                 | ✅           |
+
+## Standalone Module
+---
+# Standalone Mode
+
+Standalone Mode allows you to test and explore API collections without connecting to a project. It's perfect for API exploration, debugging, and testing endpoints in isolation.
+
+### What is Standalone Mode?
+
+Standalone Mode is a lightweight, project-independent environment for working with API collections. Unlike Project Mode which integrates directly with your codebase, Standalone Mode operates independently, making it ideal for:
+
+- **API Collection Testing**: Test API endpoints without setting up a full project.
+- **Multiple Collections**: Work with multiple API collections simultaneously.
+- **Local API Testing**: Test collections against a localhost server. To enable this, run the following command in your terminal:
+
+```bash
+  npx reex-proxy
+```
+
+## Standalone Module > Workflow
+---
+# The Workflow
+
+Standalone Mode follows a simple three-step workflow.
+
+### Step 1: Import a Collection
+
+Click the **Import** button in the toolbar to bring in your API collection.
+
+#### Supported Formats
+
+- **Swagger/OpenAPI**: JSON or YAML format.
+- **Postman Collection**: JSON export from Postman.
+
+#### Import Methods
+
+**From File:**
+
+1. Click **Import → From File**.
+2. Select your `.json` file. _(YAML import is not yet supported.)_
+3. The collection appears in the sidebar.
+
+**From URL:**
+
+1. Click **Import → From URL**.
+2. Paste the API spec URL.
+3. Click **Fetch**.
+
+> **Tip:** You can import multiple collections. Each collection appears as a separate folder in the sidebar.
+
+---
+
+### Step 2: Send a Request
+
+#### Selecting an Endpoint
+
+1. Expand the collection in the left sidebar.
+2. Click any endpoint (e.g., `GET /users`, `POST /login`).
+3. The request panel opens on the right.
+
+#### Configuring the Request
+
+When you select an endpoint, the request is automatically pre-configured with all parameters, headers, and body schema from the collection spec.
+
+**Base URL**: Automatically set from the collection and displayed at the top of the request panel. Click to edit if needed (e.g., switching from production to staging).
+
+**Parameters** (if needed):
+
+```text
+Query Params:
+  page: 1
+  limit: 10
+
+Path Params:
+  userId: 123
+
+Headers:
+  Authorization: Bearer <your-token>
+  Content-Type: application/json
+```
+
+**Request Body** (for POST/PUT/PATCH):
+
+```json
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john@example.com"
+}
+```
+
+**Authentication**: Click the **Auth** tab, select **Bearer Token**, and enter your token. _(Bearer Token is currently the only supported auth type.)_
+
+#### Sending the Request
+
+Click **Send**. Reex API Builder makes the request and displays the response in real-time.
+
+---
+
+### Step 3: View Response and Interface
+
+After sending a request, two panels are displayed.
+
+#### Response Panel
+
+Shows the response body along with status and timing information:
+
+```json
+{
+  "id": "user_123",
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john@example.com",
+  "createdAt": "2025-02-07T10:30:00Z"
+}
+```
+
+```text
+Status: 200 OK
+Time:   234ms
+Size:   156 bytes
+```
+
+#### Interface Panel
+
+Reex API Builder automatically generates a TypeScript interface from the response:
+
+```typescript
+interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  createdAt: string;
+}
+
+interface GetUserResponse {
+  data: User;
+  status: number;
+}
+```
+
+Click the **Copy** icon to copy the interface and paste it directly into your project.
+
+## Test Module > Getting Started
+---
+# Getting Started with Text Mode
+
+### Launching Text Mode
+
+Text Mode is available directly in the Reex API Builder web app:
+
+1. Visit [https://reex-api-builder.toolshq.app/](https://reex-api-builder.toolshq.app/)
+2. Click the **Test API** button in the bottom-right corner of the page.
+
+### Switching from Other Modes
+
+If you are currently in Standalone or Project Mode, click the floating **Test API** button in the bottom-right corner to switch to Text Mode.
+
+> **Auto-save enabled:** All your work in Text Mode is automatically saved in real-time. You won't lose progress even if you close the browser.
+
+## Test Module
+---
+# Text Mode (Test Module)
+
+Text Mode is built specifically for API developers who need a fast, flexible scratchpad for testing endpoints on the fly. Unlike Standalone Mode where you import existing collections, Text Mode lets you create and organize requests from scratch.
+
+### What is Text Mode?
+
+Text Mode is a lightweight, developer-focused environment for rapid API testing and experimentation. It's designed for situations where you need to quickly test an endpoint without the overhead of formal API specifications.
+
+**Perfect for:**
+
+- **Rapid Prototyping** - Test new endpoints as you build them
+- **Quick Debugging** - Isolate and test specific API calls
+- **Local API Testing**: Test APIs against a localhost server. To enable this, run the following command in your terminal:
+
+```bash
+  npx reex-proxy
+```
+
+## Test Module > Real Time Sync
+---
+# Real-time Sync
+
+Everything in Text Mode is automatically saved as you work — no manual saving required. A status indicator displays **Saved** once your changes are synced.
+
+### What Gets Saved
+
+- Collection names and structure.
+- Request configurations — URL, method, headers, and body.
+- Response data and generated interfaces.
+- Workspace layout and preferences.
+
+### Persistence
+
+Your data is stored in your browser's local storage and synced to the cloud when you are subscribed, so you can pick up exactly where you left off across sessions and devices.
+
+## Test Module > Workflow
+---
+# The Workflow
+
+Text Mode follows a simple create-and-test workflow.
+
+### Step 1: Create a Collection
+
+Collections help you organize related requests together.
+
+1. Click **+ New Collection**.
+2. Enter a name (e.g., "User API Testing", "Payment Endpoints").
+3. Click **Create**. The collection appears in the sidebar.
+
+> **Tip:** Create separate collections for different APIs or features to keep your workspace organized.
+
+---
+
+### Step 2: Create a Request
+
+1. Select a collection from the sidebar.
+2. Click **+ New Request**.
+3. Enter a name (e.g., "Get User List", "Create Payment").
+4. The request panel opens.
+
+---
+
+### Step 3: Configure the Request
+
+**HTTP Method**: Choose from the dropdown — `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`.
+
+**URL**: Type or paste the full endpoint URL:
+
+```text
+https://api.yourapp.com/users
+```
+
+**Query Parameters** (optional):
+
+```text
+Key      | Value
+---------|-------
+page     | 1
+limit    | 10
+search   | john
+```
+
+**Headers**:
+
+```text
+Key             | Value
+----------------|-------------------------
+Content-Type    | application/json
+Authorization   | Bearer eyJhbGc...
+```
+
+**Request Body** (for POST, PUT, PATCH):
+
+```json
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john@example.com",
+  "role": "admin"
+}
+```
+
+**Authentication**: Click the **Auth** tab, select **Bearer Token**, and enter your token. _(Bearer Token is currently the only supported auth type.)_
+
+---
+
+### Step 4: Send the Request
+
+Click **Send**. Reex API Builder executes the request and displays the response in real-time.
+
+---
+
+### Step 5: View Response and Interface
+
+After sending, two panels are displayed.
+
+#### Response Panel
+
+Shows the response body along with status and timing information:
+
+```json
+{
+  "data": [
+    {
+      "id": "user_123",
+      "firstName": "John",
+      "email": "john@example.com"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "total": 50
+  }
+}
+```
+
+```text
+Status: 200 OK
+Time:   234ms
+Size:   487 bytes
+```
+
+#### Interface Panel
+
+Reex API Builder automatically generates a TypeScript interface from the response:
+
+```typescript
+interface User {
+  id: string;
+  firstName: string;
+  email: string;
+}
+
+interface Meta {
+  page: number;
+  total: number;
+}
+
+interface GetUsersResponse {
+  data: User[];
+  meta: Meta;
+}
+```
+
+Click the **Copy** icon to copy the interface and paste it directly into your project.
+
+> **Note:** Interfaces update automatically each time you send a request with a new or different response structure.
+
