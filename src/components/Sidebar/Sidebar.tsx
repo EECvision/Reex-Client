@@ -88,6 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const nameInputRef = useRef<HTMLInputElement>(null);
   const originalNameRef = useRef<string>("");
+  const skipFocusRestoreRef = useRef(false);
 
   const startRename = (
     id: string,
@@ -95,6 +96,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     e: React.MouseEvent,
   ) => {
     e.stopPropagation();
+    skipFocusRestoreRef.current = true;
     originalNameRef.current = currentName;
     setEditingId(id);
     setEditingName(currentName);
@@ -272,6 +274,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 sideOffset={5}
                                 align="end"
                                 onClick={(e) => e.stopPropagation()}
+                                onCloseAutoFocus={(e) => {
+                                  if (skipFocusRestoreRef.current) {
+                                    e.preventDefault();
+                                    skipFocusRestoreRef.current = false;
+                                  }
+                                }}
                               >
                                 {onUpdateCollection && (
                                   <DropdownMenu.Item
