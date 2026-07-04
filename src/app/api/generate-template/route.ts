@@ -9,7 +9,7 @@ function generateTemplateContent(moduleName: string) {
 
   return [
     "/* eslint-disable @typescript-eslint/no-explicit-any */",
-    "import { apiClient } from \"../api-client\";",
+    "import { apiClient } from \"../core\";",
     "import { type get_list" + TypeName + "s } from \"../types/" + moduleName + "/get_list" + TypeName + "s\";",
     "import { type get_" + moduleName.slice(0, -1) + "Detail } from \"../types/" + moduleName + "/get_" + moduleName.slice(0, -1) + "Detail\";",
     "import { type post_create" + TypeName + " } from \"../types/" + moduleName + "/post_create" + TypeName + "\";",

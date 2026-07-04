@@ -176,7 +176,7 @@ export const createSandboxPayload = (
       /import\s+{([^}]+)}\s+from\s+['"].*?['"];?/g,
       (match, imports) => {
         if (imports.includes("CLIENT")) {
-          return `import { CLIENT } from '../api-client/core';`;
+          return `import { CLIENT } from '../core';`;
         }
         return match;
       },

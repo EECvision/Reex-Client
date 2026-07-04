@@ -815,7 +815,7 @@ This folder contains `sample` API endpoint definitions.
     View code
 
     ```typescript filename="definitions/authentication.ts"
-    import { apiClient } from "../api-client";
+    import { apiClient } from "../core";
     import { type post_authRefresh } from "../types/authentication/post_authRefresh";
     import { type post_authSignup } from "../types/authentication/post_authSignup";
     import { type post_authLogin } from "../types/authentication/post_authLogin";
@@ -856,7 +856,7 @@ This folder contains `sample` API endpoint definitions.
 
     ```typescript filename="definitions/todos.ts"
     /* eslint-disable @typescript-eslint/no-explicit-any */
-    import { apiClient } from "../api-client";
+    import { apiClient } from "../core";
     import { type get_todos } from "../types/todos/get_todos";
     import { type post_todos } from "../types/todos/post_todos";
     import { type put_todos } from "../types/todos/put_todos";
@@ -1084,7 +1084,7 @@ Auto-generated hooks based on your `definitions/`. These are regenerated wheneve
     import { useCallback, useState, useEffect } from "react";
     import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
     import { activeTokenProvider } from "../auth/manager";
-    import { apiClient } from "../api-client";
+    import { apiClient } from "../core";
     import { authConfig } from "../user-config/auth";
 
     /**

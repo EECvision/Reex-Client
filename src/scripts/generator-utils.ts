@@ -485,7 +485,7 @@ export const generateModuleTemplate = (
     }
 
     // 2. Imports
-    contentParts.push('import { apiClient } from "../api-client";');
+    contentParts.push('import { apiClient } from "../core";');
     if (responseTypeImports) contentParts.push(responseTypeImports);
 
     // 3. Type Definitions
