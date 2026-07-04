@@ -4,7 +4,7 @@ import {
   AUTH_PROVIDER_CONTENT,
   AUTH_MANAGER_CONTENT,
   AUTH_TYPES_CONTENT,
-  USER_CONFIG_AUTH_CONTENT,
+  API_CONFIG_CONTENT,
   COOKIE_GUARD_CONTENT,
   COOKIE_PROVIDER_CONTENT,
   LOCALSTORAGE_GUARD_CONTENT,
@@ -137,13 +137,13 @@ export const createSandboxPayload = (
     content: LOCALSTORAGE_PROVIDER_CONTENT,
   };
 
-  files["src/api-services/user-config/auth.ts"] = {
+  const apiConfigContent = API_CONFIG_CONTENT.replace(
+    /"https:\/\/api\.money\.orki\.io"/, 
+    `"${baseURL || "https://api.example.com"}"`
+  );
+  files["src/api-services/api.config.ts"] = {
     isBinary: false,
-    content: USER_CONFIG_AUTH_CONTENT,
-  };
-  files["src/api-services/user-config/constants.ts"] = {
-    isBinary: false,
-    content: `export const baseURL = "${baseURL || "https://api.example.com"}";\n`,
+    content: apiConfigContent,
   };
 
   files["src/api-services/hooks/useAuth.ts"] = {
