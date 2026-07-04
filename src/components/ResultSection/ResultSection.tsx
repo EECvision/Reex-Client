@@ -48,7 +48,7 @@ const ResultSection: React.FC<ResultSectionProps> = ({
   updatingInterface,
   isStandaloneMode = false,
 }) => {
-  const { viewPreference, setViewPreference } = useSettings();
+  const { viewPreference, setViewPreference, unwrapResponseData, setUnwrapResponseData } = useSettings();
   const [interfaceCopied, setInterfaceCopied] = React.useState(false);
 
   const handleCopyInterface = () => {
@@ -92,6 +92,15 @@ const ResultSection: React.FC<ResultSectionProps> = ({
 
         {/* Format Toggle */}
         <div className={styles.formatToggle}>
+          <label className={styles.unwrapLabel}>
+            <input 
+              type="checkbox" 
+              checked={unwrapResponseData} 
+              onChange={(e) => setUnwrapResponseData(e.target.checked)} 
+              className={styles.unwrapCheckbox}
+            />
+            Unwrap Data
+          </label>
           {VIEW_OPTIONS.map((option) => (
             <button
               key={option.value}

@@ -62,18 +62,18 @@ class TypeGenerator {
             // Check for empty interface (no body properties)
             // json-to-ts outputs "interface Name {\n}" for empty objects
             if (typeStr.includes("interface") && typeStr.includes("{}")) {
-                return `${i === 0 ? "export " : ""}type ${newName} = unknown;`;
+                return `export type ${newName} = unknown;`;
             }
 
             // Also check if it's just whitespace inside braces
             const bodyContent = typeStr.substring(typeStr.indexOf("{") + 1, typeStr.lastIndexOf("}"));
             if (!bodyContent.trim()) {
-                return `${i === 0 ? "export " : ""}type ${newName} = unknown;`;
+                return `export type ${newName} = unknown;`;
             }
 
             return typeStr.replace(
                 `interface ${originalName}`,
-                `${i === 0 ? "export " : ""}interface ${newName}`
+                `export interface ${newName}`
             );
         });
 

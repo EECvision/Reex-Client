@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { api } from "@/services/api";
 import { EndpointInfo } from "@/types";
 import { isLocalhostUrl } from "@/lib/urlUtils";
+import { useSettings } from "@/providers/SettingsContext";
 
 type InputMode = "form" | "raw";
 
@@ -35,6 +36,8 @@ type InputModeState = {
 };
 
 export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, authToken, customHeaders = {}, isStandaloneMode = false, selectedEndpoint }: UseEndpointExecutionProps) => {
+    const { unwrapResponseData } = useSettings();
+    
     // Internal state for execution management
     const [params, setParams] = useState<ParamsState>({});
     const [rawPayloads, setRawPayloads] = useState<RawPayloadState>({});
@@ -362,7 +365,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             }
 
             const res = execRes.data;
-            const payload = res?.data ?? res;
+            const payload = unwrapResponseData ? (res?.data ?? res) : res;
 
             setResults(prev => ({ ...prev, [currentKey]: payload }));
 

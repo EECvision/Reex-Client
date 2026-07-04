@@ -11,28 +11,36 @@ interface SettingsContextType {
     setTheme: (theme: ThemeType) => void;
     toggleTheme: () => void;
     setViewPreference: (pref: ViewPreferenceType) => void;
+    unwrapResponseData: boolean;
+    setUnwrapResponseData: (val: boolean) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 const THEME_KEY = 'reex_theme';
 const VIEW_PREF_KEY = 'reex_view_preference';
+const UNWRAP_DATA_KEY = 'reex_unwrap_data';
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [theme, setTheme] = useState<ThemeType>('light');
     const [viewPreference, setViewPreferenceState] = useState<ViewPreferenceType>('json');
+    const [unwrapResponseData, setUnwrapResponseDataState] = useState<boolean>(true);
     const [mounted, setMounted] = useState(false);
 
     // Load settings from localStorage on mount
     useEffect(() => {
         const savedTheme = localStorage.getItem(THEME_KEY) as ThemeType;
         const savedViewPref = localStorage.getItem(VIEW_PREF_KEY) as ViewPreferenceType;
+        const savedUnwrap = localStorage.getItem(UNWRAP_DATA_KEY);
 
         if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
             setTheme(savedTheme);
         }
         if (savedViewPref && ['json', 'raw', 'pretty'].includes(savedViewPref)) {
             setViewPreferenceState(savedViewPref);
+        }
+        if (savedUnwrap !== null) {
+            setUnwrapResponseDataState(savedUnwrap === 'true');
         }
         setMounted(true);
     }, []);
@@ -67,8 +75,9 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     useEffect(() => {
         if (mounted) {
             localStorage.setItem(VIEW_PREF_KEY, viewPreference);
+            localStorage.setItem(UNWRAP_DATA_KEY, unwrapResponseData.toString());
         }
-    }, [viewPreference, mounted]);
+    }, [viewPreference, unwrapResponseData, mounted]);
 
     const toggleTheme = useCallback(() => {
         setTheme(prev => {
@@ -81,8 +90,12 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         setViewPreferenceState(pref);
     }, []);
 
+    const setUnwrapResponseData = useCallback((val: boolean) => {
+        setUnwrapResponseDataState(val);
+    }, []);
+
     return (
-        <SettingsContext.Provider value={{ theme, viewPreference, setTheme, toggleTheme, setViewPreference }}>
+        <SettingsContext.Provider value={{ theme, viewPreference, unwrapResponseData, setTheme, toggleTheme, setViewPreference, setUnwrapResponseData }}>
             {children}
         </SettingsContext.Provider>
     );
