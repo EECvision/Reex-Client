@@ -106,33 +106,33 @@ export const createSandboxPayload = (
     isBinary: false,
     content: QUERY_PROVIDER_CONTENT,
   };
-  files["src/api-services/auth/AuthProvider.tsx"] = {
+  files["src/api-services/auth-methods/AuthProvider.tsx"] = {
     isBinary: false,
     content: AUTH_PROVIDER_CONTENT,
   };
-  files["src/api-services/auth/manager.ts"] = {
+  files["src/api-services/auth-methods/manager.ts"] = {
     isBinary: false,
     content: AUTH_MANAGER_CONTENT,
   };
-  files["src/api-services/auth/types.ts"] = {
+  files["src/api-services/auth-methods/types.ts"] = {
     isBinary: false,
     content: AUTH_TYPES_CONTENT,
   };
 
-  files["src/api-services/auth/cookie-auth/CookieAuthGuard.tsx"] = {
+  files["src/api-services/auth-methods/cookie-auth/CookieAuthGuard.tsx"] = {
     isBinary: false,
     content: COOKIE_GUARD_CONTENT,
   };
-  files["src/api-services/auth/cookie-auth/provider.ts"] = {
+  files["src/api-services/auth-methods/cookie-auth/provider.ts"] = {
     isBinary: false,
     content: COOKIE_PROVIDER_CONTENT,
   };
 
-  files["src/api-services/auth/localstorage-auth/LocalStorageAuthGuard.tsx"] = {
+  files["src/api-services/auth-methods/localstorage-auth/LocalStorageAuthGuard.tsx"] = {
     isBinary: false,
     content: LOCALSTORAGE_GUARD_CONTENT,
   };
-  files["src/api-services/auth/localstorage-auth/provider.ts"] = {
+  files["src/api-services/auth-methods/localstorage-auth/provider.ts"] = {
     isBinary: false,
     content: LOCALSTORAGE_PROVIDER_CONTENT,
   };
@@ -302,7 +302,7 @@ ${hooks.join("\n\n")}
     content: `import React from "react";
 import { createRoot } from "react-dom/client";
 import { QueryProvider } from "./api-services/providers/QueryProvider";
-import { AuthProvider } from "./api-services/auth/AuthProvider";
+import { AuthProvider } from "./api-services/auth-methods/AuthProvider";
 import App from "./App";
 
 const rootElement = document.getElementById("root");
