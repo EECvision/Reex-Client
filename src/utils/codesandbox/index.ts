@@ -12,7 +12,6 @@ import {
   USE_AUTH_HOOK_CONTENT,
   USE_NOTIFICATION_HOOK_CONTENT,
   BASE_API_CLIENT_CONTENT,
-  INDEX_HOOKS_CONTENT,
   REACT_QUERY_WRAPPERS_CONTENT,
 } from "./templates";
 import {
@@ -155,16 +154,25 @@ export const createSandboxPayload = (
     content: USE_NOTIFICATION_HOOK_CONTENT,
   };
 
-  files["src/api-services/api-client/core.ts"] = {
+  files["src/api-services/core.ts"] = {
     isBinary: false,
     content: BASE_API_CLIENT_CONTENT,
   };
-  files["src/api-services/api-client/index.ts"] = {
-    isBinary: false,
-    content: INDEX_HOOKS_CONTENT,
-  };
 
   const moduleNames = Object.keys(modules).sort();
+
+  const globalHookFrequency = new Map<string, number>();
+  if (config.manifest) {
+    moduleNames.forEach((modName) => {
+      const methods = config.manifest?.[modName];
+      if (methods) {
+        Object.keys(methods).forEach((m) => {
+          const hook = getHookName(m);
+          globalHookFrequency.set(hook, (globalHookFrequency.get(hook) || 0) + 1);
+        });
+      }
+    });
+  }
 
   // 4. Inject Generated Definitions, Types, and Hooks
   let indexHooksContent = REACT_QUERY_WRAPPERS_CONTENT + "\n";
@@ -175,8 +183,8 @@ export const createSandboxPayload = (
     let cleanContent = modules[modName].replace(
       /import\s+{([^}]+)}\s+from\s+['"].*?['"];?/g,
       (match, imports) => {
-        if (imports.includes("CLIENT")) {
-          return `import { CLIENT } from '../core';`;
+        if (imports.includes("CLIENT") || imports.includes("apiClient")) {
+          return `import { apiClient } from '../core';`;
         }
         return match;
       },
@@ -187,18 +195,13 @@ export const createSandboxPayload = (
     };
 
     barrelExports.push(
-      `import { ${modName}Api } from "./definitions/${modName}";`,
+      `import { ${modName}Api } from "./${modName}";`,
     );
 
     // B. Types and Hooks (Ported logic from node backend)
     const methods = config.manifest?.[modName];
     if (methods) {
       const methodNames = Object.keys(methods);
-      const hookFrequency = new Map();
-      methodNames.forEach((m) => {
-        const hook = getHookName(m);
-        hookFrequency.set(hook, (hookFrequency.get(hook) || 0) + 1);
-      });
 
       // Types
       methodNames.forEach((methodName) => {
@@ -272,9 +275,9 @@ ${hooks.join("\n\n")}
 
       // Add to hooks index export
       const moduleHooks = methodNames.map((m) => getHookName(m));
-      const hasConflict = moduleHooks.some((h) => hookFrequency.get(h) > 1);
+      const hasConflict = moduleHooks.some((h) => (globalHookFrequency.get(h) || 0) > 1);
       if (hasConflict) {
-        indexHooksContent += `export {\n${moduleHooks.map((h) => (hookFrequency.get(h) > 1 ? `  ${h} as ${h.replace("use", `use${pascalModule}`)},` : `  ${h},`)).join("\n")}\n} from "./use${pascalModule}Queries";\n`;
+        indexHooksContent += `export {\n${moduleHooks.map((h) => ((globalHookFrequency.get(h) || 0) > 1 ? `  ${h} as ${h.replace("use", `use${pascalModule}`)},` : `  ${h},`)).join("\n")}\n} from "./use${pascalModule}Queries";\n`;
       } else {
         indexHooksContent += `export * from "./use${pascalModule}Queries";\n`;
       }
@@ -286,7 +289,7 @@ ${hooks.join("\n\n")}
     content: indexHooksContent,
   };
 
-  files["src/api-services/index.ts"] = {
+  files["src/api-services/definitions/index.ts"] = {
     isBinary: false,
     content: `${barrelExports.join("\n")}\n\nexport const api = {\n${moduleNames.map((name) => `  ...${name}Api,`).join("\n")}\n};`,
   };
@@ -385,14 +388,14 @@ export default function App() {
   } else if (firstMod) {
     // Fallback to basic API client test if no GET query was found
     appContent = `import React, { useState } from 'react';
-import { api } from './api-services';
+import { api } from './api-services/definitions';
 
 export default function App() {
   const [result, setResult] = useState<any>(null);
 
   const testApi = async () => {
     try {
-        setResult("API Client ready! Import 'api' from './api-services' to use it.");
+        setResult("API Client ready! Import 'api' from './api-services/definitions' to use it.");
     } catch (error) {
         setResult(error);
     }
