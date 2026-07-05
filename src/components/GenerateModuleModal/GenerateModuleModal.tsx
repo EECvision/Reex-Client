@@ -3,12 +3,12 @@
 
 import React, { useState } from "react";
 import { api } from "../../services/api";
-import styles from "./GenerateTemplateModal.module.css";
+import styles from "./GenerateModuleModal.module.css";
 import { Button } from "../ui/Button/Button";
 import { Modal } from "../ui/Modal/Modal";
 import { useProject } from "../../providers/ProjectContext";
 
-interface GenerateTemplateModalProps {
+interface GenerateModuleModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (message: string) => void;
@@ -17,13 +17,13 @@ interface GenerateTemplateModalProps {
   targetDir: string; // REQUIRED
 }
 
-const GenerateTemplateModal: React.FC<GenerateTemplateModalProps> = ({
+const GenerateModuleModal: React.FC<GenerateModuleModalProps> = ({
   isOpen,
   onClose,
   onGenerated,
   onSuccess,
   onTaskStarted,
-  targetDir // REQUIRED
+  targetDir, // REQUIRED
 }) => {
   const [moduleName, setModuleName] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -49,12 +49,17 @@ const GenerateTemplateModal: React.FC<GenerateTemplateModalProps> = ({
       // Notify parent immediately so it can start listening BEFORE the request
       if (onTaskStarted) onTaskStarted(taskId);
 
-      const data = await api.generateTemplate({
-        moduleName: moduleName.trim().toLowerCase()
-      }, targetDir, api.getBridgeUrl(), taskId);
+      const data = await api.generateTemplate(
+        {
+          moduleName: moduleName.trim().toLowerCase(),
+        },
+        targetDir,
+        api.getBridgeUrl(),
+        taskId,
+      );
 
       if (!data.success) {
-        throw new Error(data.error || "Failed to generate template");
+        throw new Error(data.error || "Failed to generate module");
       }
 
       // onSuccess(data.message || "Template generation started!"); // REMOVED as per user request
@@ -79,7 +84,7 @@ const GenerateTemplateModal: React.FC<GenerateTemplateModalProps> = ({
       setGenerating(false);
       onClose();
     } catch (err: any) {
-      setError(err.message || "Failed to generate template");
+      setError(err.message || "Failed to generate module");
       setGenerating(false);
     }
   };
@@ -94,11 +99,7 @@ const GenerateTemplateModal: React.FC<GenerateTemplateModalProps> = ({
 
   const footerContent = (
     <>
-      <Button
-        onClick={handleClose}
-        variant="secondary"
-        disabled={generating}
-      >
+      <Button onClick={handleClose} variant="secondary" disabled={generating}>
         Cancel
       </Button>
       <Button
@@ -116,7 +117,7 @@ const GenerateTemplateModal: React.FC<GenerateTemplateModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Generate API Template"
+      title="Generate New Module"
       size="md"
       footer={footerContent}
       closeOnOverlayClick={!generating}
@@ -125,10 +126,7 @@ const GenerateTemplateModal: React.FC<GenerateTemplateModalProps> = ({
       <div className={styles.content}>
         <label className={styles.label}>
           Module Name
-          <span className={styles.hint}>
-            {" "}
-            (e.g., users, products, orders)
-          </span>
+          <span className={styles.hint}> (e.g., users, products, orders)</span>
         </label>
         <input
           type="text"
@@ -142,12 +140,12 @@ const GenerateTemplateModal: React.FC<GenerateTemplateModalProps> = ({
         />
         {error && <p className={styles.error}>{error}</p>}
         <p className={styles.description}>
-          This will generate a TypeScript module with GET, POST, PUT, and
-          DELETE operations.
+          This will generate a TypeScript module with GET, POST, PUT, and DELETE
+          operations.
         </p>
       </div>
     </Modal>
   );
 };
 
-export default GenerateTemplateModal;
+export default GenerateModuleModal;

@@ -349,7 +349,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   onClick={onGenerateClick}
                 >
                   <Code size={16} />
-                  Generate Template
+                  Generate Module
                 </DropdownMenu.Item>
               )}
             </DropdownMenu.Content>
@@ -461,7 +461,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   leftIcon={<Plus size={16} />}
                   style={{ justifyContent: "flex-start", width: "100%" }}
                 >
-                  Generate Template
+                  Generate Module
                 </Button>
               )}
 

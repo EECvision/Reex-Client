@@ -6,7 +6,7 @@ import { useProject } from "@/providers/ProjectContext";
 import ImportModal from "@/components/ImportModal/ImportModal";
 import HistoryModal from "@/components/HistoryModal/HistoryModal";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal/DeleteConfirmModal";
-import GenerateTemplateModal from "@/components/GenerateTemplateModal/GenerateTemplateModal";
+import GenerateModuleModal from "@/components/GenerateModuleModal/GenerateModuleModal";
 import Navbar from "@/components/Navbar/Navbar";
 import SidebarController from "@/components/Sidebar/SidebarController";
 import WorkspaceView from "@/components/WorkspaceView/WorkspaceView";
@@ -448,7 +448,7 @@ const App = () => {
 
         {
           showGenerateModal &&
-          <GenerateTemplateModal
+          <GenerateModuleModal
             isOpen={showGenerateModal}
             onClose={() => {
               setShowGenerateModal(false);
