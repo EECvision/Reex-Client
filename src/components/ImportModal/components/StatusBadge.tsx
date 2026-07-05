@@ -21,7 +21,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, onClick }) => {
     }
     if (status === "deleted") {
         className = styles.statusDeleted;
-        label = "Not Found";
+        label = "Local Only";
     }
     if (status === "disabled") {
         className = styles.statusDisabled;
