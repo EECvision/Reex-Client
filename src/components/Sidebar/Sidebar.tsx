@@ -14,6 +14,7 @@ import {
   MoreVertical,
   Code,
   PanelLeft,
+  Search,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "../ui/Button/Button";
@@ -85,6 +86,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   >(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const nameInputRef = useRef<HTMLInputElement>(null);
   const originalNameRef = useRef<string>("");
@@ -161,6 +163,39 @@ const Sidebar: React.FC<SidebarProps> = ({
     return fallbackName;
   };
 
+  const filteredCollectionGroups = React.useMemo(() => {
+    if (!collectionGroups) return [];
+    if (!searchQuery.trim()) return collectionGroups;
+    
+    const query = searchQuery.toLowerCase();
+
+    return collectionGroups.map(group => {
+      const filteredModules: Record<string, EndpointInfo[]> = {};
+      
+      Object.entries(group.modules).forEach(([modKey, endpoints]) => {
+        const modMatch = modKey.toLowerCase().includes(query);
+        
+        if (modMatch) {
+          filteredModules[modKey] = endpoints; // keep all endpoints if module matches
+        } else {
+          const matchedEndpoints = endpoints.filter(ep => 
+            ep.fnName.toLowerCase().includes(query) || 
+            (ep.url && ep.url.toLowerCase().includes(query))
+          );
+          
+          if (matchedEndpoints.length > 0) {
+            filteredModules[modKey] = matchedEndpoints;
+          }
+        }
+      });
+
+      return {
+        ...group,
+        modules: filteredModules
+      };
+    }).filter(group => Object.keys(group.modules).length > 0);
+  }, [collectionGroups, searchQuery]);
+
   return (
     <aside className={`${styles.sidebar} ${!isOpen ? styles.railMode : ""}`}>
       <div className={styles.header}>
@@ -194,12 +229,23 @@ const Sidebar: React.FC<SidebarProps> = ({
             className={styles.sidebarSelect}
           />
         </div>
+        <div className={styles.searchWrapper}>
+          <Search size={14} className={styles.searchIcon} />
+          <input
+            type="text"
+            placeholder="Search endpoints..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className={styles.searchInput}
+          />
+        </div>
       </div>
 
       <div className={styles.folderList}>
         {collectionGroups
-          ? collectionGroups.map((group) => {
-              const isExpanded = expandedCollections.has(group.id);
+          ? filteredCollectionGroups.length > 0 ? filteredCollectionGroups.map((group) => {
+              const isSearchActive = searchQuery.trim().length > 0;
+              const isExpanded = isSearchActive || expandedCollections.has(group.id);
               return (
                 <div key={group.id} className={styles.collectionGroup}>
                   {/* Root Folder (Collection) */}
@@ -344,6 +390,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         ([modKey, endpoints]) => {
                           // Use the actual unique apiKey from the first endpoint as the ID
                           const uniqueApiKey = getModuleId(endpoints, modKey);
+                          const isModuleExpanded = isSearchActive || expandedFolders.has(uniqueApiKey);
 
                           return (
                             <div key={uniqueApiKey} className={styles.folder}>
@@ -352,7 +399,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 onClick={() => onToggleFolder(uniqueApiKey)}
                               >
                                 <div className={styles.folderIconWrapper}>
-                                  {expandedFolders.has(uniqueApiKey) ? (
+                                  {isModuleExpanded ? (
                                     <ChevronDown size={14} color="#6b7280" />
                                   ) : (
                                     <ChevronRight size={14} color="#6b7280" />
@@ -361,10 +408,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 <div className={styles.folderContent}>
                                   <Folder
                                     size={14}
-                                    className={`${styles.folderIcon} ${expandedFolders.has(uniqueApiKey) ? styles.folderIconExpanded : ""}`}
+                                    className={`${styles.folderIcon} ${isModuleExpanded ? styles.folderIconExpanded : ""}`}
                                   />
                                   <span
-                                    className={`${styles.folderName} ${expandedFolders.has(uniqueApiKey) ? styles.folderNameExpanded : ""}`}
+                                    className={`${styles.folderName} ${isModuleExpanded ? styles.folderNameExpanded : ""}`}
                                   >
                                     {modKey}
                                   </span>
@@ -388,7 +435,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                   </Button>
                                 )}
                               </div>
-                              {expandedFolders.has(uniqueApiKey) && (
+                              {isModuleExpanded && (
                                 <div className={styles.fileList}>
                                   {endpoints.map((endpoint) => (
                                     <div
@@ -443,7 +490,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                   )}
                 </div>
               );
-            })
+            }) : searchQuery.trim().length > 0 ? (
+              <div className={styles.noResults}>
+                <Search size={24} className={styles.noResultsIcon} />
+                <p>No endpoints or modules found</p>
+                <span>Try adjusting your search term</span>
+              </div>
+            ) : null
           : // FALLBACK / LEGACY
             Object.entries(groupedEndpoints).map(([apiKey, endpoints]) => (
               // ... (Existing implementation for safety)
