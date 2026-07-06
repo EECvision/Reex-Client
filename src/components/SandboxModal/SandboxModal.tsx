@@ -24,7 +24,7 @@ const SandboxModal: React.FC<SandboxModalProps> = ({ isOpen, onClose }) => {
     <div className={styles.overlay}>
       <Rnd
         default={{
-          x: typeof window !== 'undefined' ? Math.max(0, (window.innerWidth - 1000) / 2) : 0,
+          x: typeof window !== 'undefined' ? Math.max(0, ((window.innerWidth - 1000) / 2) + 88) : 0,
           y: typeof window !== 'undefined' ? Math.max(0, (window.innerHeight - 650) / 2 + 18) : 0,
           width: 1000,
           height: 650,
@@ -34,6 +34,16 @@ const SandboxModal: React.FC<SandboxModalProps> = ({ isOpen, onClose }) => {
         bounds="parent"
         dragHandleClassName={styles.header}
         className={styles.rndContainer}
+        resizeHandleStyles={{
+          left: { zIndex: 9999 },
+          right: { zIndex: 9999 },
+          top: { zIndex: 9999 },
+          bottom: { zIndex: 9999 },
+          topLeft: { zIndex: 9999 },
+          topRight: { zIndex: 9999 },
+          bottomLeft: { zIndex: 9999 },
+          bottomRight: { zIndex: 9999 },
+        }}
       >
         <div className={styles.header}>
           <div className={styles.title}>

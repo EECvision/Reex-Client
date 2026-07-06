@@ -25,6 +25,7 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
   const [width, setWidth] = useState(defaultWidth);
   const [isDragging, setIsDragging] = useState(false);
   const isResizing = useRef(false);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const startResizing = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -36,12 +37,13 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
   }, []);
 
   const resize = useCallback((e: MouseEvent) => {
-    if (isResizing.current) {
+    if (isResizing.current && panelRef.current) {
       // Use requestAnimationFrame to sync with browser render cycle
       requestAnimationFrame(() => {
+        const rect = panelRef.current!.getBoundingClientRect();
         let newWidth = resizerPosition === 'right' 
-          ? e.clientX 
-          : window.innerWidth - e.clientX;
+          ? e.clientX - rect.left 
+          : rect.right - e.clientX;
           
         if (newWidth < minWidth) newWidth = minWidth;
         if (newWidth > maxWidth) newWidth = maxWidth;
@@ -67,6 +69,7 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
 
   return (
     <div 
+      ref={panelRef}
       className={`${styles.container} ${!isDragging ? styles.withTransition : ''} ${!isOpen ? styles.closed : ''} ${className}`}
       style={{ width: isOpen ? width : collapsedWidth }}
     >
