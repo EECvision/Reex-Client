@@ -246,6 +246,7 @@ export default function TestApiPage() {
             data={editorData}
             onSave={handleSaveRequest}
             requestName={activeRequest.name}
+            requestId={activeRequest.id}
           />
         ) : (
           <EmptyState hasEndpoints={true} onImportClick={() => { }} />

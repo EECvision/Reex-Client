@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Send, Layout, Pencil, Loader2, Check, Terminal, Info } from 'lucide-react';
 import { api } from '@/services/api';
+import { ClientStorage } from '@/lib/clientStorage';
 import styles from './RequestEditor.module.css';
 import ResultSection from '@/components/ResultSection/ResultSection';
 import { Button } from '@/components/ui/Button/Button';
@@ -25,12 +26,13 @@ interface RequestEditorProps {
     data?: any; // The request data (method, url, etc)
     onSave: (name: string, config: any) => void;
     requestName: string;
+    requestId: string;
 }
 
 const PROXY_PORT = 9876;
 const PROXY_URL = `http://localhost:${PROXY_PORT}`;
 
-export default function RequestEditor({ data, onSave, requestName }: RequestEditorProps) {
+export default function RequestEditor({ data, onSave, requestName, requestId }: RequestEditorProps) {
     const { showToast } = useToast();
 
     // Request State
@@ -75,11 +77,23 @@ export default function RequestEditor({ data, onSave, requestName }: RequestEdit
             setAuthType(data.authType || 'none');
             setAuthToken(data.authToken || '');
             setBody(data.body || '{\n  \n}');
-            // Clear results on switch
+            // Clear results temporarily until cache loads
             setResult(null);
             setError(null);
             setExecutedCurl(undefined);
             setInterfacePreview(null);
+            
+            // Load from LRU Cache
+            if (requestId) {
+                ClientStorage.getExecutionResult(requestId).then(saved => {
+                    if (saved) {
+                        setResult(saved.result || null);
+                        setError(saved.error || null);
+                        setExecutedCurl(saved.executedCurl || undefined);
+                        setInterfacePreview(saved.interfacePreview || null);
+                    }
+                }).catch(err => console.error("Failed to load cached result", err));
+            }
         }
         setName(requestName);
     }, []); // Run only on mount (key forces remount on switch)
@@ -203,6 +217,7 @@ export default function RequestEditor({ data, onSave, requestName }: RequestEdit
             setResult(execRes.data);
             showToast('success', `Status: ${execRes.data.status || 200}`);
 
+            let currentPreview = null;
             // Generate Interface Preview
             try {
                 const previewRes = await api.previewTypes({
@@ -210,15 +225,34 @@ export default function RequestEditor({ data, onSave, requestName }: RequestEdit
                     fnName: 'ManualRequest'
                 });
                 if ((previewRes as any).success) {
-                    setInterfacePreview((previewRes as any).interfaceString);
+                    currentPreview = (previewRes as any).interfaceString;
+                    setInterfacePreview(currentPreview);
                 }
             } catch (e) {
                 console.warn("Failed to generate type preview", e);
             }
+            
+            // Save to LRU Cache
+            ClientStorage.saveExecutionResult(requestId, {
+                result: execRes.data,
+                error: null,
+                executedCurl: curlCmd,
+                interfacePreview: currentPreview
+            }).catch(e => console.error(e));
 
         } catch (err: any) {
-            setError(err.message || "Unknown error occurred");
+            const errMsg = err.message || "Unknown error occurred";
+            setError(errMsg);
             showToast('error', "Error: Failed to fetch");
+            
+            // Wait, curlCmd is scoped to the try block. It might not exist here.
+            // But executedCurl state is already updated before the fetch starts!
+            ClientStorage.saveExecutionResult(requestId, {
+                result: null,
+                error: errMsg,
+                executedCurl: undefined, // We'll just omit it here, state will use undefined or old value
+                interfacePreview: null
+            }).catch(e => console.error(e));
         } finally {
             setLoading(false);
         }

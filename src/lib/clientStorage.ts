@@ -136,4 +136,44 @@ export class ClientStorage {
         console.error(`[ClientStorage] ❌ Cannot save "${key}" — item may exceed total IndexedDB capacity.`);
         return false;
     }
+
+    // --- Execution Result Caching ---
+    static async getExecutionResult(requestId: string): Promise<any> {
+        const items = await this.get<any>('request_results');
+        return items.find(i => i.id === requestId);
+    }
+
+    static async saveExecutionResult(requestId: string, resultData: any): Promise<void> {
+        if (typeof window === 'undefined') return;
+        
+        try {
+            const items = await this.get<any>('request_results');
+            
+            // Remove older instance
+            let filtered = items.filter(i => i.id !== requestId);
+            
+            // Add new result to front
+            filtered.unshift({ id: requestId, ...resultData, timestamp: Date.now() });
+            
+            // Apply normal LRU Cap (20)
+            if (filtered.length > 20) {
+                filtered = filtered.slice(0, 20);
+            }
+            
+            try {
+                await this.save('request_results', filtered);
+            } catch (error) {
+                if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+                    console.warn('[ClientStorage] Quota exceeded on request_results. Trimming aggressively.');
+                    // Aggressive fallback to last 5
+                    filtered = filtered.slice(0, 5);
+                    await this.save('request_results', filtered);
+                } else {
+                    throw error;
+                }
+            }
+        } catch (e) {
+            console.error('[ClientStorage] Failed to save execution result:', e);
+        }
+    }
 }
