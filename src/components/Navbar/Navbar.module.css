@@ -542,7 +542,7 @@
     display: flex;
   }
 
-  .rightSection > button:not(.mobileMenuBtn),
+  .rightSection > button:not(.mobileMenuBtn):not(.mobileAssistantBtn),
   .rightSection .actionGroup,
   .rightSection .separator {
     display: none;
@@ -561,7 +561,26 @@
   }
 
   .baseUrlInputWrapper {
-    max-width: 150px;
+    flex: 1;
+    min-width: 100px;
+    max-width: 300px;
+  }
+
+  .baseUrlInput {
+    width: 100%;
+  }
+
+  .mobileAssistantBtn {
+    width: 36px;
+    height: 36px;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hideOnMobile {
+    display: none;
   }
 }
 

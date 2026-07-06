@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import styles from "./ResultSection.module.css";
 import { Button } from "../ui/Button/Button";
 import { useSettings, ViewPreferenceType } from "@/providers/SettingsContext";
-import { FileJson, FileText, Code } from "lucide-react";
+import { FileJson, FileText, Code, Info } from "lucide-react";
 
 // Dynamic import for Monaco to avoid SSR issues
 const MonacoJsonEditor = dynamic(
@@ -48,7 +48,12 @@ const ResultSection: React.FC<ResultSectionProps> = ({
   updatingInterface,
   isStandaloneMode = false,
 }) => {
-  const { viewPreference, setViewPreference, unwrapResponseData, setUnwrapResponseData } = useSettings();
+  const {
+    viewPreference,
+    setViewPreference,
+    unwrapResponseData,
+    setUnwrapResponseData,
+  } = useSettings();
   const [interfaceCopied, setInterfaceCopied] = React.useState(false);
 
   const handleCopyInterface = () => {
@@ -92,14 +97,18 @@ const ResultSection: React.FC<ResultSectionProps> = ({
 
         {/* Format Toggle */}
         <div className={styles.formatToggle}>
-          <label className={styles.unwrapLabel}>
-            <input 
-              type="checkbox" 
-              checked={unwrapResponseData} 
-              onChange={(e) => setUnwrapResponseData(e.target.checked)} 
+          <label
+            className={styles.unwrapLabel}
+            data-tooltip="Extracts the nested data object from the API response. Click Send Request again to apply."
+          >
+            <input
+              type="checkbox"
+              checked={unwrapResponseData}
+              onChange={(e) => setUnwrapResponseData(e.target.checked)}
               className={styles.unwrapCheckbox}
             />
             Unwrap Data
+            <Info size={14} style={{ color: "#94a3b8", marginLeft: "2px" }} />
           </label>
           {VIEW_OPTIONS.map((option) => (
             <button

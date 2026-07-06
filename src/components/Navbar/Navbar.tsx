@@ -375,8 +375,9 @@ const Navbar: React.FC<NavbarProps> = ({
             onClick={onAssistantClick}
             leftIcon={<Sparkles size={16} />}
             title="Ask Assistant"
+            className={styles.mobileAssistantBtn}
           >
-            Ask Assistant
+            <span className={styles.hideOnMobile}>Ask Assistant</span>
           </Button>
         )}
 

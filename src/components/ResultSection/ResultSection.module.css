@@ -46,6 +46,55 @@
   cursor: pointer;
   margin-right: 12px;
   margin-left: 6px;
+  position: relative;
+}
+
+/* Styled Tooltip */
+.unwrapLabel::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background-color: #1f2937;
+  color: #f9fafb;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  width: 220px;
+  text-align: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 100;
+  pointer-events: none;
+  font-weight: 500;
+  line-height: 1.4;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  margin-bottom: 8px;
+}
+
+.unwrapLabel::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  border: 6px solid transparent;
+  border-top-color: #1f2937;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 100;
+  pointer-events: none;
+  margin-bottom: -4px;
+}
+
+.unwrapLabel:hover::after,
+.unwrapLabel:hover::before {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
 
 .unwrapCheckbox {
@@ -118,19 +167,15 @@
 
 /* Split View */
 .splitView {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: 1.25rem;
-}
-
-@media (max-width: 1024px) {
-  .splitView {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* Result Box */
 .resultBox {
+  flex: 1 1 350px;
+  min-width: 0;
   background: var(--card-bg, linear-gradient(135deg, #fafbfc 0%, #ffffff 100%));
   border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
   border-radius: 12px;
