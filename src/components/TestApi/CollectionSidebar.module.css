@@ -1,367 +1,367 @@
 .sidebarContainer {
-    width: 100%;
-    height: 100%;
-    border-right: 1px solid var(--sidebar-border);
-    background: var(--sidebar-bg);
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
+  width: 100%;
+  height: 100%;
+  border-right: 1px solid var(--sidebar-border);
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
 }
 
 @media (min-width: 1141px) {
+  .sidebarContainer:not(.open) .collectionsList,
+  .sidebarContainer:not(.open) .brand {
+    display: none;
+  }
 
-    .sidebarContainer:not(.open) .collectionsList,
-    .sidebarContainer:not(.open) .brand {
-        display: none;
-    }
+  .sidebarContainer:not(.open) .sidebarHeader {
+    justify-content: center;
+    padding: 0;
+  }
 
-    .sidebarContainer:not(.open) .sidebarHeader {
-        justify-content: center;
-        padding: 0;
-    }
-
-    .sidebarContainer:not(.open) .sidebarBottom {
-        padding: 16px 0;
-        justify-content: center;
-    }
+  .sidebarContainer:not(.open) .sidebarBottom {
+    padding: 16px 0;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 980px) {
-    .sidebarContainer {
-        position: fixed;
-        left: 0;
-        top: 64px;
-        bottom: 0;
-        height: calc(100vh - 64px);
-        transform: translateX(-100%);
-        box-shadow: 10px 0 15px -3px rgba(0, 0, 0, 0.1);
-        width: 260px;
-        /* Reset width to fixed on mobile */
-        opacity: 1;
-        z-index: 1001;
-    }
+  .sidebarContainer {
+    position: fixed;
+    left: 0;
+    top: 64px;
+    bottom: 0;
+    height: calc(100vh - 64px);
+    transform: translateX(-100%);
+    box-shadow: 10px 0 15px -3px rgba(0, 0, 0, 0.1);
+    width: 260px;
+    /* Reset width to fixed on mobile */
+    opacity: 1;
+    z-index: 1001;
+  }
 
-    .open {
-        transform: translateX(0);
-    }
+  .open {
+    transform: translateX(0);
+  }
 }
 
 .sidebarHeader {
-    padding: 0 16px;
-    height: 60px;
-    /* Match Sidebar header height */
-    border-bottom: 1px solid var(--sidebar-header-border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  padding: 0 16px;
+  height: 60px;
+  /* Match Sidebar header height */
+  border-bottom: 1px solid var(--sidebar-header-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .collectionsHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--sidebar-header-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--sidebar-header-border);
 }
 
 .sidebarTitle {
-    font-weight: 600;
-    font-size: 14px;
-    color: var(--text-primary);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
 }
 
 .toggleBtn {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    color: var(--text-secondary);
-    padding: 8px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .toggleBtn:hover {
-    background: var(--hover-bg);
-    color: var(--text-primary);
+  background: var(--hover-bg);
+  color: var(--text-primary);
 }
 
 .iconBtn {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    color: var(--text-secondary);
-    padding: 8px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .brand {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .iconBtn:hover {
-    background: var(--hover-bg);
-    color: var(--text-primary);
+  background: var(--hover-bg);
+  color: var(--text-primary);
 }
 
 .collectionsList {
-    flex: 1;
-    overflow-y: auto;
-    padding: 8px 0;
-    /* Align with folderList padding 8px 0 */
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+  /* Align with folderList padding 8px 0 */
 }
 
 .emptyState {
-    padding: 20px;
-    text-align: center;
-    font-size: 13px;
-    color: var(--text-muted);
+  padding: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .sidebarBottom {
-    margin-top: auto;
-    padding: 8px 16px;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 12px;
-    border-top: 1px solid var(--sidebar-border, #e5e7eb);
+  margin-top: auto;
+  padding: 8px 16px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--sidebar-border, #e5e7eb);
 }
 
 /* Collection Item */
 .collectionItem {
-    margin-bottom: 2px;
-    /* Match folder margin */
+  margin-bottom: 2px;
+  /* Match folder margin */
 }
 
 .collectionHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 6px 16px 6px 8px;
-    /* Match folderHeader padding */
-    cursor: pointer;
-    border-radius: 0;
-    /* Sidebar folders don't seem to have radius in 2px margin list? Actually folderHeader has transition. Let's use 0 or small radius if desired. Sidebar.css didn't show radius on folderHeader hover. */
-    user-select: none;
-    color: var(--text-secondary);
-    /* Default text color in sidebar */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px;
+  padding-left: 12px;
+  /* Match folderHeader padding */
+  cursor: pointer;
+  border-radius: 0;
+  /* Sidebar folders don't seem to have radius in 2px margin list? Actually folderHeader has transition. Let's use 0 or small radius if desired. Sidebar.css didn't show radius on folderHeader hover. */
+  user-select: none;
+  color: var(--text-secondary);
+  /* Default text color in sidebar */
 }
 
 .collectionHeader:hover {
-    background: var(--hover-bg);
-    color: var(--text-primary);
+  background: var(--hover-bg);
+  color: var(--text-primary);
 }
 
 .collectionInfo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    /* Match folderContent gap */
-    overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Match folderContent gap */
+  overflow: hidden;
 }
 
 .collectionIcon {
-    color: var(--text-secondary);
-    width: 20px;
-    display: flex;
-    justify-content: center;
+  color: var(--text-secondary);
+  width: 20px;
+  display: flex;
+  justify-content: center;
 }
 
 .collectionIconExpanded {
-    color: var(--primary-color, #3b82f6);
-    fill: var(--active-bg, #ebf5ff);
+  color: var(--primary-color, #3b82f6);
+  fill: var(--active-bg, #ebf5ff);
 }
 
 .collectionName {
-    font-size: 13px;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    cursor: pointer;
-    flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  flex: 1;
 }
 
 .collectionNameExpanded {
-    font-weight: 600;
-    color: var(--text-primary);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .collectionNameInput {
-    font-size: 13px;
-    font-weight: 500;
-    background: var(--input-bg, rgba(255, 255, 255, 0.07));
-    border: 1px solid var(--primary-color);
-    border-radius: 4px;
-    color: var(--text-primary);
-    padding: 1px 5px;
-    outline: none;
-    width: 100%;
-    min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--input-bg, rgba(255, 255, 255, 0.07));
+  border: 1px solid var(--primary-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  padding: 1px 5px;
+  outline: none;
+  width: 100%;
+  min-width: 0;
 }
 
 .collectionActions {
-    display: flex;
-    gap: 4px;
-    opacity: 0;
-    /* Show on hover */
-    transition: opacity 0.2s;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  /* Show on hover */
+  transition: opacity 0.2s;
 }
 
 .collectionHeader:hover .collectionActions {
-    opacity: 1;
+  opacity: 1;
 }
 
 .actionBtn {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    color: var(--text-secondary);
-    padding: 2px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .actionBtn:hover {
-    color: var(--text-primary);
+  color: var(--text-primary);
 }
 
 .deleteAction:hover {
-    color: var(--error-color);
+  color: var(--error-color);
 }
 
 /* Request List inside Collection */
 .requestsList {
-    padding-left: 0;
-    /* Reset? Sidebar uses nested padding? No, Sidebar uses recursive? No, folderContent structure. Collection is 1 level deep. */
-    /* Let's follow sidebar indent pattern. usually just a bit of margin or padding. 
+  padding-left: 0;
+  /* Reset? Sidebar uses nested padding? No, Sidebar uses recursive? No, folderContent structure. Collection is 1 level deep. */
+  /* Let's follow sidebar indent pattern. usually just a bit of margin or padding. 
        Sidebar doesn't show nested items in the snippet I saw, but implies folder/file structure. 
        Let's stick to a simple indent for now. 
     */
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .emptyRequestState {
-    padding: 4px 8px 4px 32px;
-    font-size: 11px;
-    color: var(--text-muted);
-    font-style: italic;
+  padding: 4px 8px 4px 32px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 .requestItem {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 6px 16px 6px 32px;
-    /* Indent for items inside collection */
-    cursor: pointer;
-    border-left: 2px solid transparent;
-    color: var(--text-secondary);
-    font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px 6px 32px;
+  /* Indent for items inside collection */
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
 }
 
 .requestItem:hover {
-    background: var(--hover-bg);
-    color: var(--text-primary);
+  background: var(--hover-bg);
+  color: var(--text-primary);
 }
 
 .requestActive {
-    background: var(--active-bg);
-    border-left-color: var(--primary-color);
-    color: var(--text-primary);
-    font-weight: 500;
+  background: var(--active-bg);
+  border-left-color: var(--primary-color);
+  color: var(--text-primary);
+  font-weight: 500;
 }
 
 .requestInfo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
 }
 
 .requestName {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .deleteReqBtn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    opacity: 0;
-    font-size: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  font-size: 0;
 }
 
 .requestItem:hover .deleteReqBtn {
-    opacity: 1;
+  opacity: 1;
 }
 
 .deleteReqBtn:hover {
-    color: var(--error-color);
+  color: var(--error-color);
 }
 
 /* Method Badges (Mini) */
 .methodBadge {
-    font-size: 9px;
-    font-weight: 700;
-    min-width: 30px;
-    text-align: center;
-    text-transform: uppercase;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 30px;
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .get {
-    color: #3b82f6;
+  color: #3b82f6;
 }
 
 .post {
-    color: #10b981;
+  color: #10b981;
 }
 
 .put {
-    color: #f59e0b;
+  color: #f59e0b;
 }
 
 .delete {
-    color: #ef4444;
+  color: #ef4444;
 }
 
 .patch {
-    color: #8b5cf6;
+  color: #8b5cf6;
 }
 
 /* Footer Credits (Copied from Sidebar.module.css) */
 .footerCredits {
-    padding: 16px;
-    border-top: 1px solid var(--sidebar-header-border);
-    background-color: var(--sidebar-bg);
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    align-items: center;
-    text-align: center;
-    margin-top: auto;
-    /* Push to bottom */
+  padding: 16px;
+  border-top: 1px solid var(--sidebar-header-border);
+  background-color: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  text-align: center;
+  margin-top: auto;
+  /* Push to bottom */
 }
 
 .devLink {
-    color: var(--text-secondary);
-    text-decoration: none;
+  color: var(--text-secondary);
+  text-decoration: none;
 }
 
 .devLink:hover {
-    text-decoration: underline;
-    color: var(--text-primary);
+  text-decoration: underline;
+  color: var(--text-primary);
 }

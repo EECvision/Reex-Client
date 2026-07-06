@@ -169,7 +169,8 @@
 .folderHeader {
   display: flex;
   align-items: center;
-  padding: 6px 16px 6px 8px;
+  padding: 6px 16px;
+  padding-left: 12px;
   /* Less left padding for chevron */
   cursor: pointer;
   user-select: none;
