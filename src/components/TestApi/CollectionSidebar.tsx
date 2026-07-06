@@ -82,7 +82,10 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
 
     return (
         <div className={`${styles.sidebarContainer} ${isOpen ? styles.open : ''}`}>
-            <div className={styles.sidebarHeader} style={{ justifyContent: hideLogo ? 'flex-end' : 'space-between' }}>
+            <div 
+                className={styles.sidebarHeader} 
+                style={hideLogo ? { justifyContent: isOpen ? 'flex-end' : 'center' } : undefined}
+            >
                 {!hideLogo && (
                     <div className={styles.brand}>
                         <Logo />
