@@ -55,6 +55,7 @@ interface NavbarProps {
   onCodeSandboxClick?: () => void;
   onAssistantClick?: () => void;
   isAssistantOpen?: boolean;
+  onSandboxClick?: () => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -80,6 +81,7 @@ const Navbar: React.FC<NavbarProps> = ({
   onCodeSandboxClick,
   onAssistantClick,
   isAssistantOpen,
+  onSandboxClick,
 }) => {
   const router = useRouter();
   const [url, setUrl] = React.useState(() => {
@@ -231,7 +233,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
               <DropdownMenu.Item
                 className={styles.workspaceOption}
-                onClick={() => router.push("/test-api")}
+                onClick={() => onSandboxClick ? onSandboxClick() : router.push("/test-api")}
               >
                 <div className={styles.workspaceOptionIcon}>
                   <TestTube size={16} />

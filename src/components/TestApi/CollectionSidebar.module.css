@@ -7,7 +7,6 @@
     flex-direction: column;
     flex-shrink: 0;
     transition: width 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
-    z-index: 1001;
     overflow: hidden;
     /* Prevent content jump during width transition */
 }
@@ -34,6 +33,7 @@
         width: 260px;
         /* Reset width to fixed on mobile */
         opacity: 1;
+        z-index: 1001;
     }
 
     .open {

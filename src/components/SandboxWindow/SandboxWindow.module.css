@@ -1,0 +1,83 @@
+/* Main Container */
+.pageContainer {
+    display: flex;
+    flex: 1;
+    height: 100%; /* Changed from 100vh for modal */
+    width: 100%;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    background: var(--card-bg);
+    color: var(--text-primary);
+}
+
+/* Editor (Right Panel Wrapper) */
+.rightPanel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    background: var(--card-bg);
+}
+
+/* Empty State for Editor - rendered by page.tsx when no request selected */
+.emptyEditor {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-secondary);
+    gap: 16px;
+}
+
+.modalInput {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    margin-top: 8px;
+}
+
+.modalInput:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+@media (max-width: 980px) {
+    .sidebarOverlay {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(2px);
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+    }
+
+    .showOverlay {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .pageContainer {
+        flex-direction: column;
+    }
+
+    .rightPanel {
+        width: 100%;
+        min-width: 0;
+    }
+}

@@ -12,6 +12,7 @@ import SidebarController from "@/components/Sidebar/SidebarController";
 import WorkspaceView from "@/components/WorkspaceView/WorkspaceView";
 import BackgroundNotification from "@/components/BackgroundNotification/BackgroundNotification";
 import { AuthModal } from "@/components/AuthModal/AuthModal";
+import SandboxModal from "@/components/SandboxModal/SandboxModal";
 import { Assistant } from "@/components/Assistant/Assistant";
 import styles from "./page.module.css";
 import { EndpointInfo } from "@/types";
@@ -131,6 +132,7 @@ const App = () => {
   const [autoAnalyzeImport, setAutoAnalyzeImport] = useState(false);
   const [importModalTab, setImportModalTab] = useState<'file' | 'url'>('file');
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+  const [isSandboxOpen, setIsSandboxOpen] = useState(false);
 
   useEffect(() => {
     // Open sidebar by default on desktop
@@ -359,6 +361,7 @@ const App = () => {
           isSidebarOpen={isSidebarOpen}
           onAssistantClick={() => setIsAssistantOpen(true)}
           isAssistantOpen={isAssistantOpen}
+          onSandboxClick={() => setIsSandboxOpen(true)}
         />
 
         {showImportModal && (
@@ -517,6 +520,10 @@ const App = () => {
       <Assistant 
         isOpen={isAssistantOpen} 
         onClose={() => setIsAssistantOpen(false)} 
+      />
+      <SandboxModal 
+        isOpen={isSandboxOpen} 
+        onClose={() => setIsSandboxOpen(false)} 
       />
     </div>
   );
