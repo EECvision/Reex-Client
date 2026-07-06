@@ -18,6 +18,10 @@ export default function UserNavbar({ }: UserNavbarProps) {
     const router = useRouter();
     const { toggleSidebar, hasSidebar } = useUI();
 
+    if (pathname?.startsWith('/test-api')) {
+        return null;
+    }
+
     const isActive = (path: string) => pathname?.startsWith(path);
 
     return (
@@ -34,15 +38,19 @@ export default function UserNavbar({ }: UserNavbarProps) {
             </div>
 
             <div className={styles.right}>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => router.push('/')}
-                >
-                    <ArrowLeft size={16} style={{ marginRight: 6 }} />
-                    Workspace
-                </Button>
-                <div style={{ width: 1, height: 24, background: 'var(--border-color)' }} />
+                {!pathname?.startsWith('/test-api') && (
+                    <>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => router.push('/')}
+                        >
+                            <ArrowLeft size={16} style={{ marginRight: 6 }} />
+                            Workspace
+                        </Button>
+                        <div style={{ width: 1, height: 24, background: 'var(--border-color)' }} />
+                    </>
+                )}
                 <UserMenu placement="bottom" />
             </div>
         </nav>

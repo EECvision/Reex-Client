@@ -1,7 +1,8 @@
 /* Main Container */
 .pageContainer {
     display: flex;
-    height: calc(100vh - 66px);
+    height: 100vh;
+    margin-top: -64px;
     /* Fit within UserLayout content area */
     overflow: hidden;
     /* Prevent body scroll */

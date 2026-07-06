@@ -6,9 +6,12 @@ import {
     ChevronDown,
     FolderPlus,
     FilePlus,
-    Pencil
+    Pencil,
+    PanelLeft
 } from 'lucide-react';
 import styles from './CollectionSidebar.module.css';
+import Logo from '../Logo/Logo';
+import UserMenu from '../UserMenu/UserMenu';
 
 export interface RequestItem {
     id: string;
@@ -34,26 +37,28 @@ interface CollectionSidebarProps {
     collections: Collection[];
     activeRequestId: string | null;
     onSelectRequest: (collectionId: string, request: RequestItem) => void;
-    onAddCollection: () => void;
     onAddRequest: (collectionId: string) => void;
     onDeleteCollection: (collectionId: string) => void;
     onDeleteRequest: (collectionId: string, requestId: string) => void;
     onToggleCollection: (collectionId: string) => void;
     onRenameCollection?: (collectionId: string, newName: string) => void;
     isOpen?: boolean;
+    onToggleSidebar?: () => void;
+    hideLogo?: boolean;
 }
 
 const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
     collections,
     activeRequestId,
     onSelectRequest,
-    onAddCollection,
     onAddRequest,
     onDeleteCollection,
     onDeleteRequest,
     onToggleCollection,
     onRenameCollection,
-    isOpen = false
+    isOpen = false,
+    onToggleSidebar,
+    hideLogo = false,
 }) => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingName, setEditingName] = useState('');
@@ -77,15 +82,17 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
 
     return (
         <div className={`${styles.sidebarContainer} ${isOpen ? styles.open : ''}`}>
-            <div className={styles.sidebarHeader}>
-                <span className={styles.sidebarTitle}>Collections</span>
-                <button
-                    className={styles.iconBtn}
-                    onClick={onAddCollection}
-                    title="New Collection"
-                >
-                    <FolderPlus size={18} />
-                </button>
+            <div className={styles.sidebarHeader} style={{ justifyContent: hideLogo ? 'flex-end' : 'space-between' }}>
+                {!hideLogo && (
+                    <div className={styles.brand}>
+                        <Logo />
+                    </div>
+                )}
+                {onToggleSidebar && (
+                    <button className={styles.toggleBtn} onClick={onToggleSidebar}>
+                        <PanelLeft size={16} />
+                    </button>
+                )}
             </div>
 
             <div className={styles.collectionsList}>
@@ -103,7 +110,7 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
                         >
                             <div className={styles.collectionInfo}>
                                 {col.isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                                <Folder size={14} className={styles.collectionIcon} />
+                                <Folder size={14} className={`${styles.collectionIcon} ${col.isOpen ? styles.collectionIconExpanded : ''}`} />
                                 {editingId === col.id ? (
                                     <input
                                         ref={inputRef}
@@ -119,7 +126,7 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
                                         autoFocus
                                     />
                                 ) : (
-                                    <span className={styles.collectionName} title={col.name}>
+                                    <span className={`${styles.collectionName} ${col.isOpen ? styles.collectionNameExpanded : ''}`} title={col.name}>
                                         {col.name}
                                     </span>
                                 )}
@@ -191,10 +198,13 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
                             </div>
                         )}
                     </div>
-                ))
-                }
-            </div >
-        </div >
+                ))}
+            </div>
+
+            <div className={styles.sidebarBottom}>
+                <UserMenu placement="top" expanded={isOpen} />
+            </div>
+        </div>
     );
 };
 

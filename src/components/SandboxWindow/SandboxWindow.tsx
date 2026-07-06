@@ -14,6 +14,8 @@ import { useCollections } from '@/hooks/useCollections';
 import { useToast } from '@/hooks/useToast';
 
 import LoginModal from '@/components/LoginModal/LoginModal';
+import { ResizablePanel } from '@/components/ui/ResizablePanel/ResizablePanel';
+import TestApiNavbar from '@/components/TestApiNavbar/TestApiNavbar';
 
 export const SandboxWindow = () => {
   const { user } = useAuth();
@@ -216,23 +218,33 @@ export const SandboxWindow = () => {
         onClick={() => setSidebarOpen(false)}
       />
 
-      <CollectionSidebar
-        collections={collections}
-        activeRequestId={activeRequest?.id || null}
-        onSelectRequest={(cid, req) => {
-          setActiveRequest(req);
-          if (window.innerWidth <= 1140) setSidebarOpen(false);
-        }}
-        onAddCollection={handleAddCollection}
-        onAddRequest={handleAddRequest}
-        onDeleteCollection={handleDeleteCollection}
-        onDeleteRequest={handleDeleteRequest}
-        onToggleCollection={handleToggleCollection}
-        onRenameCollection={(id, name) => renameCollection({ id, name })}
+      <ResizablePanel
         isOpen={isSidebarOpen}
-      />
+        defaultWidth={260}
+        minWidth={200}
+        maxWidth={600}
+        collapsedWidth={64}
+      >
+        <CollectionSidebar
+          collections={collections}
+          activeRequestId={activeRequest?.id || null}
+          onSelectRequest={(cid, req) => {
+            setActiveRequest(req);
+            if (window.innerWidth <= 1140) setSidebarOpen(false);
+          }}
+          onAddRequest={handleAddRequest}
+          onDeleteCollection={handleDeleteCollection}
+          onDeleteRequest={handleDeleteRequest}
+          onToggleCollection={handleToggleCollection}
+          onRenameCollection={(id, name) => renameCollection({ id, name })}
+          isOpen={isSidebarOpen}
+          onToggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
+          hideLogo={true}
+        />
+      </ResizablePanel>
 
       <div className={styles.rightPanel}>
+        <TestApiNavbar onAddCollection={handleAddCollection} />
         {isLoading ? (
           <Loading />
         ) : activeRequest ? (
