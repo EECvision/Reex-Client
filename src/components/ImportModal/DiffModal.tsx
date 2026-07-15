@@ -105,29 +105,15 @@ const CustomDiffViewer = ({
         <div className={styles.diffViewer}>
             <div className={styles.diffRow}>
                 <div className={styles.diffSplit}>
-                    <div className={styles.diffPaneHeader}>Incoming</div>
+                    <div className={styles.diffPaneHeader}>Current</div>
                 </div>
                 <div className={styles.diffSplit}>
-                    <div className={styles.diffPaneHeader}>Current</div>
+                    <div className={styles.diffPaneHeader}>Incoming</div>
                 </div>
             </div>
             {rows.map((row, idx) => (
                 <div key={idx} className={styles.diffRow}>
-                    {/* Left Pane (New Code) */}
-                    <div className={styles.diffSplit}>
-                        <div className={styles.diffLineNumber}>
-                            {row.rightLineNumber || ""}
-                        </div>
-                        <div
-                            className={`${styles.diffContent} ${row.rightType !== "normal" && row.rightType !== "diffEmpty"
-                                ? styles[row.rightType]
-                                : ""
-                                } ${row.rightType === "diffEmpty" ? styles.diffEmpty : ""}`}
-                        >
-                            {row.rightContent || (row.rightType === "diffEmpty" ? "" : " ")}
-                        </div>
-                    </div>
-                    {/* Right Pane (Current Code) */}
+                    {/* Left Pane (Current Code) */}
                     <div className={styles.diffSplit}>
                         <div className={styles.diffLineNumber}>
                             {row.leftLineNumber || ""}
@@ -139,6 +125,20 @@ const CustomDiffViewer = ({
                                 } ${row.leftType === "diffEmpty" ? styles.diffEmpty : ""}`}
                         >
                             {row.leftContent || (row.leftType === "diffEmpty" ? "" : " ")}
+                        </div>
+                    </div>
+                    {/* Right Pane (Incoming Code) */}
+                    <div className={styles.diffSplit}>
+                        <div className={styles.diffLineNumber}>
+                            {row.rightLineNumber || ""}
+                        </div>
+                        <div
+                            className={`${styles.diffContent} ${row.rightType !== "normal" && row.rightType !== "diffEmpty"
+                                ? styles[row.rightType]
+                                : ""
+                                } ${row.rightType === "diffEmpty" ? styles.diffEmpty : ""}`}
+                        >
+                            {row.rightContent || (row.rightType === "diffEmpty" ? "" : " ")}
                         </div>
                     </div>
                 </div>
