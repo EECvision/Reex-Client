@@ -52,6 +52,6 @@
     gap: 6px;
     padding: 0 1.75rem 0.25rem;
     font-size: 12px;
-    color: var(--text-muted, #9ca3af);
+    color: var(--primary-color, #0070f3);
     background-color: var(--card-bg, #fff);
 }

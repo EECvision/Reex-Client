@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useChat } from 'ai/react';
-import { X, ArrowUp, Sparkles } from 'lucide-react';
+import { X, ArrowUp, Sparkles, ExternalLink } from 'lucide-react';
 import styles from './Assistant.module.css';
 import { AssistantMessage } from './AssistantMessage';
 
@@ -90,9 +90,19 @@ export const Assistant: React.FC<AssistantProps> = ({ isOpen, onClose }) => {
               <Sparkles size={20} color="var(--primary-color, #0070f3)" />
               Ask Assistant
             </div>
-            <button className={styles.closeButton} onClick={onClose} aria-label="Close Assistant">
-              <X size={20} />
-            </button>
+            <div className={styles.headerActions}>
+              <a 
+                href="https://reex-api-builder.toolshq.app/docs" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className={styles.docsLink}
+              >
+                Docs <ExternalLink size={14} />
+              </a>
+              <button className={styles.closeButton} onClick={onClose} aria-label="Close Assistant">
+                <X size={20} />
+              </button>
+            </div>
           </div>
 
           <div className={styles.body}>

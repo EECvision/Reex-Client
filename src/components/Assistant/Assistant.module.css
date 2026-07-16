@@ -93,6 +93,25 @@
   color: var(--text-primary);
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.docsLink {
+  font-size: 13px;
+  color: var(--primary-color, #0070f3);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.docsLink:hover {
+  text-decoration: underline;
+}
+
 .closeButton {
   background: none;
   border: none;

@@ -46,10 +46,8 @@ const App = () => {
     recentCollections,
     addCollectionToHistory,
     removeCollectionFromHistory,
-    clearAllCollections
+    clearAllCollections,
   } = useProject();
-
-  // ...
 
   // Custom Hooks
   const { showToast } = useToast();
@@ -61,17 +59,18 @@ const App = () => {
     registerTaskId,
     resetImportTask,
     dismissBackgroundTask,
-    activeTaskId
+    activeTaskId,
   } = useProjectSync({
     showToast,
     refreshProject,
-    isStandaloneMode
+    isStandaloneMode,
   });
 
   // Move this call AFTER activeCollection derivation
 
-
-  const [selectedEndpoint, setSelectedEndpoint] = useState<EndpointInfo | null>(null);
+  const [selectedEndpoint, setSelectedEndpoint] = useState<EndpointInfo | null>(
+    null,
+  );
 
   // Derived Active Config for Standalone Mode
   const getActiveCollection = () => {
@@ -79,10 +78,10 @@ const App = () => {
 
     // 1. Try to get from selected endpoint
     if (selectedEndpoint) {
-      const parts = selectedEndpoint.apiKey.split('__');
-      if (parts.length > 1 && parts[0].startsWith('col_')) {
-        const id = parts[0].replace('col_', '');
-        return collections.find(c => c.id === id);
+      const parts = selectedEndpoint.apiKey.split("__");
+      if (parts.length > 1 && parts[0].startsWith("col_")) {
+        const id = parts[0].replace("col_", "");
+        return collections.find((c) => c.id === id);
       }
     }
 
@@ -91,28 +90,44 @@ const App = () => {
   };
 
   const activeCollection = getActiveCollection();
-  const activeConfig = isStandaloneMode ? (activeCollection?.config || {}) : projectConfig;
-  const activeCollectionName = isStandaloneMode ? (activeCollection?.name || "Collection") : projectConfig?.collectionName;
-  const hasAuthConfigured = !!(activeConfig?.auth?.token || (activeConfig?.auth?.customHeaders && Object.keys(activeConfig.auth.customHeaders).length > 0));
+  const activeConfig = isStandaloneMode
+    ? activeCollection?.config || {}
+    : projectConfig;
+  const activeCollectionName = isStandaloneMode
+    ? activeCollection?.name || "Collection"
+    : projectConfig?.collectionName;
+  const hasAuthConfigured = !!(
+    activeConfig?.auth?.token ||
+    (activeConfig?.auth?.customHeaders &&
+      Object.keys(activeConfig.auth.customHeaders).length > 0)
+  );
 
   const {
-    showImportModal, setShowImportModal,
-    showDeleteModal, setShowDeleteModal,
-    showGenerateModal, setShowGenerateModal,
-    showDeleteItemModal, setShowDeleteItemModal,
-    importFile, setImportFile,
+    showImportModal,
+    setShowImportModal,
+    showDeleteModal,
+    setShowDeleteModal,
+    showGenerateModal,
+    setShowGenerateModal,
+    showDeleteItemModal,
+    setShowDeleteItemModal,
+    importFile,
+    setImportFile,
     fetchingUrl,
-    collectionToUpdate, setCollectionToUpdate, openUpdateModal,
+    collectionToUpdate,
+    setCollectionToUpdate,
+    openUpdateModal,
     deleting,
     deletingItem,
-    deleteItemInfo, setDeleteItemInfo,
+    deleteItemInfo,
+    setDeleteItemInfo,
     handleFetchUrl,
     handleDeleteCollection,
     openDeleteModal,
     collectionToDelete,
     handleDeleteModule,
     handleDeleteFunction,
-    confirmDeleteItem
+    confirmDeleteItem,
   } = useCollectionManagement({
     projectPath,
     showToast,
@@ -123,14 +138,14 @@ const App = () => {
     removeCollection,
     activeCollectionId: activeCollection?.id,
     setCollections,
-    clearAllCollections
+    clearAllCollections,
   });
 
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [autoAnalyzeImport, setAutoAnalyzeImport] = useState(false);
-  const [importModalTab, setImportModalTab] = useState<'file' | 'url'>('file');
+  const [importModalTab, setImportModalTab] = useState<"file" | "url">("file");
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isSandboxOpen, setIsSandboxOpen] = useState(false);
 
@@ -141,9 +156,13 @@ const App = () => {
     }
   }, []);
 
-  const handleSaveAuth = (collectionId: string, token: string, customHeaders: Record<string, string>) => {
+  const handleSaveAuth = (
+    collectionId: string,
+    token: string,
+    customHeaders: Record<string, string>,
+  ) => {
     if (isStandaloneMode) {
-      const targetCol = collections.find(c => c.id === collectionId);
+      const targetCol = collections.find((c) => c.id === collectionId);
       if (!targetCol) return;
 
       updateCollection(collectionId, {
@@ -151,23 +170,23 @@ const App = () => {
           ...targetCol.config,
           auth: {
             token,
-            customHeaders
-          }
-        }
+            customHeaders,
+          },
+        },
       });
     } else {
       const authData = { token, customHeaders };
       setConfig({
         ...projectConfig,
-        auth: authData
+        auth: authData,
       });
 
       // Persist auth to localStorage for dev mode
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         if (token || Object.keys(customHeaders).length > 0) {
-          localStorage.setItem('reex_project_auth', JSON.stringify(authData));
+          localStorage.setItem("reex_project_auth", JSON.stringify(authData));
         } else {
-          localStorage.removeItem('reex_project_auth');
+          localStorage.removeItem("reex_project_auth");
         }
       }
     }
@@ -204,7 +223,7 @@ const App = () => {
     customHeaders: activeConfig?.auth?.customHeaders || {},
     isStandaloneMode,
 
-    selectedEndpoint
+    selectedEndpoint,
   });
 
   // Reset selected endpoint if manifest becomes empty, else update it with new args
@@ -247,7 +266,9 @@ const App = () => {
       <div className={styles.loadingContainer}>
         <div className={styles.loadingContent}>
           <div className={styles.loadingSpinner}></div>
-          <span className={styles.loadingText}>Loading project workspace...</span>
+          <span className={styles.loadingText}>
+            Loading project workspace...
+          </span>
         </div>
       </div>
     );
@@ -256,15 +277,19 @@ const App = () => {
   // Note: projectError is no longer blocking - standalone mode handles missing bridge
 
   return (
-    <div className={`${styles.container} ${isSidebarOpen ? styles.sidebarOpen : ""}`}>
-
+    <div
+      className={`${styles.container} ${isSidebarOpen ? styles.sidebarOpen : ""}`}
+    >
       <BackgroundNotification
         tasks={backgroundTasks}
         onDismiss={dismissBackgroundTask}
       />
 
       {hasEndpoints && (
-        <div className={`${styles.sidebarOverlay} ${isSidebarOpen ? styles.showOverlay : ""}`} onClick={() => setIsSidebarOpen(false)} />
+        <div
+          className={`${styles.sidebarOverlay} ${isSidebarOpen ? styles.showOverlay : ""}`}
+          onClick={() => setIsSidebarOpen(false)}
+        />
       )}
 
       {hasEndpoints && (
@@ -281,13 +306,13 @@ const App = () => {
           onRenameCollection={(id, name) => updateCollection(id, { name })}
           onUpdateCollection={openUpdateModal}
           onOpenSandbox={(id) => {
-            const col = collections.find(c => c.id === id);
+            const col = collections.find((c) => c.id === id);
             if (col && activeConfig) {
               openInCodeSandbox(
                 col.name,
                 activeConfig.baseURL,
                 col.modules || {},
-                { ...activeConfig, manifest: col.manifest }
+                { ...activeConfig, manifest: col.manifest },
               );
             }
           }}
@@ -302,7 +327,7 @@ const App = () => {
           onImportClick={() => {
             resetImportTask();
             setAutoAnalyzeImport(false);
-            setImportModalTab('file');
+            setImportModalTab("file");
             setShowImportModal(true);
           }}
           hasCollection={hasEndpoints}
@@ -315,7 +340,7 @@ const App = () => {
           onOpenFetchModal={() => {
             resetImportTask();
             setAutoAnalyzeImport(false);
-            setImportModalTab('url');
+            setImportModalTab("url");
             setShowImportModal(true);
           }}
           isFetching={fetchingUrl}
@@ -332,10 +357,11 @@ const App = () => {
             const oldBase = activeConfig?.baseURL || "";
             const updatedClients = { ...(activeConfig?.clients || {}) };
 
-            Object.keys(updatedClients).forEach(key => {
+            Object.keys(updatedClients).forEach((key) => {
               const clientUrl = updatedClients[key];
               if (oldBase && clientUrl.startsWith(oldBase)) {
-                updatedClients[key] = newUrl + clientUrl.substring(oldBase.length);
+                updatedClients[key] =
+                  newUrl + clientUrl.substring(oldBase.length);
               } else {
                 updatedClients[key] = newUrl;
               }
@@ -346,14 +372,14 @@ const App = () => {
                 config: {
                   ...activeCollection.config,
                   baseURL: newUrl,
-                  clients: updatedClients
-                }
+                  clients: updatedClients,
+                },
               });
             } else {
               setConfig({
                 ...projectConfig,
                 baseURL: newUrl,
-                clients: updatedClients
+                clients: updatedClients,
               });
             }
           }}
@@ -376,7 +402,9 @@ const App = () => {
             }}
             initialFile={importFile}
             initialTab={importModalTab}
-            onSuccess={(msg) => showToast("success", msg || "Collection imported successfully")}
+            onSuccess={(msg) =>
+              showToast("success", msg || "Collection imported successfully")
+            }
             onError={(msg) => showToast("error", msg)}
             isEmptyWorkspace={!hasEndpoints}
             onUpdateStarted={registerTaskId}
@@ -407,8 +435,12 @@ const App = () => {
             onClose={() => setShowHistoryModal(false)}
             items={recentCollections}
             onItemClick={(item) => {
-              const blob = new Blob([JSON.stringify(item.content, null, 2)], { type: "application/json" });
-              const file = new File([blob], item.name, { type: "application/json" });
+              const blob = new Blob([JSON.stringify(item.content, null, 2)], {
+                type: "application/json",
+              });
+              const file = new File([blob], item.name, {
+                type: "application/json",
+              });
               resetImportTask();
               setImportFile(file);
               setShowHistoryModal(false);
@@ -422,10 +454,15 @@ const App = () => {
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleDeleteCollection}
           deleting={deleting}
-          title={isStandaloneMode && !collectionToDelete ? "Clear All Collections" : "Delete Collection"}
-          message={isStandaloneMode && !collectionToDelete
-            ? "Are you sure you want to delete ALL imported collections? This acts as a workspace reset."
-            : "Are you sure you want to delete this collection? This action cannot be undone."
+          title={
+            isStandaloneMode && !collectionToDelete
+              ? "Clear All Collections"
+              : "Delete Collection"
+          }
+          message={
+            isStandaloneMode && !collectionToDelete
+              ? "Are you sure you want to delete ALL imported collections? This acts as a workspace reset."
+              : "Are you sure you want to delete this collection? This action cannot be undone."
           }
         />
 
@@ -449,8 +486,7 @@ const App = () => {
           }
         />
 
-        {
-          showGenerateModal &&
+        {showGenerateModal && (
           <GenerateModuleModal
             isOpen={showGenerateModal}
             onClose={() => {
@@ -461,25 +497,36 @@ const App = () => {
             onTaskStarted={registerTaskId}
             targetDir={projectPath}
           />
-        }
+        )}
 
         <AuthModal
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
-          collections={isStandaloneMode ? collections : [{
-            id: 'project',
-            name: activeCollectionName || 'Project',
-            manifest: apiManifest,
-            modules: {} as Record<string, string>,
-            config: projectConfig
-          }]}
-          activeCollectionId={isStandaloneMode ? activeCollection?.id : 'project'}
+          collections={
+            isStandaloneMode
+              ? collections
+              : [
+                  {
+                    id: "project",
+                    name: activeCollectionName || "Project",
+                    manifest: apiManifest,
+                    modules: {} as Record<string, string>,
+                    config: projectConfig,
+                  },
+                ]
+          }
+          activeCollectionId={
+            isStandaloneMode ? activeCollection?.id : "project"
+          }
           onSave={handleSaveAuth}
         />
 
         <WorkspaceView
           selectedEndpoint={selectedEndpoint}
-          currentParams={params[`${selectedEndpoint?.apiKey}.${selectedEndpoint?.fnName}`] || {}}
+          currentParams={
+            params[`${selectedEndpoint?.apiKey}.${selectedEndpoint?.fnName}`] ||
+            {}
+          }
           onParamChange={handleParamChange}
           onSubmit={handleSubmit}
           loading={executionLoading}
@@ -498,7 +545,11 @@ const App = () => {
           }}
           onGenerate={() => setShowGenerateModal(true)}
           computedUrl={getComputedUrl()}
-          method={selectedEndpoint ? selectedEndpoint.fnName.split('_')[0].toUpperCase() : ""}
+          method={
+            selectedEndpoint
+              ? selectedEndpoint.fnName.split("_")[0].toUpperCase()
+              : ""
+          }
           rawPayload={rawPayload}
           inputMode={inputMode}
           onRawPayloadChange={handleRawPayloadChange}
@@ -507,8 +558,12 @@ const App = () => {
           isStandaloneMode={isStandaloneMode}
           recentCollections={recentCollections}
           onHistoryClick={(item) => {
-            const blob = new Blob([JSON.stringify(item.content, null, 2)], { type: "application/json" });
-            const file = new File([blob], item.name, { type: "application/json" });
+            const blob = new Blob([JSON.stringify(item.content, null, 2)], {
+              type: "application/json",
+            });
+            const file = new File([blob], item.name, {
+              type: "application/json",
+            });
             resetImportTask();
             setImportFile(file);
             setShowImportModal(true);
@@ -517,13 +572,13 @@ const App = () => {
         />
       </div>
 
-      <Assistant 
-        isOpen={isAssistantOpen} 
-        onClose={() => setIsAssistantOpen(false)} 
+      <Assistant
+        isOpen={isAssistantOpen}
+        onClose={() => setIsAssistantOpen(false)}
       />
-      <SandboxModal 
-        isOpen={isSandboxOpen} 
-        onClose={() => setIsSandboxOpen(false)} 
+      <SandboxModal
+        isOpen={isSandboxOpen}
+        onClose={() => setIsSandboxOpen(false)}
       />
     </div>
   );
