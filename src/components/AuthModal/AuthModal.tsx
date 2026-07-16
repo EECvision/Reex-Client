@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, Plus, Trash2 } from 'lucide-react';
+import { Lock, Plus, Trash2, X } from 'lucide-react';
 import styles from './AuthModal.module.css';
 import { Button } from '../ui/Button/Button';
 import { Modal } from '../ui/Modal/Modal';
@@ -156,13 +156,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                     Bearer Token
                                 </div>
                                 <div className={styles.inputGroup}>
-                                    <input
-                                        type="text"
-                                        placeholder="Enter token from auth/signin"
-                                        className={styles.input}
-                                        value={draftToken}
-                                        onChange={(e) => setDraftToken(e.target.value)}
-                                    />
+                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                        <input
+                                            type="text"
+                                            placeholder="Enter token from auth/signin"
+                                            className={styles.input}
+                                            value={draftToken}
+                                            onChange={(e) => setDraftToken(e.target.value)}
+                                            style={{ paddingRight: draftToken ? '36px' : undefined }}
+                                        />
+                                        {draftToken && (
+                                            <button
+                                                onClick={() => setDraftToken('')}
+                                                className={styles.clearButton}
+                                                title="Clear token"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 

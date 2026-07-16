@@ -15,6 +15,7 @@ import {
   Code,
   PanelLeft,
   Search,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "../ui/Button/Button";
@@ -87,6 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [copiedEndpointId, setCopiedEndpointId] = useState<string | null>(null);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
   const originalNameRef = useRef<string>("");
@@ -238,6 +240,15 @@ const Sidebar: React.FC<SidebarProps> = ({
             onChange={(e) => setSearchQuery(e.target.value)}
             className={styles.searchInput}
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className={styles.clearButton}
+              title="Clear search"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -449,7 +460,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                                           : ""
                                       }`}
                                       onClick={() => onSelectEndpoint(endpoint)}
+                                      onDoubleClick={(e) => {
+                                        e.preventDefault();
+                                        navigator.clipboard.writeText(endpoint.fnName);
+                                        setCopiedEndpointId(`${endpoint.apiKey}-${endpoint.fnName}`);
+                                        setTimeout(() => setCopiedEndpointId(null), 2000);
+                                      }}
                                     >
+                                      {copiedEndpointId === `${endpoint.apiKey}-${endpoint.fnName}` && (
+                                        <span className={styles.copiedBadge}>Copied</span>
+                                      )}
                                       <div
                                         className={styles.fileInfo}
                                         title={`${endpoint.fnName}${endpoint.url ? `\n${endpoint.url}` : ""}`}
