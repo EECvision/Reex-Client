@@ -31,6 +31,25 @@
     margin: 0 auto;
 }
 
+.viewIssuesButton {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: var(--input-bg, #f8fafc);
+    color: var(--text-primary);
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s;
+}
+
+.viewIssuesButton:hover {
+    background-color: var(--hover-bg, #f1f5f9);
+    border-color: var(--primary-color, #3b82f6);
+}
+
 .card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);

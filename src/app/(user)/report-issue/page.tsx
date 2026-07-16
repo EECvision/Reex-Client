@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import styles from "./report-issue.module.css";
 import { Button } from "@/components/ui/Button/Button";
 import { useAuth } from "@/providers/AuthContext";
-import { MessageSquareWarning, Loader2, CheckCircle } from "lucide-react";
+import { MessageSquareWarning, Loader2, CheckCircle, ExternalLink } from "lucide-react";
 import { createIssue } from "@/app/actions/issueActions";
 
 export default function ReportIssuePage() {
@@ -49,6 +49,18 @@ export default function ReportIssuePage() {
                     <p className={styles.subtitle}>
                         Found a bug or have a suggestion? Let us know and help us improve Reex API Builder.
                     </p>
+                    {process.env.NEXT_PUBLIC_GITHUB_REPO_URL && (
+                        <div style={{ marginTop: '16px' }}>
+                            <a 
+                                href={process.env.NEXT_PUBLIC_GITHUB_REPO_URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.viewIssuesButton}
+                            >
+                                View All Issues <ExternalLink size={14} style={{ marginLeft: 6 }} />
+                            </a>
+                        </div>
+                    )}
                 </div>
 
                 <div className={styles.card}>
