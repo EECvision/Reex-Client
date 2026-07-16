@@ -21,6 +21,47 @@ interface UseEndpointExecutionProps {
     selectedEndpoint: EndpointInfo | null;
 }
 
+const setNestedValue = (obj: any, path: string, value: any) => {
+    const keys = path.split('.');
+    let current = obj;
+    for (let i = 0; i < keys.length - 1; i++) {
+        const key = keys[i];
+        const nextKey = keys[i + 1];
+        if (!current[key]) {
+            current[key] = /^\d+$/.test(nextKey) ? [] : {};
+        }
+        current = current[key];
+    }
+    current[keys[keys.length - 1]] = value;
+};
+
+const getLeafNodes = (args: any[]) => {
+    const leaves: { path: string; isOptional: boolean }[] = [];
+    
+    const traverse = (prop: any, currentPath: string) => {
+        const isArray = prop.type?.includes('[]') || prop.type?.toLowerCase().includes('array') || prop.type?.toLowerCase().includes('list');
+        const basePath = isArray ? `${currentPath}.0` : currentPath;
+
+        if (prop.properties && prop.properties.length > 0) {
+            prop.properties.forEach((child: any) => {
+                traverse(child, `${basePath}.${child.name}`);
+            });
+        } else {
+            leaves.push({ path: basePath, isOptional: prop.isOptional });
+        }
+    };
+
+    args.forEach((arg: any) => {
+        if (arg.isObject && Array.isArray(arg.properties)) {
+            arg.properties.forEach((prop: any) => traverse(prop, prop.name));
+        } else {
+            traverse(arg, arg.name);
+        }
+    });
+
+    return leaves;
+};
+
 type ParamsState = {
     [key: string]: {
         [key: string]: any;
@@ -53,26 +94,42 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
 
     const currentKey = selectedEndpoint ? `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}` : null;
 
-    const tryParse = (value: any) => {
-        // Don't try to parse File objects or non-strings
+    const parseValue = (value: any, type?: string) => {
         if (value instanceof File || typeof value !== 'string') {
             return value;
         }
-        try {
-            return JSON.parse(value);
-        } catch {
-            return value;
+        const t = (type || "").toLowerCase();
+        
+        if (t.includes('number') || t.includes('int') || t.includes('float') || t.includes('double')) {
+            const num = Number(value);
+            return !isNaN(num) ? num : value;
         }
+        if (t.includes('bool')) {
+            if (value.toLowerCase() === 'true') return true;
+            if (value.toLowerCase() === 'false') return false;
+        }
+        if (t.includes('array') || t.includes('[]') || t.includes('list') || t.includes('object') || t.includes('map') || t.includes('dict')) {
+            try { return JSON.parse(value); } catch { return value; }
+        }
+        
+        // If type is empty/unknown, loosely parse JSON structures for backward compatibility
+        if (!t) {
+            const trimmed = value.trim();
+            if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                try { return JSON.parse(trimmed); } catch { return value; }
+            }
+        }
+        return value;
     };
 
-    const handleParamChange = (paramName: string, value: any) => {
+    const handleParamChange = (paramName: string, value: any, type?: string) => {
         if (!selectedEndpoint) return;
         const key = `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}`;
         setParams((prev) => ({
             ...prev,
             [key]: {
                 ...prev[key],
-                [paramName]: tryParse(value),
+                [paramName]: parseValue(value, type),
             },
         }));
     };
@@ -160,30 +217,15 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
                 }
             } else if (currentInputMode === "form") {
 
-                // Flatten params logic
-                if (
-                    selectedEndpoint.args.length === 1 &&
-                    selectedEndpoint.args[0].isObject &&
-                    Array.isArray(selectedEndpoint.args[0].properties)
-                ) {
-                    const props = selectedEndpoint.args[0].properties;
-                    for (const prop of props) {
-                        const value = currentParams[prop.name];
-                        if (value !== undefined && value !== "") {
-                            argsMap[prop.name] = value;
-                        } else if (!prop.isOptional) {
-                            throw new Error(`Missing required field: ${prop.name}`);
-                        }
+                // Unflatten params logic using leaf nodes
+                const leaves = getLeafNodes(selectedEndpoint.args);
+                for (const leaf of leaves) {
+                    const value = currentParams[leaf.path];
+                    if (value !== undefined && value !== "") {
+                        setNestedValue(argsMap, leaf.path, value);
+                    } else if (!leaf.isOptional) {
+                        throw new Error(`Missing required field: ${leaf.path}`);
                     }
-                } else {
-                    selectedEndpoint.args.forEach(arg => {
-                        const value = currentParams[arg.name];
-                        if (value !== undefined && value !== "") {
-                            argsMap[arg.name] = value;
-                        } else if (!arg.isOptional) {
-                            throw new Error(`Missing required param: ${arg.name}`);
-                        }
-                    });
                 }
             }
 
@@ -428,21 +470,11 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
 
         // In form mode, check required fields
         const currentParams = params[key] || {};
+        const leaves = getLeafNodes(selectedEndpoint.args);
 
-        const requiredFields = selectedEndpoint.args.flatMap((arg) => {
-            if (arg.isObject && Array.isArray((arg as any).properties)) {
-                return (arg as any).properties
-                    .filter((p: any) => !p.isOptional)
-                    .map((p: any) => p.name);
-            } else if (!arg.isOptional) {
-                return [arg.name];
-            } else {
-                return [];
-            }
-        });
-
-        return !requiredFields.every((field) => {
-            const value = currentParams[field];
+        return !leaves.every((leaf) => {
+            if (leaf.isOptional) return true;
+            const value = currentParams[leaf.path];
             return value !== undefined && value !== "";
         });
     };

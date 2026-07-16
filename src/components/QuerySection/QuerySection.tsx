@@ -43,7 +43,7 @@ interface QuerySectionProps {
   currentParams: Record<string, any>;
   loading: boolean;
   isSubmitDisabled: boolean;
-  onParamChange: (paramName: string, value: any) => void;
+  onParamChange: (paramName: string, value: any, type?: string) => void;
   onSubmit: () => void;
   rawPayload?: string;
   onRawPayloadChange?: (value: string) => void;
@@ -182,7 +182,7 @@ const QuerySection: React.FC<QuerySectionProps> = ({
     return isMultipart && fileNames.some(fn => name.toLowerCase().includes(fn));
   };
 
-  const renderInput = (name: string, isOptional: boolean) => {
+  const renderInput = (name: string, isOptional: boolean, type?: string) => {
     if (isFileParam(name)) {
       const selectedFile = selectedFiles[name];
 
@@ -219,7 +219,7 @@ const QuerySection: React.FC<QuerySectionProps> = ({
       <input
         type="text"
         value={currentParams[name] ?? ""}
-        onChange={(e) => onParamChange(name, e.target.value)}
+        onChange={(e) => onParamChange(name, e.target.value, type)}
         className={styles.paramInput}
         placeholder={isOptional ? "Enter value" : "Enter value"}
       />
@@ -279,84 +279,67 @@ const QuerySection: React.FC<QuerySectionProps> = ({
           </div>
         ) : (
           <div className={styles.paramList}>
-            {selectedEndpoint.args.map((arg) => {
-              if (arg.isObject && Array.isArray(arg.properties)) {
-                // Check if any property has sub-properties (complex nested types)
-                const hasNestedComplex = arg.properties.some(prop => prop.properties && prop.properties.length > 0);
+            {(() => {
+              // Recursive function to render a property tree
+              const renderParamNode = (prop: EndpointArgProperty | EndpointArg, path: string, depth: number): React.ReactNode => {
+                const hasChildren = prop.properties && prop.properties.length > 0;
+                const isArray = prop.type?.includes('[]') || prop.type?.toLowerCase().includes('array') || prop.type?.toLowerCase().includes('list');
+                const basePath = isArray ? `${path}.0` : path;
 
-                if (hasNestedComplex) {
-                  // Render properties with expanded sub-property info
-                  return arg.properties.map((prop) => (
-                    <div key={prop.name} className={styles.paramField}>
+                if (hasChildren) {
+                  return (
+                    <div key={path} className={styles.paramGroup} style={{ 
+                      marginLeft: depth > 0 ? '12px' : '0', 
+                      borderLeft: depth > 0 ? '2px solid var(--border-color)' : 'none', 
+                      paddingLeft: depth > 0 ? '16px' : '0',
+                      marginTop: depth > 0 ? '12px' : '0',
+                      marginBottom: '12px'
+                    }}>
                       <label className={styles.paramLabel}>
                         {prop.name}
                         {!prop.isOptional && <span className={styles.required}>*</span>}
-                        {/* {prop.isOptional && <span className={styles.optional}>optional</span>} */}
                         {prop.type && <span className={styles.paramType} style={{ color: getTypeColor(prop.type) }}>{prop.type}</span>}
                       </label>
                       {prop.description && (
-                        <span className={styles.paramDescription}>{prop.description}</span>
+                        <span className={styles.paramDescription} style={{ marginBottom: '8px', display: 'block' }}>{prop.description}</span>
                       )}
-                      {prop.properties && prop.properties.length > 0 && (
-                        <div className={styles.subProperties}>
-                          <span className={styles.subPropertiesLabel}>Properties:</span>
-                          {prop.properties.map((sub) => (
-                            <div key={sub.name} className={styles.subPropertyItem}>
-                              <span className={styles.subPropertyName}>{sub.name}</span>
-                              {sub.type && <span className={styles.subPropertyType} style={{ color: getTypeColor(sub.type) }}>{sub.type}</span>}
-                              {/* {sub.isOptional && <span className={styles.optional}>optional</span>} */}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {renderInput(prop.name, prop.isOptional)}
+                      <div className={styles.nestedParams}>
+                        {prop.properties!.map((child) => renderParamNode(child, `${basePath}.${child.name}`, depth + 1))}
+                      </div>
                     </div>
-                  ));
+                  );
                 }
 
-                return arg.properties.map((prop) => (
-                  <div key={prop.name} className={styles.paramField}>
+                return (
+                  <div key={path} className={styles.paramField} style={{ 
+                    marginLeft: depth > 0 ? '12px' : '0', 
+                    borderLeft: depth > 0 ? '2px solid var(--border-color)' : 'none', 
+                    paddingLeft: depth > 0 ? '16px' : '0',
+                    marginTop: depth > 0 ? '8px' : '0'
+                  }}>
                     <label className={styles.paramLabel}>
                       {prop.name}
                       {!prop.isOptional && <span className={styles.required}>*</span>}
-                      {/* {prop.isOptional && <span className={styles.optional}>optional</span>} */}
                       {prop.type && <span className={styles.paramType} style={{ color: getTypeColor(prop.type) }}>{prop.type}</span>}
                     </label>
                     {prop.description && (
                       <span className={styles.paramDescription}>{prop.description}</span>
                     )}
-                    {renderInput(prop.name, prop.isOptional)}
+                    {renderInput(basePath, prop.isOptional, prop.type)}
                   </div>
-                ));
-              }
+                );
+              };
 
-              return (
-                <div key={arg.name} className={styles.paramField}>
-                  <label className={styles.paramLabel}>
-                    {arg.name}
-                    {!arg.isOptional && <span className={styles.required}>*</span>}
-                    {/* {arg.isOptional && <span className={styles.optional}>optional</span>} */}
-                    {arg.type && <span className={styles.paramType} style={{ color: getTypeColor(arg.type) }}>{arg.type}</span>}
-                  </label>
-                  {arg.description && (
-                    <span className={styles.paramDescription}>{arg.description}</span>
-                  )}
-                  {arg.properties && arg.properties.length > 0 && (
-                    <div className={styles.subProperties}>
-                      <span className={styles.subPropertiesLabel}>Properties:</span>
-                      {arg.properties.map((sub) => (
-                        <div key={sub.name} className={styles.subPropertyItem}>
-                          <span className={styles.subPropertyName}>{sub.name}</span>
-                          {sub.type && <span className={styles.subPropertyType} style={{ color: getTypeColor(sub.type) }}>{sub.type}</span>}
-                          {/* {sub.isOptional && <span className={styles.optional}>optional</span>} */}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {renderInput(arg.name, arg.isOptional)}
-                </div>
-              );
-            })}
+              return selectedEndpoint.args.map((arg) => {
+                if (arg.isObject && Array.isArray(arg.properties)) {
+                  // If it's a payload object, expand its properties at depth 0
+                  return arg.properties.map((prop) => renderParamNode(prop, prop.name, 0));
+                }
+
+                // If it's a normal arg
+                return renderParamNode(arg, arg.name, 0);
+              });
+            })()}
           </div>
         )}
 

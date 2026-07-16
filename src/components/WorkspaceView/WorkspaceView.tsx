@@ -23,7 +23,7 @@ type InputMode = "form" | "raw";
 interface WorkspaceViewProps {
   selectedEndpoint: EndpointInfo | null;
   currentParams: Record<string, any>;
-  onParamChange: (paramName: string, value: string) => void;
+  onParamChange: (paramName: string, value: any, type?: string) => void;
   onSubmit: () => void;
   loading: boolean;
   isSubmitDisabled: boolean;
