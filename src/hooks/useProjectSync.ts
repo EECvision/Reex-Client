@@ -75,8 +75,17 @@ export const useProjectSync = ({ showToast, refreshProject, onImportTaskComplete
             showToast("success", "Connected to local bridge");
         };
 
-        eventSource.onerror = (err) => {
-            console.error("[SSE] Connection Error:", err);
+        eventSource.onerror = async (err) => {
+            // Prevent false positive reloads (e.g. from HMR network blips) by double checking if the bridge is actually dead
+            try {
+                const res = await fetch(`${bridgeUrl}/api/health`);
+                if (!res.ok) throw new Error("Bridge down");
+            } catch {
+                console.warn("[SSE] Connection lost and bridge is unreachable. Reloading to switch to preview mode...");
+                if (typeof window !== "undefined") {
+                    window.location.reload();
+                }
+            }
         };
 
         eventSource.onmessage = (event) => {
