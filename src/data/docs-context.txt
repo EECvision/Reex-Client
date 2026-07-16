@@ -55,42 +55,26 @@ Here is the folder structure that gets generated:
 ```
 src/
 └── api-services/
-    ├── api-client/       # Core HTTP configuration and proxy
-    ├── auth/             # Modular authentication strategies & guards
+    ├── auth-methods/     # Modular authentication strategies & guards
     ├── definitions/      # Your API implementations (editable)
     ├── generated/        # Auto-generated React Query hooks
     ├── hooks/            # Authentication & custom hooks
     ├── providers/        # Application providers (e.g. QueryProvider)
     ├── types/            # TypeScript interfaces
-    ├── user-config/      # User configuration files
-    ├── index.ts          # Main barrel export
+    ├── api.config.ts     # Centralized user configuration
+    ├── core.ts           # Core HTTP configuration and proxy
     └── ...
 ```
 
-### `api-client/` - Core API Client
+### `core.ts` - Core API Client
 
-This folder contains the core Axios configuration and the interceptors.
-
-    **`index.ts`**: The main API client that dynamically uses the active strategy.
-
-    View code
-
-    ```typescript filename="api-client/index.ts"
-    import { createApiClient } from "./core";
-    import { proxyTokenProvider } from "../auth/manager";
-
-    /**
-     * The globally configured API client instance.
-     * It dynamically uses the Active Strategy defined in the AuthProvider.
-     */
-    export const apiClient = createApiClient(proxyTokenProvider);
-    ```
+This file contains the core Axios configuration, interceptors, and the main API client that dynamically uses the active strategy.
 
     **`core.ts`**: Request interceptors & auth logic.
 
     View code
 
-    ```typescript filename="api-client/core.ts"
+    ```typescript filename="core.ts"
     // @internal — No changes needed
     /* eslint-disable @typescript-eslint/no-explicit-any */
     import axios, {
@@ -99,14 +83,14 @@ This folder contains the core Axios configuration and the interceptors.
       AxiosError,
       type AxiosRequestConfig,
     } from "axios";
-    import { baseURL } from "../user-config/constants";
-    import type { TokenProvider, ApiError } from "../auth/types";
-
+    import { apiConfig } from "./api.config";
+    import { proxyTokenProvider } from "./auth-methods/manager";
+    import type { ApiError, TokenProvider } from "./auth-methods/types";
     const API_TIMEOUT = 30000;
     const REFRESH_TIMEOUT = 10000;
 
     const DEFAULT_CONFIG: AxiosRequestConfig = {
-      baseURL: baseURL,
+      baseURL: apiConfig.baseURL,
       timeout: API_TIMEOUT,
       headers: { "Content-Type": "application/json" },
     };
@@ -137,6 +121,10 @@ This folder contains the core Axios configuration and the interceptors.
       // Request interceptor: inject token + custom headers
       client.interceptors.request.use(
         async (config: InternalAxiosRequestConfig) => {
+          if (config.data instanceof FormData && config.headers) {
+            delete config.headers["Content-Type"];
+          }
+
           if (tokenProvider) {
             const token = await tokenProvider.getToken();
             if (token && config.headers) {
@@ -810,6 +798,22 @@ This folder contains `sample` API endpoint definitions.
 - **Editable**: You can make changes to these files to match your API.
 - **Two-Way Sync**: Changes here are reflected in the Reex API Builder UI.
 
+> **Note on File Uploads**: 
+> Instead of manually setting the header inside the function, the recommended approach is to use the `@contentType multipart/form-data` JSDoc tag above the endpoint. 
+> 1. The Reex UI uses this tag to generate the correct file upload interface.
+> 2. Passing a `FormData` object directly allows Axios to automatically calculate and append the necessary `boundary=` string. Manually setting the header can cause backend parsing errors!
+> 
+> ```typescript
+> /**
+>  * Upload user photo
+>  * @auth
+>  * @contentType multipart/form-data
+>  */
+> uploadPhoto: async (payload: FormData) => {
+>   return await apiClient.post(`/user/profile/photo`, payload);
+> }
+> ```
+
     **`authentication.ts`**: Authentication endpoints (Refresh, Signup, Login, Logout).
 
     View code
@@ -1245,67 +1249,60 @@ View Todo Types
 
 ```
 
-### `user-config/` - User Configuration
+### `api.config.ts` - User Configuration
 
-This folder is designed specifically for you to edit. It contains constants and mappings customized to your backend settings.
+This file is designed specifically for you to edit. It contains constants and mappings customized to your backend settings, merging both core API and authentication settings.
 
-    **`auth.ts`**: Centralized authentication configuration.
+    **`api.config.ts`**: Centralized configuration file.
 
     View code
 
-    ```typescript filename="user-config/auth.ts"
+    ```typescript filename="api.config.ts"
     // @user-config — changes needed: Update routes, keys, and endpoints to match your backend
     import axios from "axios";
-    import { baseURL } from "./constants";
 
-    /**
-     * Centralized Authentication Configuration
-     *
-     * Customize these values and functions to match your backend's
-     * authentication requirements.
-     */
-    export const authConfig = {
-      /** Redirect path for unauthenticated users */
-      loginUrl: "/auth/login",
+    const BASE_URL = "https://example.com/api/v1";
 
-      /** Server-side logout endpoint */
-      logoutUrl: "/auth/logout",
+    export const apiConfig = {
+      /**
+       * 1. CORE SETTINGS
+       * Update this to your actual backend URL or rely on environment variables
+       */
+      baseURL: BASE_URL,
 
-      /** HTTP Method for logout endpoint (e.g., "GET", "POST") */
-      logoutMethod: "POST" as "GET" | "POST",
+      /** Set to true if your API wraps responses in a 'data' object */
+      unwrapResponseData: false,
 
-      /** localStorage key for access token */
-      accessTokenKey: "access_token",
+      /**
+       * 2. AUTHENTICATION SETTINGS
+       * Customize these to match your backend's authentication endpoints
+       */
+      auth: {
+        loginUrl: "/auth/login",
+        logoutUrl: "/auth/logout",
+        logoutMethod: "POST" as "GET" | "POST",
+        accessTokenKey: "access_token",
+        refreshTokenKey: "refresh_token",
+        refreshEndpoint: `${BASE_URL}/auth/refresh`,
 
-      /** localStorage key for refresh token (if applicable) */
-      refreshTokenKey: "refresh_token",
+        /** Refresh via httpOnly cookie. Edit the method/headers to match your backend. */
+        refreshWithCookie: async () => {
+          return await axios.post(apiConfig.auth.refreshEndpoint, undefined, {
+            withCredentials: true,
+          });
+        },
 
-      /** Refresh token endpoint */
-      refreshEndpoint: `${baseURL}/auth/refresh`,
-
-      /** Refresh via httpOnly cookie. Edit the method/headers to match your backend. */
-      refreshWithCookie: async () => {
-        return await axios.post(authConfig.refreshEndpoint, undefined, { withCredentials: true });
-      },
-
-      /** Refresh via stored token payload. Edit the property name to match your backend. */
-      refreshWithToken: async (storedRefreshToken: string) => {
-        return await axios.post(authConfig.refreshEndpoint, {
-          refreshToken: storedRefreshToken,
-        });
+        /** Refresh via stored token payload. Edit the property name to match your backend. */
+        refreshWithToken: async (storedRefreshToken: string) => {
+          return await axios.post(apiConfig.auth.refreshEndpoint, {
+            refreshToken: storedRefreshToken,
+          });
+        },
       },
     };
     ```
 
-    **`constants.ts`**: Base URLs and environment config.
-
-    View code
-
-    ```typescript filename="user-config/constants.ts"
-    export const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
-    ```
-
-### `index.ts` - Main Export
+### `definitions/index.ts` - Main Export
 
 This file serves as the main entry point to all of your API definitions. It merges all defined API modules into a single `api` object.
 
@@ -1313,9 +1310,9 @@ This file serves as the main entry point to all of your API definitions. It merg
 
     View code
 
-    ```typescript filename="index.ts"
-    import { authenticationApi } from "./definitions/authentication";
-    import { todosApi } from "./definitions/todos";
+    ```typescript filename="definitions/index.ts"
+    import { authenticationApi } from "./authentication";
+    import { todosApi } from "./todos";
 
     export const api = {
       ...authenticationApi,
