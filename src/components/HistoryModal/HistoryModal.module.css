@@ -110,25 +110,40 @@
     font-size: 13px;
 }
 
-.actions {
+.actionGroup {
     display: none;
     /* Hidden by default */
+    align-items: center;
+    gap: 4px;
+}
+
+.item:hover .actionGroup {
+    display: flex;
+    /* Show on hover */
+}
+
+.actionBtn {
+    display: flex;
     align-items: center;
     justify-content: center;
     padding: 4px;
     border-radius: 4px;
     cursor: pointer;
+    color: var(--text-muted, #6b7280);
+    transition: background 0.2s, color 0.2s;
+}
+
+.actionBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary, #f3f4f6);
+}
+
+.actionBtn.delete {
     color: #ef4444;
     /* Red color for delete */
-    transition: background 0.2s;
 }
 
-.item:hover .actions {
-    display: flex;
-    /* Show on hover */
-}
-
-.actions:hover {
+.actionBtn.delete:hover {
     background: rgba(239, 68, 68, 0.1);
-    /* Subtle red background on hover */
+    color: #ef4444;
 }

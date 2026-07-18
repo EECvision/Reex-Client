@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { HistoryItem } from '../../providers/ProjectContext';
 import styles from './HistoryModal.module.css';
-import { Search, Folder, X } from 'lucide-react';
+import { Search, Folder, X, Download } from 'lucide-react';
 import { Modal } from '../ui/Modal/Modal';
 
 interface HistoryModalProps {
@@ -30,6 +30,23 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, items, onI
     const filteredItems = items.filter(item =>
         item.name.toLowerCase().includes(search.toLowerCase())
     );
+
+    const handleDownload = (e: React.MouseEvent, item: HistoryItem) => {
+        e.stopPropagation();
+        
+        const dataStr = JSON.stringify(item.content, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${item.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_reex.json`;
+        document.body.appendChild(a);
+        a.click();
+        
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'ArrowDown') {
@@ -105,18 +122,27 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, items, onI
                                         Last edited: {formatDate(item.updated_at)}
                                     </span>
                                 </div>
-                                {onDelete && (
+                                <div className={styles.actionGroup}>
                                     <div
-                                        className={styles.actions}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onDelete(item.id);
-                                        }}
-                                        title="Delete from history"
+                                        className={styles.actionBtn}
+                                        onClick={(e) => handleDownload(e, item)}
+                                        title="Download collection"
                                     >
-                                        <X size={14} />
+                                        <Download size={14} />
                                     </div>
-                                )}
+                                    {onDelete && (
+                                        <div
+                                            className={`${styles.actionBtn} ${styles.delete}`}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDelete(item.id);
+                                            }}
+                                            title="Delete from history"
+                                        >
+                                            <X size={14} />
+                                        </div>
+                                    )}
+                                </div>
                             </button>
                         ))
                     ) : (
