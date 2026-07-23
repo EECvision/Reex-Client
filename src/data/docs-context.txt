@@ -305,7 +305,7 @@ Provides modular authentication strategies and guards.
     import { localStorageTokenProvider } from "./localstorage-auth/provider";
 
     export type AuthStrategy = "cookie" | "next-auth" | "localstorage";
-    export let activeTokenProvider: any = localStorageTokenProvider;
+    let activeTokenProvider: any = localStorageTokenProvider;
 
     export const setActiveStrategy = (strategy: AuthStrategy) => {
       switch (strategy) {
@@ -1093,7 +1093,7 @@ Auto-generated hooks based on your `definitions/`. These are regenerated wheneve
     /* eslint-disable @typescript-eslint/no-explicit-any */
     import { useCallback, useState, useEffect } from "react";
     import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-    import { activeTokenProvider } from "../auth/manager";
+    import { getActiveProvider } from "../auth/manager";
     import { apiClient } from "../core";
     import { authConfig } from "../user-config/auth";
 
@@ -1116,7 +1116,7 @@ Auto-generated hooks based on your `definitions/`. These are regenerated wheneve
           const accessToken = data?.accessToken ?? data?.access_token ?? data?.token;
           const refreshToken = data?.refreshToken ?? data?.refresh_token ?? data?.refresh;
 
-          activeTokenProvider?.setTokens?.({ accessToken, refreshToken });
+          const provider = getActiveProvider();\n          provider?.setTokens?.({ accessToken, refreshToken });
 
           if (typeof window !== "undefined") {
             window.dispatchEvent(new Event("auth:login"));
@@ -1149,13 +1149,13 @@ Auto-generated hooks based on your `definitions/`. These are regenerated wheneve
               await apiClient.get(authConfig.logoutUrl);
             }
           }
-          activeTokenProvider?.clearTokens?.();
+          const provider = getActiveProvider();\n          provider?.clearTokens?.();
           if (typeof window !== "undefined") {
             window.dispatchEvent(new Event("auth:logout"));
           }
         } catch (error) {
           console.error("[useLogout] Logout failed:", error);
-          activeTokenProvider?.clearTokens?.();
+          const provider = getActiveProvider();\n          provider?.clearTokens?.();
           if (typeof window !== "undefined") {
             window.dispatchEvent(new Event("auth:logout"));
           }
@@ -1175,7 +1175,7 @@ Auto-generated hooks based on your `definitions/`. These are regenerated wheneve
       useEffect(() => {
         const checkAuth = async () => {
           try {
-            const token = await activeTokenProvider?.getToken?.();
+            const provider = getActiveProvider();\n            const token = await provider?.getToken?.();
             setIsAuthenticated(!!token);
           } catch {
             setIsAuthenticated(false);
