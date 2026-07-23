@@ -137,6 +137,30 @@
   font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
 }
 
+.urlInputPassword {
+  padding-right: 40px;
+}
+
+.togglePasswordBtn {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary, #64748b);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.togglePasswordBtn:hover {
+  color: var(--text-primary, #f1f5f9);
+  background-color: var(--hover-bg, rgba(255, 255, 255, 0.05));
+}
+
 .urlInput:focus {
   border-color: var(--primary-color, #3b82f6);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);

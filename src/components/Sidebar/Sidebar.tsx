@@ -12,6 +12,7 @@ import {
   Pencil,
   RefreshCw,
   MoreVertical,
+  Download,
   Code,
   PanelLeft,
   Search,
@@ -52,6 +53,7 @@ interface SidebarProps {
   onDeleteModule?: (moduleName: string) => void;
   onDeleteFunction?: (moduleName: string, functionName: string) => void;
   onDeleteCollection?: (id: string) => void;
+  onDownloadCollection?: (id: string) => void;
   onRenameCollection?: (id: string, newName: string) => void;
   onUpdateCollection?: (id: string) => void;
   onOpenSandbox?: (id: string) => void;
@@ -73,6 +75,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onDeleteModule,
   onDeleteFunction,
   onDeleteCollection,
+  onDownloadCollection,
   onRenameCollection,
   onUpdateCollection,
   onOpenSandbox,
@@ -310,6 +313,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       {(onUpdateCollection ||
                         onOpenSandbox ||
                         onRenameCollection ||
+                        onDownloadCollection ||
                         onDeleteCollection) && (
                         <div className={styles.collectionHeaderActions}>
                           <DropdownMenu.Root>
@@ -372,6 +376,18 @@ const Sidebar: React.FC<SidebarProps> = ({
                                   >
                                     <Pencil size={14} />
                                     Rename Collection
+                                  </DropdownMenu.Item>
+                                )}
+                                {onDownloadCollection && (
+                                  <DropdownMenu.Item
+                                    className={styles.dropdownItem}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onDownloadCollection(group.id);
+                                    }}
+                                  >
+                                    <Download size={14} />
+                                    Download Collection
                                   </DropdownMenu.Item>
                                 )}
                                 {onDeleteCollection && (

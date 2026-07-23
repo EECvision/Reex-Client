@@ -3,7 +3,7 @@ import styles from "./ImportModal.module.css";
 import { useAuth } from "@/providers/AuthContext";
 import { Button } from "../ui/Button/Button";
 import { api } from "@/services/api";
-import { Loader2, Globe, History as HistoryIcon, AlertCircle, X, Lock } from "lucide-react";
+import { Loader2, Globe, History as HistoryIcon, AlertCircle, X, Lock, Eye, EyeOff } from "lucide-react";
 import DiffModal, { FunctionDiff } from "./DiffModal";
 import { Modal } from "../ui/Modal/Modal";
 import { DiffResult } from "./importTypes";
@@ -118,6 +118,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
     }
     return "";
   });
+  const [showPostmanApiKey, setShowPostmanApiKey] = useState(false);
   const [isFetchingPostman, setIsFetchingPostman] = useState(false);
   const [postmanError, setPostmanError] = useState('');
 
@@ -582,9 +583,9 @@ const ImportModal: React.FC<ImportModalProps> = ({
                       <div className={styles.urlInputWrapper}>
                         <Lock size={16} className={styles.urlIcon} />
                         <input
-                          type="password"
+                          type={showPostmanApiKey ? "text" : "password"}
                           placeholder="PMAK-..."
-                          className={styles.urlInput}
+                          className={`${styles.urlInput} ${styles.urlInputPassword}`}
                           value={postmanApiKey}
                           onChange={(e) => {
                             setPostmanApiKey(e.target.value);
@@ -592,6 +593,14 @@ const ImportModal: React.FC<ImportModalProps> = ({
                           }}
                           disabled={isFetchingPostman}
                         />
+                        <button
+                          type="button"
+                          className={styles.togglePasswordBtn}
+                          onClick={() => setShowPostmanApiKey(!showPostmanApiKey)}
+                          title={showPostmanApiKey ? "Hide API Key" : "Show API Key"}
+                        >
+                          {showPostmanApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
                       </div>
                     </div>
                     <p className={styles.postmanHelperText}>

@@ -15,6 +15,7 @@ interface SidebarControllerProps {
   onDeleteFunction: (moduleName: string, functionName: string) => void;
   onDeleteCollection: (id: string) => void;
   onRenameCollection?: (id: string, newName: string) => void;
+  onDownloadCollection?: (id: string) => void;
   onUpdateCollection?: (id: string) => void;
   onOpenSandbox?: (id: string) => void;
   isOpen?: boolean;
@@ -31,6 +32,7 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
   onDeleteFunction,
   onDeleteCollection,
   onRenameCollection,
+  onDownloadCollection,
   onUpdateCollection,
   onOpenSandbox,
   isOpen = false,
@@ -175,6 +177,7 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
         onDeleteFunction={isStandaloneMode ? undefined : onDeleteFunction}
         onDeleteCollection={isStandaloneMode ? onDeleteCollection : undefined}
         onRenameCollection={isStandaloneMode ? onRenameCollection : undefined}
+        onDownloadCollection={isStandaloneMode ? onDownloadCollection : undefined}
         onUpdateCollection={isStandaloneMode ? onUpdateCollection : undefined}
         onOpenSandbox={isStandaloneMode ? onOpenSandbox : undefined}
         baseURL={config?.baseURL}

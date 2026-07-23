@@ -261,6 +261,26 @@ const App = () => {
 
   const hasEndpoints = apiManifest && Object.keys(apiManifest).length > 0;
 
+  const handleDownloadCollection = (id: string) => {
+    const col = collections.find((c) => c.id === id);
+    if (col) {
+      try {
+        const contentStr = JSON.stringify(col, null, 2);
+        const blob = new Blob([contentStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${col.name.replace(/\s+/g, "_")}_collection.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error("Error downloading collection:", err);
+      }
+    }
+  };
+
   if (projectLoading) {
     return (
       <div className={styles.loadingContainer}>
@@ -303,6 +323,7 @@ const App = () => {
           onDeleteModule={handleDeleteModule}
           onDeleteFunction={handleDeleteFunction}
           onDeleteCollection={openDeleteModal}
+          onDownloadCollection={handleDownloadCollection}
           onRenameCollection={(id, name) => updateCollection(id, { name })}
           onUpdateCollection={openUpdateModal}
           onOpenSandbox={(id) => {
