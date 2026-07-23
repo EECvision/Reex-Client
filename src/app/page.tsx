@@ -262,23 +262,44 @@ const App = () => {
   const hasEndpoints = apiManifest && Object.keys(apiManifest).length > 0;
 
   const handleDownloadCollection = (id: string) => {
-    const col = collections.find((c) => c.id === id);
-    if (col) {
+    let col = collections.find((c) => c.id === id);
+    let nameToMatch = col?.name;
+
+    if (!col && id === "default" && !isStandaloneMode) {
+      nameToMatch = activeConfig?.collectionName;
+      col = {
+        id: "default",
+        name: activeConfig?.collectionName || "Collection",
+        manifest: apiManifest || {},
+        modules: {},
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      } as any;
+    }
+
+    // Try to find the original Postman/OpenAPI content in history first
+    const historyItem = recentCollections.find((h) => h.name === nameToMatch);
+
+    if (historyItem && historyItem.content) {
       try {
-        const contentStr = JSON.stringify(col, null, 2);
+        const contentStr = JSON.stringify(historyItem.content, null, 2);
         const blob = new Blob([contentStr], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `${col.name.replace(/\s+/g, "_")}_collection.json`;
+        a.download = `${historyItem.name.replace(/[^a-z0-9]/gi, "_").toLowerCase()}_reex.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+        return;
       } catch (err) {
-        console.error("Error downloading collection:", err);
+        console.error("Error downloading from history:", err);
       }
     }
+
+    // Fallback: Show error
+    showToast("error", "Original collection file not found in history. Cannot download collection.");
   };
 
   if (projectLoading) {

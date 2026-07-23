@@ -7,6 +7,7 @@ import {
   ChevronDown,
   Download,
   Plus,
+  RefreshCw,
   Trash2,
   FileText,
   Loader2,
@@ -311,8 +312,8 @@ const Navbar: React.FC<NavbarProps> = ({
           }}
         >
           <DropdownMenu.Trigger asChild>
-            <Button variant="ghost" leftIcon={<Plus size={16} />}>
-              Add Collection
+            <Button variant="ghost" leftIcon={(!isStandaloneMode && hasCollection) ? <RefreshCw size={16} /> : <Plus size={16} />}>
+              {(!isStandaloneMode && hasCollection) ? "Update Collection" : "Add Collection"}
             </Button>
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
