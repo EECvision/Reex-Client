@@ -168,11 +168,26 @@ export const sanitizePropertyName = (name: string) => {
     return `'${name}'`;
 };
 
-export const normalizeApiUrl = (url: string) => {
-    return url
+export const normalizeApiUrl = (url: string, baseUrl?: string) => {
+    let normalized = url
         .replace(/^https?:\/\/[^\/]+/, "")
         .replace(/^{{[^}]+}}/, "")
         .replace(/\/$/, "");
+
+    if (baseUrl) {
+        try {
+            // Handle both absolute and relative baseUrls
+            const parsedUrl = baseUrl.startsWith('http') ? new URL(baseUrl) : new URL(baseUrl, 'http://dummy.com');
+            const basePath = parsedUrl.pathname.replace(/\/+$/, '');
+            if (basePath && basePath !== '/') {
+                if (normalized === basePath || normalized.startsWith(basePath + '/')) {
+                    normalized = normalized.slice(basePath.length);
+                }
+            }
+        } catch(e) {}
+    }
+    
+    return normalized.startsWith('/') ? normalized : '/' + normalized;
 };
 
 export const extractBaseUrl = (data: any): string | undefined => {

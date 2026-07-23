@@ -11,6 +11,7 @@ import {
   StandardFunctionDefinition,
   generateStandardModuleContent,
   normalizeApiUrl,
+  extractBaseUrl,
   extractPostmanPathParams,
   resolveClientAndPath,
   getCommonPrefix,
@@ -52,7 +53,8 @@ export const processPostmanCollection = (collectionData: any) => {
 const mapToStandardIR = (
   processedModules: Map<string, any[]>,
   filterModules?: string[],
-  clientMappings?: Record<string, string>
+  clientMappings?: Record<string, string>,
+  baseUrl?: string
 ): StandardModuleDefinition[] => {
   const standardModules: StandardModuleDefinition[] = [];
 
@@ -81,7 +83,7 @@ const mapToStandardIR = (
 
       if (!url) return;
 
-      const finalUrl = normalizeApiUrl(url);
+      const finalUrl = normalizeApiUrl(url, baseUrl);
       const [pathOnly] = finalUrl.split("?");
       const pathParams = extractPostmanPathParams(pathOnly);
 
@@ -200,7 +202,8 @@ export const generatePostman = async (options: GeneratorOptions): Promise<Module
   if (!data) throw new Error("No collection data provided");
 
   const processed = processPostmanCollection(data);
-  const standardModules = mapToStandardIR(processed, options.filterModules, options.clientMappings);
+  const baseUrl = extractBaseUrl(data);
+  const standardModules = mapToStandardIR(processed, options.filterModules, options.clientMappings, baseUrl);
   const modules = generateStandardModuleContent(standardModules);
   const operations = processAndMergeModules(modules, options);
 

@@ -6,6 +6,7 @@ import {
   toCamelCase,
   sanitizeModuleName,
   normalizeApiUrl,
+  extractBaseUrl,
   processAndMergeModules,
   runGeneratorCLI,
   GenericParam,
@@ -54,7 +55,8 @@ export const processOpenAPI = (spec: any) => {
 const mapToStandardIR = (
   processedModules: Map<string, any[]>,
   filterModules?: string[],
-  clientMappings?: Record<string, string>
+  clientMappings?: Record<string, string>,
+  baseUrl?: string
 ): StandardModuleDefinition[] => {
   const standardModules: StandardModuleDefinition[] = [];
 
@@ -89,7 +91,7 @@ const mapToStandardIR = (
       // Extract Path Params & Normalize Path
       // Convert /users/{id} -> /users/${id}
       const pathParams = extractPathParams(path);
-      let normalizedPath = normalizeApiUrl(path);
+      let normalizedPath = normalizeApiUrl(path, baseUrl);
       // Ensure no query params leak into the path
       normalizedPath = normalizedPath.split("?")[0];
 
@@ -200,7 +202,8 @@ export const generateOpenApi = async (options: GeneratorOptions): Promise<Module
   console.log(`📋 OpenAPI Version: ${data.openapi || data.swagger}`);
 
   const processed = processOpenAPI(data);
-  const standardModules = mapToStandardIR(processed, options.filterModules, options.clientMappings);
+  const baseUrl = extractBaseUrl(data);
+  const standardModules = mapToStandardIR(processed, options.filterModules, options.clientMappings, baseUrl);
   const modules = generateStandardModuleContent(standardModules, data); // Pass data for Ref resolution
   const operations = processAndMergeModules(modules, options);
 
