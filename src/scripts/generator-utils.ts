@@ -500,7 +500,7 @@ export const generateModuleTemplate = (
     }
 
     // 2. Imports
-    contentParts.push('import { apiClient } from "../core";');
+    contentParts.push('import { apiClient, type ReexDefinition } from "../core";');
     if (responseTypeImports) contentParts.push(responseTypeImports);
 
     // 3. Type Definitions
@@ -514,7 +514,7 @@ export const generateModuleTemplate = (
 
     contentParts.push("export const " + moduleName + "Api = {");
     contentParts.push(functionDefinitions.join(",\n\n\n"));
-    contentParts.push("};");
+    contentParts.push("} satisfies ReexDefinition;");
 
     return contentParts.join("\n") + "\n";
 };

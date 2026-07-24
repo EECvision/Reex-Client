@@ -61,7 +61,7 @@ export const useImportActions = ({
         const modules: Record<string, string> = {};
         
         for (const [moduleName, endpoints] of Object.entries(manifest)) {
-            let code = `export const ${moduleName}Api = {\n`;
+            let code = `import { type ReexDefinition } from "../core";\n\nexport const ${moduleName}Api = {\n`;
             for (const [fnName, ep] of Object.entries(endpoints as Record<string, any>)) {
                 // Ensure correct case for the extracted URL handling
                 const method = ep.method?.toLowerCase() || 'get';
@@ -73,7 +73,7 @@ export const useImportActions = ({
                 code += `  /**${requiresAuthStr}${contentTypeStr}\n   */\n`;
                 code += `  ${fnName}: () => ${client}.${method}(\`${url}\`),\n`;
             }
-            code += `};\n`;
+            code += `} satisfies ReexDefinition;\n`;
             modules[moduleName] = code;
         }
         return modules;
