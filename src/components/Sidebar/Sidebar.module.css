@@ -313,7 +313,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--text-secondary, #4b5563);
-  padding: 2px 0;
+  padding: 4px 0;
 }
 
 .fileActive .fileName {
@@ -383,8 +383,10 @@
   align-items: center;
   gap: 2px;
   margin-left: auto;
-  opacity: 0;
+  opacity: 1; /* Always visible as requested */
   transition: opacity 0.2s;
+  min-width: 24px; /* Prevent UI jump when copy success icon appears */
+  justify-content: flex-end;
 }
 
 .file:hover .fileActions,

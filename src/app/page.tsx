@@ -25,6 +25,14 @@ import { useCollectionManagement } from "@/hooks/useCollectionManagement";
 import { useEndpointExecution } from "@/hooks/useEndpointExecution";
 
 const App = () => {
+  // Prevent default browser right-click context menu globally
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+    document.addEventListener("contextmenu", handleContextMenu);
+    return () => document.removeEventListener("contextmenu", handleContextMenu);
+  }, []);
   // Project Context
   const {
     manifest: apiManifest,
@@ -348,52 +356,88 @@ const App = () => {
     selectedEndpoint,
   });
 
-  // Reset selected endpoint if manifest/collections becomes empty, else update it with new args
+  // Sync tabs with manifest changes
   useEffect(() => {
-    if (projectLoading) return;
+    if (projectLoading || isStandaloneMode || !apiManifest) return;
 
-    if (isStandaloneMode) {
-      // In standalone mode, collections are loaded asynchronously.
-      // We don't wipe tabs here because we don't have a reliable `collectionsLoading` flag right now,
-      // and doing so would wipe saved tabs on initial load before collections finish fetching.
-    } else {
-      if (apiManifest && Object.keys(apiManifest).length === 0 && tabs.length > 0) {
-        setTabs([]);
-        setActiveTabIndex(-1);
-      } else if (selectedEndpoint && apiManifest) {
-        // Keep selectedEndpoint in sync with manifest updates
-        const { apiKey, fnName } = selectedEndpoint;
+    if (Object.keys(apiManifest).length === 0 && tabs.length > 0) {
+      setTabs([]);
+      setActiveTabIndex(-1);
+      return;
+    }
+
+    if (tabs.length > 0) {
+      let needsUpdate = false;
+      const newTabs = tabs.map((tab) => {
+        const { apiKey, fnName } = tab.endpoint;
         const endpointDef = apiManifest?.[apiKey]?.[fnName];
+        
         if (endpointDef) {
-          // Re-create the endpoint info with fresh data from the updated manifest
           const methodPrefix = fnName.split("_")[0].toUpperCase();
-          setTabs((currentTabs) => {
-            const newTabs = [...currentTabs];
-            const activeIndex = activeTabIndex;
-            if (activeIndex >= 0) {
-               newTabs[activeIndex] = {
-                 ...newTabs[activeIndex],
-                 endpoint: {
-                   apiKey,
-                   fnName,
-                   args: endpointDef.args || [],
-                   url: endpointDef.url,
-                   method: endpointDef.method || methodPrefix,
-                   requiresAuth: endpointDef.requiresAuth,
-                   contentType: endpointDef.contentType,
-                   description: endpointDef.description,
-                 }
-               };
-            }
-            return newTabs;
-          });
+          const newMethod = endpointDef.method || methodPrefix;
+          
+          // Check for differences
+          const hasDiff = 
+            JSON.stringify(tab.endpoint.args) !== JSON.stringify(endpointDef.args || []) ||
+            tab.endpoint.url !== endpointDef.url ||
+            tab.endpoint.method !== newMethod ||
+            tab.endpoint.requiresAuth !== endpointDef.requiresAuth ||
+            tab.endpoint.contentType !== endpointDef.contentType ||
+            tab.endpoint.description !== endpointDef.description;
+            
+          if (hasDiff) {
+            needsUpdate = true;
+            return {
+              ...tab,
+              endpoint: {
+                ...tab.endpoint,
+                args: endpointDef.args || [],
+                url: endpointDef.url,
+                method: newMethod,
+                requiresAuth: endpointDef.requiresAuth,
+                contentType: endpointDef.contentType,
+                description: endpointDef.description,
+              }
+            };
+          }
+          return tab;
+        }
+        
+        // Endpoint no longer exists in manifest
+        needsUpdate = true;
+        return null;
+      });
+
+      if (needsUpdate) {
+        const filteredTabs = newTabs.filter(t => t !== null) as typeof tabs;
+        setTabs(filteredTabs);
+        
+        // Adjust active index if necessary
+        if (filteredTabs.length === 0) {
+          setActiveTabIndex(-1);
+        } else if (activeTabIndex >= filteredTabs.length) {
+          setActiveTabIndex(filteredTabs.length - 1);
         } else {
-          // Endpoint was removed from manifest
-          handleCloseTab(activeTabIndex);
+          // If the specifically active tab was deleted, we might need to adjust, 
+          // but the index shifting might mean we land on a different tab. 
+          // For simplicity, we just keep activeTabIndex if it's within bounds.
+          // Let's accurately find the new index of the previously active tab if it survived.
+          const activeTab = tabs[activeTabIndex];
+          const stillExistsIndex = filteredTabs.findIndex(t => 
+            t.endpoint.apiKey === activeTab?.endpoint.apiKey && 
+            t.endpoint.fnName === activeTab?.endpoint.fnName
+          );
+          
+          if (stillExistsIndex !== -1) {
+             setActiveTabIndex(stillExistsIndex);
+          } else {
+             // The active tab was deleted, select the one next to it (which is now at activeTabIndex, or bounded)
+             setActiveTabIndex(Math.min(activeTabIndex, filteredTabs.length - 1));
+          }
         }
       }
     }
-  }, [apiManifest, projectLoading, isStandaloneMode]);
+  }, [apiManifest, projectLoading, isStandaloneMode, tabs, activeTabIndex]);
 
   const hasEndpoints = apiManifest && Object.keys(apiManifest).length > 0;
 
