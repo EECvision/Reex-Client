@@ -161,9 +161,9 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top', expanded = false
                                     </div>
                                 </div>
                                 <div className={styles.separator} />
-                                <button className={styles.menuItem} onClick={() => handleNavigate('/report-issue')}>
+                                <button className={styles.menuItem} onClick={() => handleNavigate('/support')}>
                                     <MessageSquareWarning size={14} />
-                                    <span>Report Issue</span>
+                                    <span>Support</span>
                                 </button>
                                 <div className={styles.separator} />
                                 <button

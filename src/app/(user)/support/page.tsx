@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import styles from "./report-issue.module.css";
+import styles from "./support.module.css";
 import { Button } from "@/components/ui/Button/Button";
 import { useAuth } from "@/providers/AuthContext";
-import { MessageSquareWarning, Loader2, CheckCircle, ExternalLink } from "lucide-react";
+import { MessageSquareWarning, Loader2, CheckCircle, ExternalLink, MessageCircle } from "lucide-react";
+
+const WHATSAPP_GROUP_URL = "https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK";
 import { createIssue } from "@/app/actions/issueActions";
 
 export default function ReportIssuePage() {
@@ -45,12 +47,12 @@ export default function ReportIssuePage() {
         <main className={styles.container}>
             <div className={styles.content}>
                 <div className={styles.header}>
-                    <h1 className={styles.title}>Report an Issue</h1>
+                    <h1 className={styles.title}>Support</h1>
                     <p className={styles.subtitle}>
-                        Found a bug or have a suggestion? Let us know and help us improve Reex API Builder.
+                        Need help, found a bug, or have a suggestion? Let us know and we'll get back to you.
                     </p>
-                    {process.env.NEXT_PUBLIC_GITHUB_REPO_URL && (
-                        <div style={{ marginTop: '16px' }}>
+                    <div style={{ marginTop: '16px' }}>
+                        {process.env.NEXT_PUBLIC_GITHUB_REPO_URL && (
                             <a 
                                 href={process.env.NEXT_PUBLIC_GITHUB_REPO_URL}
                                 target="_blank"
@@ -59,8 +61,8 @@ export default function ReportIssuePage() {
                             >
                                 View All Issues <ExternalLink size={14} style={{ marginLeft: 6 }} />
                             </a>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
 
                 <div className={styles.card}>
@@ -133,6 +135,17 @@ export default function ReportIssuePage() {
                     )}
                 </div>
             </div>
+
+            <a
+                href={WHATSAPP_GROUP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.whatsappFab}
+                title="Join our WhatsApp Community"
+                style={{display: "none"}}
+            >
+                <MessageCircle size={28} />
+            </a>
         </main>
     );
 }

@@ -52,6 +52,6 @@ export async function createIssue(formData: FormData) {
         return { error: "Failed to submit issue. Please try again." };
     }
 
-    revalidatePath("/report-issue");
+    revalidatePath("/support");
     return { success: true };
 }
