@@ -3,7 +3,8 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { Project, SyntaxKind, } from "ts-morph";
+import { Project, } from "ts-morph";
+import { getInitializerObject } from "@/utils/ast";
 import { exec } from "child_process";
 // @ts-ignore
 const { API_DEFINITIONS_DIR, API_TYPES_DIR } = require("../paths");
@@ -68,7 +69,7 @@ async function deleteItem(request: DeleteRequest) {
             throw new Error(`API object not found in module '${moduleName}'`);
         }
 
-        const initializer = variableDecl.getInitializerIfKind(SyntaxKind.ObjectLiteralExpression);
+        const initializer = getInitializerObject(variableDecl);
         if (!initializer) {
             throw new Error(`Invalid API object structure in module '${moduleName}'`);
         }

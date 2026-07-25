@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import * as fs from "fs";
 import * as path from "path";
 import * as prettier from "prettier";
 import { Project, SyntaxKind, PropertyAssignment } from "ts-morph";
+import { getInitializerObject } from "@/utils/ast";
 // @ts-ignore
 const { API_DEFINITIONS_DIR } = require("../paths");
 import yaml from 'js-yaml';
@@ -122,15 +122,9 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
 
     if (!variableDecl) return functions;
 
-    let initializer: any = variableDecl.getInitializer();
-    if (initializer) {
-        const kindName = initializer.getKindName();
-        if (kindName === "SatisfiesExpression" || kindName === "AsExpression") {
-            initializer = initializer.getExpression();
-        }
-    }
+    const initializer = getInitializerObject(variableDecl);
 
-    if (!initializer || initializer.getKindName() !== "ObjectLiteralExpression") return functions;
+    if (!initializer) return functions;
 
     initializer.getProperties().forEach((prop: any) => {
         if (prop.getKind() === SyntaxKind.PropertyAssignment) {

@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
-import { Project, SyntaxKind, PropertyAssignment, SourceFile, InterfaceDeclaration } from "ts-morph";
+import { Project, SourceFile, SyntaxKind, PropertyAssignment, InterfaceDeclaration } from "ts-morph";
+import { getInitializerObject } from "@/utils/ast";
 
 // --- Types ---
 
@@ -281,7 +282,7 @@ export const getExistingFunctions = (sourceFile: SourceFile, moduleName: string)
     const variableDecl = sourceFile.getVariableDeclaration(`${moduleName}Api`);
 
     if (variableDecl) {
-        const initializer = variableDecl.getInitializerIfKind(SyntaxKind.ObjectLiteralExpression);
+        const initializer = getInitializerObject(variableDecl);
         if (initializer) {
             initializer.getProperties().forEach((prop) => {
                 if (prop.getKind() === SyntaxKind.PropertyAssignment) {
@@ -567,7 +568,7 @@ export const processAndMergeModules = (
 
         if (variableDecl) {
             const normalizedForceOverwrite = forceOverwrite?.map(k => k.toLowerCase()) || [];
-            const initializer = variableDecl.getInitializerIfKind(SyntaxKind.ObjectLiteralExpression);
+            const initializer = getInitializerObject(variableDecl);
 
             if (initializer) {
                 if (functionsToInclude && functionsToInclude.length > 0) {

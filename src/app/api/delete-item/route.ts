@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sendEvent, getBridgeUrl, getApiServicesDir } from "@/app/api/utils";
-import { Project, SyntaxKind } from "ts-morph";
+import { getApiServicesDir } from "@/app/api/utils";
+import { Project } from "ts-morph";
+import { getInitializerObject } from "@/utils/ast";
 
 export async function POST(req: NextRequest) {
     try {
@@ -26,7 +27,8 @@ export async function POST(req: NextRequest) {
 
             const variableDecl = sourceFile.getVariableDeclaration(`${moduleName}Api`);
             if (variableDecl) {
-                const initializer = variableDecl.getInitializerIfKind(SyntaxKind.ObjectLiteralExpression);
+                let initializer = getInitializerObject(variableDecl);
+
                 if (initializer) {
                     const prop = initializer.getProperty(functionName);
                     if (prop) {
@@ -39,8 +41,14 @@ export async function POST(req: NextRequest) {
                             iface.remove();
                         }
                     });
-
-                    // If empty, delete module
+                    
+                    // Also remove the import declaration for the function's type
+                    const imports = sourceFile.getImportDeclarations();
+                    imports.forEach(imp => {
+                        if (imp.getModuleSpecifierValue().includes(functionName)) {
+                            imp.remove();
+                        }
+                    });
                     if (initializer.getProperties().length === 0) {
                         operations.push({ type: 'delete', filePath: `${API_SERVICES_DIR}/definitions/${moduleName}.ts` });
                         operations.push({ type: 'delete', filePath: `${API_SERVICES_DIR}/types/${moduleName}` });

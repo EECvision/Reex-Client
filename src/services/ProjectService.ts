@@ -1,6 +1,7 @@
 
 import fs from "fs";
 import path from "path";
+import { getInitializerObject } from "@/utils/ast";
 import {
     Project,
     SyntaxKind,
@@ -156,9 +157,9 @@ class ProjectService {
 
 
                     if (kind === SyntaxKind.VariableDeclaration) {
-                        const initializer = (declaration as VariableDeclaration).getInitializer();
-                        if (initializer && initializer.getKind() === SyntaxKind.ObjectLiteralExpression) {
-                            const properties = (initializer as ObjectLiteralExpression).getProperties();
+                        const initializer = getInitializerObject(declaration as VariableDeclaration);
+                        if (initializer) {
+                            const properties = initializer.getProperties();
                             for (const property of properties) {
                                 if (property.getKind() === SyntaxKind.PropertyAssignment) {
                                     const methodName = (property as PropertyAssignment).getName();
