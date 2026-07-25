@@ -7,6 +7,7 @@ import { useSettings } from "@/providers/SettingsContext";
 import { User, LogOut, LogIn, Settings, CreditCard, LayoutDashboard, Sun, Moon, Monitor, Palette, Book, MessageSquareWarning, ChevronsUpDown } from "lucide-react";
 import LoginModal from "../LoginModal/LoginModal";
 import { useRouter } from "next/navigation";
+import { isSubscriptionActive } from "@/lib/subscription";
 
 interface UserMenuProps {
     placement?: 'top' | 'bottom';
@@ -44,7 +45,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top', expanded = false
 
     const popoverClass = `${styles.popover} ${placement === 'top' ? styles.popoverTop : styles.popoverBottom}`;
 
-    const isSubscribed = user?.subscription_status === 'active';
+    const isSubscribed = isSubscriptionActive(user?.subscription_status);
 
     return (
         <div className={`${styles.container} ${expanded ? styles.containerExpanded : ''}`} ref={containerRef}>

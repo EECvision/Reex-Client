@@ -3,6 +3,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { createClient } from "@supabase/supabase-js";
 import { FREE_PROJECT_IMPORT_LIMIT } from "@/lib/constants";
+import { isSubscriptionActive } from "@/lib/subscription";
 
 export async function POST(req: NextRequest) {
     const session = await auth();
@@ -12,7 +13,7 @@ export async function POST(req: NextRequest) {
     }
 
     const userId = session.user.id;
-    const isPro = session.user.subscription_status === 'active'; // Minimal check, hook does more
+    const isPro = isSubscriptionActive(session.user.subscription_status); // Minimal check, hook does more
 
     // Pro users are never blocked
     if (isPro) {

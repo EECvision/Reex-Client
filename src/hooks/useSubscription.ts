@@ -1,6 +1,7 @@
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import { isSubscriptionActive } from "@/lib/subscription";
 
 export function useSubscription() {
     const { data: session, status, update } = useSession();
@@ -25,10 +26,7 @@ export function useSubscription() {
     const currentPeriodEnd = subscriptionData?.current_period_end ?? user?.current_period_end;
     const plan = subscriptionData?.subscription_plan ?? user?.subscription_plan ?? "free";
 
-    const isPro =
-        subscriptionStatus === "active" &&
-        currentPeriodEnd &&
-        new Date(currentPeriodEnd) > new Date();
+    const isPro = isSubscriptionActive(subscriptionStatus);
 
     return {
         isPro,

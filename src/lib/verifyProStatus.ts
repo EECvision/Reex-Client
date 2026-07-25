@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types/supabase";
+import { isSubscriptionActive } from "@/lib/subscription";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -26,12 +27,9 @@ export async function verifyProStatus(userId: string): Promise<boolean> {
         }
 
         const userData = user as any;
-        const isActive = userData.subscription_status === 'active';
-        const isValidPeriod = userData.current_period_end
-            ? new Date(userData.current_period_end) > new Date()
-            : false;
+        const isActive = isSubscriptionActive(userData.subscription_status);
 
-        return isActive && isValidPeriod;
+        return isActive;
     } catch (error) {
         console.error("Error verifying pro status:", error);
         return false;

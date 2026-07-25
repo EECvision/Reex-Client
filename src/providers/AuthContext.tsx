@@ -3,6 +3,7 @@
 import React, { ReactNode } from "react";
 import { SessionProvider } from "next-auth/react";
 import { useSession, signIn, signOut } from "next-auth/react";
+import { isSubscriptionActive } from "@/lib/subscription";
 
 interface AuthContextType {
     user: any;
@@ -20,8 +21,7 @@ export const useAuth = () => {
 
     // Check for "active" status and "Pro" plan (or others if you have more)
     // Adjust based on your exact subscription schema
-    const isPro = session?.user?.subscription_status === 'active' &&
-        (session?.user?.subscription_plan === 'Pro' || session?.user?.subscription_plan === 'pro');
+    const isPro = isSubscriptionActive(session?.user?.subscription_status);
 
     return {
         user: session?.user || null,
