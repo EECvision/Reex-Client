@@ -33,8 +33,8 @@ export async function POST(req: Request) {
         // if (!plan) return new NextResponse("Invalid Plan", { status: 400 });
 
         // For flexibility during dev/testing if plan_id might vary:
-        const expectedAmount = plan?.amount;
-        const expectedCurrency = plan?.currency;
+        const expectedAmount = plan?.amount || (billing_cycle === 'yearly' ? PRICING.yearly : PRICING.monthly);
+        const expectedCurrency = plan?.currency || "USD";
 
         const FLUTTERWAVE_SECRET_KEY = process.env.FLUTTERWAVE_SECRET_KEY;
         if (!FLUTTERWAVE_SECRET_KEY) {
@@ -61,8 +61,7 @@ export async function POST(req: Request) {
         if (data.status === "success" && fwData.status === "successful") {
 
             // 2. SECURITY CHECK: Verify Amount & Currency
-            // Only check if we have a matching plan config
-            if (expectedAmount && (fwData.amount < expectedAmount || fwData.currency !== expectedCurrency)) {
+            if (fwData.amount < expectedAmount || fwData.currency !== expectedCurrency) {
                 return NextResponse.json({ success: false, message: "Payment amount mismatch" }, { status: 400 });
             }
 
@@ -83,21 +82,30 @@ export async function POST(req: Request) {
             }
 
             // 4. DATE LOGIC: Use date-fns for accurate calculation based on billing cycle
+            const baseDate = session.user.current_period_end && new Date(session.user.current_period_end as string) > new Date()
+                ? new Date(session.user.current_period_end as string)
+                : new Date();
+
             const currentPeriodEnd = billing_cycle === 'yearly'
-                ? addYears(new Date(), 1)
-                : addMonths(new Date(), 1);
+                ? addYears(baseDate, 1)
+                : addMonths(baseDate, 1);
+
+            const updatePayload: any = {
+                subscription_status: "active",
+                subscription_plan: plan_id,
+                current_period_end: currentPeriodEnd.toISOString(),
+            };
+
+            // Only update subscription_id if Flutterwave provides the real one here, 
+            // otherwise the webhook will update it.
+            if (fwData.subscription_id) {
+                updatePayload.subscription_id = String(fwData.subscription_id);
+            }
 
             // 5. Update User
             const { error } = await supabase
                 .from("users")
-                .update({
-                    subscription_status: "active",
-                    subscription_plan: plan_id,
-                    subscription_id: fwData.id,
-                    // customer_code is not returned by the transaction verify endpoint;
-                    // it is updated later via webhook when Flutterwave sends charge.completed
-                    current_period_end: currentPeriodEnd.toISOString(),
-                })
+                .update(updatePayload)
                 .eq("id", session.user.id);
 
             if (error) {

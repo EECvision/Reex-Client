@@ -28,22 +28,66 @@ export async function POST(req: Request) {
 
             // Check plan ID from flutterwave data to determine the renewal duration
             const planId = data.plan;
-            const isYearly = planId && planId === PLAN_IDS.yearly;
+            const isYearly = planId ? String(planId) === String(PLAN_IDS.yearly) : false;
+
+            const { data: user, error: fetchError } = await supabase
+                .from("users")
+                .select("id, current_period_end")
+                .eq("email", email)
+                .maybeSingle();
+
+            if (fetchError || !user) {
+                console.error("Error fetching user for webhook:", fetchError || "User not found");
+                return new NextResponse("User Not Found", { status: 404 });
+            }
 
             // DATE LOGIC: Use date-fns to add exact duration
-            const currentPeriodEnd = isYearly ? addYears(new Date(), 1) : addMonths(new Date(), 1);
+            const baseDate = user.current_period_end && new Date(user.current_period_end) > new Date()
+                ? new Date(user.current_period_end)
+                : new Date();
+            const currentPeriodEnd = isYearly ? addYears(baseDate, 1) : addMonths(baseDate, 1);
+
+            // Extract subscription_id from Flutterwave webhook if available
+            const subscriptionId = data.subscription_id ? String(data.subscription_id) : undefined;
+            const updatePayload: any = {
+                subscription_status: "active",
+                current_period_end: currentPeriodEnd.toISOString(),
+            };
+            
+            if (planId) {
+                updatePayload.subscription_plan = String(planId);
+            }
+            if (subscriptionId) {
+                updatePayload.subscription_id = subscriptionId;
+            }
 
             const { error } = await supabase
                 .from("users")
-                .update({
-                    subscription_status: "active",
-                    current_period_end: currentPeriodEnd.toISOString(),
-                })
-                .eq("email", email);
+                .update(updatePayload)
+                .eq("id", user.id);
 
             if (error) {
                 console.error("Error updating user subscription from webhook:", error);
                 return new NextResponse("Database Error", { status: 500 });
+            }
+
+            // Record invoice / payment log for recurring charge idempotently
+            const txId = String(data.id || data.tx_ref || `wh_${Date.now()}`);
+            const { data: existingTx } = await supabase
+                .from("payments")
+                .select("id")
+                .eq("transaction_id", txId)
+                .maybeSingle();
+
+            if (!existingTx) {
+                await supabase.from("payments").insert({
+                    user_id: user.id,
+                    transaction_id: txId,
+                    amount: data.amount,
+                    currency: data.currency || "USD",
+                    status: "success",
+                    plan_id: String(planId || "")
+                });
             }
 
         } else if (event === "subscription.cancelled") {

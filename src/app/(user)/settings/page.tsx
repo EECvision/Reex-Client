@@ -8,6 +8,7 @@ import { useSettings } from "@/providers/SettingsContext";
 import { useRouter } from "next/navigation";
 import { useSubscription } from "@/hooks/useSubscription";
 import { InvoiceModal } from "@/components/InvoiceModal/InvoiceModal";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal/DeleteConfirmModal";
 import { FileText, Eye, Loader2 } from "lucide-react";
 import { PLAN_IDS } from "@/config/pricing";
 
@@ -22,6 +23,48 @@ export default function SettingsPage() {
     const [invoices, setInvoices] = useState<any[]>([]);
     const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+
+    // Cancel Subscription State
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
+    const [isReactivating, setIsReactivating] = useState(false);
+
+    const handleReactivateSubscription = async () => {
+        setIsReactivating(true);
+        try {
+            const res = await fetch('/api/subscription/reactivate', {
+                method: 'POST'
+            });
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                console.error("Failed to reactivate subscription");
+            }
+        } catch (error) {
+            console.error("Error reactivating subscription:", error);
+        } finally {
+            setIsReactivating(false);
+        }
+    };
+
+    const handleCancelSubscription = async () => {
+        setIsCancelling(true);
+        try {
+            const res = await fetch('/api/subscription/cancel', {
+                method: 'POST'
+            });
+            if (res.ok) {
+                setIsCancelModalOpen(false);
+                window.location.reload();
+            } else {
+                console.error("Failed to cancel subscription");
+            }
+        } catch (error) {
+            console.error("Error cancelling subscription:", error);
+        } finally {
+            setIsCancelling(false);
+        }
+    };
 
     React.useEffect(() => {
         if (activeTab === 'billing') {
@@ -129,11 +172,22 @@ export default function SettingsPage() {
                                             ? `Your next billing date is ${new Date(subscriptionUser.current_period_end).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}.`
                                             : "You are not charged for this plan."}
                                     </span>
-                                    {isPro ? (
-                                        <Button variant="secondary" size="sm" disabled>Active</Button>
-                                    ) : (
-                                        <Button variant="primary" size="sm" onClick={() => router.push('/subscription')}>Upgrade Plan</Button>
-                                    )}
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        {isPro ? (
+                                            <>
+                                                {subscriptionUser?.subscription_status !== 'canceled' ? (
+                                                    <>
+                                                        <Button variant="danger" size="sm" onClick={() => setIsCancelModalOpen(true)}>Cancel</Button>
+                                                        <Button variant="secondary" size="sm" disabled>Active</Button>
+                                                    </>
+                                                ) : (
+                                                    <Button variant="secondary" size="sm" onClick={handleReactivateSubscription} isLoading={isReactivating} disabled={isReactivating}>Reactivate Subscription</Button>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <Button variant="primary" size="sm" onClick={() => router.push('/subscription')}>Upgrade Plan</Button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -188,6 +242,15 @@ export default function SettingsPage() {
                                 isOpen={!!selectedInvoice}
                                 onClose={() => setSelectedInvoice(null)}
                                 invoice={selectedInvoice}
+                            />
+                            <DeleteConfirmModal
+                                isOpen={isCancelModalOpen}
+                                onClose={() => setIsCancelModalOpen(false)}
+                                onConfirm={handleCancelSubscription}
+                                deleting={isCancelling}
+                                title="Cancel Subscription"
+                                message="Are you sure you want to cancel your subscription? You will retain access until the end of your current billing period."
+                                confirmText="Cancel"
                             />
                         </>
                     )}

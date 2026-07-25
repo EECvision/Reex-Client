@@ -26,7 +26,7 @@ export function useSubscription() {
     const currentPeriodEnd = subscriptionData?.current_period_end ?? user?.current_period_end;
     const plan = subscriptionData?.subscription_plan ?? user?.subscription_plan ?? "free";
 
-    const isPro = isSubscriptionActive(subscriptionStatus);
+    const isPro = isSubscriptionActive(subscriptionStatus, currentPeriodEnd);    
 
     return {
         isPro,

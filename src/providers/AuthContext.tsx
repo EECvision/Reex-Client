@@ -21,7 +21,7 @@ export const useAuth = () => {
 
     // Check for "active" status and "Pro" plan (or others if you have more)
     // Adjust based on your exact subscription schema
-    const isPro = isSubscriptionActive(session?.user?.subscription_status);
+    const isPro = isSubscriptionActive(session?.user?.subscription_status, session?.user?.current_period_end);
 
     return {
         user: session?.user || null,

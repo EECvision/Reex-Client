@@ -27,7 +27,7 @@ export async function verifyProStatus(userId: string): Promise<boolean> {
         }
 
         const userData = user as any;
-        const isActive = isSubscriptionActive(userData.subscription_status);
+        const isActive = isSubscriptionActive(userData.subscription_status, userData.current_period_end);
 
         return isActive;
     } catch (error) {

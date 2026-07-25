@@ -17,11 +17,12 @@ import { PRICING, PLAN_IDS } from "@/config/pricing";
 
 export default function SubscriptionPage() {
     const router = useRouter();
-    const { isPro, user, isLoading, update } = useSubscription();
+    const { isPro, plan, user, isLoading, update } = useSubscription();
     const queryClient = useQueryClient();
     const [isProcessing, setIsProcessing] = useState(false);
     const [showLogin, setShowLogin] = useState(false);
-    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+
+    const yearlySavings = Math.round(((PRICING.monthly * 12 - PRICING.yearly) / (PRICING.monthly * 12)) * 100);
 
     // Status Modal State
     const [statusModal, setStatusModal] = useState<{
@@ -36,15 +37,11 @@ export default function SubscriptionPage() {
         message: ''
     });
 
-    const config = {
+    const getBaseConfig = () => ({
         public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY || "",
         tx_ref: `reexapibuilder_${Date.now()}`,
-        amount: PRICING[billingCycle], // Amount in USD
         currency: "USD",
         payment_options: "card,mobilemoney,ussd",
-        payment_plan: billingCycle === 'yearly'
-            ? PLAN_IDS.yearly
-            : PLAN_IDS.monthly,
         customer: {
             email: user?.email || "",
             phone_number: "",
@@ -58,15 +55,31 @@ export default function SubscriptionPage() {
             description: "Upgrade to Pro for unlimited access",
             logo: "/logo-subscription.svg",
         },
+    });
+
+    const configMonthly = {
+        ...getBaseConfig(),
+        amount: PRICING.monthly,
+        payment_plan: PLAN_IDS.monthly,
     };
 
-    const handleFlutterPayment = useFlutterwaveCustom(config);
+    const configYearly = {
+        ...getBaseConfig(),
+        amount: PRICING.yearly,
+        payment_plan: PLAN_IDS.yearly,
+    };
 
-    const handlePayment = () => {
+    const handleFlutterPaymentMonthly = useFlutterwaveCustom(configMonthly);
+    const handleFlutterPaymentYearly = useFlutterwaveCustom(configYearly);
+
+    const handlePayment = (billingCycle: 'monthly' | 'yearly') => {
         if (!user?.email) {
             setShowLogin(true);
             return;
         }
+
+        const handleFlutterPayment = billingCycle === 'monthly' ? handleFlutterPaymentMonthly : handleFlutterPaymentYearly;
+        const currentConfig = billingCycle === 'monthly' ? configMonthly : configYearly;
 
         handleFlutterPayment({
             callback: async (response) => {
@@ -81,7 +94,7 @@ export default function SubscriptionPage() {
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                                 transaction_id: response.transaction_id,
-                                plan_id: config.payment_plan,
+                                plan_id: currentConfig.payment_plan,
                                 billing_cycle: billingCycle
                             }),
                         });
@@ -141,6 +154,9 @@ export default function SubscriptionPage() {
         return <Loading />;
     }
 
+    const isYearlyPro = isPro && String(plan) === String(PLAN_IDS.yearly);
+    const isMonthlyPro = isPro && String(plan) === String(PLAN_IDS.monthly);
+
     return (
         <main className={styles.container}>
             <header className={styles.header}>
@@ -152,7 +168,7 @@ export default function SubscriptionPage() {
                 <div className={styles.planInfo}>
                     <h3>Current Plan</h3>
                     <div className={styles.planName}>
-                        {isPro ? "Pro Developer" : "Free Tier"}
+                        {isPro ? `Pro Developer (${plan === PLAN_IDS.yearly ? 'Yearly' : 'Monthly'})` : "Free Tier"}
                         <span className={isPro ? styles.badgePro : styles.badge}>Active</span>
                     </div>
                 </div>
@@ -177,27 +193,13 @@ export default function SubscriptionPage() {
                     </Button>
                 </div>
 
-                {/* Pro Plan */}
-                <div className={`${styles.planCard} ${styles.featured}`}>
-                    <div className={styles.featuredLabel}>RECOMMENDED</div>
+                {/* Pro Monthly Plan */}
+                <div className={`${styles.planCard} ${isMonthlyPro ? styles.featured : ''}`}>
+                    {isMonthlyPro && <div className={styles.featuredLabel}>CURRENT PLAN</div>}
                     <div className={styles.planCardHeader}>
-                        <h3 className={styles.planCardTitle}>Pro Developer</h3>
-                        <div className={styles.billingToggle}>
-                            <button
-                                className={`${styles.toggleBtn} ${billingCycle === 'monthly' ? styles.active : ''}`}
-                                onClick={() => setBillingCycle('monthly')}
-                            >
-                                Monthly
-                            </button>
-                            <button
-                                className={`${styles.toggleBtn} ${billingCycle === 'yearly' ? styles.active : ''}`}
-                                onClick={() => setBillingCycle('yearly')}
-                            >
-                                Yearly <span className={styles.saveBadge}>Save 20%</span>
-                            </button>
-                        </div>
+                        <h3 className={styles.planCardTitle}>Pro (Monthly)</h3>
                     </div>
-                    <div className={styles.price}>${PRICING[billingCycle]}<span>/{billingCycle === 'yearly' ? 'yr' : 'mo'}</span></div>
+                    <div className={styles.price}>${PRICING.monthly}<span>/mo</span></div>
                     
                     <ul className={styles.features}>
                         <li className={styles.feature}><Check size={18} className={styles.check} /> Everything in Hobby</li>
@@ -205,15 +207,43 @@ export default function SubscriptionPage() {
                         <li className={styles.feature}><Check size={18} className={styles.check} /> Cloud Sync & Backup</li>
                     </ul>
 
-                    {isPro ? (
+                    {isMonthlyPro ? (
                         <Button variant="primary" disabled>Current Plan</Button>
                     ) : (
                         <Button
                             variant="primary"
-                            onClick={handlePayment}
+                            onClick={() => handlePayment('monthly')}
                             disabled={isProcessing}
                         >
-                            {isProcessing ? <><Loader2 className="animate-spin mr-2" size={16} /> Processing...</> : `Upgrade to Pro (${billingCycle === 'yearly' ? 'Yearly' : 'Monthly'})`}
+                            {isProcessing ? <><Loader2 className="animate-spin mr-2" size={16} /> Processing...</> : (isPro ? 'Switch to Monthly' : 'Upgrade to Monthly')}
+                        </Button>
+                    )}
+                </div>
+
+                {/* Pro Yearly Plan */}
+                <div className={`${styles.planCard} ${!isMonthlyPro ? styles.featured : ''}`}>
+                    {!isMonthlyPro && <div className={styles.featuredLabel}>{isYearlyPro ? 'CURRENT PLAN' : 'RECOMMENDED'}</div>}
+                    <div className={styles.planCardHeader}>
+                        <h3 className={styles.planCardTitle}>Pro (Yearly)</h3>
+                        {yearlySavings > 0 && <span className={styles.saveBadge}>Save {yearlySavings}%</span>}
+                    </div>
+                    <div className={styles.price}>${PRICING.yearly}<span>/yr</span></div>
+                    
+                    <ul className={styles.features}>
+                        <li className={styles.feature}><Check size={18} className={styles.check} /> Everything in Hobby</li>
+                        <li className={styles.feature}><Check size={18} className={styles.check} /> Unlimited Project Mode Imports</li>
+                        <li className={styles.feature}><Check size={18} className={styles.check} /> Cloud Sync & Backup</li>
+                    </ul>
+
+                    {isYearlyPro ? (
+                        <Button variant="primary" disabled>Current Plan</Button>
+                    ) : (
+                        <Button
+                            variant="primary"
+                            onClick={() => handlePayment('yearly')}
+                            disabled={isProcessing}
+                        >
+                            {isProcessing ? <><Loader2 className="animate-spin mr-2" size={16} /> Processing...</> : (isPro ? 'Switch to Yearly' : 'Upgrade to Yearly')}
                         </Button>
                     )}
                 </div>

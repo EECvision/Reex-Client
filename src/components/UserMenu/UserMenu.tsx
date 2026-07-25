@@ -45,7 +45,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top', expanded = false
 
     const popoverClass = `${styles.popover} ${placement === 'top' ? styles.popoverTop : styles.popoverBottom}`;
 
-    const isSubscribed = isSubscriptionActive(user?.subscription_status);
+    const isSubscribed = isSubscriptionActive(user?.subscription_status, user?.current_period_end);
 
     return (
         <div className={`${styles.container} ${expanded ? styles.containerExpanded : ''}`} ref={containerRef}>

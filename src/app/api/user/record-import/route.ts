@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     }
 
     const userId = session.user.id;
-    const isPro = isSubscriptionActive(session.user.subscription_status); // Minimal check, hook does more
+    const isPro = isSubscriptionActive(session.user.subscription_status, session.user.current_period_end);
 
     // Pro users are never blocked
     if (isPro) {

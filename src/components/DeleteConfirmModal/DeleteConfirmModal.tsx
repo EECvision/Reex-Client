@@ -11,6 +11,7 @@ interface DeleteConfirmModalProps {
     deleting: boolean;
     title?: string;
     message?: string;
+    confirmText?: string;
 }
 
 const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
@@ -20,6 +21,7 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
     deleting,
     title = "Delete Collection",
     message = "Are you sure you want to delete this collection? This action cannot be undone and all generated API modules will be removed.",
+    confirmText = "Delete",
 }) => {
 
     const footer = (
@@ -37,7 +39,7 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
                 isLoading={deleting}
                 variant="danger"
             >
-                Delete
+                {confirmText}
             </Button>
         </div>
     );
