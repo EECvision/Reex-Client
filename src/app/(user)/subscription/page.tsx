@@ -154,8 +154,12 @@ export default function SubscriptionPage() {
         return <Loading />;
     }
 
-    const isYearlyPro = isPro && String(plan) === String(PLAN_IDS.yearly);
-    const isMonthlyPro = isPro && String(plan) === String(PLAN_IDS.monthly);
+    const isYearlyPro = isPro && plan === 'yearly';
+    const isMonthlyPro = isPro && plan === 'monthly';
+
+    let planName = "Legacy/Unknown";
+    if (isYearlyPro) planName = "Yearly";
+    if (isMonthlyPro) planName = "Monthly";
 
     return (
         <main className={styles.container}>
@@ -168,7 +172,7 @@ export default function SubscriptionPage() {
                 <div className={styles.planInfo}>
                     <h3>Current Plan</h3>
                     <div className={styles.planName}>
-                        {isPro ? `Pro Developer (${plan === PLAN_IDS.yearly ? 'Yearly' : 'Monthly'})` : "Free Tier"}
+                        {isPro ? `Pro Developer (${planName})` : "Free Tier"}
                         <span className={isPro ? styles.badgePro : styles.badge}>Active</span>
                     </div>
                 </div>

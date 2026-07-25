@@ -213,8 +213,8 @@ export default function SettingsPage() {
                                                         </div>
                                                         <div className={styles.invoiceMeta}>
                                                             <p className={styles.invoiceTitle}>
-                                                                {invoice.plan_id === PLAN_IDS.monthly ? "Pro Plan (Monthly)" :
-                                                                    invoice.plan_id === PLAN_IDS.yearly ? "Pro Plan (Yearly)" :
+                                                                {invoice.plan_id === 'monthly' ? "Pro Plan (Monthly)" :
+                                                                    invoice.plan_id === 'yearly' ? "Pro Plan (Yearly)" :
                                                                         "Subscription"}
                                                             </p>
                                                             <p className={styles.invoiceDate}>

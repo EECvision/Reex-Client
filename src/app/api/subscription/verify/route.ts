@@ -5,10 +5,7 @@ import axios from "axios";
 import { addMonths, addYears } from "date-fns";
 import { PRICING, PLAN_IDS } from "@/config/pricing";
 
-const PLANS = {
-    ...(PLAN_IDS.monthly ? { [PLAN_IDS.monthly]: { amount: PRICING.monthly, currency: "USD" } } : {}),
-    ...(PLAN_IDS.yearly ? { [PLAN_IDS.yearly]: { amount: PRICING.yearly, currency: "USD" } } : {}),
-};
+
 
 export async function POST(req: Request) {
     try {
@@ -24,17 +21,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, message: "Missing transaction_id or plan_id" }, { status: 400 });
         }
 
-        // validate plan
-        // @ts-ignore
-        const plan = PLANS[plan_id];
 
-        // Allow if plan is not in local config but let's be strict for now:
-        // If you want strict validation:
-        // if (!plan) return new NextResponse("Invalid Plan", { status: 400 });
-
-        // For flexibility during dev/testing if plan_id might vary:
-        const expectedAmount = plan?.amount || (billing_cycle === 'yearly' ? PRICING.yearly : PRICING.monthly);
-        const expectedCurrency = plan?.currency || "USD";
 
         const FLUTTERWAVE_SECRET_KEY = process.env.FLUTTERWAVE_SECRET_KEY;
         if (!FLUTTERWAVE_SECRET_KEY) {
@@ -60,8 +47,19 @@ export async function POST(req: Request) {
 
         if (data.status === "success" && fwData.status === "successful") {
 
+            const fwPlanId = fwData.payment_plan || (fwData.plan ? (typeof fwData.plan === 'object' ? fwData.plan.id : fwData.plan) : null);
+            const isYearlyPlan = String(fwPlanId) === String(PLAN_IDS.yearly);
+            const isMonthlyPlan = String(fwPlanId) === String(PLAN_IDS.monthly);
+
+            if (!isYearlyPlan && !isMonthlyPlan) {
+                return NextResponse.json({ success: false, message: "Invalid subscription plan on transaction" }, { status: 400 });
+            }
+
+            const trueBillingCycle = isYearlyPlan ? 'yearly' : 'monthly';
+            const expectedAmount = isYearlyPlan ? PRICING.yearly : PRICING.monthly;
+
             // 2. SECURITY CHECK: Verify Amount & Currency
-            if (fwData.amount < expectedAmount || fwData.currency !== expectedCurrency) {
+            if (fwData.amount < expectedAmount || fwData.currency !== "USD") {
                 return NextResponse.json({ success: false, message: "Payment amount mismatch" }, { status: 400 });
             }
 
@@ -86,14 +84,14 @@ export async function POST(req: Request) {
                 ? new Date(session.user.current_period_end as string)
                 : new Date();
 
-            const currentPeriodEnd = billing_cycle === 'yearly'
+            const currentPeriodEnd = trueBillingCycle === 'yearly'
                 ? addYears(baseDate, 1)
                 : addMonths(baseDate, 1);
 
             const updatePayload: any = {
-                subscription_status: "active",
-                subscription_plan: plan_id,
+                subscription_status: 'active',
                 current_period_end: currentPeriodEnd.toISOString(),
+                subscription_plan: trueBillingCycle
             };
 
             // Only update subscription_id if Flutterwave provides the real one here, 
@@ -120,7 +118,7 @@ export async function POST(req: Request) {
                 amount: fwData.amount,
                 currency: fwData.currency,
                 status: "success",
-                plan_id: plan_id
+                plan_id: trueBillingCycle
             });
 
             return NextResponse.json({ success: true, data: fwData });

@@ -29,6 +29,12 @@ export async function POST(req: Request) {
             // Check plan ID from flutterwave data to determine the renewal duration
             const planId = data.plan;
             const isYearly = planId ? String(planId) === String(PLAN_IDS.yearly) : false;
+            const isMonthly = planId ? String(planId) === String(PLAN_IDS.monthly) : false;
+
+            if (!isYearly && !isMonthly) {
+                console.log("Ignoring webhook for unknown plan ID:", planId);
+                return new NextResponse(null, { status: 200 }); // Ignore silently to Flutterwave
+            }
 
             const { data: user, error: fetchError } = await supabase
                 .from("users")
@@ -47,7 +53,6 @@ export async function POST(req: Request) {
                 : new Date();
             const currentPeriodEnd = isYearly ? addYears(baseDate, 1) : addMonths(baseDate, 1);
 
-            // Extract subscription_id from Flutterwave webhook if available
             const subscriptionId = data.subscription_id ? String(data.subscription_id) : undefined;
             const updatePayload: any = {
                 subscription_status: "active",
@@ -55,7 +60,9 @@ export async function POST(req: Request) {
             };
             
             if (planId) {
-                updatePayload.subscription_plan = String(planId);
+                if (isYearly) updatePayload.subscription_plan = "yearly";
+                else if (String(planId) === String(PLAN_IDS.monthly)) updatePayload.subscription_plan = "monthly";
+                else updatePayload.subscription_plan = String(planId); // Fallback to raw ID for unknown plans
             }
             if (subscriptionId) {
                 updatePayload.subscription_id = subscriptionId;
@@ -86,7 +93,7 @@ export async function POST(req: Request) {
                     amount: data.amount,
                     currency: data.currency || "USD",
                     status: "success",
-                    plan_id: String(planId || "")
+                    plan_id: isYearly ? "yearly" : (String(planId) === String(PLAN_IDS.monthly) ? "monthly" : String(planId || ""))
                 });
             }
 
