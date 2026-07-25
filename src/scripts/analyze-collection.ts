@@ -122,8 +122,15 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
 
     if (!variableDecl) return functions;
 
-    const initializer = variableDecl.getInitializerIfKind(SyntaxKind.ObjectLiteralExpression);
-    if (!initializer) return functions;
+    let initializer: any = variableDecl.getInitializer();
+    if (initializer) {
+        const kindName = initializer.getKindName();
+        if (kindName === "SatisfiesExpression" || kindName === "AsExpression") {
+            initializer = initializer.getExpression();
+        }
+    }
+
+    if (!initializer || initializer.getKindName() !== "ObjectLiteralExpression") return functions;
 
     initializer.getProperties().forEach((prop: any) => {
         if (prop.getKind() === SyntaxKind.PropertyAssignment) {
