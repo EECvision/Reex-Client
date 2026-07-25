@@ -17,12 +17,14 @@ import {
   PanelLeft,
   Search,
   X,
+  Check,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "../ui/Button/Button";
 import { Select } from "../ui/Select/Select";
 import Logo from "../Logo/Logo";
 import UserMenu from "../UserMenu/UserMenu";
+import ContextMenu from "../ui/ContextMenu/ContextMenu";
 
 // ... existing code ...
 
@@ -61,6 +63,7 @@ interface SidebarProps {
   collectionName?: string;
   isOpen?: boolean;
   onToggleSidebar?: () => void;
+  onDoubleClickEndpoint?: (endpoint: EndpointInfo) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -83,6 +86,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   collectionName,
   isOpen = false,
   onToggleSidebar,
+  onDoubleClickEndpoint,
 }) => {
   // Initialize expanded state for collections - default to ALL expanded
   const [expandedCollections, setExpandedCollections] = React.useState<
@@ -92,6 +96,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [editingName, setEditingName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedEndpointId, setCopiedEndpointId] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, endpoint: EndpointInfo } | null>(null);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
   const originalNameRef = useRef<string>("");
@@ -202,6 +207,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [collectionGroups, searchQuery]);
 
   return (
+    <>
     <aside className={`${styles.sidebar} ${!isOpen ? styles.railMode : ""}`}>
       <div className={styles.header}>
         <div className={styles.brand}>
@@ -478,14 +484,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                                       onClick={() => onSelectEndpoint(endpoint)}
                                       onDoubleClick={(e) => {
                                         e.preventDefault();
-                                        navigator.clipboard.writeText(endpoint.fnName);
-                                        setCopiedEndpointId(`${endpoint.apiKey}-${endpoint.fnName}`);
-                                        setTimeout(() => setCopiedEndpointId(null), 2000);
+                                        if (onDoubleClickEndpoint) {
+                                          onDoubleClickEndpoint(endpoint);
+                                        }
+                                      }}
+                                      onContextMenu={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setContextMenu({ x: e.clientX, y: e.clientY, endpoint });
                                       }}
                                     >
-                                      {copiedEndpointId === `${endpoint.apiKey}-${endpoint.fnName}` && (
-                                        <span className={styles.copiedBadge}>Copied</span>
-                                      )}
                                       <div
                                         className={styles.fileInfo}
                                         title={`${endpoint.fnName}${endpoint.url ? `\n${endpoint.url}` : ""}`}
@@ -497,23 +505,30 @@ const Sidebar: React.FC<SidebarProps> = ({
                                           {endpoint.fnName}
                                         </span>
                                       </div>
-                                      {onDeleteFunction && (
-                                        <Button
-                                          className={styles.deleteBtn}
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            onDeleteFunction(
-                                              uniqueApiKey,
-                                              endpoint.fnName,
-                                            );
-                                          }}
-                                          title={`Delete ${endpoint.fnName}`}
-                                          variant="ghost"
-                                          size="sm"
-                                        >
-                                          <Trash2 size={12} />
-                                        </Button>
-                                      )}
+                                      <div className={`${styles.fileActions} ${copiedEndpointId === `${endpoint.apiKey}-${endpoint.fnName}` ? styles.showActions : ""}`}>
+                                        {copiedEndpointId === `${endpoint.apiKey}-${endpoint.fnName}` && (
+                                          <div className={styles.copySuccessIcon}>
+                                            <Check size={12} />
+                                          </div>
+                                        )}
+                                        {onDeleteFunction && (
+                                          <Button
+                                            className={styles.deleteBtn}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              onDeleteFunction(
+                                                uniqueApiKey,
+                                                endpoint.fnName,
+                                              );
+                                            }}
+                                            title={`Delete ${endpoint.fnName}`}
+                                            variant="ghost"
+                                            size="sm"
+                                          >
+                                            <Trash2 size={12} />
+                                          </Button>
+                                        )}
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
@@ -547,6 +562,24 @@ const Sidebar: React.FC<SidebarProps> = ({
         <UserMenu placement="top" expanded={isOpen} />
       </div>
     </aside>
+    {contextMenu && (
+      <ContextMenu
+        items={[
+          {
+            label: "Copy",
+            onClick: () => {
+              navigator.clipboard.writeText(contextMenu.endpoint.fnName);
+              setCopiedEndpointId(`${contextMenu.endpoint.apiKey}-${contextMenu.endpoint.fnName}`);
+              setTimeout(() => setCopiedEndpointId(null), 2000);
+            }
+          }
+        ]}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        onClose={() => setContextMenu(null)}
+      />
+    )}
+    </>
   );
 };
 

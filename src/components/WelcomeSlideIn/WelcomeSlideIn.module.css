@@ -59,7 +59,7 @@
 }
 
 .closeBtn:hover {
-    background: var(--bg-hover, #f1f5f9);
+    background: var(--hover-bg, #f1f5f9);
     color: var(--text-primary, #0f172a);
 }
 

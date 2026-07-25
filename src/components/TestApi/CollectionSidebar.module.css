@@ -254,9 +254,6 @@
 
 .emptyRequestState {
   padding: 4px 8px 4px 32px;
-  font-size: 11px;
-  color: var(--text-muted);
-  font-style: italic;
 }
 
 .requestItem {

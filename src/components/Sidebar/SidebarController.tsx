@@ -20,6 +20,7 @@ interface SidebarControllerProps {
   onOpenSandbox?: (id: string) => void;
   isOpen?: boolean;
   onToggleSidebar?: () => void;
+  onDoubleClickEndpoint?: (endpoint: EndpointInfo) => void;
 }
 
 type ApiKey = string;
@@ -37,6 +38,7 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
   onOpenSandbox,
   isOpen = false,
   onToggleSidebar,
+  onDoubleClickEndpoint,
 }) => {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set(),
@@ -184,6 +186,7 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
         collectionName={config?.collectionName}
         isOpen={isOpen}
         onToggleSidebar={onToggleSidebar}
+        onDoubleClickEndpoint={onDoubleClickEndpoint}
       />
     </ResizablePanel>
   );

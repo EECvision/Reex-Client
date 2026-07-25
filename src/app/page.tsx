@@ -68,9 +68,131 @@ const App = () => {
 
   // Move this call AFTER activeCollection derivation
 
-  const [selectedEndpoint, setSelectedEndpoint] = useState<EndpointInfo | null>(
-    null,
-  );
+  type Tab = {
+    endpoint: EndpointInfo;
+    isPinned: boolean;
+  };
+  const [tabs, setTabs] = useState<Tab[]>([]);
+  const [activeTabIndex, setActiveTabIndex] = useState<number>(-1);
+  const [isTabsLoaded, setIsTabsLoaded] = useState(false);
+
+  // Load tabs from localStorage based on mode
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const modeSuffix = isStandaloneMode ? "_standalone" : "";
+        const savedTabs = localStorage.getItem(`reex_project_tabs${modeSuffix}`);
+        const savedIndex = localStorage.getItem(`reex_project_active_tab${modeSuffix}`);
+        if (savedTabs) {
+            const parsed = JSON.parse(savedTabs);
+            setTabs(parsed);
+        } else {
+            setTabs([]); // Ensure empty if not found on switch
+        }
+        if (savedIndex) {
+            setActiveTabIndex(Number(savedIndex));
+        } else {
+            setActiveTabIndex(-1);
+        }
+      } catch (e) {
+        console.error("Failed to load tabs", e);
+      }
+      setIsTabsLoaded(true);
+    }
+  }, [isStandaloneMode]); // Reload when mode switches
+
+  // Save tabs to localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined" && isTabsLoaded) {
+      const modeSuffix = isStandaloneMode ? "_standalone" : "";
+      localStorage.setItem(`reex_project_tabs${modeSuffix}`, JSON.stringify(tabs));
+      localStorage.setItem(`reex_project_active_tab${modeSuffix}`, String(activeTabIndex));
+    }
+  }, [tabs, activeTabIndex, isTabsLoaded, isStandaloneMode]);
+
+  const selectedEndpoint = activeTabIndex >= 0 && activeTabIndex < tabs.length 
+    ? tabs[activeTabIndex].endpoint 
+    : null;
+
+  const handleSelectEndpoint = (endpoint: EndpointInfo) => {
+    setTabs((currentTabs) => {
+      const existingIndex = currentTabs.findIndex(t => t.endpoint.apiKey === endpoint.apiKey && t.endpoint.fnName === endpoint.fnName);
+      if (existingIndex >= 0) {
+        setActiveTabIndex(existingIndex);
+        return currentTabs;
+      }
+      
+      const unpinnedIndex = currentTabs.findIndex(t => !t.isPinned);
+      if (unpinnedIndex >= 0) {
+        const newTabs = [...currentTabs];
+        newTabs[unpinnedIndex] = { endpoint, isPinned: false };
+        setActiveTabIndex(unpinnedIndex);
+        return newTabs;
+      }
+      
+      const newTabs = [...currentTabs, { endpoint, isPinned: false }];
+      setActiveTabIndex(newTabs.length - 1);
+      return newTabs;
+    });
+  };
+
+  const handleDoubleClickEndpoint = (endpoint: EndpointInfo) => {
+    setTabs((currentTabs) => {
+      const existingIndex = currentTabs.findIndex(t => t.endpoint.apiKey === endpoint.apiKey && t.endpoint.fnName === endpoint.fnName);
+      if (existingIndex >= 0) {
+        const newTabs = [...currentTabs];
+        newTabs[existingIndex] = { ...newTabs[existingIndex], isPinned: true };
+        setActiveTabIndex(existingIndex);
+        return newTabs;
+      }
+      const newTabs = [...currentTabs, { endpoint, isPinned: true }];
+      setActiveTabIndex(newTabs.length - 1);
+      return newTabs;
+    });
+  };
+
+  const handleCloseTab = (index: number) => {
+    setTabs((currentTabs) => {
+      const newTabs = currentTabs.filter((_, i) => i !== index);
+      if (newTabs.length === 0) {
+        setActiveTabIndex(-1);
+      } else if (index === activeTabIndex) {
+        setActiveTabIndex(Math.min(index, newTabs.length - 1));
+      } else if (index < activeTabIndex) {
+        setActiveTabIndex(activeTabIndex - 1);
+      }
+      return newTabs;
+    });
+  };
+
+  const handleCloseAllTabs = () => {
+    setTabs([]);
+    setActiveTabIndex(-1);
+  };
+
+  const handleCloseOthers = (index: number) => {
+    setTabs((currentTabs) => {
+      if (index < 0 || index >= currentTabs.length) return currentTabs;
+      return [currentTabs[index]];
+    });
+    setActiveTabIndex(0);
+  };
+
+  const handleCloseToRight = (index: number) => {
+    setTabs((currentTabs) => {
+      if (index < 0 || index >= currentTabs.length) return currentTabs;
+      return currentTabs.slice(0, index + 1);
+    });
+    setActiveTabIndex((currentActive) => (currentActive > index ? Math.max(0, index) : currentActive));
+  };
+
+  const handlePinTab = (index: number) => {
+    setTabs((currentTabs) => {
+      const newTabs = [...currentTabs];
+      newTabs[index] = { ...newTabs[index], isPinned: true };
+      return newTabs;
+    });
+  };
 
   // Derived Active Config for Standalone Mode
   const getActiveCollection = () => {
@@ -145,7 +267,7 @@ const App = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [autoAnalyzeImport, setAutoAnalyzeImport] = useState(false);
-  const [importModalTab, setImportModalTab] = useState<"file" | "url">("file");
+  const [importModalTab, setImportModalTab] = useState<"file" | "url" | "postman">("file");
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isSandboxOpen, setIsSandboxOpen] = useState(false);
 
@@ -226,38 +348,52 @@ const App = () => {
     selectedEndpoint,
   });
 
-  // Reset selected endpoint if manifest becomes empty, else update it with new args
+  // Reset selected endpoint if manifest/collections becomes empty, else update it with new args
   useEffect(() => {
-    if (apiManifest && Object.keys(apiManifest).length === 0) {
-      setSelectedEndpoint(null);
-    } else if (selectedEndpoint && apiManifest) {
-      // Keep selectedEndpoint in sync with manifest updates
-      const { apiKey, fnName } = selectedEndpoint;
-      const endpointDef = apiManifest?.[apiKey]?.[fnName];
-      if (endpointDef) {
-        // Re-create the endpoint info with fresh data from the updated manifest
-        const methodPrefix = fnName.split("_")[0].toUpperCase();
-        setSelectedEndpoint({
-          apiKey,
-          fnName,
-          args: endpointDef.args || [],
-          url: endpointDef.url,
-          method: endpointDef.method || methodPrefix,
-          requiresAuth: endpointDef.requiresAuth,
-          contentType: endpointDef.contentType,
-          description: endpointDef.description,
-        });
-      } else {
-        // Endpoint was removed from manifest
-        setSelectedEndpoint(null);
+    if (projectLoading) return;
+
+    if (isStandaloneMode) {
+      // In standalone mode, collections are loaded asynchronously.
+      // We don't wipe tabs here because we don't have a reliable `collectionsLoading` flag right now,
+      // and doing so would wipe saved tabs on initial load before collections finish fetching.
+    } else {
+      if (apiManifest && Object.keys(apiManifest).length === 0 && tabs.length > 0) {
+        setTabs([]);
+        setActiveTabIndex(-1);
+      } else if (selectedEndpoint && apiManifest) {
+        // Keep selectedEndpoint in sync with manifest updates
+        const { apiKey, fnName } = selectedEndpoint;
+        const endpointDef = apiManifest?.[apiKey]?.[fnName];
+        if (endpointDef) {
+          // Re-create the endpoint info with fresh data from the updated manifest
+          const methodPrefix = fnName.split("_")[0].toUpperCase();
+          setTabs((currentTabs) => {
+            const newTabs = [...currentTabs];
+            const activeIndex = activeTabIndex;
+            if (activeIndex >= 0) {
+               newTabs[activeIndex] = {
+                 ...newTabs[activeIndex],
+                 endpoint: {
+                   apiKey,
+                   fnName,
+                   args: endpointDef.args || [],
+                   url: endpointDef.url,
+                   method: endpointDef.method || methodPrefix,
+                   requiresAuth: endpointDef.requiresAuth,
+                   contentType: endpointDef.contentType,
+                   description: endpointDef.description,
+                 }
+               };
+            }
+            return newTabs;
+          });
+        } else {
+          // Endpoint was removed from manifest
+          handleCloseTab(activeTabIndex);
+        }
       }
     }
-  }, [apiManifest]);
-
-  // Reset workspace to empty state when switching between project/standalone modes
-  useEffect(() => {
-    setSelectedEndpoint(null);
-  }, [isStandaloneMode]);
+  }, [apiManifest, projectLoading, isStandaloneMode]);
 
   const hasEndpoints = apiManifest && Object.keys(apiManifest).length > 0;
 
@@ -320,6 +456,7 @@ const App = () => {
   return (
     <div
       className={`${styles.container} ${isSidebarOpen ? styles.sidebarOpen : ""}`}
+      onContextMenu={(e) => e.preventDefault()}
     >
       <BackgroundNotification
         tasks={backgroundTasks}
@@ -338,9 +475,10 @@ const App = () => {
           apiManifest={apiManifest}
           selectedEndpoint={selectedEndpoint}
           onSelectEndpoint={(ep) => {
-            setSelectedEndpoint(ep);
+            handleSelectEndpoint(ep);
             if (window.innerWidth <= 980) setIsSidebarOpen(false);
           }}
+          onDoubleClickEndpoint={handleDoubleClickEndpoint}
           onDeleteModule={handleDeleteModule}
           onDeleteFunction={handleDeleteFunction}
           onDeleteCollection={openDeleteModal}
@@ -383,6 +521,12 @@ const App = () => {
             resetImportTask();
             setAutoAnalyzeImport(false);
             setImportModalTab("url");
+            setShowImportModal(true);
+          }}
+          onOpenPostmanModal={() => {
+            resetImportTask();
+            setAutoAnalyzeImport(false);
+            setImportModalTab("postman");
             setShowImportModal(true);
           }}
           isFetching={fetchingUrl}
@@ -587,11 +731,7 @@ const App = () => {
           }}
           onGenerate={() => setShowGenerateModal(true)}
           computedUrl={getComputedUrl()}
-          method={
-            selectedEndpoint
-              ? selectedEndpoint.fnName.split("_")[0].toUpperCase()
-              : ""
-          }
+          method={selectedEndpoint?.method || ""}
           rawPayload={rawPayload}
           inputMode={inputMode}
           onRawPayloadChange={handleRawPayloadChange}
@@ -608,9 +748,16 @@ const App = () => {
             });
             resetImportTask();
             setImportFile(file);
-            setShowImportModal(true);
           }}
           onHistoryDelete={removeCollectionFromHistory}
+          tabs={tabs}
+          activeTabIndex={activeTabIndex}
+          onSelectTab={setActiveTabIndex}
+          onCloseTab={handleCloseTab}
+          onCloseAllTabs={handleCloseAllTabs}
+          onCloseOthers={handleCloseOthers}
+          onCloseToRight={handleCloseToRight}
+          onPinTab={handlePinTab}
         />
       </div>
 

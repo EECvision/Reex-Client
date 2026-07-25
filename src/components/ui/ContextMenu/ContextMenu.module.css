@@ -1,0 +1,50 @@
+.contextMenu {
+  --dropdown-bg: #1e1e1e;
+  --dropdown-border: #333;
+  --dropdown-hover: #094771;
+  --dropdown-text: #cccccc;
+  --dropdown-text-disabled: #666666;
+
+  position: fixed;
+  background-color: var(--dropdown-bg);
+  border: 1px solid var(--dropdown-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  padding: 4px 0;
+  z-index: 9999;
+  min-width: 220px;
+}
+
+:global([data-theme="light"]) .contextMenu {
+  --dropdown-bg: var(--menu-bg);
+  --dropdown-border: var(--border-color);
+  --dropdown-hover: var(--primary-color);
+  --dropdown-text: var(--text-primary);
+  --dropdown-text-disabled: var(--text-muted);
+}
+
+.contextMenuItem {
+  padding: 6px 24px 6px 32px;
+  font-size: 13px;
+  color: var(--dropdown-text);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.contextMenuItem:hover:not(.disabled) {
+  background-color: var(--dropdown-hover);
+  color: #ffffff;
+}
+
+.contextMenuItem.disabled {
+  color: var(--dropdown-text-disabled);
+  cursor: default;
+}
+
+.contextMenuSeparator {
+  height: 1px;
+  background-color: var(--dropdown-border);
+  margin: 4px 0;
+}

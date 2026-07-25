@@ -25,6 +25,7 @@ import {
   TestTube,
   ChevronsUpDown,
   Check,
+  Send,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
@@ -40,6 +41,7 @@ interface NavbarProps {
   onDeleteClick: () => void;
   onFetchUrl: (url: string) => void;
   onOpenFetchModal?: () => void;
+  onOpenPostmanModal?: () => void;
   isFetching: boolean;
   onGenerateClick?: () => void;
   baseURL?: string;
@@ -66,6 +68,7 @@ const Navbar: React.FC<NavbarProps> = ({
   onDeleteClick,
   onFetchUrl,
   onOpenFetchModal,
+  onOpenPostmanModal,
   isFetching,
   onGenerateClick,
   baseURL,
@@ -346,6 +349,15 @@ const Navbar: React.FC<NavbarProps> = ({
                 )}
                 {url ? `Fetch from ${formatUrlDomain(url)}` : "Fetch from URL"}
               </DropdownMenu.Item>
+              {onOpenPostmanModal && (
+                <DropdownMenu.Item
+                  className={styles.dropdownItem}
+                  onClick={onOpenPostmanModal}
+                >
+                  <Send size={16} />
+                  Import from Postman
+                </DropdownMenu.Item>
+              )}
               {onGenerateClick && !isStandaloneMode && (
                 <DropdownMenu.Item
                   className={styles.dropdownItem}

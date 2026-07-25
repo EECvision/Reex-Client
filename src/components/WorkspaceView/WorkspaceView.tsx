@@ -15,11 +15,17 @@ import { HistoryItem } from "@/providers/ProjectContext";
 import LocalhostBanner from "../LocalhostBanner/LocalhostBanner";
 import { isLocalhostUrl } from "@/lib/urlUtils";
 import WelcomeSlideIn from "../WelcomeSlideIn/WelcomeSlideIn";
+import TabBar from "../TabBar/TabBar";
 
 // Dynamic import for Monaco
 // Monaco definition removed
 
 type InputMode = "form" | "raw";
+
+interface Tab {
+  endpoint: EndpointInfo;
+  isPinned: boolean;
+}
 
 interface WorkspaceViewProps {
   selectedEndpoint: EndpointInfo | null;
@@ -50,6 +56,14 @@ interface WorkspaceViewProps {
   recentCollections?: HistoryItem[];
   onHistoryClick?: (item: HistoryItem) => void;
   onHistoryDelete?: (id: string) => void;
+  tabs?: Tab[];
+  activeTabIndex?: number;
+  onSelectTab?: (index: number) => void;
+  onCloseTab?: (index: number) => void;
+  onCloseAllTabs?: () => void;
+  onCloseOthers?: (index: number) => void;
+  onCloseToRight?: (index: number) => void;
+  onPinTab?: (index: number) => void;
 }
 
 const WorkspaceView: React.FC<WorkspaceViewProps> = ({
@@ -80,6 +94,14 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
   recentCollections,
   onHistoryClick,
   onHistoryDelete,
+  tabs = [],
+  activeTabIndex = -1,
+  onSelectTab,
+  onCloseTab,
+  onCloseAllTabs,
+  onCloseOthers,
+  onCloseToRight,
+  onPinTab,
 }) => {
   const getMethodColor = (m?: string) => {
     if (m === "BASE") return "#6b7280";
@@ -114,6 +136,18 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
 
   return (
     <div className={styles.workspace}>
+      {tabs.length > 0 && onSelectTab && onCloseTab && onPinTab && (
+        <TabBar
+          tabs={tabs}
+          activeTabIndex={activeTabIndex}
+          onSelectTab={onSelectTab}
+          onCloseTab={onCloseTab}
+          onCloseAllTabs={onCloseAllTabs}
+          onCloseOthers={onCloseOthers}
+          onCloseToRight={onCloseToRight}
+          onPinTab={onPinTab}
+        />
+      )}
       {selectedEndpoint ? (
         <>
           <div

@@ -46,7 +46,7 @@ interface ImportModalProps {
   onOpenHistory?: () => void;
   hasHistory?: boolean;
   autoAnalyze?: boolean;
-  initialTab?: 'file' | 'url';
+  initialTab?: 'file' | 'url' | 'postman';
 }
 
 const ImportModal: React.FC<ImportModalProps> = ({

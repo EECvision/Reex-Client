@@ -7,11 +7,13 @@ import {
     FolderPlus,
     FilePlus,
     Pencil,
-    PanelLeft
+    PanelLeft,
+    Plus
 } from 'lucide-react';
 import styles from './CollectionSidebar.module.css';
 import Logo from '../Logo/Logo';
 import UserMenu from '../UserMenu/UserMenu';
+import { Button } from '../ui/Button/Button';
 
 export interface RequestItem {
     id: string;
@@ -172,7 +174,14 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
                             <div className={styles.requestsList}>
                                 {col.requests.length === 0 && (
                                     <div className={styles.emptyRequestState}>
-                                        No requests
+                                        <Button 
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => onAddRequest(col.id)}
+                                            leftIcon={<Plus size={14} />}
+                                        >
+                                            Add Request
+                                        </Button>
                                     </div>
                                 )}
                                 {col.requests.map(req => (

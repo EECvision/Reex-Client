@@ -1,0 +1,122 @@
+.tabBarContainer {
+  display: flex;
+  width: 100%;
+  height: 40px;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.tabScrollArea {
+  display: flex;
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.2s ease;
+}
+
+.tabScrollArea:hover {
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 120px;
+  max-width: 200px;
+  height: 40px;
+  padding: 0 12px;
+  background-color: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  transition: background-color 0.15s ease;
+  color: var(--text-secondary);
+  font-size: 13px;
+  gap: 8px;
+}
+
+.tab:hover {
+  background-color: var(--bg-hover);
+}
+
+.tab.active {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border-top: 2px solid var(--primary-color);
+}
+
+.tab:not(.active) {
+  border-top: 2px solid transparent;
+}
+
+.tab.unpinned .tabName {
+  font-style: italic;
+}
+
+.tabName {
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.tab:hover .closeBtn,
+.tab.active .closeBtn {
+  opacity: 1;
+}
+
+.closeBtn:hover {
+  background-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Method Colors */
+.methodDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.get {
+  background-color: var(--method-get, #10b981);
+}
+.post {
+  background-color: var(--method-post, #3b82f6);
+}
+.put {
+  background-color: var(--method-put, #f59e0b);
+}
+.delete {
+  background-color: var(--method-delete, #ef4444);
+}
+.patch {
+  background-color: var(--method-patch, #8b5cf6);
+}
+.defaultMethod {
+  background-color: var(--text-tertiary);
+}
+
+

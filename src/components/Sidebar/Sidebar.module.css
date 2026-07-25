@@ -313,6 +313,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--text-secondary, #4b5563);
+  padding: 2px 0;
 }
 
 .fileActive .fileName {
@@ -375,6 +376,29 @@
 .deleteBtn:hover svg {
   color: #ef4444;
   stroke: #ef4444;
+}
+
+.fileActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.file:hover .fileActions,
+.showActions {
+  opacity: 1;
+}
+
+.copySuccessIcon {
+  color: #10b981;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Rename Button */
