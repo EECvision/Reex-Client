@@ -163,7 +163,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top', expanded = false
                                 <div className={styles.separator} />
                                 <button className={styles.menuItem} onClick={() => handleNavigate('/support')}>
                                     <MessageSquareWarning size={14} />
-                                    <span>Support</span>
+                                    <span>Contact Support</span>
                                 </button>
                                 <div className={styles.separator} />
                                 <button

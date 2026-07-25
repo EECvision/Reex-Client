@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileCode } from 'lucide-react';
+import { FileCode, Trash2 } from 'lucide-react';
 import { HistoryItem } from '../../providers/ProjectContext';
 import styles from './RecentCollectionsList.module.css';
 import HistoryModal from '../HistoryModal/HistoryModal';
@@ -36,21 +36,34 @@ const RecentCollectionsList: React.FC<RecentCollectionsListProps> = ({ items, on
                 <h3 className={styles.title}>Recent Collections</h3>
                 <div className={styles.list}>
                     {displayedItems.map(item => (
-                        <button
-                            key={item.id}
-                            className={styles.item}
-                            onClick={() => onItemClick(item)}
-                        >
-                            <div className={styles.iconWrapper}>
-                                <FileCode size={18} strokeWidth={2} />
+                        <div key={item.id} className={styles.item}>
+                            <div 
+                                className={styles.itemClickable}
+                                onClick={() => onItemClick(item)}
+                            >
+                                <div className={styles.iconWrapper}>
+                                    <FileCode size={18} strokeWidth={2} />
+                                </div>
+                                <div className={styles.info}>
+                                    <span className={styles.name} title={item.name}>{item.name}</span>
+                                    <span className={styles.meta}>
+                                        Last edited: {formatDate(item.updated_at)}
+                                    </span>
+                                </div>
                             </div>
-                            <div className={styles.info}>
-                                <span className={styles.name} title={item.name}>{item.name}</span>
-                                <span className={styles.meta}>
-                                    Last edited: {formatDate(item.updated_at)}
-                                </span>
-                            </div>
-                        </button>
+                            {onDelete && (
+                                <button
+                                    className={styles.deleteBtn}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDelete(item.id);
+                                    }}
+                                    title="Remove from history"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                            )}
+                        </div>
                     ))}
                 </div>
 

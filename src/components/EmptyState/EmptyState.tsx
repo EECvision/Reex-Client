@@ -13,6 +13,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import LoginModal from "../LoginModal/LoginModal";
 
+import WelcomeCard from "../WelcomeCard/WelcomeCard";
+
 interface EmptyStateProps {
   hasEndpoints: boolean;
   onImportClick: () => void;
@@ -44,6 +46,8 @@ const EmptyState: React.FC<EmptyStateProps> = ({
     action();
   };
 
+  const hasRecentCollections = recentCollections && recentCollections.length > 0;
+
   if (hasEndpoints) {
     return (
       <div className={styles.emptyState}>
@@ -64,53 +68,59 @@ const EmptyState: React.FC<EmptyStateProps> = ({
     <>
       <div className={styles.wrapper}>
         <div className={styles.container}>
-          {/* Logo & Branding */}
-          <div className={styles.header}>
-            <Logo horizontal />
-          </div>
+          {!hasRecentCollections ? (
+            <WelcomeCard onImportClick={() => handleAction(onImportClick)} />
+          ) : (
+            <>
+              {/* Logo & Branding */}
+              <div className={styles.header}>
+                <Logo horizontal />
+              </div>
 
-          {/* Primary Actions */}
-          <div className={styles.actions}>
-            <Button
-              variant="primary"
-              onClick={() => handleAction(onImportClick)}
-              className={styles.primaryBtn}
-              leftIcon={<Folder size={18} />}
-            >
-              Import Collection
-            </Button>
-
-            <div className={styles.secondaryActions}>
-              {onGenerateClick && (
+              {/* Primary Actions */}
+              <div className={styles.actions}>
                 <Button
-                  variant="secondary"
-                  onClick={() => handleAction(onGenerateClick)}
-                  className={styles.secondaryBtn}
+                  variant="primary"
+                  onClick={() => handleAction(onImportClick)}
+                  className={styles.primaryBtn}
+                  leftIcon={<Folder size={18} />}
                 >
-                  <Plus size={16} />
-                  <span>New Template</span>
+                  Import Collection
                 </Button>
-              )}
-              <Button
-                variant="secondary"
-                onClick={() => router.push('/docs')}
-                className={styles.secondaryBtn}
-              >
-                <BookOpen size={16} />
-                <span>Documentation</span>
-              </Button>
-            </div>
-          </div>
 
-          {/* Recent History */}
-          {recentCollections && recentCollections.length > 0 && onHistoryClick && (
-            <RecentCollectionsList
-              items={recentCollections}
-              onItemClick={(item) => {
-                onHistoryClick(item);
-              }}
-              onDelete={onHistoryDelete}
-            />
+                <div className={styles.secondaryActions}>
+                  {onGenerateClick && (
+                    <Button
+                      variant="secondary"
+                      onClick={() => handleAction(onGenerateClick)}
+                      className={styles.secondaryBtn}
+                    >
+                      <Plus size={16} />
+                      <span>New Template</span>
+                    </Button>
+                  )}
+                  <Button
+                    variant="secondary"
+                    onClick={() => router.push('/docs')}
+                    className={styles.secondaryBtn}
+                  >
+                    <BookOpen size={16} />
+                    <span>Documentation</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Recent History */}
+              {recentCollections && recentCollections.length > 0 && onHistoryClick && (
+                <RecentCollectionsList
+                  items={recentCollections}
+                  onItemClick={(item) => {
+                    onHistoryClick(item);
+                  }}
+                  onDelete={onHistoryDelete}
+                />
+              )}
+            </>
           )}
         </div>
 

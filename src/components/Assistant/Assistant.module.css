@@ -89,7 +89,7 @@
   align-items: center;
   gap: 0.5rem;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   color: var(--text-primary);
 }
 
@@ -246,16 +246,53 @@
 }
 
 .messageAssistantContent {
-  font-size: 0.95rem;
-  line-height: 1.5;
+  font-family: var(--font-sans, "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text-primary);
+  opacity: 0.92;
+  letter-spacing: -0.01em;
 }
 
-.messageAssistantContent p {
+.messageAssistantContent h1,
+.messageAssistantContent h2,
+.messageAssistantContent h3,
+.messageAssistantContent h4 {
+  font-weight: 600;
+  margin-top: 1.5rem;
   margin-bottom: 0.75rem;
+  color: var(--text-primary);
+  opacity: 1;
+  letter-spacing: -0.02em;
+}
+
+.messageAssistantContent h1 { font-size: 1.25rem; }
+.messageAssistantContent h2 { font-size: 1.15rem; }
+.messageAssistantContent h3 { font-size: 1.05rem; }
+.messageAssistantContent h4 { font-size: 0.95rem; }
+
+.messageAssistantContent p {
+  margin-bottom: 1rem;
 }
 
 .messageAssistantContent p:last-child {
   margin-bottom: 0;
+}
+
+.messageAssistantContent a {
+  color: #6366f1;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.messageAssistantContent a:hover {
+  text-decoration: underline;
+}
+
+.messageAssistantContent strong {
+  font-weight: 600;
+  color: var(--text-primary);
+  opacity: 1;
 }
 
 .messageAssistantContent pre {
@@ -264,16 +301,18 @@
   padding: 0.75rem;
   border-radius: 6px;
   overflow-x: auto;
-  margin: 0.5rem 0;
+  margin: 0.75rem 0;
   font-size: 0.85rem;
+  border: 1px solid var(--border-color);
 }
 
 .messageAssistantContent code {
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   background-color: var(--hover-bg);
-  padding: 0.1rem 0.3rem;
-  border-radius: 3px;
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
   font-size: 0.85em;
+  color: var(--primary-color, #3b82f6);
 }
 
 .messageAssistantContent pre code {
@@ -283,9 +322,18 @@
   color: inherit;
 }
 
-.messageAssistantContent ul, .messageAssistantContent ol {
-  margin-left: 1.5rem;
+.messageAssistantContent ul, 
+.messageAssistantContent ol {
+  margin-left: 1.25rem;
   margin-bottom: 0.75rem;
+}
+
+.messageAssistantContent li {
+  margin-bottom: 0.25rem;
+}
+
+.messageAssistantContent li::marker {
+  color: var(--text-secondary);
 }
 
 .copyButton {

@@ -370,15 +370,17 @@ const Navbar: React.FC<NavbarProps> = ({
           </Button>
         )}
 
+        <div className={styles.separator}></div>
+
         {onAssistantClick && !isAssistantOpen && (
           <Button
             variant="ghost"
             onClick={onAssistantClick}
             leftIcon={<Sparkles size={16} />}
-            title="Ask Assistant"
+            title="Ask Docs"
             className={styles.mobileAssistantBtn}
           >
-            <span className={styles.hideOnMobile}>Ask Assistant</span>
+            <span className={styles.hideOnMobile}>Ask Docs</span>
           </Button>
         )}
 

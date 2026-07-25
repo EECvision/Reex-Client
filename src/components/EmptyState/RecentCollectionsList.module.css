@@ -24,14 +24,9 @@
 .item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
-    /* Reduced padding (was 16px) */
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    cursor: pointer;
-    text-align: left;
     transition: all 0.2s ease;
     width: 100%;
 }
@@ -39,6 +34,41 @@
 .item:hover {
     background: var(--item-hover-bg, rgba(255, 255, 255, 0.05));
     border-color: var(--text-muted);
+}
+
+.itemClickable {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    cursor: pointer;
+    flex: 1;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.deleteBtn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 8px;
+    margin-right: 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    opacity: 0;
+}
+
+.item:hover .deleteBtn {
+    opacity: 1;
+}
+
+.deleteBtn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
 }
 
 .iconWrapper {

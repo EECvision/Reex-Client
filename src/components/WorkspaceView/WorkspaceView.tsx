@@ -14,6 +14,7 @@ import LoginModal from "../LoginModal/LoginModal";
 import { HistoryItem } from "@/providers/ProjectContext";
 import LocalhostBanner from "../LocalhostBanner/LocalhostBanner";
 import { isLocalhostUrl } from "@/lib/urlUtils";
+import WelcomeSlideIn from "../WelcomeSlideIn/WelcomeSlideIn";
 
 // Dynamic import for Monaco
 // Monaco definition removed
@@ -196,6 +197,8 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
           onHistoryDelete={onHistoryDelete}
         />
       )}
+
+      {hasCollection && <WelcomeSlideIn />}
 
       <LoginModal
         isOpen={showLogin}

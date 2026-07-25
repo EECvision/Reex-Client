@@ -47,7 +47,7 @@ export default function ReportIssuePage() {
         <main className={styles.container}>
             <div className={styles.content}>
                 <div className={styles.header}>
-                    <h1 className={styles.title}>Support</h1>
+                    <h1 className={styles.title}>Contact Support</h1>
                     <p className={styles.subtitle}>
                         Need help, found a bug, or have a suggestion? Let us know and we'll get back to you.
                     </p>
