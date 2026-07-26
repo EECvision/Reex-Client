@@ -253,22 +253,16 @@ const ImportModal: React.FC<ImportModalProps> = ({
   }, [taskComplete, step, setStep]);
 
   const validateFetchUrl = (val: string) => {
-    if (!val.trim()) return 'URL is required';
-    const lowerVal = val.toLowerCase();
+    if (!val.trim()) {
+      return 'URL is required';
+    }
     
-    if (lowerVal.includes('postman.com/collections/') || lowerVal.includes('getpostman.com/collections/')) {
-      return '';
+    try {
+      new URL(val);
+    } catch {
+      return 'Please enter a valid URL';
     }
-
-    if (
-      !lowerVal.endsWith('.json') &&
-      !lowerVal.endsWith('.postman') &&
-      !lowerVal.endsWith('.openapi') &&
-      !lowerVal.endsWith('.yaml') &&
-      !lowerVal.endsWith('.yml')
-    ) {
-      return 'URL must end with .json, .yaml, .yml, .postman, .openapi or be a valid Postman collection link';
-    }
+    
     return '';
   };
 
@@ -468,7 +462,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
           </div>
         ) : undefined}
         showCloseButton={step !== "analyzing" && step !== "updating"}
-        closeOnOverlayClick={step !== "analyzing" && step !== "updating"}
+        closeOnOverlayClick={false}
       >
         <div className={styles.body}>
           {step === "upload" && (
