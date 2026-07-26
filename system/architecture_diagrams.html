@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reex API Builder — Architecture Diagrams</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0f;
+            color: #e2e8f0;
+            line-height: 1.7;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 80px 40px 60px;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .hero h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #818cf8, #6366f1, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+        }
+
+        .diagram-section {
+            margin-bottom: 64px;
+            background: #111118;
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .diagram-header {
+            padding: 28px 32px 20px;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+        }
+
+        .diagram-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #c7d2fe;
+            margin-bottom: 8px;
+        }
+
+        .diagram-header p {
+            font-size: 0.95rem;
+            color: #94a3b8;
+        }
+
+        .diagram-body {
+            padding: 32px;
+            display: flex;
+            justify-content: center;
+            background: #fafafa;
+            min-height: 300px;
+        }
+
+        .diagram-body .mermaid {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .toc {
+            background: #111118;
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 48px;
+        }
+
+        .toc h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #a5b4fc;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.85rem;
+        }
+
+        .toc ol {
+            padding-left: 20px;
+        }
+
+        .toc li {
+            margin-bottom: 8px;
+        }
+
+        .toc a {
+            color: #818cf8;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+
+        .toc a:hover {
+            color: #c7d2fe;
+            text-decoration: underline;
+        }
+
+        .directory-tree {
+            background: #1e1e2e;
+            border-radius: 12px;
+            padding: 24px 28px;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            color: #cdd6f4;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .directory-tree .dir { color: #89b4fa; font-weight: 600; }
+        .directory-tree .user { color: #a6e3a1; }
+        .directory-tree .gen { color: #f9e2af; }
+        .directory-tree .comment { color: #6c7086; }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .badge-user { background: rgba(166, 227, 161, 0.15); color: #a6e3a1; }
+        .badge-gen { background: rgba(249, 226, 175, 0.15); color: #f9e2af; }
+        .badge-scaffold { background: rgba(137, 180, 250, 0.15); color: #89b4fa; }
+
+        @media print {
+            body { background: #fff; color: #1a1a2e; }
+            .hero { background: #f8f9fa; border-bottom: 2px solid #6366f1; }
+            .hero h1 { -webkit-text-fill-color: #4f46e5; }
+            .diagram-section { border: 1px solid #d1d5db; break-inside: avoid; }
+            .diagram-header { background: #f8f9fa; }
+            .diagram-header h2 { color: #1e1b4b; }
+            .diagram-header p, .hero p { color: #475569; }
+            .toc { background: #f8f9fa; border: 1px solid #d1d5db; }
+            .toc a { color: #4f46e5; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <h1>Reex API Builder</h1>
+    <p>Architecture &amp; System Diagrams — A visual reference for the complete technical architecture</p>
+</div>
+
+<div class="container">
+
+    <div class="toc">
+        <h3>Table of Contents</h3>
+        <ol>
+            <li><a href="#system-overview">System Overview — Three-Tier Architecture</a></li>
+            <li><a href="#data-flow">Data Flow — From Definition to Generated Code</a></li>
+            <li><a href="#communication">Cloud UI ↔ Bridge Communication Map</a></li>
+            <li><a href="#ast-pipeline">AST Parsing Pipeline — getInitializerObject()</a></li>
+            <li><a href="#file-watcher">File Watcher Flow</a></li>
+            <li><a href="#operation-relay">Operation Relay Pattern (Delete/Update)</a></li>
+            <li><a href="#directory-structure">Generated Directory Structure</a></li>
+        </ol>
+    </div>
+
+    <!-- Diagram 1 -->
+    <div class="diagram-section" id="system-overview">
+        <div class="diagram-header">
+            <h2>1. System Overview — Three-Tier Architecture</h2>
+            <p>Reex operates as a three-tier system: a hosted cloud UI, a local CLI bridge running in the developer's terminal, and the developer's own project on disk.</p>
+        </div>
+        <div class="diagram-body">
+            <pre class="mermaid">
+graph TB
+    subgraph "Tier 1 — Hosted Cloud UI"
+        UI["Reex Web App\n(Next.js @ reex-api-builder.toolshq.app)"]
+    end
+
+    subgraph "Tier 2 — Local CLI Bridge"
+        CLI["reex-cli npm package\nExpress.js Server\nlocalhost:4000"]
+    end
+
+    subgraph "Tier 3 — Developer's Project"
+        PROJ["React / Next.js Project\n(User's Codebase)"]
+        DEFS["api-services/definitions/*.ts"]
+        GEN["api-services/generated/*.ts"]
+        TYPES["api-services/types/**/*.ts"]
+        HOOKS["api-services/hooks/*.ts"]
+        CONFIG["api-services/api.config.ts"]
+        CORE["api-services/core.ts"]
+    end
+
+    UI -- "HTTP REST JSON" --> CLI
+    CLI -- "SSE Server-Sent Events" --> UI
+    CLI -- "fs.readFileSync / writeFileSync" --> PROJ
+    DEFS --> GEN
+    DEFS --> TYPES
+    CONFIG --> CORE
+
+    style UI fill:#4F46E5,color:#fff,stroke:#6366f1
+    style CLI fill:#059669,color:#fff,stroke:#10b981
+    style PROJ fill:#D97706,color:#fff,stroke:#f59e0b
+            </pre>
+        </div>
+    </div>
+
+    <!-- Diagram 2 -->
+    <div class="diagram-section" id="data-flow">
+        <div class="diagram-header">
+            <h2>2. Data Flow — From Definition to Generated Code</h2>
+            <p>The complete pipeline when a developer writes or modifies an API definition file. Shows all services involved in the regeneration cycle.</p>
+        </div>
+        <div class="diagram-body">
+            <pre class="mermaid">
+sequenceDiagram
+    participant Dev as Developer
+    participant Def as definitions/*.ts
+    participant Watch as WatcherService
+    participant Gen as GeneratorService
+    participant Proj as ProjectService
+    participant Hook as HookService
+    participant Type as TypeService
+    participant SSE as SseService
+    participant UI as Cloud UI
+
+    Dev->>Def: Saves definition file
+    Def->>Watch: chokidar detects change
+    Watch->>Watch: Debounce 1000ms
+    Watch->>SSE: broadcast project:sync-start
+    SSE-->>UI: Shows Syncing spinner
+
+    Watch->>Gen: regenerate(targetDir, changedModules)
+    Gen->>Proj: pruneUnusedDefinitions()
+    Gen->>Proj: generateManifest(definitionsDir)
+
+    Note over Proj: ts-morph parses each .ts file.
+    Note over Proj: getInitializerObject() unwraps
+    Note over Proj: as/satisfies/TypeAssertion wrappers.
+    Note over Proj: Extracts args, URL, method, auth.
+
+    Proj-->>Gen: Returns manifest JSON
+
+    Gen->>Hook: generateHooks(manifest)
+    Note over Hook: Generates useXxxQuery hooks
+    Note over Hook: Generates useXxxMutation hooks
+    Note over Hook: Creates key factories
+    Note over Hook: Handles name collisions
+
+    Gen->>Type: generateTypes(manifest)
+    Note over Type: Creates type scaffolds
+    Note over Type: Preserves user overrides
+
+    Gen->>Gen: Generate barrel file
+    Gen->>Gen: Scaffold templates if missing
+    Gen->>Gen: Run Prettier
+    Gen->>Gen: Sanitize directory
+
+    Gen->>SSE: broadcast project:updated
+    SSE-->>UI: Refreshes manifest and sidebar
+            </pre>
+        </div>
+    </div>
+
+    <!-- Diagram 3 -->
+    <div class="diagram-section" id="communication">
+        <div class="diagram-header">
+            <h2>3. Cloud UI ↔ Bridge Communication Map</h2>
+            <p>All HTTP endpoints and SSE channels between the browser, the local bridge, and the Next.js server-side API routes.</p>
+        </div>
+        <div class="diagram-body">
+            <pre class="mermaid">
+graph LR
+    subgraph "Browser — Cloud UI"
+        PAGE["page.tsx\nMain App"]
+        SYNC["useProjectSync\nSSE Listener"]
+        EXEC["useEndpointExecution\nAPI Tester"]
+        SIDEBAR["Sidebar\nModule Explorer"]
+    end
+
+    subgraph "Bridge — localhost"
+        HEALTH["/api/health"]
+        EVENTS["/api/events SSE"]
+        MANIFEST["/api/project/manifest"]
+        CONFIGR["/api/project/config"]
+        CONFIGW["/api/project/config/update"]
+        FSWRITE["/api/fs/write"]
+        FSDELETE["/api/fs/delete"]
+    end
+
+    subgraph "Next.js API Routes"
+        DELROUTE["/api/delete-item"]
+        ANALYZE["/api/analyze-collection"]
+        PROXY["/api/execute-proxy"]
+    end
+
+    SYNC -- "EventSource" --> EVENTS
+    PAGE -- "GET" --> MANIFEST
+    PAGE -- "GET" --> CONFIGR
+    SIDEBAR -- "GET" --> MANIFEST
+    PAGE -- "POST" --> DELROUTE
+    DELROUTE -- "Returns file ops" --> PAGE
+    PAGE -- "POST write" --> FSWRITE
+    PAGE -- "POST delete" --> FSDELETE
+    EXEC -- "POST via proxy" --> PROXY
+
+    style EVENTS fill:#EF4444,color:#fff,stroke:#f87171
+    style DELROUTE fill:#8B5CF6,color:#fff,stroke:#a78bfa
+    style PROXY fill:#8B5CF6,color:#fff,stroke:#a78bfa
+            </pre>
+        </div>
+    </div>
+
+    <!-- Diagram 4 -->
+    <div class="diagram-section" id="ast-pipeline">
+        <div class="diagram-header">
+            <h2>4. AST Parsing Pipeline — <code>getInitializerObject()</code></h2>
+            <p>The centralized utility that all 6 AST processors rely on to safely read API definition files regardless of TypeScript syntax wrappers.</p>
+        </div>
+        <div class="diagram-body">
+            <pre class="mermaid">
+graph TD
+    A["variableDecl.getInitializer()"] --> B{initializer exists?}
+    B -- No --> RET_UNDEF["return undefined"]
+    B -- Yes --> C{SyntaxKind check}
+    
+    C -- "AsExpression\n(x as Type)" --> UNWRAP["initializer =\ninitializer.getExpression()"]
+    C -- "SatisfiesExpression\n(x satisfies Type)" --> UNWRAP
+    C -- "TypeAssertionExpression\n(‹Type›x)" --> UNWRAP
+    C -- "NonNullExpression\n(x!)" --> UNWRAP
+    C -- "ParenthesizedExpression\n((x))" --> UNWRAP
+    
+    UNWRAP --> C
+    
+    C -- "ObjectLiteralExpression\n({ ... })" --> RET_OBJ["return ObjectLiteralExpression ✅"]
+    C -- "Any other kind" --> RET_UNDEF2["return undefined"]
+
+    style RET_OBJ fill:#059669,color:#fff,stroke:#10b981
+    style RET_UNDEF fill:#EF4444,color:#fff,stroke:#f87171
+    style RET_UNDEF2 fill:#EF4444,color:#fff,stroke:#f87171
+    style UNWRAP fill:#D97706,color:#fff,stroke:#f59e0b
+            </pre>
+        </div>
+    </div>
+
+    <!-- Diagram 5 -->
+    <div class="diagram-section" id="file-watcher">
+        <div class="diagram-header">
+            <h2>5. File Watcher Flow</h2>
+            <p>How chokidar detects file changes and triggers smart, debounced regeneration with selective module targeting.</p>
+        </div>
+        <div class="diagram-body">
+            <pre class="mermaid">
+graph TD
+    A["chokidar.watch()"] --> B["Monitors:\ndefinitions/*.ts\napi.config.ts"]
+    B --> C{Which file changed?}
+    
+    C -- "api.config.ts" --> D["Debounce 500ms"]
+    D --> E["SSE: project:updated\nUI refreshes config only"]
+    
+    C -- "definitions/*.ts" --> F["SSE: project:sync-start"]
+    F --> G["Collect changed files into Set"]
+    G --> H["Debounce 1000ms\nCoalesces rapid saves"]
+    H --> I["Extract module names\nfrom filenames"]
+    I --> J["regenerate(targetDir,\nchangedModules)"]
+    J --> K["SSE: project:updated\nFull UI refresh"]
+
+    style A fill:#4F46E5,color:#fff,stroke:#6366f1
+    style J fill:#059669,color:#fff,stroke:#10b981
+    style K fill:#EF4444,color:#fff,stroke:#f87171
+    style E fill:#EF4444,color:#fff,stroke:#f87171
+            </pre>
+        </div>
+    </div>
+
+    <!-- Diagram 6 -->
+    <div class="diagram-section" id="operation-relay">
+        <div class="diagram-header">
+            <h2>6. Operation Relay Pattern</h2>
+            <p>The UI cannot write files directly. It uses a relay pattern where the Next.js server computes changes and the browser forwards them to the local bridge.</p>
+        </div>
+        <div class="diagram-body">
+            <pre class="mermaid">
+sequenceDiagram
+    participant User as User Browser
+    participant Next as Next.js API Route
+    participant Bridge as Local Bridge
+    participant Disk as Filesystem
+    participant Watch as Watcher
+
+    User->>Next: POST /api/delete-item
+    
+    Note over Next: ts-morph parses definition
+    Note over Next: Removes function property
+    Note over Next: Removes related interfaces
+    Note over Next: Removes dangling imports
+    Note over Next: Computes file operations
+
+    Next-->>User: { operations: [write, delete] }
+
+    User->>Bridge: POST /api/fs/write
+    Bridge->>Disk: fs.writeFileSync()
+    Bridge-->>User: success
+
+    User->>Bridge: POST /api/fs/delete
+    Bridge->>Disk: fs.unlinkSync()
+    Bridge-->>User: success
+
+    Disk->>Watch: chokidar detects change
+    Watch->>Watch: GeneratorService.regenerate()
+    Watch-->>User: SSE: project:updated
+            </pre>
+        </div>
+    </div>
+
+    <!-- Diagram 7 -->
+    <div class="diagram-section" id="directory-structure">
+        <div class="diagram-header">
+            <h2>7. Generated Directory Structure</h2>
+            <p>The <code>api-services/</code> directory created and managed by Reex inside the developer's project.
+                <span class="badge badge-user">✏️ User-Authored</span>
+                <span class="badge badge-gen">🤖 Auto-Generated</span>
+                <span class="badge badge-scaffold">📦 Scaffolded Once</span>
+            </p>
+        </div>
+        <div class="diagram-body" style="background: #1e1e2e;">
+            <div class="directory-tree">
+<span class="dir">my-react-app/</span>
+├── src/
+│   └── <span class="dir">api-services/</span>                    <span class="comment">← Reex-managed directory</span>
+│       ├── <span class="user">api.config.ts</span>                <span class="comment">← 📦 User config (baseURL, auth)</span>
+│       ├── <span class="user">core.ts</span>                      <span class="comment">← 📦 HTTP client builder (scaffolded once)</span>
+│       │
+│       ├── <span class="dir">definitions/</span>                 <span class="comment">← ✏️ USER-AUTHORED (Source of Truth)</span>
+│       │   ├── <span class="user">users.ts</span>                 <span class="comment">← export const usersApi = { get_users: ..., post_createUser: ... }</span>
+│       │   ├── <span class="user">products.ts</span>
+│       │   └── <span class="gen">index.ts</span>                 <span class="comment">← 🤖 Auto-generated barrel (re-exports all modules)</span>
+│       │
+│       ├── <span class="dir">generated/</span>                   <span class="comment">← 🤖 AUTO-GENERATED (Do Not Edit)</span>
+│       │   ├── <span class="gen">useUsersQueries.ts</span>       <span class="comment">← useGetUsersQuery, usePostCreateUserMutation</span>
+│       │   ├── <span class="gen">useProductsQueries.ts</span>
+│       │   └── <span class="gen">index.ts</span>                 <span class="comment">← useApiQuery, useApiMutation wrappers + re-exports</span>
+│       │
+│       ├── <span class="dir">types/</span>                       <span class="comment">← 🔧 SEMI-GENERATED (User can override)</span>
+│       │   ├── <span class="dir">users/</span>
+│       │   │   ├── <span class="gen">get_users.ts</span>         <span class="comment">← export type get_users = unknown; (or user-defined)</span>
+│       │   │   └── <span class="gen">post_createUser.ts</span>
+│       │   └── <span class="dir">products/</span>
+│       │
+│       ├── <span class="dir">hooks/</span>                       <span class="comment">← 📦 Utility hooks (useAuth, useNotification)</span>
+│       ├── <span class="dir">providers/</span>                   <span class="comment">← 📦 React providers (QueryClient, Auth)</span>
+│       ├── <span class="dir">auth-methods/</span>                <span class="comment">← 📦 Auth strategy implementations</span>
+│       ├── <span class="dir">custom/</span>                      <span class="comment">← ✏️ Safe zone for user's custom code</span>
+│       └── <span class="dir">.reex/</span>                       <span class="comment">← Metadata (port, collection name)</span>
+│           └── metadata.json
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'default',
+        themeVariables: {
+            fontSize: '14px',
+        },
+        flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true,
+            curve: 'basis'
+        },
+        sequence: {
+            useMaxWidth: true,
+            actorMargin: 40,
+            messageMargin: 30,
+            noteMargin: 10,
+            mirrorActors: false
+        }
+    });
+</script>
+
+</body>
+</html>
