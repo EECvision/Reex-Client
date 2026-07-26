@@ -371,7 +371,7 @@ const Navbar: React.FC<NavbarProps> = ({
           </DropdownMenu.Portal>
         </DropdownMenu.Root>
 
-        {hasCollection && (
+        {/* {hasCollection && (
           <Button
             variant="ghost"
             onClick={onDeleteClick}
@@ -380,7 +380,7 @@ const Navbar: React.FC<NavbarProps> = ({
           >
             Delete
           </Button>
-        )}
+        )} */}
 
         <div className={styles.separator}></div>
 

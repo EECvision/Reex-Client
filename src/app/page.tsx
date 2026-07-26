@@ -194,6 +194,21 @@ const App = () => {
     setActiveTabIndex((currentActive) => (currentActive > index ? Math.max(0, index) : currentActive));
   };
 
+  const handleTabsDeletion = (filterFn: (t: Tab) => boolean) => {
+    setTabs((prev) => {
+      const newTabs = prev.filter(filterFn);
+      if (newTabs.length !== prev.length) {
+        const activeTab = prev[activeTabIndex];
+        if (activeTab && newTabs.includes(activeTab)) {
+          setActiveTabIndex(newTabs.indexOf(activeTab));
+        } else {
+          setActiveTabIndex(newTabs.length > 0 ? 0 : -1);
+        }
+      }
+      return newTabs;
+    });
+  };
+
   const handlePinTab = (index: number) => {
     setTabs((currentTabs) => {
       const newTabs = [...currentTabs];
@@ -673,6 +688,8 @@ const App = () => {
               });
               resetImportTask();
               setImportFile(file);
+              setImportModalTab("file");
+              setShowImportModal(true);
               setShowHistoryModal(false);
             }}
             onDelete={removeCollectionFromHistory}
@@ -682,7 +699,19 @@ const App = () => {
         <DeleteConfirmModal
           isOpen={showDeleteModal}
           onClose={() => setShowDeleteModal(false)}
-          onConfirm={handleDeleteCollection}
+          onConfirm={async () => {
+            const isClearAll = isStandaloneMode && !collectionToDelete;
+            const colId = collectionToDelete;
+
+            await handleDeleteCollection();
+
+            if (isClearAll || !isStandaloneMode) {
+              setTabs([]);
+              setActiveTabIndex(-1);
+            } else if (colId) {
+              handleTabsDeletion((t) => !t.endpoint.apiKey.startsWith(`col_${colId}__`));
+            }
+          }}
           deleting={deleting}
           title={
             isStandaloneMode && !collectionToDelete
@@ -702,7 +731,20 @@ const App = () => {
             setShowDeleteItemModal(false);
             setDeleteItemInfo(null);
           }}
-          onConfirm={confirmDeleteItem}
+          onConfirm={async () => {
+            const info = deleteItemInfo;
+            await confirmDeleteItem();
+            
+            if (info) {
+              handleTabsDeletion((t) => {
+                if (info.type === "module") {
+                  return t.endpoint.apiKey !== info.moduleName;
+                } else {
+                  return !(t.endpoint.apiKey === info.moduleName && t.endpoint.fnName === info.functionName);
+                }
+              });
+            }
+          }}
           deleting={deletingItem}
           title={
             deleteItemInfo?.type === "module"
@@ -792,6 +834,8 @@ const App = () => {
             });
             resetImportTask();
             setImportFile(file);
+            setImportModalTab("file");
+            setShowImportModal(true);
           }}
           onHistoryDelete={removeCollectionFromHistory}
           tabs={tabs}

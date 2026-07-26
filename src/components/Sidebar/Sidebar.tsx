@@ -167,6 +167,26 @@ const Sidebar: React.FC<SidebarProps> = ({
     });
   };
 
+  useEffect(() => {
+    if (selectedEndpoint && collectionGroups) {
+      let colId = "default";
+      if (selectedEndpoint.apiKey.startsWith("col_")) {
+        const parts = selectedEndpoint.apiKey.split("__");
+        if (parts.length > 1) {
+          colId = parts[0].replace("col_", "");
+        }
+      }
+      setExpandedCollections((prev) => {
+        if (!prev.has(colId)) {
+          const next = new Set(prev);
+          next.add(colId);
+          return next;
+        }
+        return prev;
+      });
+    }
+  }, [selectedEndpoint, collectionGroups]);
+
   // Helper to get unique module ID (apiKey) from endpoints list
   const getModuleId = (endpoints: EndpointInfo[], fallbackName: string) => {
     if (endpoints.length > 0) return endpoints[0].apiKey;
@@ -357,21 +377,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     }}
                                   >
                                     <RefreshCw size={14} />
-                                    Update Collection
+                                    Update
                                   </DropdownMenu.Item>
                                 )}
-                                {onOpenSandbox && (
-                                  <DropdownMenu.Item
-                                    className={styles.dropdownItem}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onOpenSandbox(group.id);
-                                    }}
-                                  >
-                                    <Code size={14} />
-                                    Open in Sandbox
-                                  </DropdownMenu.Item>
-                                )}
+                               
                                 {onRenameCollection && (
                                   <DropdownMenu.Item
                                     className={styles.dropdownItem}
@@ -381,7 +390,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     }}
                                   >
                                     <Pencil size={14} />
-                                    Rename Collection
+                                    Rename
                                   </DropdownMenu.Item>
                                 )}
                                 {onDownloadCollection && (
@@ -393,7 +402,19 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     }}
                                   >
                                     <Download size={14} />
-                                    Download Collection
+                                    Download
+                                  </DropdownMenu.Item>
+                                )}
+                                 {onOpenSandbox && (
+                                  <DropdownMenu.Item
+                                    className={styles.dropdownItem}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onOpenSandbox(group.id);
+                                    }}
+                                  >
+                                    <Code size={14} />
+                                    Open in Sandbox
                                   </DropdownMenu.Item>
                                 )}
                                 {onDeleteCollection && (

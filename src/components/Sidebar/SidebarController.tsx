@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import { EndpointInfo, Methods } from "@/types";
 import { useProject } from "@/providers/ProjectContext";
@@ -56,6 +56,19 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
       return newSet;
     });
   };
+
+  useEffect(() => {
+    if (selectedEndpoint) {
+      setExpandedFolders((prev) => {
+        if (!prev.has(selectedEndpoint.apiKey)) {
+          const newSet = new Set(prev);
+          newSet.add(selectedEndpoint.apiKey);
+          return newSet;
+        }
+        return prev;
+      });
+    }
+  }, [selectedEndpoint]);
 
   const endpoints = useMemo(() => {
     if (!apiManifest) return [];
@@ -177,7 +190,7 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
         setMethodFilter={setMethodFilter}
         onDeleteModule={isStandaloneMode ? undefined : onDeleteModule}
         onDeleteFunction={isStandaloneMode ? undefined : onDeleteFunction}
-        onDeleteCollection={isStandaloneMode ? onDeleteCollection : undefined}
+        onDeleteCollection={onDeleteCollection}
         onRenameCollection={isStandaloneMode ? onRenameCollection : undefined}
         onDownloadCollection={onDownloadCollection}
         onUpdateCollection={isStandaloneMode ? onUpdateCollection : undefined}

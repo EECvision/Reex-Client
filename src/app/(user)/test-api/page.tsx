@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import styles from "./page.module.css";
 import CollectionSidebar, {
-  Collection,
   RequestItem,
 } from "@/components/TestApi/CollectionSidebar";
 import RequestEditor from "@/components/TestApi/RequestEditor";
@@ -15,7 +14,6 @@ import { Button } from "@/components/ui/Button/Button";
 import { Loading } from "@/components/ui/Loading/Loading";
 import { useAuth } from "@/providers/AuthContext";
 import { signOut } from "next-auth/react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useCollections } from "@/hooks/useCollections";
 import { useToast } from "@/hooks/useToast";
 
@@ -27,8 +25,16 @@ import TestApiNavbar from "@/components/TestApiNavbar/TestApiNavbar";
 export default function TestApiPage() {
   const { user } = useAuth();
   const { showToast } = useToast();
-  const queryClient = useQueryClient();
   const { isSidebarOpen, setSidebarOpen, setHasSidebar } = useUI();
+
+  // Prevent default browser right-click context menu globally
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+    document.addEventListener("contextmenu", handleContextMenu);
+    return () => document.removeEventListener("contextmenu", handleContextMenu);
+  }, []);
 
   // Collections Data via TanStack Query
   const {
