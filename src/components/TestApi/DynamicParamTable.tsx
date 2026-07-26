@@ -15,6 +15,7 @@ interface DynamicParamTableProps {
     onChange: (newParams: ParamRow[]) => void;
     placeholderKey?: string;
     placeholderValue?: string;
+    inheritedParams?: Record<string, string>;
 }
 
 const DynamicParamTable: React.FC<DynamicParamTableProps> = ({
@@ -22,7 +23,8 @@ const DynamicParamTable: React.FC<DynamicParamTableProps> = ({
     params,
     onChange,
     placeholderKey = "Key",
-    placeholderValue = "Value"
+    placeholderValue = "Value",
+    inheritedParams = {}
 }) => {
     const [isCopied, setIsCopied] = useState(false);
 
@@ -102,6 +104,35 @@ const DynamicParamTable: React.FC<DynamicParamTableProps> = ({
                         No {title.toLowerCase()} added yet.
                     </div>
                 )}
+
+                {Object.entries(inheritedParams)
+                    .filter(([k]) => k && !params.some(p => p.active && p.key === k))
+                    .map(([k, v]) => (
+                    <div key={`inherited-${k}`} className={styles.paramRow} style={{ opacity: 0.6 }}>
+                        <div className={styles.activeToggle} style={{ cursor: 'default' }} title="Inherited (Always Active)">
+                            <CheckCircle size={16} className={styles.activeIcon} />
+                        </div>
+                        <input
+                            type="text"
+                            className={styles.paramInput}
+                            value={k}
+                            readOnly
+                            style={{ cursor: 'not-allowed' }}
+                            title="Inherited from Collection Settings"
+                        />
+                        <input
+                            type="text"
+                            className={styles.paramInput}
+                            value={v}
+                            readOnly
+                            style={{ cursor: 'not-allowed' }}
+                            title="Inherited from Collection Settings"
+                        />
+                        <div className={styles.removeParamBtn} style={{ visibility: 'hidden' }}>
+                            <Trash2 size={15} />
+                        </div>
+                    </div>
+                ))}
 
                 {params.map(param => (
                     <div key={param.id} className={`${styles.paramRow} ${!param.active ? styles.paramRowInactive : ''}`}>

@@ -70,6 +70,7 @@ export async function getCollections() {
             id: col.id,
             name: col.name,
             auth: col.auth,
+            base_url: col.base_url,
             requests: colRequests
                 .sort((a: any, b: any) => (a.sort_order - b.sort_order) || new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
                 .map((req: any) => ({
@@ -185,6 +186,24 @@ export async function renameCollection(id: string, name: string) {
     const { error } = await supabase
         .from('test_collections')
         .update({ name } as any)
+        .eq('id', id)
+        .eq('user_id', session.user.id); // enforce ownership
+
+    if (error) return { error: error.message };
+    revalidatePath('/test-api');
+    return { success: true };
+}
+
+export async function updateCollection(id: string, updates: { base_url?: string; auth?: any }) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: 'Unauthorized' };
+
+    const isPro = await verifyProStatus(session.user.id);
+    if (!isPro) return { error: 'Pro required' };
+
+    const { error } = await supabase
+        .from('test_collections')
+        .update(updates as any)
         .eq('id', id)
         .eq('user_id', session.user.id); // enforce ownership
 

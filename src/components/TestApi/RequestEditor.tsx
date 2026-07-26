@@ -1,449 +1,547 @@
-import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import { Send, Layout, Pencil, Loader2, Check, Terminal, Info } from 'lucide-react';
-import { api } from '@/services/api';
-import { ClientStorage } from '@/lib/clientStorage';
-import styles from './RequestEditor.module.css';
-import ResultSection from '@/components/ResultSection/ResultSection';
-import { Button } from '@/components/ui/Button/Button';
-import { Select } from '@/components/ui/Select/Select';
-import DynamicParamTable, { ParamRow } from '@/components/TestApi/DynamicParamTable';
-import { useToast } from '@/hooks/useToast';
-import LocalhostBanner from '../LocalhostBanner/LocalhostBanner';
-import { isLocalhostUrl } from '@/lib/urlUtils';
+import React, { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
+import {
+  Send,
+  Layout,
+  Pencil,
+  Loader2,
+  Check,
+  Terminal,
+  Info,
+} from "lucide-react";
+import { api } from "@/services/api";
+import { ClientStorage } from "@/lib/clientStorage";
+import styles from "./RequestEditor.module.css";
+import ResultSection from "@/components/ResultSection/ResultSection";
+import { Button } from "@/components/ui/Button/Button";
+import { Select } from "@/components/ui/Select/Select";
+import DynamicParamTable, {
+  ParamRow,
+} from "@/components/TestApi/DynamicParamTable";
+import { useToast } from "@/hooks/useToast";
+import LocalhostBanner from "../LocalhostBanner/LocalhostBanner";
+import { isLocalhostUrl } from "@/lib/urlUtils";
 
-import CurlSection from '@/components/CurlSection/CurlSection';
+import CurlSection from "@/components/CurlSection/CurlSection";
 
 // Monaco Editor
 const MonacoJsonEditor = dynamic(
-    () => import("@/components/MonacoJsonEditor/MonacoJsonEditor"),
-    { ssr: false, loading: () => <div>Loading editor...</div> }
+  () => import("@/components/MonacoJsonEditor/MonacoJsonEditor"),
+  { ssr: false, loading: () => <div>Loading editor...</div> },
 );
 
-const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'];
+const METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
 
 interface RequestEditorProps {
-    data?: any; // The request data (method, url, etc)
-    onSave: (name: string, config: any) => void;
-    requestName: string;
-    requestId: string;
+  data?: any; // The request data (method, url, etc)
+  onSave: (name: string, config: any) => void;
+  requestName: string;
+  requestId: string;
 }
 
 const PROXY_PORT = 9876;
 const PROXY_URL = `http://localhost:${PROXY_PORT}`;
 
-export default function RequestEditor({ data, onSave, requestName, requestId }: RequestEditorProps) {
-    const { showToast } = useToast();
+export default function RequestEditor({
+  data,
+  onSave,
+  requestName,
+  requestId,
+}: RequestEditorProps) {
+  const { showToast } = useToast();
 
-    // Request State
-    const [name, setName] = useState(requestName);
-    const [method, setMethod] = useState('GET');
-    const [url, setUrl] = useState('https://jsonplaceholder.typicode.com/todos/1');
-    const [activeTab, setActiveTab] = useState<'params' | 'auth' | 'headers' | 'body'>('params');
+  // Request State
+  const [name, setName] = useState(requestName);
+  const [method, setMethod] = useState("GET");
+  const [url, setUrl] = useState("");
+  const [baseUrl, setBaseUrl] = useState("");
+  const [activeTab, setActiveTab] = useState<
+    "params" | "auth" | "headers" | "body"
+  >("params");
 
-    // Dynamic Params
-    const [queryParams, setQueryParams] = useState<ParamRow[]>([
-        { id: '1', key: '', value: '', active: true }
-    ]);
-    const [headers, setHeaders] = useState<ParamRow[]>([
-        { id: '1', key: 'Content-Type', value: 'application/json', active: true },
-        { id: '2', key: 'Accept', value: 'application/json', active: true }
-    ]);
+  // Dynamic Params
+  const [queryParams, setQueryParams] = useState<ParamRow[]>([
+    { id: "1", key: "", value: "", active: true },
+  ]);
+  const [headers, setHeaders] = useState<ParamRow[]>([
+    { id: "1", key: "Content-Type", value: "application/json", active: true },
+    { id: "2", key: "Accept", value: "application/json", active: true },
+  ]);
 
-    // Auth State
-    const [authType, setAuthType] = useState<'none' | 'bearer'>('none');
-    const [authToken, setAuthToken] = useState('');
+  // Auth State
+  const [authType, setAuthType] = useState<"none" | "bearer">("none");
+  const [authToken, setAuthToken] = useState("");
 
-    // Body State
-    const [body, setBody] = useState('{\n  \n}');
+  // Body State
+  const [body, setBody] = useState("{\n  \n}");
 
-    // Response State
-    const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState<any>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [interfacePreview, setInterfacePreview] = useState<string | null>(null);
-    const [savingInterface, setSavingInterface] = useState(false);
-    const [copied, setCopied] = useState(false);
-    const [executedCurl, setExecutedCurl] = useState<string | undefined>(undefined);
-    const [isSaving, setIsSaving] = useState(false);
+  // Auth & Config inherited from Collection
+  const inheritedCustomHeaders: Record<string, string> =
+    data?.customHeaders || {};
 
-    // Sync state with props (Initial Load)
-    useEffect(() => {
-        if (data) {
-            setMethod(data.method || 'GET');
-            setUrl(data.url || '');
-            setQueryParams(data.queryParams || [{ id: '1', key: '', value: '', active: true }]);
-            setHeaders(data.headers || [{ id: '1', key: 'Content-Type', value: 'application/json', active: true }]);
-            setAuthType(data.authType || 'none');
-            setAuthToken(data.authToken || '');
-            setBody(data.body || '{\n  \n}');
-            // Clear results temporarily until cache loads
-            setResult(null);
-            setError(null);
-            setExecutedCurl(undefined);
-            setInterfacePreview(null);
-            
-            // Load from LRU Cache
-            if (requestId) {
-                ClientStorage.getExecutionResult(requestId).then(saved => {
-                    if (saved) {
-                        setResult(saved.result || null);
-                        setError(saved.error || null);
-                        setExecutedCurl(saved.executedCurl || undefined);
-                        setInterfacePreview(saved.interfacePreview || null);
-                    }
-                }).catch(err => console.error("Failed to load cached result", err));
+  // Response State
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [interfacePreview, setInterfacePreview] = useState<string | null>(null);
+  const [savingInterface, setSavingInterface] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [executedCurl, setExecutedCurl] = useState<string | undefined>(
+    undefined,
+  );
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Sync state with props (Initial Load)
+  useEffect(() => {
+    if (data) {
+      setMethod(data.method || "GET");
+      setUrl(data.url || "");
+      setBaseUrl(data.baseUrl || "");
+      setQueryParams(
+        data.queryParams || [{ id: "1", key: "", value: "", active: true }],
+      );
+      setHeaders(
+        data.headers || [
+          {
+            id: "1",
+            key: "Content-Type",
+            value: "application/json",
+            active: true,
+          },
+        ],
+      );
+      setAuthType(data.authType || "none");
+      setAuthToken(data.authToken || "");
+      setBody(data.body || "{\n  \n}");
+      // Clear results temporarily until cache loads
+      setResult(null);
+      setError(null);
+      setExecutedCurl(undefined);
+      setInterfacePreview(null);
+
+      // Load from LRU Cache
+      if (requestId) {
+        ClientStorage.getExecutionResult(requestId)
+          .then((saved) => {
+            if (saved) {
+              setResult(saved.result || null);
+              setError(saved.error || null);
+              setExecutedCurl(saved.executedCurl || undefined);
+              setInterfacePreview(saved.interfacePreview || null);
             }
+          })
+          .catch((err) => console.error("Failed to load cached result", err));
+      }
+    }
+    setName(requestName);
+  }, []); // Run only on mount (key forces remount on switch)
+
+  // Sync inherited properties if they change externally (e.g., from Navbar)
+  useEffect(() => {
+    if (data) {
+      if (data.baseUrl !== undefined) setBaseUrl(data.baseUrl);
+      setAuthType(data.authType || "none");
+      setAuthToken(data.authToken || "");
+    }
+  }, [data?.baseUrl, data?.authType, data?.authToken]);
+
+  // Auto-Save Effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const config = {
+        method,
+        url,
+        queryParams,
+        headers,
+        auth: { type: authType, token: authToken },
+        body,
+      };
+      onSave(name, config);
+      setIsSaving(false);
+    }, 1000);
+
+    setIsSaving(true);
+    return () => clearTimeout(timeoutId);
+  }, [name, method, url, queryParams, headers, authType, authToken, body]);
+
+  // --- Logic ---
+
+  const handleSend = async () => {
+    setLoading(true);
+    setResult(null);
+    setError(null);
+    setInterfacePreview(null);
+    setExecutedCurl(undefined);
+
+    try {
+      // 1. Construct URL with Query Params
+      let finalUrl = url.trim();
+      if (baseUrl && !finalUrl.startsWith("http")) {
+        // Ensure there's a slash between baseUrl and path if needed
+        const bUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+        const path = finalUrl.startsWith("/") ? finalUrl : "/" + finalUrl;
+        finalUrl = bUrl + path;
+      }
+      const activeParams = queryParams.filter((p) => p.active && p.key);
+      if (activeParams.length > 0) {
+        const qs = activeParams
+          .map(
+            (p) =>
+              `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`,
+          )
+          .join("&");
+        finalUrl += (finalUrl.includes("?") ? "&" : "?") + qs;
+      }
+
+      // 2. Construct Headers
+      const finalHeaders: Record<string, string> = {};
+      headers.forEach((h) => {
+        if (h.active && h.key) finalHeaders[h.key] = h.value;
+      });
+
+      if (authType === "bearer" && authToken) {
+        finalHeaders["Authorization"] = `Bearer ${authToken}`;
+      }
+
+      // Apply custom headers from collection auth config
+      Object.entries(inheritedCustomHeaders).forEach(([k, v]) => {
+        if (k && !finalHeaders[k]) {
+          // Don't override if explicitly set in request params
+          finalHeaders[k] = v;
         }
-        setName(requestName);
-    }, []); // Run only on mount (key forces remount on switch)
+      });
 
-    // Auto-Save Effect
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            const config = {
-                method,
-                url,
-                queryParams,
-                headers,
-                auth: { type: authType, token: authToken },
-                body
-            };
-            onSave(name, config);
-            setIsSaving(false);
-        }, 1000);
-
-        setIsSaving(true);
-        return () => clearTimeout(timeoutId);
-    }, [name, method, url, queryParams, headers, authType, authToken, body]);
-
-    // --- Logic ---
-
-    const handleSend = async () => {
-        setLoading(true);
-        setResult(null);
-        setError(null);
-        setInterfacePreview(null);
-        setExecutedCurl(undefined);
-
+      // 3. Prepare Body
+      let requestData = undefined;
+      if (["POST", "PUT", "PATCH"].includes(method)) {
         try {
-            // 1. Construct URL with Query Params
-            let finalUrl = url.trim();
-            const activeParams = queryParams.filter(p => p.active && p.key);
-            if (activeParams.length > 0) {
-                const qs = activeParams.map(p => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`).join('&');
-                finalUrl += (finalUrl.includes('?') ? '&' : '?') + qs;
-            }
-
-            // 2. Construct Headers
-            const finalHeaders: Record<string, string> = {};
-            headers.forEach(h => {
-                if (h.active && h.key) finalHeaders[h.key] = h.value;
-            });
-
-            if (authType === 'bearer' && authToken) {
-                finalHeaders['Authorization'] = `Bearer ${authToken}`;
-            }
-
-            // 3. Prepare Body
-            let requestData = undefined;
-            if (['POST', 'PUT', 'PATCH'].includes(method)) {
-                try {
-                    if (body && body.trim()) {
-                        requestData = JSON.parse(body);
-                    }
-                } catch (e) {
-                    throw new Error("Invalid JSON body");
-                }
-            }
-
-            // 4. Update Header for JSON if body exists
-            if (requestData && !finalHeaders['Content-Type']) {
-                finalHeaders['Content-Type'] = 'application/json';
-            }
-
-            // --- Generate Curl ---
-            let curlCmd = `curl -X '${method}' \\\n  '${finalUrl}'`;
-            const paramHeaders: string[] = [];
-
-            Object.entries(finalHeaders).forEach(([k, v]) => {
-                paramHeaders.push(`-H '${k}: ${v}'`);
-            });
-
-            if (paramHeaders.length > 0) {
-                curlCmd += ` \\\n${paramHeaders.join(" \\\n")}`;
-            }
-
-            if (requestData) {
-                const jsonData = JSON.stringify(requestData, null, 2);
-                curlCmd += ` \\\n-d '${jsonData}'`;
-            }
-            setExecutedCurl(curlCmd);
-            // ---------------------
-
-            // 5. Execute
-            const isLocal = isLocalhostUrl(finalUrl);
-            let execRes: any;
-
-            if (isLocal) {
-                // Route through user's local reex-proxy to reach localhost
-                try {
-                    const proxyRes = await fetch(`${PROXY_URL}/proxy`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ url: finalUrl, method, data: requestData, headers: finalHeaders })
-                    });
-                    execRes = await proxyRes.json();
-                } catch (e: any) {
-                    throw new Error(
-                        'Could not connect to the local proxy. Run `npx reex-proxy` in your terminal first.'
-                    );
-                }
-            } else {
-                // External URL — use server-side proxy to bypass CORS
-                execRes = await api.executeRequest({
-                    url: finalUrl,
-                    method,
-                    data: requestData,
-                    headers: finalHeaders,
-                    useProxy: true
-                });
-            }
-
-            if (!execRes.success) {
-                throw new Error(execRes.error || "Request failed");
-            }
-
-            setResult(execRes.data);
-            showToast('success', `Status: ${execRes.data.status || 200}`);
-
-            let currentPreview = null;
-            // Generate Interface Preview
-            try {
-                const previewRes = await api.previewTypes({
-                    data: execRes.data,
-                    fnName: 'ManualRequest'
-                });
-                if ((previewRes as any).success) {
-                    currentPreview = (previewRes as any).interfaceString;
-                    setInterfacePreview(currentPreview);
-                }
-            } catch (e) {
-                console.warn("Failed to generate type preview", e);
-            }
-            
-            // Save to LRU Cache
-            ClientStorage.saveExecutionResult(requestId, {
-                result: execRes.data,
-                error: null,
-                executedCurl: curlCmd,
-                interfacePreview: currentPreview
-            }).catch(e => console.error(e));
-
-        } catch (err: any) {
-            const errMsg = err.message || "Unknown error occurred";
-            setError(errMsg);
-            showToast('error', "Error: Failed to fetch");
-            
-            // Wait, curlCmd is scoped to the try block. It might not exist here.
-            // But executedCurl state is already updated before the fetch starts!
-            ClientStorage.saveExecutionResult(requestId, {
-                result: null,
-                error: errMsg,
-                executedCurl: undefined, // We'll just omit it here, state will use undefined or old value
-                interfacePreview: null
-            }).catch(e => console.error(e));
-        } finally {
-            setLoading(false);
+          if (body && body.trim()) {
+            requestData = JSON.parse(body);
+          }
+        } catch (e) {
+          throw new Error("Invalid JSON body");
         }
-    };
+      }
 
-    const handleCopy = () => {
-        if (result) {
-            navigator.clipboard.writeText(JSON.stringify(result, null, 2));
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
+      // 4. Update Header for JSON if body exists
+      if (requestData && !finalHeaders["Content-Type"]) {
+        finalHeaders["Content-Type"] = "application/json";
+      }
+
+      // --- Generate Curl ---
+      let curlCmd = `curl -X '${method}' \\\n  '${finalUrl}'`;
+      const paramHeaders: string[] = [];
+
+      Object.entries(finalHeaders).forEach(([k, v]) => {
+        paramHeaders.push(`-H '${k}: ${v}'`);
+      });
+
+      if (paramHeaders.length > 0) {
+        curlCmd += ` \\\n${paramHeaders.join(" \\\n")}`;
+      }
+
+      if (requestData) {
+        const jsonData = JSON.stringify(requestData, null, 2);
+        curlCmd += ` \\\n-d '${jsonData}'`;
+      }
+      setExecutedCurl(curlCmd);
+      // ---------------------
+
+      // 5. Execute
+      const isLocal = isLocalhostUrl(finalUrl);
+      let execRes: any;
+
+      if (isLocal) {
+        // Route through user's local reex-proxy to reach localhost
+        try {
+          const proxyRes = await fetch(`${PROXY_URL}/proxy`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              url: finalUrl,
+              method,
+              data: requestData,
+              headers: finalHeaders,
+            }),
+          });
+          execRes = await proxyRes.json();
+        } catch (e: any) {
+          throw new Error(
+            "Could not connect to the local proxy. Run `npx reex-proxy` in your terminal first.",
+          );
         }
-    };
+      } else {
+        // External URL — use server-side proxy to bypass CORS
+        execRes = await api.executeRequest({
+          url: finalUrl,
+          method,
+          data: requestData,
+          headers: finalHeaders,
+          useProxy: true,
+        });
+      }
 
-    return (
-        <div className={styles.editorContainer}>
+      if (!execRes.success) {
+        throw new Error(execRes.error || "Request failed");
+      }
 
+      setResult(execRes.data);
+      showToast("success", `Status: ${execRes.data.status || 200}`);
 
-            <div className={styles.editorScrollArea}>
-                <div className={styles.headerRow}>
-                    <div className={styles.headerLeft}>
-                        <div className={styles.headerIcon}>
-                            <Layout size={20} />
-                        </div>
-                        <div className={styles.nameWrapper}>
-                            <input
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className={styles.nameInput}
-                                placeholder="Request Name"
-                            />
-                            <Pencil size={16} className={styles.editIcon} />
-                        </div>
-                    </div>
-                    <div className={styles.saveStatus}>
-                        {isSaving ? (
-                            <>
-                                <Loader2 size={14} className={styles.spinner} />
-                                <span>Saving...</span>
-                            </>
-                        ) : (
-                            <>
-                                <Check size={14} />
-                                <span>Saved</span>
-                            </>
-                        )}
-                    </div>
-                </div>
+      let currentPreview = null;
+      // Generate Interface Preview
+      try {
+        const previewRes = await api.previewTypes({
+          data: execRes.data,
+          fnName: "ManualRequest",
+        });
+        if ((previewRes as any).success) {
+          currentPreview = (previewRes as any).interfaceString;
+          setInterfacePreview(currentPreview);
+        }
+      } catch (e) {
+        console.warn("Failed to generate type preview", e);
+      }
 
-                {/* Request Bar */}
-                <div className={styles.requestBar}>
-                    <div style={{ width: 120 }}>
-                        <Select
-                            options={METHODS.map(m => ({ value: m, label: m }))}
-                            value={method}
-                            onChange={setMethod}
-                        />
-                    </div>
+      // Save to LRU Cache
+      ClientStorage.saveExecutionResult(requestId, {
+        result: execRes.data,
+        error: null,
+        executedCurl: curlCmd,
+        interfacePreview: currentPreview,
+      }).catch((e) => console.error(e));
+    } catch (err: any) {
+      const errMsg = err.message || "Unknown error occurred";
+      setError(errMsg);
+      showToast("error", "Error: Failed to fetch");
 
-                    <input
-                        type="text"
-                        className={styles.urlInput}
-                        value={url}
-                        onChange={e => setUrl(e.target.value)}
-                        placeholder="Enter request URL (e.g. https://api.example.com/users)"
-                    />
+      // Wait, curlCmd is scoped to the try block. It might not exist here.
+      // But executedCurl state is already updated before the fetch starts!
+      ClientStorage.saveExecutionResult(requestId, {
+        result: null,
+        error: errMsg,
+        executedCurl: undefined, // We'll just omit it here, state will use undefined or old value
+        interfacePreview: null,
+      }).catch((e) => console.error(e));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                    <Button
-                        variant="primary"
-                        onClick={handleSend}
-                        disabled={loading || !url}
-                        isLoading={loading}
-                        leftIcon={<Send size={16} />}
-                    >
-                        Send
-                    </Button>
-                </div>
+  const handleCopy = () => {
+    if (result) {
+      navigator.clipboard.writeText(JSON.stringify(result, null, 2));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
-                {/* Localhost Info Banner */}
-                {isLocalhostUrl(url) && (
-                    <LocalhostBanner />
-                )}
+  return (
+    <div className={styles.editorContainer}>
+      <div className={styles.editorScrollArea}>
+        {/* Localhost Info Banner */}
+        {(isLocalhostUrl(url) || isLocalhostUrl(baseUrl)) && (
+          <LocalhostBanner />
+        )}
 
-                {/* Config Tabs */}
-                <div>
-                    <div className={styles.tabs}>
-                        <button
-                            className={`${styles.tab} ${activeTab === 'params' ? styles.tabActive : ''}`}
-                            onClick={() => setActiveTab('params')}
-                        >
-                            Query Params
-                        </button>
-                        <button
-                            className={`${styles.tab} ${activeTab === 'headers' ? styles.tabActive : ''}`}
-                            onClick={() => setActiveTab('headers')}
-                        >
-                            Headers
-                        </button>
-                        <button
-                            className={`${styles.tab} ${activeTab === 'auth' ? styles.tabActive : ''}`}
-                            onClick={() => setActiveTab('auth')}
-                        >
-                            Auth
-                        </button>
-                        <button
-                            className={`${styles.tab} ${activeTab === 'body' ? styles.tabActive : ''}`}
-                            onClick={() => setActiveTab('body')}
-                        >
-                            Body
-                        </button>
-                    </div>
-
-                    <div className={styles.tabContent}>
-                        {activeTab === 'params' && (
-                            <DynamicParamTable
-                                title="Query Parameters"
-                                params={queryParams}
-                                onChange={setQueryParams}
-                            />
-                        )}
-
-                        {activeTab === 'headers' && (
-                            <DynamicParamTable
-                                title="Request Headers"
-                                params={headers}
-                                onChange={setHeaders}
-                                placeholderKey="Header"
-                            />
-                        )}
-
-                        {activeTab === 'auth' && (
-                            <div className={styles.authSection}>
-                                <div>
-                                    <label className={styles.authTypeLabel}>Authorization Type:</label>
-                                    <div style={{ width: 200 }}>
-                                        <Select
-                                            options={[
-                                                { value: "none", label: "None" },
-                                                { value: "bearer", label: "Bearer Token" }
-                                            ]}
-                                            value={authType}
-                                            onChange={(val) => setAuthType(val as any)}
-                                        />
-                                    </div>
-                                </div>
-
-                                {authType === 'bearer' && (
-                                    <input
-                                        type="text"
-                                        className={styles.authInput}
-                                        placeholder="Enter Bearer Token"
-                                        value={authToken}
-                                        onChange={(e) => setAuthToken(e.target.value)}
-                                    />
-                                )}
-                            </div>
-                        )}
-
-                        {activeTab === 'body' && (
-                            <div>
-                                <MonacoJsonEditor
-                                    value={body}
-                                    onChange={setBody}
-                                    height="200px"
-                                />
-                                <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 8 }}>
-                                    JSON Body (Only for POST, PUT, PATCH)
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Curl Section */}
-                {executedCurl && (
-                    <div style={{ marginTop: 20 }}>
-                        <CurlSection curlCommand={executedCurl} />
-                    </div>
-                )}
-
-                {/* Results */}
-                <ResultSection
-                    result={result}
-                    error={error}
-                    copied={copied}
-                    onCopy={handleCopy}
-                    interfacePreview={interfacePreview}
-                    onUpdateInterface={() => { }}
-                    updatingInterface={savingInterface}
-                    isStandaloneMode={true}
-                />
+        <div className={styles.headerRow}>
+          <div className={styles.headerLeft}>
+            <div className={styles.headerIcon}>
+              <Layout size={20} />
             </div>
+            <div className={styles.nameWrapper}>
+              <div className={styles.inputSizerWrapper}>
+                <span className={styles.inputSizer}>
+                  {name || "Request Name"}
+                </span>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className={styles.nameInput}
+                  placeholder="Request Name"
+                />
+              </div>
+              <Pencil size={16} className={styles.editIcon} />
+            </div>
+          </div>
+          <div className={styles.saveStatus}>
+            {isSaving ? (
+              <>
+                <Loader2 size={14} className={styles.spinner} />
+                <span>Syncing...</span>
+              </>
+            ) : (
+              <>
+                <Check size={14} />
+                <span>Synced</span>
+              </>
+            )}
+          </div>
         </div>
-    );
+
+        {/* Request Bar */}
+        <div className={styles.requestBar}>
+          <div style={{ width: 120 }}>
+            <Select
+              className={styles.requestSelect}
+              options={METHODS.map((m) => ({ value: m, label: m }))}
+              value={method}
+              onChange={setMethod}
+            />
+          </div>
+
+          <div className={styles.urlInputContainer}>
+            <span className={styles.baseUrlPrefix}>
+              {baseUrl || "Set Base URL in Navbar ↗"}
+            </span>
+            <input
+              type="text"
+              className={styles.urlInput}
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="/users"
+            />
+          </div>
+
+          <Button
+            variant="primary"
+            onClick={handleSend}
+            disabled={loading || !url}
+            isLoading={loading}
+            leftIcon={<Send size={16} />}
+            style={{ height: "40px" }}
+          >
+            Send
+          </Button>
+        </div>
+
+        {/* Config Tabs */}
+        <div>
+          <div className={styles.tabs}>
+            <button
+              className={`${styles.tab} ${activeTab === "params" ? styles.tabActive : ""}`}
+              onClick={() => setActiveTab("params")}
+            >
+              Query Params
+            </button>
+            <button
+              className={`${styles.tab} ${activeTab === "headers" ? styles.tabActive : ""}`}
+              onClick={() => setActiveTab("headers")}
+            >
+              Headers
+            </button>
+            <button
+              className={`${styles.tab} ${activeTab === "auth" ? styles.tabActive : ""}`}
+              onClick={() => setActiveTab("auth")}
+            >
+              Auth
+            </button>
+            <button
+              className={`${styles.tab} ${activeTab === "body" ? styles.tabActive : ""}`}
+              onClick={() => setActiveTab("body")}
+            >
+              Body
+            </button>
+          </div>
+
+          <div className={styles.tabContent}>
+            {activeTab === "params" && (
+              <DynamicParamTable
+                title="Query Parameters"
+                params={queryParams}
+                onChange={setQueryParams}
+              />
+            )}
+
+            {activeTab === "headers" && (
+              <DynamicParamTable
+                title="Request Headers"
+                params={headers}
+                onChange={setHeaders}
+                placeholderKey="Header"
+                inheritedParams={inheritedCustomHeaders}
+              />
+            )}
+
+            {activeTab === "auth" && (
+              <div className={styles.authSection}>
+                <div>
+                  <label className={styles.authTypeLabel}>
+                    Authorization Type:
+                  </label>
+                  <p
+                    className={styles.authHelp}
+                    style={{ marginBottom: "12px", marginTop: "-4px" }}
+                  >
+                    Inherited from Collection settings (Editable in Navbar)
+                  </p>
+                  <div style={{ width: 200 }}>
+                    <Select
+                      options={[
+                        { value: "none", label: "None" },
+                        { value: "bearer", label: "Bearer Token" },
+                      ]}
+                      value={authType}
+                      onChange={() => {}}
+                      disabled={true}
+                    />
+                  </div>
+                </div>
+
+                {authType === "bearer" && (
+                  <input
+                    type="text"
+                    className={styles.authInput}
+                    placeholder="Enter Bearer Token"
+                    value={authToken}
+                    onChange={() => {}}
+                    readOnly
+                    style={{ opacity: 0.6, cursor: "not-allowed" }}
+                  />
+                )}
+              </div>
+            )}
+
+            {activeTab === "body" && (
+              <div>
+                <MonacoJsonEditor
+                  value={body}
+                  onChange={setBody}
+                  height="200px"
+                />
+                <p
+                  style={{
+                    fontSize: 12,
+                    color: "var(--text-secondary)",
+                    marginTop: 8,
+                  }}
+                >
+                  JSON Body (Only for POST, PUT, PATCH)
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Curl Section */}
+        {executedCurl && (
+          <div style={{ marginTop: 20 }}>
+            <CurlSection curlCommand={executedCurl} />
+          </div>
+        )}
+
+        {/* Results */}
+        <ResultSection
+          result={result}
+          error={error}
+          copied={copied}
+          onCopy={handleCopy}
+          interfacePreview={interfacePreview}
+          onUpdateInterface={() => {}}
+          updatingInterface={savingInterface}
+          isStandaloneMode={true}
+        />
+      </div>
+    </div>
+  );
 }

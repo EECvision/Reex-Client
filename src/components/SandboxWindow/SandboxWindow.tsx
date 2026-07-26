@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/useToast';
 import LoginModal from '@/components/LoginModal/LoginModal';
 import { ResizablePanel } from '@/components/ui/ResizablePanel/ResizablePanel';
 import TestApiNavbar from '@/components/TestApiNavbar/TestApiNavbar';
+import { TestApiAuthModal } from '@/components/TestApiAuthModal/TestApiAuthModal';
 
 export const SandboxWindow = () => {
   const { user } = useAuth();
@@ -32,7 +33,8 @@ export const SandboxWindow = () => {
     createRequest,
     updateRequest,
     deleteRequest,
-    toggleCollection
+    toggleCollection,
+    updateCollection
   } = useCollections(user?.id);
 
   // Active Request State
@@ -41,6 +43,7 @@ export const SandboxWindow = () => {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [modalType, setModalType] = useState<'collection' | 'request' | 'delete-collection' | 'delete-request'>('collection');
   const [newItemName, newItemNameSet] = useState('');
@@ -198,8 +201,10 @@ export const SandboxWindow = () => {
     ...activeRequest.config,
     method: activeRequest.method,
     url: activeRequest.url,
+    baseUrl: activeCollection?.base_url || '',
     authType: activeCollection?.auth?.type || activeRequest.config?.auth?.type || 'none',
-    authToken: activeCollection?.auth?.token || activeRequest.config?.auth?.token || ''
+    authToken: activeCollection?.auth?.token || activeRequest.config?.auth?.token || '',
+    customHeaders: activeCollection?.auth?.customHeaders || {}
   } : undefined;
 
   const getModalTitle = () => {
@@ -240,11 +245,21 @@ export const SandboxWindow = () => {
           isOpen={isSidebarOpen}
           onToggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
           hideLogo={true}
+          onAddCollection={handleAddCollection}
         />
       </ResizablePanel>
 
       <div className={styles.rightPanel}>
-        <TestApiNavbar onAddCollection={handleAddCollection} />
+        <TestApiNavbar 
+          onAddCollection={handleAddCollection}
+          activeCollection={activeCollection}
+          onBaseUrlChange={(url) => {
+            if (activeCollection?.id) {
+              updateCollection({ id: activeCollection.id, updates: { base_url: url } });
+            }
+          }}
+          onAuthClick={() => setShowAuthModal(true)}
+        />
         {isLoading ? (
           <Loading />
         ) : activeRequest ? (
@@ -308,6 +323,20 @@ export const SandboxWindow = () => {
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
         message="Sign in to create your first API collection."
+      />
+
+      <TestApiAuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        collections={collections}
+        activeCollectionId={activeCollection?.id || undefined}
+        onSave={(collectionId, token, customHeaders) => {
+          updateCollection({
+            id: collectionId,
+            updates: { auth: { type: "bearer", token, customHeaders } },
+          });
+          setShowAuthModal(false);
+        }}
       />
     </div>
   );

@@ -4,6 +4,7 @@ import {
     createCollection,
     deleteCollection,
     renameCollection as renameCollectionAction,
+    updateCollection,
     createRequest,
     updateRequest,
     deleteRequest
@@ -150,6 +151,37 @@ export const useCollections = (userId?: string) => {
         },
         onError: (err: any) => {
             showToast('error', err.message || 'Failed to rename collection');
+        }
+    });
+
+    // Mutation: Update Collection
+    const updateCollectionMutation = useMutation({
+        mutationFn: async ({ id, updates }: { id: string; updates: { base_url?: string; auth?: any } }) => {
+            if (!isPro) {
+                const all = await ClientStorage.get<Collection>(COLLECTIONS_KEY);
+                const col = all.find(c => c.id === id);
+                if (col) {
+                    await ClientStorage.update(COLLECTIONS_KEY, id, { ...col, ...updates });
+                }
+                return { id, updates };
+            }
+            // Pro: persist to DB
+            const res = await updateCollection(id, updates);
+            if (res && res.error) return { error: res.error };
+            return { id, updates };
+        },
+        onSuccess: (result) => {
+            if ((result as any).error) {
+                showToast('error', String((result as any).error));
+                return;
+            }
+            const { id, updates } = result as { id: string; updates: { base_url?: string; auth?: any } };
+            queryClient.setQueryData(['collections', userId, isPro], (old: Collection[] = []) =>
+                old.map(c => c.id === id ? { ...c, ...updates } : c)
+            );
+        },
+        onError: (err: any) => {
+            showToast('error', err.message || 'Failed to update collection');
         }
     });
 
@@ -320,6 +352,7 @@ export const useCollections = (userId?: string) => {
         createCollection: createCollectionMutation.mutateAsync,
         deleteCollection: deleteCollectionMutation.mutateAsync,
         renameCollection: renameCollectionMutation.mutateAsync,
+        updateCollection: updateCollectionMutation.mutateAsync,
         createRequest: createRequestMutation.mutateAsync,
         updateRequest: updateRequestMutation.mutateAsync,
         deleteRequest: deleteRequestMutation.mutateAsync,

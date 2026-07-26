@@ -8,6 +8,8 @@ import CollectionSidebar, {
 } from "@/components/TestApi/CollectionSidebar";
 import RequestEditor from "@/components/TestApi/RequestEditor";
 import EmptyState from "@/components/EmptyState/EmptyState";
+import { Assistant } from "@/components/Assistant/Assistant";
+import { TestApiAuthModal } from "@/components/TestApiAuthModal/TestApiAuthModal";
 import { Modal } from "@/components/ui/Modal/Modal";
 import { Button } from "@/components/ui/Button/Button";
 import { Loading } from "@/components/ui/Loading/Loading";
@@ -39,14 +41,17 @@ export default function TestApiPage() {
     updateRequest,
     deleteRequest,
     toggleCollection,
+    updateCollection,
   } = useCollections(user?.id);
 
-  // Active Request State
+  // Active Request & Collection State
   const [activeRequest, setActiveRequest] = useState<RequestItem | null>(null);
+  const [activeCollectionId, setActiveCollectionId] = useState<string | null>(null);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [modalType, setModalType] = useState<
     "collection" | "request" | "delete-collection" | "delete-request"
@@ -54,6 +59,9 @@ export default function TestApiPage() {
   const [newItemName, newItemNameSet] = useState("");
   const [targetColId, setTargetColId] = useState<string | null>(null);
   const [targetReqId, setTargetReqId] = useState<string | null>(null);
+  
+  // Auth Modal State
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     setHasSidebar(true);
@@ -143,6 +151,7 @@ export default function TestApiPage() {
       return;
     }
 
+
     if (!newItemName.trim()) return;
 
     setIsActionLoading(true);
@@ -187,6 +196,7 @@ export default function TestApiPage() {
   };
 
   const handleToggleCollection = (id: string) => {
+    setActiveCollectionId(id);
     toggleCollection(id);
   };
 
@@ -217,23 +227,29 @@ export default function TestApiPage() {
     }
   };
 
-  const activeCollection = collections.find((c) =>
+  const requestCollection = collections.find((c) =>
     c.requests.some((r) => r.id === activeRequest?.id),
   );
+
+  const activeCollection = activeCollectionId 
+    ? collections.find((c) => c.id === activeCollectionId)
+    : requestCollection;
 
   const editorData = activeRequest
     ? {
         ...activeRequest.config,
         method: activeRequest.method,
         url: activeRequest.url,
+        baseUrl: requestCollection?.base_url || "",
         authType:
-          activeCollection?.auth?.type ||
+          requestCollection?.auth?.type ||
           activeRequest.config?.auth?.type ||
           "none",
         authToken:
-          activeCollection?.auth?.token ||
+          requestCollection?.auth?.token ||
           activeRequest.config?.auth?.token ||
           "",
+        customHeaders: requestCollection?.auth?.customHeaders || {},
       }
     : undefined;
 
@@ -269,6 +285,7 @@ export default function TestApiPage() {
           collections={collections}
           activeRequestId={activeRequest?.id || null}
           onSelectRequest={(cid, req) => {
+            setActiveCollectionId(cid);
             setActiveRequest(req);
             if (window.innerWidth <= 1140) setSidebarOpen(false);
           }}
@@ -279,11 +296,27 @@ export default function TestApiPage() {
           onRenameCollection={(id, name) => renameCollection({ id, name })}
           isOpen={isSidebarOpen}
           onToggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
+          onAddCollection={handleAddCollection}
         />
       </ResizablePanel>
 
       <div className={styles.rightPanel}>
-        <TestApiNavbar onAddCollection={handleAddCollection} />
+        <TestApiNavbar 
+          onAddCollection={handleAddCollection}
+          activeCollection={activeCollection}
+          onBaseUrlChange={(url) => {
+            if (activeCollectionId) {
+              updateCollection({ id: activeCollectionId, updates: { base_url: url } });
+            }
+          }}
+          onAuthClick={() => {
+            setShowAuthModal(true);
+          }}
+          onAskDocsClick={() => {
+            setIsAssistantOpen(true);
+          }}
+          isAssistantOpen={isAssistantOpen}
+        />
         {isLoading ? (
           <Loading />
         ) : activeRequest ? (
@@ -327,6 +360,7 @@ export default function TestApiPage() {
                 ? "Are you sure you want to delete this collection?"
                 : "Are you sure you want to delete this request?"}
             </p>
+
           ) : (
             <>
               <label
@@ -359,6 +393,25 @@ export default function TestApiPage() {
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
         message="Sign in to create your first API collection."
+      />
+      
+      <TestApiAuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        collections={collections}
+        activeCollectionId={activeCollectionId || undefined}
+        onSave={(collectionId, token, customHeaders) => {
+          updateCollection({
+            id: collectionId,
+            updates: { auth: { type: "bearer", token, customHeaders } },
+          });
+          setShowAuthModal(false);
+        }}
+      />
+
+      <Assistant
+        isOpen={isAssistantOpen}
+        onClose={() => setIsAssistantOpen(false)}
       />
     </div>
   );

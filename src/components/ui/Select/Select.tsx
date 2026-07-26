@@ -13,6 +13,7 @@ interface SelectProps {
     onChange: (value: string) => void;
     placeholder?: string;
     className?: string; // For wrapper positioning
+    disabled?: boolean;
 }
 
 export const Select: React.FC<SelectProps> = ({
@@ -21,6 +22,7 @@ export const Select: React.FC<SelectProps> = ({
     onChange,
     placeholder = "Select...",
     className,
+    disabled = false,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -50,12 +52,12 @@ export const Select: React.FC<SelectProps> = ({
 
     return (
         <div
-            className={`${styles.selectContainer} ${className || ""}`}
+            className={`${styles.selectContainer} ${className || ""} ${disabled ? styles.disabled : ""}`}
             ref={containerRef}
         >
             <div
-                className={`${styles.selectTrigger} ${isOpen ? styles.open : ""}`}
-                onClick={() => setIsOpen(!isOpen)}
+                className={`${styles.selectTrigger} ${isOpen ? styles.open : ""} ${disabled ? styles.disabledTrigger : ""}`}
+                onClick={() => !disabled && setIsOpen(!isOpen)}
             >
                 <span className={styles.value}>
                     {selectedOption ? selectedOption.label : placeholder}

@@ -6,14 +6,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 48px;
-  padding: 0 16px;
+  padding: 0 8px;
   background-color: var(--card-bg, #fff);
   border-bottom: 1px solid var(--border-color, #e5e7eb);
   position: relative;
   z-index: 100;
 }
 
-.left {
+.leftSection {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -21,8 +21,120 @@
   min-width: 0;
 }
 
-.right {
+.workspaceSwitcherTrigger {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  user-select: none;
+  background-color: transparent;
+  flex: 0 0 auto;
+}
+
+.workspaceIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.workspaceTextColumn {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.workspaceTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  line-height: 1.2;
+}
+
+.workspaceSub {
+  font-size: 11px;
+  color: var(--text-secondary, #6b7280);
+  line-height: 1.2;
+  margin-top: 2px;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.baseUrlInputWrapper {
+  display: flex;
+  align-items: center;
+  background: var(--input-bg, #fff);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border-color, #e5e7eb);
+  height: 32px;
+  margin-left: 8px;
+  transition: all 0.2s ease;
+}
+
+.baseUrlInputWrapper:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1);
+}
+
+.baseUrlInputWrapper:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.baseUrlLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  padding: 0 8px;
+  background: var(--hover-bg, #f3f4f6);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid var(--border-color, #e5e7eb);
+  cursor: default;
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.actionGroup {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.separator {
+  width: 1px;
+  height: 24px;
+  background-color: var(--border-color, #e5e7eb);
+  margin: 0 8px;
+}
+
+@media (max-width: 980px) {
+  .mobileAssistantBtn {
+    width: 36px;
+    height: 36px;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hideOnMobile {
+    display: none;
+  }
 }

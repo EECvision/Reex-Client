@@ -25,6 +25,19 @@
     background-color: var(--hover-bg, #f9fafb);
 }
 
+.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.disabledTrigger {
+    cursor: not-allowed;
+}
+
+.disabledTrigger:hover {
+    border-color: var(--border-color, #e5e7eb);
+}
+
 .selectTrigger.open {
     border-color: #3b82f6;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);

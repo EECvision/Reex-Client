@@ -32,7 +32,9 @@ export interface Collection {
     auth?: {
         type: string;
         token: string;
+        customHeaders?: Record<string, string>;
     };
+    base_url?: string;
 }
 
 interface CollectionSidebarProps {
@@ -47,6 +49,7 @@ interface CollectionSidebarProps {
     isOpen?: boolean;
     onToggleSidebar?: () => void;
     hideLogo?: boolean;
+    onAddCollection?: () => void;
 }
 
 const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
@@ -61,6 +64,7 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
     isOpen = false,
     onToggleSidebar,
     hideLogo = false,
+    onAddCollection,
 }) => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingName, setEditingName] = useState('');
@@ -103,7 +107,17 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
             <div className={styles.collectionsList}>
                 {collections.length === 0 && (
                     <div className={styles.emptyState}>
-                        No collections yet. Click + to create one.
+                        <p style={{ marginBottom: '12px' }}>No collections yet.</p>
+                        {onAddCollection && (
+                            <Button 
+                                variant="primary"
+                                size="sm"
+                                onClick={onAddCollection}
+                                leftIcon={<Plus size={14} />}
+                            >
+                                Add Collection
+                            </Button>
+                        )}
                     </div>
                 )}
 
@@ -137,16 +151,7 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
                                 )}
                             </div>
                             <div className={styles.collectionActions}>
-                                <button
-                                    className={styles.actionBtn}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onAddRequest(col.id);
-                                    }}
-                                    title="Add Request"
-                                >
-                                    <FilePlus size={14} />
-                                </button>
+
                                 <button
                                     className={styles.actionBtn}
                                     onClick={(e) => {
@@ -172,18 +177,7 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
 
                         {col.isOpen && (
                             <div className={styles.requestsList}>
-                                {col.requests.length === 0 && (
-                                    <div className={styles.emptyRequestState}>
-                                        <Button 
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => onAddRequest(col.id)}
-                                            leftIcon={<Plus size={14} />}
-                                        >
-                                            Add Request
-                                        </Button>
-                                    </div>
-                                )}
+
                                 {col.requests.map(req => (
                                     <div
                                         key={req.id}
@@ -207,6 +201,16 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
                                         </button>
                                     </div>
                                 ))}
+                                <div className={styles.addRequestWrapper}>
+                                    <Button 
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => onAddRequest(col.id)}
+                                        leftIcon={<Plus size={14} />}
+                                    >
+                                        Add Request
+                                    </Button>
+                                </div>
                             </div>
                         )}
                     </div>

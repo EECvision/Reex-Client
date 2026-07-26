@@ -252,15 +252,17 @@
   gap: 1px;
 }
 
-.emptyRequestState {
-  padding: 4px 8px 4px 32px;
+.addRequestWrapper {
+  padding: 4px 16px 4px 32px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .requestItem {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 16px 6px 32px;
+  padding: 8px 16px 8px 32px;
   /* Indent for items inside collection */
   cursor: pointer;
   border-left: 2px solid transparent;

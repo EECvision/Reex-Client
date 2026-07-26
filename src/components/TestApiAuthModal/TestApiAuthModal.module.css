@@ -1,0 +1,198 @@
+.modalOverride {
+    padding: 0;
+    overflow: hidden;
+}
+
+.title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.content {
+    display: flex;
+    flex: 1;
+    min-height: 400px;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 250px;
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.sidebarTitle {
+    padding: 16px 16px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+}
+
+.collectionList {
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    gap: 2px;
+}
+
+.collectionItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+}
+
+.collectionItem:hover:not(.active) {
+    background: var(--item-hover-bg);
+    color: var(--text-primary);
+}
+
+.collectionItem.active {
+    background: var(--hover-tint);
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.authBadge {
+    background: #10b981;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.mainPanel {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.section {
+    margin-bottom: 32px;
+}
+
+.sectionHeader {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.scrollableHeaders {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding-right: 4px;
+    /* Prevent scrollbar from overlapping inputs */
+}
+
+/* Custom scrollbar for webkit */
+.scrollableHeaders::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scrollableHeaders::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollableHeaders::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.scrollableHeaders::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+.input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+    color: var(--text-primary);
+    background-color: var(--input-bg);
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.input::placeholder {
+    color: var(--text-muted);
+    font-family: inherit;
+}
+
+.input:hover {
+    border-color: var(--border-color);
+    background-color: var(--input-bg);
+}
+
+.input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.headerRow {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.emptyState {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 12px 0;
+    text-align: center;
+}
+
+.footerInner {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    width: 100%;
+}
+
+.clearButton {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.clearButton:hover {
+    background-color: var(--item-hover-bg);
+    color: var(--text-primary);
+}
