@@ -54,7 +54,7 @@ const SandboxModal: React.FC<SandboxModalProps> = ({ isOpen, onClose }) => {
             <button 
               className={styles.closeButton} 
               onClick={() => {
-                window.open('/test-api', '_blank');
+                window.open('/sandbox', '_blank');
                 onClose();
               }} 
               title="Open in new tab"

@@ -18,7 +18,7 @@ export default function UserNavbar({ }: UserNavbarProps) {
     const router = useRouter();
     const { toggleSidebar, hasSidebar } = useUI();
 
-    if (pathname?.startsWith('/test-api')) {
+    if (pathname?.startsWith('/sandbox')) {
         return null;
     }
 
@@ -38,7 +38,7 @@ export default function UserNavbar({ }: UserNavbarProps) {
             </div>
 
             <div className={styles.right}>
-                {!pathname?.startsWith('/test-api') && (
+                {!pathname?.startsWith('/sandbox') && (
                     <>
                         <Button
                             variant="ghost"

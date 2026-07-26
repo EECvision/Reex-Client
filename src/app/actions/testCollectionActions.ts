@@ -139,7 +139,7 @@ export async function createCollection(name: string) {
         }
 
         console.log('[Action] Collection created successfully:', data.id);
-        revalidatePath('/test-api');
+        revalidatePath('/sandbox');
 
         return {
             success: true,
@@ -173,7 +173,7 @@ export async function deleteCollection(id: string) {
         .eq('user_id', session.user.id); // Ensure ownership
 
     if (error) throw error;
-    revalidatePath('/test-api');
+    revalidatePath('/sandbox');
 }
 
 export async function renameCollection(id: string, name: string) {
@@ -190,7 +190,7 @@ export async function renameCollection(id: string, name: string) {
         .eq('user_id', session.user.id); // enforce ownership
 
     if (error) return { error: error.message };
-    revalidatePath('/test-api');
+    revalidatePath('/sandbox');
     return { success: true };
 }
 
@@ -208,7 +208,7 @@ export async function updateCollection(id: string, updates: { base_url?: string;
         .eq('user_id', session.user.id); // enforce ownership
 
     if (error) return { error: error.message };
-    revalidatePath('/test-api');
+    revalidatePath('/sandbox');
     return { success: true };
 }
 
@@ -252,7 +252,7 @@ export async function createRequest(collectionId: string, request: any) {
         .single();
 
     if (error) return { error: error.message };
-    revalidatePath('/test-api');
+    revalidatePath('/sandbox');
 
     return {
         id: data.id,
@@ -300,7 +300,7 @@ export async function updateRequest(id: string, updates: any) {
         .eq('id', id);
 
     if (error) throw error;
-    revalidatePath('/test-api');
+    revalidatePath('/sandbox');
 }
 
 export async function deleteRequest(id: string) {
@@ -319,5 +319,5 @@ export async function deleteRequest(id: string) {
         .eq('id', id);
 
     if (error) throw error;
-    revalidatePath('/test-api');
+    revalidatePath('/sandbox');
 }

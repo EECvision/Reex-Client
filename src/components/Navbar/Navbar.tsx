@@ -237,7 +237,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
               <DropdownMenu.Item
                 className={styles.workspaceOption}
-                onClick={() => onSandboxClick ? onSandboxClick() : router.push("/test-api")}
+                onClick={() => onSandboxClick ? onSandboxClick() : router.push("/sandbox")}
               >
                 <div className={styles.workspaceOptionIcon}>
                   <TestTube size={16} />
