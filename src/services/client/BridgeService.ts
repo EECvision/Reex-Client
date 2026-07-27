@@ -123,16 +123,11 @@ export const BridgeService = {
             try {
                 res = await fetch(url, options);
             } catch (fetchError: any) {
-                // If direct fetch fails due to network/CORS error in Project Mode, try falling back to Proxy
+                // If direct fetch fails due to network/CORS error, try falling back to Proxy
                 // Browsers throw a TypeError for CORS blocks and connection refused
-                if (!isStandaloneMode && fetchError instanceof TypeError) {
+                if (fetchError instanceof TypeError) {
                     const fallbackProxyUrl = isLocal ? 'http://localhost:9876/proxy' : '/api/cors-proxy';
                     
-                    if (isLocal && isNativeFormData) {
-                         // Local reex-proxy on 9876 doesn't support multipart/form-data yet.
-                         // Surface the original fetch error rather than a confusing proxy JSON parsing error.
-                         throw fetchError;
-                    }
 
                     console.warn(`[CORS Fallback] Direct request to ${url} failed. Retrying via proxy (${fallbackProxyUrl})...`);
                     try {

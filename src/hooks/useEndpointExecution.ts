@@ -365,36 +365,15 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             let execRes: any;
             const isLocal = isLocalhostUrl(requestUrl);
 
-            if (isStandaloneMode && isLocal && !isFormDataRequest) {
-                // Route through user's local reex-proxy to reach localhost
-                try {
-                    const proxyRes = await fetch(`${PROXY_URL}/proxy`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            url: requestUrl,
-                            method: method.toUpperCase(),
-                            data: requestData,
-                            headers: Object.keys(headers).length > 0 ? headers : undefined
-                        })
-                    });
-                    execRes = await proxyRes.json();
-                } catch (e: any) {
-                    throw new Error(
-                        'Could not connect to the local proxy. Run `npx reex-proxy` in your terminal first.'
-                    );
-                }
-            } else {
-                // External URL or Bridge Mode — use server-side proxy
-                execRes = await api.executeRequest({
-                    url: requestUrl,
-                    method,
-                    data: requestData,
-                    headers: Object.keys(headers).length > 0 ? headers : undefined,
-                    useProxy: isStandaloneMode && !isLocal, // Only use proxy for standalone mode external requests
-                    isStandaloneMode // Pass flag to executeRequest so it can conditionally perform CORS fallback
-                });
-            }
+            // External URL or Bridge Mode — use server-side proxy
+            execRes = await api.executeRequest({
+                url: requestUrl,
+                method,
+                data: requestData,
+                headers: Object.keys(headers).length > 0 ? headers : undefined,
+                useProxy: isStandaloneMode && !isLocal, // Only use proxy for standalone mode external requests
+                isStandaloneMode // Pass flag to executeRequest so it can conditionally perform CORS fallback
+            });
 
             if (!execRes.success) {
                 let errorMessage = execRes.error || "Execution failed";
