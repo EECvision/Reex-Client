@@ -327,11 +327,9 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
                 // Don't set Content-Type for FormData - browser will set it with boundary
             }
 
-            // FormData cannot be sent through the JSON proxy - show helpful error in standalone mode
+            // We no longer block FormData in standalone mode. 
+            // The Next.js proxy now natively supports forwarding multipart/form-data requests with files.
             const isFormDataRequest = requestData instanceof FormData;
-            if (isStandaloneMode && isFormDataRequest) {
-                throw new Error("File uploads are not supported in standalone mode. Please connect to the bridge to test multipart/form-data requests.");
-            }
 
             // --- Generate Snapshot Curl ---
             let curlCmd = `curl -X '${method.toUpperCase()}' \\\n  '${requestUrl}'`;
@@ -393,7 +391,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
                     method,
                     data: requestData,
                     headers: Object.keys(headers).length > 0 ? headers : undefined,
-                    useProxy: isStandaloneMode && !isLocal && !isFormDataRequest, // Only use proxy for standalone mode external requests
+                    useProxy: isStandaloneMode && !isLocal, // Only use proxy for standalone mode external requests
                     isStandaloneMode // Pass flag to executeRequest so it can conditionally perform CORS fallback
                 });
             }

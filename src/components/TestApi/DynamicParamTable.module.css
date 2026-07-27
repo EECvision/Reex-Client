@@ -101,6 +101,37 @@
     box-shadow: 0 0 0 3px var(--hover-tint);
 }
 
+.paramInput[type="file"] {
+    padding: 0.35rem 0.6rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    line-height: normal;
+}
+
+.paramInput[type="file"]::file-selector-button {
+    background-color: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    padding: 4px 12px;
+    margin-right: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.paramInput[type="file"]::file-selector-button:hover {
+    background-color: var(--hover-bg);
+    border-color: var(--border-color);
+}
+
+.typeSelect {
+    flex: 0 0 auto;
+    width: 95px;
+}
+
 .removeParamBtn {
     background: transparent;
     border: none;

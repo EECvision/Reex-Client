@@ -44,20 +44,56 @@ export const BridgeService = {
     },
 
     // Execution could be viewed as separate, but often runs client-side making request
-    executeRequest: async (config: { url: string; method: string; data?: any; headers?: any; useProxy?: boolean; isStandaloneMode?: boolean }) => {
+    executeRequest: async (config: { url: string; method: string; data?: any; formData?: any[]; headers?: any; useProxy?: boolean; isStandaloneMode?: boolean }) => {
         try {
-            const { url, method, data, headers, useProxy, isStandaloneMode } = config;
+            const { url, method, data, formData, headers, useProxy, isStandaloneMode } = config;
             const isLocal = isLocalhostUrl(url);
+            const isNativeFormData = data instanceof FormData;
+            const hasFiles = formData?.some((p: any) => p.type === 'file' && p.file) || false;
+
+            const getProxyOptions = (): RequestInit => {
+                if (hasFiles || isNativeFormData) {
+                    const proxyData = new FormData();
+                    proxyData.append('url', url);
+                    proxyData.append('method', method);
+                    if (headers) proxyData.append('headers', JSON.stringify(headers));
+
+                    if (isNativeFormData) {
+                        const metadata: any[] = [];
+                        let fileIndex = 0;
+                        (data as FormData).forEach((value, key) => {
+                            if (value instanceof File) {
+                                metadata.push({ key, value: value.name, type: 'file' });
+                                proxyData.append(`file_${fileIndex}`, value);
+                                fileIndex++;
+                            } else {
+                                metadata.push({ key, value: String(value), type: 'text' });
+                            }
+                        });
+                        proxyData.append('formDataStr', JSON.stringify(metadata));
+                    } else if (formData) {
+                         const metadata = formData.map((p: any) => ({ key: p.key, value: p.value, type: p.type }));
+                         proxyData.append('formDataStr', JSON.stringify(metadata));
+                         formData.forEach((p: any, index: number) => {
+                             if (p.type === 'file' && p.file) {
+                                 proxyData.append(`file_${index}`, p.file);
+                             }
+                         });
+                    }
+                    return { method: 'POST', body: proxyData };
+                }
+                return {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, method, data, formData, headers })
+                };
+            };
 
             // Use proxy for standalone mode to bypass CORS
             if (useProxy) {
                 const proxyUrl = isLocal ? 'http://localhost:9876/proxy' : '/api/cors-proxy';
                 try {
-                    const proxyRes = await fetch(proxyUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ url, method, data, headers })
-                    });
+                    const proxyRes = await fetch(proxyUrl, getProxyOptions());
                     return await proxyRes.json();
                 } catch (e: any) {
                     if (isLocal) {
@@ -89,15 +125,18 @@ export const BridgeService = {
             } catch (fetchError: any) {
                 // If direct fetch fails due to network/CORS error in Project Mode, try falling back to Proxy
                 // Browsers throw a TypeError for CORS blocks and connection refused
-                if (!isStandaloneMode && !isFormData && fetchError instanceof TypeError) {
+                if (!isStandaloneMode && fetchError instanceof TypeError) {
                     const fallbackProxyUrl = isLocal ? 'http://localhost:9876/proxy' : '/api/cors-proxy';
+                    
+                    if (isLocal && isNativeFormData) {
+                         // Local reex-proxy on 9876 doesn't support multipart/form-data yet.
+                         // Surface the original fetch error rather than a confusing proxy JSON parsing error.
+                         throw fetchError;
+                    }
+
                     console.warn(`[CORS Fallback] Direct request to ${url} failed. Retrying via proxy (${fallbackProxyUrl})...`);
                     try {
-                        const proxyRes = await fetch(fallbackProxyUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ url, method, data, headers })
-                        });
+                        const proxyRes = await fetch(fallbackProxyUrl, getProxyOptions());
                         return await proxyRes.json();
                     } catch (e: any) {
                         if (isLocal) {

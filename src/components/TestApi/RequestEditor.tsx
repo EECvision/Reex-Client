@@ -73,7 +73,11 @@ export default function RequestEditor({
   const [authToken, setAuthToken] = useState("");
 
   // Body State
+  const [bodyType, setBodyType] = useState<"none" | "json" | "form-data">("json");
   const [body, setBody] = useState("{\n  \n}");
+  const [formData, setFormData] = useState<ParamRow[]>([
+    { id: "1", key: "", value: "", active: true },
+  ]);
 
   // Auth & Config inherited from Collection
   const inheritedCustomHeaders: Record<string, string> =
@@ -112,7 +116,11 @@ export default function RequestEditor({
       );
       setAuthType(data.authType || "none");
       setAuthToken(data.authToken || "");
+      setBodyType(data.bodyType || "json");
       setBody(data.body || "{\n  \n}");
+      setFormData(
+        data.formData || [{ id: "1", key: "", value: "", active: true }],
+      );
       // Clear results temporarily until cache loads
       setResult(null);
       setError(null);
@@ -154,7 +162,9 @@ export default function RequestEditor({
         queryParams,
         headers,
         auth: { type: authType, token: authToken },
+        bodyType,
         body,
+        formData,
       };
       onSave(name, config);
       setIsSaving(false);
@@ -162,7 +172,7 @@ export default function RequestEditor({
 
     setIsSaving(true);
     return () => clearTimeout(timeoutId);
-  }, [name, method, url, queryParams, headers, authType, authToken, body]);
+  }, [name, method, url, queryParams, headers, authType, authToken, bodyType, body, formData]);
 
   // --- Logic ---
 
@@ -213,18 +223,24 @@ export default function RequestEditor({
 
       // 3. Prepare Body
       let requestData = undefined;
+      let activeFormData: ParamRow[] = [];
+
       if (["POST", "PUT", "PATCH"].includes(method)) {
-        try {
-          if (body && body.trim()) {
-            requestData = JSON.parse(body);
+        if (bodyType === "json") {
+          try {
+            if (body && body.trim()) {
+              requestData = JSON.parse(body);
+            }
+          } catch (e) {
+            throw new Error("Invalid JSON body");
           }
-        } catch (e) {
-          throw new Error("Invalid JSON body");
+        } else if (bodyType === "form-data") {
+          activeFormData = formData.filter((p) => p.active && p.key);
         }
       }
 
       // 4. Update Header for JSON if body exists
-      if (requestData && !finalHeaders["Content-Type"]) {
+      if (bodyType === "json" && requestData && !finalHeaders["Content-Type"]) {
         finalHeaders["Content-Type"] = "application/json";
       }
 
@@ -240,9 +256,17 @@ export default function RequestEditor({
         curlCmd += ` \\\n${paramHeaders.join(" \\\n")}`;
       }
 
-      if (requestData) {
+      if (bodyType === "json" && requestData) {
         const jsonData = JSON.stringify(requestData, null, 2);
         curlCmd += ` \\\n-d '${jsonData}'`;
+      } else if (bodyType === "form-data" && activeFormData.length > 0) {
+        activeFormData.forEach(p => {
+          if (p.type === 'file' && p.file) {
+            curlCmd += ` \\\n-F '${p.key}=@${p.file.name}'`;
+          } else {
+            curlCmd += ` \\\n-F '${p.key}=${p.value}'`;
+          }
+        });
       }
       setExecutedCurl(curlCmd);
       // ---------------------
@@ -261,6 +285,7 @@ export default function RequestEditor({
               url: finalUrl,
               method,
               data: requestData,
+              formData: activeFormData.length > 0 ? activeFormData : undefined,
               headers: finalHeaders,
             }),
           });
@@ -276,9 +301,10 @@ export default function RequestEditor({
           url: finalUrl,
           method,
           data: requestData,
+          formData: activeFormData.length > 0 ? activeFormData : undefined,
           headers: finalHeaders,
           useProxy: true,
-        });
+        } as any);
       }
 
       if (!execRes.success) {
@@ -503,21 +529,50 @@ export default function RequestEditor({
             )}
 
             {activeTab === "body" && (
-              <div>
-                <MonacoJsonEditor
-                  value={body}
-                  onChange={setBody}
-                  height="200px"
-                />
-                <p
-                  style={{
-                    fontSize: 12,
-                    color: "var(--text-secondary)",
-                    marginTop: 8,
-                  }}
-                >
-                  JSON Body (Only for POST, PUT, PATCH)
-                </p>
+              <div style={{ marginTop: 12 }}>
+                <div style={{ marginBottom: 12 }}>
+                  <Select
+                    options={[
+                      { value: "none", label: "None" },
+                      { value: "json", label: "JSON" },
+                      { value: "form-data", label: "Multipart Form Data" },
+                    ]}
+                    value={bodyType}
+                    onChange={(v) =>
+                      setBodyType(v as "none" | "json" | "form-data")
+                    }
+                  />
+                </div>
+
+                {bodyType === "json" && (
+                  <>
+                    <MonacoJsonEditor
+                      value={body}
+                      onChange={setBody}
+                      height="200px"
+                    />
+                    <p
+                      style={{
+                        fontSize: 12,
+                        color: "var(--text-secondary)",
+                        marginTop: 8,
+                      }}
+                    >
+                      JSON Body (Only for POST, PUT, PATCH)
+                    </p>
+                  </>
+                )}
+
+                {bodyType === "form-data" && (
+                  <DynamicParamTable
+                    title="Form Data"
+                    params={formData}
+                    onChange={setFormData}
+                    placeholderKey="Key"
+                    placeholderValue="Value"
+                    allowFiles={true}
+                  />
+                )}
               </div>
             )}
           </div>

@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import styles from './DynamicParamTable.module.css';
 import { Plus, Trash2, CheckCircle, Circle, Copy, Check } from 'lucide-react';
+import { Select } from '../ui/Select/Select';
 
 export interface ParamRow {
     id: string;
     key: string;
     value: string;
     active: boolean;
+    type?: 'text' | 'file';
+    file?: File | null;
 }
 
 interface DynamicParamTableProps {
@@ -16,6 +19,7 @@ interface DynamicParamTableProps {
     placeholderKey?: string;
     placeholderValue?: string;
     inheritedParams?: Record<string, string>;
+    allowFiles?: boolean;
 }
 
 const DynamicParamTable: React.FC<DynamicParamTableProps> = ({
@@ -24,7 +28,8 @@ const DynamicParamTable: React.FC<DynamicParamTableProps> = ({
     onChange,
     placeholderKey = "Key",
     placeholderValue = "Value",
-    inheritedParams = {}
+    inheritedParams = {},
+    allowFiles = false
 }) => {
     const [isCopied, setIsCopied] = useState(false);
 
@@ -151,19 +156,46 @@ const DynamicParamTable: React.FC<DynamicParamTableProps> = ({
                             type="text"
                             className={styles.paramInput}
                             placeholder={placeholderKey}
-                            value={param.key}
+                            value={param.key || ''}
                             onChange={(e) => handleUpdate(param.id, 'key', e.target.value)}
                             onPaste={handlePaste}
                         />
 
-                        <input
-                            type="text"
-                            className={styles.paramInput}
-                            placeholder={placeholderValue}
-                            value={param.value}
-                            onChange={(e) => handleUpdate(param.id, 'value', e.target.value)}
-                            onPaste={handlePaste}
-                        />
+                        {allowFiles && (
+                            <Select
+                                className={styles.typeSelect}
+                                value={param.type || 'text'}
+                                onChange={(newType) => {
+                                    onChange(params.map(p => p.id === param.id ? { ...p, type: newType as 'text'|'file', file: null, value: '' } : p));
+                                }}
+                                options={[
+                                    { value: 'text', label: 'Text' },
+                                    { value: 'file', label: 'File' }
+                                ]}
+                            />
+                        )}
+
+                        {param.type === 'file' ? (
+                            <input
+                                key={`file-${param.id}`}
+                                type="file"
+                                className={styles.paramInput}
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0] || null;
+                                    onChange(params.map(p => p.id === param.id ? { ...p, file, value: file ? file.name : '' } : p));
+                                }}
+                            />
+                        ) : (
+                            <input
+                                key={`text-${param.id}`}
+                                type="text"
+                                className={styles.paramInput}
+                                placeholder={placeholderValue}
+                                value={param.value || ''}
+                                onChange={(e) => handleUpdate(param.id, 'value', e.target.value)}
+                                onPaste={handlePaste}
+                            />
+                        )}
 
                         <button
                             className={styles.removeParamBtn}
