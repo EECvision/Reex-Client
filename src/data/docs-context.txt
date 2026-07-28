@@ -1263,194 +1263,55 @@ This file is designed specifically for you to edit. It contains constants and ma
 
     const BASE_URL = "https://example.com/api/v1";
 
-    export const apiConfig = {
-      /**
-       * 1. CORE SETTINGS
-       * Update this to your actual backend URL or rely on environment variables
-       */
-      baseURL: BASE_URL,
+    // @user-config — changes needed: Update routes, keys, and endpoints to match your backend
+import axios from "axios";
 
-      /** Set to true if your API wraps responses in a 'data' object */
-      unwrapResponseData: false,
+const BASE_URL = "https://example.com/api/v1";
 
-      /**
-       * 2. AUTHENTICATION SETTINGS
-       * Customize these to match your backend's authentication endpoints
-       */
-      auth: {
-        loginUrl: "/auth/login",
-        logoutUrl: "/auth/logout",
-        logoutMethod: "POST" as "GET" | "POST",
-        accessTokenKey: "access_token",
-        refreshTokenKey: "refresh_token",
-        refreshEndpoint: `${BASE_URL}/auth/refresh`,
+export const apiConfig = {
+  /**
+   * 1. CORE SETTINGS
+   * Update this to your actual backend URL or rely on environment variables
+   */
+  baseURL: BASE_URL,
 
-        /** Refresh via httpOnly cookie. Edit the method/headers to match your backend. */
-        refreshWithCookie: async () => {
-          return await axios.post(apiConfig.auth.refreshEndpoint, undefined, {
-            withCredentials: true,
-          });
-        },
+  /** Set to true if your API wraps responses in a 'data' object */
+  unwrapResponseData: false,
 
-        /** Refresh via stored token payload. Edit the property name to match your backend. */
-        refreshWithToken: async (storedRefreshToken: string) => {
-          return await axios.post(apiConfig.auth.refreshEndpoint, {
-            refreshToken: storedRefreshToken,
-          });
-        },
-      },
-    };
-    ```
+  /**
+   * 2. AUTHENTICATION SETTINGS
+   * Customize these to match your backend's authentication endpoints
+   */
+  auth: {
+    refreshEndpoint: `${BASE_URL}/auth/refresh`,
+    /** Keys used to store your tokens locally in localStorage */
+    accessTokenKey: "access_token",
+    refreshTokenKey: "refresh_token",
+    /**
+     * Function to extract tokens from your backend response.
+     * Update this if your backend returns tokens in a nested or custom structure.
+     */
+    extractTokens: (responseData: Record<string, unknown>) => ({
+      accessToken: (responseData?.accessToken ?? responseData?.access_token ?? responseData?.token) as string | undefined,
+      refreshToken: (responseData?.refreshToken ?? responseData?.refresh_token ?? responseData?.refresh) as string | undefined,
+    }),
 
-### `definitions/index.ts` - Main Export
+    /** Refresh via httpOnly cookie. Edit the method/headers to match your backend. */
+    refreshWithCookie: async () => {
+      return await axios.post(apiConfig.auth.refreshEndpoint, undefined, {
+        withCredentials: true,
+      });
+    },
 
-This file serves as the main entry point to all of your API definitions. It merges all defined API modules into a single `api` object.
-
-    **`index.ts`**: The main barrel export.
-
-    View code
-
-    ```typescript filename="definitions/index.ts"
-    import { authenticationApi } from "./authentication";
-    import { todosApi } from "./todos";
-
-    export const api = {
-      ...authenticationApi,
-      ...todosApi,
-    };
-    ```
-
-## Project Module > Auth Strategies
----
-# AuthProvider
-
-The `AuthProvider` wraps your application with the authentication context required by the generated hooks. Without it, API generation and query hooks will work as expected, but the authentication hooks (`useLogin`, `useLogout`, `useIsAuthenticated`) will not be available — you will have to manually store and manage user sessions.
-
-Import both providers from `api-services` and wrap your root layout:
-
-```typescript filename="app/layout.tsx"
-
-  return (
-
-                                    {/* Required for query hooks */}
-            {/* Required for auth hooks */}
-            {children}
-
-  );
-}
-```
-
-### Auth Strategies
-
-The `AuthProvider` accepts a `strategy` prop that determines how tokens are stored and sessions are managed. Three strategies are available:
-
----
-
-#### `localstorage`
-
-> Use this strategy if your backend returns an `access_token` and/or `refresh_token` in the login response. Reex API Builder will automatically store these tokens, attach them to outgoing requests, and handle silent refresh when the access token expires.
-
-```typescript filename="app/layout.tsx"
-
-  {children}
-
-```
-
----
-
-#### `cookie`
-
-> Use this strategy if your backend manages authentication through httpOnly cookies. In this setup, the server sets and rotates the refresh token directly via `Set-Cookie` headers — no tokens are returned in the response body. The provider handles silent refresh by sending credentialed requests to your refresh endpoint, and the browser manages the cookie automatically.
-
-```typescript filename="app/layout.tsx"
-
-  {children}
-
-```
-
----
-
-#### `next-auth`
-
-> Use this strategy if you are building a Next.js application and using Auth.js (NextAuth) for authentication and session management. In this setup, NextAuth owns the session lifecycle — Reex API Builder reads the `accessToken` from the active session and attaches it to outgoing requests.
-
-Since Reex API Builder needs access to the `accessToken` from the NextAuth session, you must extend the NextAuth types and configure its callbacks to expose the token:
-
-```typescript
-// Extend NextAuth types to include accessToken
-declare module "next-auth" {
-  interface User {
-    accessToken?: string;
-  }
-}
-
-// In your NextAuth config
-callbacks: {
-  async jwt({ token, user }) {
-    // On initial sign-in, persist the accessToken into the JWT
-    if (user?.accessToken) {
-      token.accessToken = user.accessToken;
-    }
-    return token;
-  },
-  async session({ session, token }) {
-    // Expose accessToken on the client-side session
-    (session as any).accessToken = token.accessToken;
-    return session;
-  },
-},
-```
-
-Then wrap your layout as usual:
-
-```typescript filename="app/layout.tsx"
-
-  {children}
-
-```
-
-> **Note:** When using the `next-auth` strategy, the `useLogin` and `useLogout` hooks are no-ops. Authentication is managed entirely by NextAuth — use `signIn()` and `signOut()` from `next-auth/react` directly.
-
----
-
-### Configuring Your Backend
-
-Regardless of the strategy, open `api-services/user-config/auth.ts` and update the values to match your backend:
-
-```typescript filename="user-config/auth.ts"
-
-  /** Redirect path for unauthenticated users */
-  loginUrl: "/auth/login",
-
-  /** Server-side logout endpoint */
-  logoutUrl: "/auth/logout",
-
-  /** HTTP method for the logout endpoint */
-  logoutMethod: "POST" as "GET" | "POST",
-
-  /** localStorage key for the access token */
-  accessTokenKey: "access_token",
-
-  /** localStorage key for the refresh token */
-  refreshTokenKey: "refresh_token",
-
-  /** Refresh token endpoint */
-  refreshEndpoint: `${baseURL}/auth/refresh`,
-
-  /** Cookie strategy: refresh via httpOnly cookie */
-  refreshWithCookie: async () => {
-    return await axios.post(authConfig.refreshEndpoint, undefined, {
-      withCredentials: true,
-    });
-  },
-
-  /** localstorage strategy: refresh via stored token payload */
-  refreshWithToken: async (storedRefreshToken: string) => {
-    return await axios.post(authConfig.refreshEndpoint, {
-      refreshToken: storedRefreshToken,
-    });
+    /** Refresh via stored token payload. Edit the property name <refreshToken> to match your backend eg. refresh_token*/
+    refreshWithToken: async (storedRefreshToken: string) => {
+      return await axios.post(apiConfig.auth.refreshEndpoint, {
+        refreshToken: storedRefreshToken,
+      });
+    },
   },
 };
+
 ```
 
 ## Project Module > Getting Started
@@ -1590,7 +1451,7 @@ The hooks are available from `api-services/hooks/useAuth`.
 ```typescript filename="app/page.tsx"
 
   const { login, setCustomHeaders } = useLogin();
-  const { logout } = useLogout();
+  const { clearSession } = useClearSession();
   const { isAuthenticated } = useIsAuthenticated();
 
   const { data } = useGetTodosQuery({ enabled: isAuthenticated });
