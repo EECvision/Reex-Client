@@ -474,7 +474,7 @@ export const generateAxiosCallBody = (
     }
 
     // Post/Put/Patch
-    const payloadArg = (hasBody) ? ", payload" : ", {}";
+    const payloadArg = (hasBody) ? ", payload" : "";
     return "    apiClient." + methodLower + "(`" + url + "`" + payloadArg + ")";
 };
 

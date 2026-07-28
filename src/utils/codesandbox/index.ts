@@ -9,7 +9,8 @@ import {
   COOKIE_PROVIDER_CONTENT,
   LOCALSTORAGE_GUARD_CONTENT,
   LOCALSTORAGE_PROVIDER_CONTENT,
-  USE_AUTH_HOOK_CONTENT,
+  USE_AUTH_STATE_HOOK_CONTENT,
+  USE_CLEAR_SESSION_HOOK_CONTENT,
   USE_NOTIFICATION_HOOK_CONTENT,
   BASE_API_CLIENT_CONTENT,
   REACT_QUERY_WRAPPERS_CONTENT,
@@ -145,9 +146,13 @@ export const createSandboxPayload = (
     content: apiConfigContent,
   };
 
-  files["src/api-services/hooks/useAuth.ts"] = {
+  files["src/api-services/hooks/useAuthState.ts"] = {
     isBinary: false,
-    content: USE_AUTH_HOOK_CONTENT,
+    content: USE_AUTH_STATE_HOOK_CONTENT,
+  };
+  files["src/api-services/hooks/useClearSession.ts"] = {
+    isBinary: false,
+    content: USE_CLEAR_SESSION_HOOK_CONTENT,
   };
   files["src/api-services/hooks/useNotification.ts"] = {
     isBinary: false,
@@ -262,7 +267,7 @@ ${commonImports ? `import { ${commonImports} } from ".";` : ""}
 
 // Helper Types
 type ApiData<T extends (...args: any) => any> = Awaited<ReturnType<T>>;
-type ApiVars<T extends (...args: any) => any> = Parameters<T>[0];
+type ApiVars<T extends (...args: any) => any> = Parameters<T> extends [] ? void : Parameters<T>[0];
 
 ${keyFactory}
 
