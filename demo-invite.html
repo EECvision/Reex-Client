@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reex API Builder — Developer Demo Invitation</title>
+  <meta name="description" content="You're invited to the first Reex API Builder developer demo. See how Reex auto-generates fully-typed React Query hooks and TypeScript types from your API definitions." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --brand-blue: #4f8ef7;
+      --brand-purple: #8b5cf6;
+      --brand-cyan: #06d6d6;
+      --brand-pink: #f472b6;
+      --bg-dark: #050810;
+      --bg-card: rgba(255, 255, 255, 0.04);
+      --bg-card-hover: rgba(255, 255, 255, 0.07);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(79, 142, 247, 0.3);
+      --text-primary: #f0f4ff;
+      --text-secondary: #8892a4;
+      --text-muted: #4a5568;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ─── Animated Background ─── */
+    .bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.18;
+      animation: float 18s ease-in-out infinite;
+    }
+
+    .orb-1 {
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, #4f8ef7, #8b5cf6);
+      top: -200px; left: -200px;
+      animation-duration: 22s;
+    }
+
+    .orb-2 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, #06d6d6, #4f8ef7);
+      bottom: -100px; right: -100px;
+      animation-duration: 18s;
+      animation-delay: -8s;
+    }
+
+    .orb-3 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, #8b5cf6, #f472b6);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation-duration: 26s;
+      animation-delay: -14s;
+      opacity: 0.1;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33%       { transform: translate(40px, -60px) scale(1.05); }
+      66%       { transform: translate(-30px, 30px) scale(0.97); }
+    }
+
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image:
+        linear-gradient(rgba(79, 142, 247, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79, 142, 247, 0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+
+    /* ─── Layout ─── */
+    .page-wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 60px 24px 80px;
+    }
+
+    /* ─── Top Badge ─── */
+    .top-badge {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 36px;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      background: rgba(79, 142, 247, 0.1);
+      border: 1px solid rgba(79, 142, 247, 0.3);
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--brand-blue);
+      letter-spacing: 0.04em;
+      animation: fadeDown 0.8s ease both;
+    }
+
+    .badge-dot {
+      width: 7px; height: 7px;
+      background: var(--brand-cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--brand-cyan);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.6; transform: scale(0.85); }
+    }
+
+    /* ─── Hero ─── */
+    .hero {
+      text-align: center;
+      animation: fadeUp 0.9s ease 0.1s both;
+    }
+
+    .hero-label {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    .hero-title {
+      font-size: clamp(42px, 8vw, 72px);
+      font-weight: 700;
+      line-height: 1.08;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #f0f4ff 0%, #a5b8f0 40%, #8b5cf6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-product {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(13px, 2.5vw, 16px);
+      color: var(--brand-cyan);
+      background: rgba(6, 214, 214, 0.08);
+      border: 1px solid rgba(6, 214, 214, 0.2);
+      border-radius: 8px;
+      padding: 6px 16px;
+      display: inline-block;
+      margin-bottom: 28px;
+      letter-spacing: 0.04em;
+    }
+
+    .hero-tagline {
+      font-size: clamp(16px, 2.5vw, 20px);
+      color: var(--text-secondary);
+      max-width: 580px;
+      margin: 0 auto 48px;
+      font-weight: 400;
+    }
+
+    .hero-tagline strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* ─── Divider ─── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-glow), transparent);
+      margin: 48px 0;
+      animation: shimmer 3s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0%, 100% { opacity: 0.5; }
+      50%       { opacity: 1; }
+    }
+
+    /* ─── Event Card ─── */
+    .event-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.9s ease 0.2s both;
+      backdrop-filter: blur(12px);
+    }
+
+    .event-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(79, 142, 247, 0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .event-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .event-icon {
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--brand-blue), var(--brand-purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .event-card-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .event-card-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .event-details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 20px;
+    }
+
+    .event-detail {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .event-detail-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .event-detail-value {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .event-detail-value.highlight {
+      color: var(--brand-cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+    }
+
+    .event-detail-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* ─── Features Grid ─── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      text-align: center;
+      animation: fadeUp 0.9s ease 0.3s both;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      animation: fadeUp 0.9s ease 0.35s both;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+      cursor: default;
+      backdrop-filter: blur(8px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-glow);
+      transform: translateY(-3px);
+    }
+
+    .feature-icon-wrap {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 14px;
+    }
+
+    .fi-blue   { background: rgba(79, 142, 247, 0.15); }
+    .fi-purple { background: rgba(139, 92, 246, 0.15); }
+    .fi-cyan   { background: rgba(6, 214, 214, 0.12); }
+    .fi-pink   { background: rgba(244, 114, 182, 0.12); }
+    .fi-green  { background: rgba(52, 211, 153, 0.12); }
+    .fi-orange { background: rgba(251, 146, 60, 0.12); }
+
+    .feature-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .feature-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    .code-inline {
+      font-size: 11px;
+      background: rgba(255,255,255,0.06);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .feature-tag {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+
+    .tag-blue   { background: rgba(79,142,247,0.12);  color: #7eb3ff; border: 1px solid rgba(79,142,247,0.2); }
+    .tag-purple { background: rgba(139,92,246,0.12);  color: #b48bff; border: 1px solid rgba(139,92,246,0.2); }
+    .tag-cyan   { background: rgba(6,214,214,0.1);    color: #4de8e8; border: 1px solid rgba(6,214,214,0.2); }
+    .tag-pink   { background: rgba(244,114,182,0.1);  color: #f9a8d4; border: 1px solid rgba(244,114,182,0.2); }
+    .tag-green  { background: rgba(52,211,153,0.1);   color: #6ee7b7; border: 1px solid rgba(52,211,153,0.2); }
+    .tag-orange { background: rgba(251,146,60,0.1);   color: #fdba74; border: 1px solid rgba(251,146,60,0.2); }
+
+    /* ─── Agenda ─── */
+    .agenda-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 40px;
+      backdrop-filter: blur(12px);
+      animation: fadeUp 0.9s ease 0.4s both;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .agenda-card::before {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 280px; height: 280px;
+      background: radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .agenda-title {
+      font-size: 19px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .agenda-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .agenda-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .agenda-num {
+      width: 26px; height: 26px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--brand-blue), var(--brand-purple));
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .agenda-text strong {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .agenda-text p {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* ─── Code Block ─── */
+    .code-block {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      padding: 20px 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      text-align: left;
+      overflow-x: auto;
+      backdrop-filter: blur(8px);
+    }
+
+    .code-line { display: block; }
+    .code-comment { color: #4a5568; }
+    .code-keyword { color: #8b5cf6; }
+    .code-fn { color: #4f8ef7; }
+    .code-str { color: #34d399; }
+    .code-type { color: #f472b6; }
+    .code-var { color: #fbbf24; }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 14px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .d-red { background: #ff5f57; }
+    .d-yellow { background: #febc2e; }
+    .d-green { background: #28c840; }
+
+    .code-filename {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    /* ─── CTA ─── */
+    .cta-section {
+      text-align: center;
+      animation: fadeUp 0.9s ease 0.5s both;
+    }
+
+    .cta-eyebrow {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+      font-weight: 500;
+    }
+
+    .cta-heading {
+      font-size: clamp(26px, 5vw, 38px);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+      line-height: 1.2;
+    }
+
+    .cta-sub {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin-bottom: 36px;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .cta-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 14px 32px;
+      background: linear-gradient(135deg, var(--brand-blue), var(--brand-purple));
+      color: #fff;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 4px 24px rgba(79, 142, 247, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+      pointer-events: none;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(79, 142, 247, 0.5);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 14px 28px;
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--border-glow);
+      color: var(--text-primary);
+      background: rgba(79, 142, 247, 0.05);
+      transform: translateY(-2px);
+    }
+
+    /* ─── Footer ─── */
+    .footer {
+      text-align: center;
+      padding-top: 20px;
+      animation: fadeUp 0.9s ease 0.6s both;
+    }
+
+    .footer-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, var(--brand-blue), var(--brand-purple));
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.06em;
+    }
+
+    .footer-text {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .footer-text a {
+      color: var(--brand-blue);
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    .footer-text a:hover { opacity: 0.75; }
+    .footer-divider { margin: 0 8px; opacity: 0.4; }
+
+    /* ─── Animations ─── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 600px) {
+      .page-wrap { padding: 40px 16px 60px; }
+      .event-card { padding: 28px 20px; }
+      .agenda-card { padding: 28px 20px; }
+      .features-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Animated background -->
+  <div class="bg-canvas">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="bg-grid"></div>
+
+  <div class="page-wrap">
+
+    <!-- Top Badge -->
+    <div class="top-badge">
+      <div class="badge-pill">
+        <span class="badge-dot"></span>
+        First Developer Demo &mdash; Seats are Limited
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <header class="hero">
+      <p class="hero-label">You're Invited</p>
+      <h1 class="hero-title">Meet Reex<br/>API Builder</h1>
+      <div class="hero-product">reex-cli &nbsp;·&nbsp; v0.1</div>
+      <p class="hero-tagline">
+        Stop writing boilerplate.
+        <strong>Reex auto-generates fully-typed React Query hooks,
+        TypeScript types, and barrel files</strong> directly from your API definitions &mdash;
+        with a visual UI, real-time sync, and AI assistance built in.
+      </p>
+    </header>
+
+    <!-- Code Teaser -->
+    <div class="code-block" style="margin-bottom: 48px; animation: fadeUp 0.9s ease 0.15s both;">
+      <div class="code-header">
+        <div class="dot d-red"></div>
+        <div class="dot d-yellow"></div>
+        <div class="dot d-green"></div>
+        <span class="code-filename">useUsersQueries.ts &nbsp;&mdash; auto-generated by Reex</span>
+      </div>
+      <code>
+        <span class="code-line"><span class="code-comment">// ✦ This file is generated. Do not edit manually.</span></span>
+        <span class="code-line">&nbsp;</span>
+        <span class="code-line"><span class="code-keyword">export function</span> <span class="code-fn">useGetUsers</span>(<span class="code-var">params</span><span class="code-type">: GetUsersParams</span>) {</span>
+        <span class="code-line">&nbsp;&nbsp;<span class="code-keyword">return</span> <span class="code-fn">useApiQuery</span>({</span>
+        <span class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;queryKey: <span class="code-fn">usersKeys</span>.<span class="code-fn">get_users</span>(<span class="code-var">params</span>),</span>
+        <span class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;queryFn: () <span class="code-keyword">=&gt;</span> api.users.<span class="code-fn">get_users</span>(<span class="code-var">params</span>),</span>
+        <span class="code-line">&nbsp;&nbsp;});</span>
+        <span class="code-line">}</span>
+        <span class="code-line">&nbsp;</span>
+        <span class="code-line"><span class="code-keyword">export function</span> <span class="code-fn">useCreateUser</span>() {</span>
+        <span class="code-line">&nbsp;&nbsp;<span class="code-keyword">return</span> <span class="code-fn">useApiMutation</span>({</span>
+        <span class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;mutationFn: api.users.<span class="code-fn">post_user</span>,</span>
+        <span class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;onSuccess: () <span class="code-keyword">=&gt;</span> queryClient.<span class="code-fn">invalidateQueries</span>(<span class="code-fn">usersKeys</span>.<span class="code-type">all</span>),</span>
+        <span class="code-line">&nbsp;&nbsp;});</span>
+        <span class="code-line">}</span>
+      </code>
+    </div>
+
+    <!-- Event Details -->
+    <div class="event-card">
+      <div class="event-card-header">
+        <div class="event-icon">📅</div>
+        <div>
+          <div class="event-card-title">Demo Session Details</div>
+          <div class="event-card-subtitle">A live walkthrough of Reex API Builder</div>
+        </div>
+      </div>
+      <div class="event-details-grid">
+        <div class="event-detail">
+          <span class="event-detail-label">Date</span>
+          <span class="event-detail-value" id="demo-date">TBD</span>
+          <span class="event-detail-sub">Check your personal invite</span>
+        </div>
+        <div class="event-detail">
+          <span class="event-detail-label">Time</span>
+          <span class="event-detail-value" id="demo-time">TBD</span>
+          <span class="event-detail-sub">Check your personal invite</span>
+        </div>
+        <div class="event-detail">
+          <span class="event-detail-label">Format</span>
+          <span class="event-detail-value">Virtual</span>
+          <span class="event-detail-sub">Live screen share &amp; Q&amp;A</span>
+        </div>
+        <div class="event-detail">
+          <span class="event-detail-label">Meeting Link</span>
+          <span class="event-detail-value highlight" id="demo-link">Coming soon</span>
+          <span class="event-detail-sub">Sent to your email</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Features Section -->
+    <p class="section-label">What Reex brings to your workflow</p>
+    <div class="features-grid">
+
+      <div class="feature-card">
+        <div class="feature-icon-wrap fi-blue">&#x26A1;</div>
+        <div class="feature-title">Instant Hook Generation</div>
+        <div class="feature-desc">
+          Define your API once. Reex generates
+          <span class="code-inline">useQuery</span> and <span class="code-inline">useMutation</span>
+          hooks with full TypeScript types, collision detection, and automatic cache invalidation.
+        </div>
+        <span class="feature-tag tag-blue">React Query · TanStack</span>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-wrap fi-purple">&#x1F5A5;</div>
+        <div class="feature-title">Visual Testing UI</div>
+        <div class="feature-desc">
+          A built-in multi-tab workspace to execute endpoints, inspect responses, generate
+          cURL commands, and configure auth &mdash; like Postman, but native to your project.
+        </div>
+        <span class="feature-tag tag-purple">Multi-tab · Real-time</span>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-wrap fi-cyan">&#x1F504;</div>
+        <div class="feature-title">Real-time File Watcher</div>
+        <div class="feature-desc">
+          Smart debounced watcher detects changes to your definition files and selectively
+          regenerates only the modules that changed &mdash; in milliseconds.
+        </div>
+        <span class="feature-tag tag-cyan">chokidar · SSE</span>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-wrap fi-pink">&#x1F4E6;</div>
+        <div class="feature-title">Import from Anywhere</div>
+        <div class="feature-desc">
+          Import Postman Collections (v2.1) or OpenAPI / Swagger specs (3.0, 3.1, 2.0) in
+          JSON or YAML &mdash; and get a complete TypeScript API layer instantly.
+        </div>
+        <span class="feature-tag tag-pink">Postman · OpenAPI · Swagger</span>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-wrap fi-green">&#x1F916;</div>
+        <div class="feature-title">AI Assistant</div>
+        <div class="feature-desc">
+          Describe an endpoint in plain English and the AI assistant generates the TypeScript
+          definition for you &mdash; no boilerplate, no copy-paste.
+        </div>
+        <span class="feature-tag tag-green">Gemini · AI-powered</span>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-wrap fi-orange">&#x1F6E1;</div>
+        <div class="feature-title">Scaffold-Once Safety</div>
+        <div class="feature-desc">
+          Your customizations are never overwritten. Type overrides, hook modifications,
+          and config files survive every regeneration cycle.
+        </div>
+        <span class="feature-tag tag-orange">Non-destructive · Safe</span>
+      </div>
+
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Agenda -->
+    <div class="agenda-card">
+      <h2 class="agenda-title"><span>&#x1F5FA;</span> What You'll See in the Demo</h2>
+      <ul class="agenda-list">
+        <li class="agenda-item">
+          <div class="agenda-num">1</div>
+          <div class="agenda-text">
+            <strong>The Problem We're Solving</strong>
+            <p>Why writing React Query hooks by hand is painful, error-prone, and doesn't scale with your API surface.</p>
+          </div>
+        </li>
+        <li class="agenda-item">
+          <div class="agenda-num">2</div>
+          <div class="agenda-text">
+            <strong>Live CLI Walkthrough</strong>
+            <p><span class="code-inline" style="color:#7eb3ff;">reex start</span> &mdash; watch Reex spin up, analyze your definitions, and generate typed hooks in seconds.</p>
+          </div>
+        </li>
+        <li class="agenda-item">
+          <div class="agenda-num">3</div>
+          <div class="agenda-text">
+            <strong>Visual UI &amp; Testing</strong>
+            <p>Executing real API endpoints live, inspecting typed responses, and generating cURL commands &mdash; all from the built-in UI.</p>
+          </div>
+        </li>
+        <li class="agenda-item">
+          <div class="agenda-num">4</div>
+          <div class="agenda-text">
+            <strong>Import Flow Demo</strong>
+            <p>Dropping in a Postman Collection and watching Reex generate a complete TypeScript API layer from scratch.</p>
+          </div>
+        </li>
+        <li class="agenda-item">
+          <div class="agenda-num">5</div>
+          <div class="agenda-text">
+            <strong>Q&amp;A &amp; Roadmap Preview</strong>
+            <p>Open floor for questions, feedback, and a sneak peek at what's coming next for Reex.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- CTA -->
+    <section class="cta-section">
+      <p class="cta-eyebrow">Spots are limited &mdash; first come, first served</p>
+      <h2 class="cta-heading">Ready to never write<br/>boilerplate hooks again?</h2>
+      <p class="cta-sub">
+        Join the demo and be among the first developers to see Reex in action.
+        Your feedback will directly shape what gets built next.
+      </p>
+      <div class="cta-buttons">
+        <a href="mailto:YOUR_EMAIL_HERE?subject=Reex%20Demo%20RSVP&body=Hi%2C%20I'd%20like%20to%20attend%20the%20Reex%20API%20Builder%20developer%20demo." class="btn-primary" id="rsvp-btn">
+          &#x2709;&#xFE0F;&nbsp;&nbsp;RSVP Now
+        </a>
+        <a href="#" class="btn-secondary" id="learn-more-btn">
+          &#x1F4D6;&nbsp;&nbsp;Learn More
+        </a>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-brand">
+        <span class="brand-badge">REEX</span>
+        API Builder
+      </div>
+      <p class="footer-text">
+        Built by <a href="#">Your Name</a>
+        <span class="footer-divider">&middot;</span>
+        Questions? <a href="mailto:YOUR_EMAIL_HERE">your@email.com</a>
+        <span class="footer-divider">&middot;</span>
+        v0.1 &mdash; 2026
+      </p>
+    </footer>
+
+  </div>
+
+</body>
+</html>
