@@ -24,7 +24,7 @@ const UNWRAP_DATA_KEY = 'reex_unwrap_data';
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [theme, setTheme] = useState<ThemeType>('light');
     const [viewPreference, setViewPreferenceState] = useState<ViewPreferenceType>('json');
-    const [unwrapResponseData, setUnwrapResponseDataState] = useState<boolean>(true);
+    const [unwrapResponseData, setUnwrapResponseDataState] = useState<boolean>(false);
     const [mounted, setMounted] = useState(false);
 
     // Load settings from localStorage on mount

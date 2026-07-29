@@ -891,14 +891,14 @@ This folder contains `sample` API endpoint definitions.
 
 ### `generated/` - React Query Hooks
 
-Auto-generated hooks based on your `definitions/`. These are regenerated whenever you save changes in definitions.
+Auto-generated hooks based on your `definitions/`.
 
-    **`index.ts`**: React Query wrapper hooks.
+    **`query.config.ts`**: React Query wrapper hooks. Edit this file to configure defaults like `refetchOnWindowFocus`.
 
     View code
 
-    ```typescript filename="generated/index.ts"
-    // Generated file - DO NOT EDIT
+    ```typescript filename="generated/query.config.ts"
+    // @user-config — customize query defaults here
     import {
       type QueryKey,
       type UseMutationOptions,
@@ -956,7 +956,14 @@ Auto-generated hooks based on your `definitions/`. These are regenerated wheneve
         enabled: isEnabled,
       });
     };
+    ```
 
+    **`index.ts`**: Barrel exports.
+
+    View code
+
+    ```typescript filename="generated/index.ts"
+    // Generated file - DO NOT EDIT
     export * from "./useAuthenticationQueries";
     export * from "./useTodosQueries";
     ```
@@ -970,7 +977,7 @@ Auto-generated hooks based on your `definitions/`. These are regenerated wheneve
     // Generated file - DO NOT EDIT
     import { useQueryClient, type UseMutationOptions } from "@tanstack/react-query";
     import { authenticationApi } from "../definitions/authentication";
-    import { useApiMutation } from ".";
+    import { useApiMutation } from "./query.config";
 
     // Helper Types
     type ApiData any> = Awaited<ReturnType>;

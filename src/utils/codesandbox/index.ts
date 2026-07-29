@@ -13,7 +13,7 @@ import {
   USE_CLEAR_SESSION_HOOK_CONTENT,
   USE_NOTIFICATION_HOOK_CONTENT,
   BASE_API_CLIENT_CONTENT,
-  REACT_QUERY_WRAPPERS_CONTENT,
+  QUERY_CONFIG_CONTENT,
 } from "./templates";
 import {
   generateKeyFactory,
@@ -180,7 +180,7 @@ export const createSandboxPayload = (
   }
 
   // 4. Inject Generated Definitions, Types, and Hooks
-  let indexHooksContent = REACT_QUERY_WRAPPERS_CONTENT + "\n";
+  let indexHooksContent = "";
   const barrelExports: string[] = [];
 
   moduleNames.forEach((modName) => {
@@ -198,10 +198,6 @@ export const createSandboxPayload = (
       isBinary: false,
       content: cleanContent,
     };
-
-    barrelExports.push(
-      `import { ${modName}Api } from "./${modName}";`,
-    );
 
     // B. Types and Hooks (Ported logic from node backend)
     const methods = config.manifest?.[modName];
@@ -263,7 +259,7 @@ export const createSandboxPayload = (
 // Generated file - DO NOT EDIT
 ${tanstackImportLine}
 import { ${modName}Api } from "../definitions/${modName}";
-${commonImports ? `import { ${commonImports} } from ".";` : ""}
+${commonImports ? `import { ${commonImports} } from "./query.config";` : ""}
 
 // Helper Types
 type ApiData<T extends (...args: any) => any> = Awaited<ReturnType<T>>;
@@ -284,19 +280,26 @@ ${hooks.join("\n\n")}
       if (hasConflict) {
         indexHooksContent += `export {\n${moduleHooks.map((h) => ((globalHookFrequency.get(h) || 0) > 1 ? `  ${h} as ${h.replace("use", `use${pascalModule}`)},` : `  ${h},`)).join("\n")}\n} from "./use${pascalModule}Queries";\n`;
       } else {
-        indexHooksContent += `export * from "./use${pascalModule}Queries";\n`;
+        barrelExports.push(`export * from "./use${pascalModule}Queries";`);
       }
     }
   });
 
+  indexHooksContent += barrelExports.join("\n");
+  
   files["src/api-services/generated/index.ts"] = {
     isBinary: false,
     content: indexHooksContent,
   };
 
+  files["src/api-services/generated/query.config.ts"] = {
+    isBinary: false,
+    content: QUERY_CONFIG_CONTENT,
+  };
+
   files["src/api-services/definitions/index.ts"] = {
     isBinary: false,
-    content: `${barrelExports.join("\n")}\n\nexport const api = {\n${moduleNames.map((name) => `  ...${name}Api,`).join("\n")}\n};`,
+    content: `${moduleNames.map(modName => `import { ${modName}Api } from "./${modName}";`).join("\n")}\n\nexport const api = {\n${moduleNames.map((name) => `  ...${name}Api,`).join("\n")}\n};`,
   };
 
   // 5. Index and App
