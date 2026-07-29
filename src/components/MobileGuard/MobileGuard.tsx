@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import styles from "./MobileGuard.module.css";
 
-const BREAKPOINT = 1024;
+const BREAKPOINT = 981;
 
 export const MobileGuard = ({ children }: { children: React.ReactNode }) => {
   const [isMobile, setIsMobile] = useState(false);
