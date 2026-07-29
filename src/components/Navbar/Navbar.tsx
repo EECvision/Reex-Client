@@ -90,7 +90,7 @@ const Navbar: React.FC<NavbarProps> = ({
   const router = useRouter();
   const [url, setUrl] = React.useState(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("docs_url") || "";
+      return localStorage.getItem("reex_docs_url") || "";
     }
     return "";
   });
@@ -116,7 +116,7 @@ const Navbar: React.FC<NavbarProps> = ({
   }, [isMobileMenuOpen]);
 
   const syncUrl = () => {
-    const stored = localStorage.getItem("docs_url");
+    const stored = localStorage.getItem("reex_docs_url");
     if (stored !== null && stored !== url) {
       setUrl(stored);
     }

@@ -90,7 +90,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
   // URL Fetch State
   const [fetchUrl, setFetchUrl] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem("docs_url") || "";
+      return localStorage.getItem("reex_docs_url") || "";
     }
     return "";
   });
@@ -101,20 +101,20 @@ const ImportModal: React.FC<ImportModalProps> = ({
   // Persist URL to localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem("docs_url", fetchUrl);
+      localStorage.setItem("reex_docs_url", fetchUrl);
     }
   }, [fetchUrl]);
 
   // Postman Fetch State
   const [postmanUrl, setPostmanUrl] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem("postman_url") || "";
+      return localStorage.getItem("reex_postman_url") || "";
     }
     return "";
   });
   const [postmanApiKey, setPostmanApiKey] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem("postman_api_key") || "";
+      return localStorage.getItem("reex_postman_api_key") || "";
     }
     return "";
   });
@@ -125,13 +125,13 @@ const ImportModal: React.FC<ImportModalProps> = ({
   // Persist Postman state to localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem("postman_url", postmanUrl);
+      localStorage.setItem("reex_postman_url", postmanUrl);
     }
   }, [postmanUrl]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem("postman_api_key", postmanApiKey);
+      localStorage.setItem("reex_postman_api_key", postmanApiKey);
     }
   }, [postmanApiKey]);
 
@@ -229,7 +229,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
   // Effect: Sync from localStorage when modal opens
   useEffect(() => {
     if (isOpen) {
-      const stored = localStorage.getItem("docs_url");
+      const stored = localStorage.getItem("reex_docs_url");
       if (stored && stored !== fetchUrl) {
         setFetchUrl(stored);
       }

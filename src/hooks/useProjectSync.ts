@@ -23,14 +23,14 @@ export const useProjectSync = ({ showToast, refreshProject, onImportTaskComplete
         activeTaskIdRef.current = taskId;
         // Optionally save to local storage for persistence across reloads
         if (typeof window !== "undefined") {
-            localStorage.setItem("active_import_task", taskId);
+            localStorage.setItem("reex_active_import_task", taskId);
         }
     }, []);
 
     const clearActiveTask = useCallback(() => {
         activeTaskIdRef.current = null;
         if (typeof window !== "undefined") {
-            localStorage.removeItem("active_import_task");
+            localStorage.removeItem("reex_active_import_task");
         }
     }, []);
 
@@ -50,7 +50,7 @@ export const useProjectSync = ({ showToast, refreshProject, onImportTaskComplete
     // Restore task state on mount
     useEffect(() => {
         if (typeof window !== "undefined") {
-            const savedTaskId = localStorage.getItem("active_import_task");
+            const savedTaskId = localStorage.getItem("reex_active_import_task");
             if (savedTaskId) {
                 console.log("Restoring active import task:", savedTaskId);
                 activeTaskIdRef.current = savedTaskId;
