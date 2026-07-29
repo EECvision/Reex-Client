@@ -22,6 +22,7 @@ import { SettingsProvider } from "@/providers/SettingsContext";
 import { AuthProvider } from "@/providers/AuthContext";
 import QueryProvider from "@/providers/QueryProvider";
 import { ToastProvider } from "@/providers/ToastContext";
+import { MobileGuard } from "@/components/MobileGuard/MobileGuard";
 
 export default function RootLayout({
   children,
@@ -31,18 +32,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <SettingsProvider>
-          <AuthProvider>
-            <QueryProvider>
-              <ToastProvider>
-                <ProjectProvider>
-                  {children}
-                </ProjectProvider>
-              </ToastProvider>
-            </QueryProvider>
-          </AuthProvider>
-        </SettingsProvider>
+        <MobileGuard>
+          <SettingsProvider>
+            <AuthProvider>
+              <QueryProvider>
+                <ToastProvider>
+                  <ProjectProvider>
+                    {children}
+                  </ProjectProvider>
+                </ToastProvider>
+              </QueryProvider>
+            </AuthProvider>
+          </SettingsProvider>
+        </MobileGuard>
       </body>
-    </html >
+    </html>
   );
 }
