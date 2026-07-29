@@ -9,7 +9,12 @@ export const MobileGuard = ({ children }: { children: React.ReactNode }) => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < BREAKPOINT);
+    const check = () => {
+      const isMobileUA = /Mobi|Android|iPhone|iPad|iPod/i.test(
+        navigator.userAgent
+      );
+      setIsMobile(window.innerWidth < BREAKPOINT && isMobileUA);
+    };
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
