@@ -98,3 +98,33 @@
     opacity: 0.35;
   }
 }
+
+@media (max-width: 480px) {
+  .icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .arrowIcon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .desktopIcon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .message {
+    font-size: 13px;
+  }
+
+  .badge {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+}
