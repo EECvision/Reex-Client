@@ -12,6 +12,8 @@ import {
   USE_AUTH_STATE_HOOK_CONTENT,
   USE_CLEAR_SESSION_HOOK_CONTENT,
   USE_NOTIFICATION_HOOK_CONTENT,
+  USE_TOKENS_HOOK_CONTENT,
+  USE_HEADERS_HOOK_CONTENT,
   BASE_API_CLIENT_CONTENT,
   QUERY_CONFIG_CONTENT,
 } from "./templates";
@@ -158,7 +160,14 @@ export const createSandboxPayload = (
     isBinary: false,
     content: USE_NOTIFICATION_HOOK_CONTENT,
   };
-
+  files["src/api-services/hooks/useTokens.ts"] = {
+    isBinary: false,
+    content: USE_TOKENS_HOOK_CONTENT,
+  };
+  files["src/api-services/hooks/useHeaders.ts"] = {
+    isBinary: false,
+    content: USE_HEADERS_HOOK_CONTENT,
+  };
 
   files["src/api-services/core.ts"] = {
     isBinary: false,
