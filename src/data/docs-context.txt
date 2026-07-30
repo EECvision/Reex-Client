@@ -1091,125 +1091,264 @@ Auto-generated hooks based on your `definitions/`.
 
 ### `hooks/` - Custom Hooks
 
-    **`useAuth.ts`**: Managed login/logout state and events.
+**`useAuthState.ts`**: Utility hook for useAuthState.
+```typescript filename="hooks/useAuthState.ts"
+// @internal — No changes needed
+import { useEffect, useState } from "react";
+import { getActiveProvider } from "../auth-methods/manager";
 
-    View code
+export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
-    ```typescript filename="hooks/useAuth.ts"
-    // @internal — No changes needed
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    import { useCallback, useState, useEffect } from "react";
-    import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-    import { getActiveProvider } from "../auth/manager";
-    import { apiClient } from "../core";
-    import { authConfig } from "../user-config/auth";
+/**
+ * Hook to check the current authentication state.
+ * Returns the status ("loading", "authenticated", or "unauthenticated").
+ *
+ * @example
+ * const { status } = useAuthState();
+ * if (status === "loading") return <Loading />;
+ * if (status === "unauthenticated") return <Login />;
+ */
+export const useAuthState = () => {
+  const provider = getActiveProvider();
 
-    /**
-     * Login hook that stores tokens on success via the active provider.
-     */
-    export const useLogin = (
-      options?: Omit<UseMutationOptions<any, any, any, any>, "mutationFn">,
-    ) => {
-      const mutation = useMutation({
-        mutationFn: async (credentials: any) => {
-          const response = await apiClient.post(authConfig.loginUrl, credentials);
-          const isRawAxiosResponse =
-            response?.config && response?.headers && response?.status;
-          const unwrappedData = isRawAxiosResponse ? response.data : response;
-          return unwrappedData?.data ?? unwrappedData;
+  const [status, setStatus] = useState<AuthStatus>("loading");
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = await provider?.getToken?.();
+        setStatus(token ? "authenticated" : "unauthenticated");
+      } catch {
+        setStatus("unauthenticated");
+      }
+    };
+
+    checkAuth();
+
+    // Listen to dispatch events to update UI instantly without refresh
+    const handleLogin = () => setStatus("authenticated");
+    const handleLogout = () => setStatus("unauthenticated");
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("auth:login", handleLogin);
+      window.addEventListener("auth:logout", handleLogout);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("auth:login", handleLogin);
+        window.removeEventListener("auth:logout", handleLogout);
+      }
+    };
+  }, [provider]);
+
+  return {
+    status,
+    isAuthenticated: status === "authenticated",
+    isLoading: status === "loading",
+  };
+};
+```
+
+**`useClearSession.ts`**: Utility hook for useClearSession.
+```typescript filename="hooks/useClearSession.ts"
+import { useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { getActiveProvider } from "../auth-methods/manager";
+
+/**
+ * Hook to clear the local session after a user logs out.
+ * This removes stored tokens, clears the React Query cache, and dispatches a logout event.
+ *
+ * @example
+ * const { clearSession } = useClearSession();
+ * 
+ * const handleLogout = async () => {
+ *   await logoutApiCall(); // your backend logout logic
+ *   clearSession();
+ * };
+ */
+export const useClearSession = () => {
+  const provider = getActiveProvider();
+  const queryClient = useQueryClient();
+
+  const clearSession = useCallback(async () => {
+    provider?.clearTokens?.();
+
+    // Clear React Query cache
+    await queryClient.cancelQueries();
+    queryClient.clear();
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("auth:logout"));
+    }
+  }, [provider, queryClient]);
+
+  return { clearSession };
+};
+```
+
+**`useNotification.ts`**: Utility hook for useNotification.
+```typescript filename="hooks/useNotification.ts"
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  ReactNode,
+} from "react";
+
+export type NotificationType = "success" | "error" | "warning" | "info";
+
+export interface ApiNotification {
+  id: string;
+  type: NotificationType;
+  message: string;
+  statusCode?: number;
+  timestamp: string;
+}
+
+export interface UseNotificationOptions {
+  maxNotifications?: number;
+  autoDismissMs?: number | false;
+}
+
+export const NOTIFICATION_EVENT = "api:notification" as const;
+
+const DEFAULT_MAX = 10;
+const DEFAULT_AUTO_DISMISS_MS = 5000;
+
+interface NotificationContextValue {
+  notifications: ApiNotification[];
+  dismiss: (id: string) => void;
+  dismissAll: () => void;
+  pushNotification: (
+    notification: Omit<ApiNotification, "id" | "timestamp">,
+  ) => void;
+}
+
+const NotificationContext = createContext<NotificationContextValue | null>(
+  null,
+);
+
+// Standalone push function for non-React contexts (like Axios interceptors)
+export const pushNotification = (
+  notification: Omit<ApiNotification, "id" | "timestamp">,
+) => {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent(NOTIFICATION_EVENT, {
+        detail: {
+          ...notification,
+          id: crypto.randomUUID(),
+          timestamp: new Date().toISOString(),
         },
-        ...options,
-        onSuccess: (data: any, variables, context) => {
-          const accessToken = data?.accessToken ?? data?.access_token ?? data?.token;
-          const refreshToken = data?.refreshToken ?? data?.refresh_token ?? data?.refresh;
+      }),
+    );
+  }
+};
 
-          const provider = getActiveProvider();\n          provider?.setTokens?.({ accessToken, refreshToken });
+export const NotificationProvider = ({
+  children,
+  options,
+}: {
+  children: ReactNode;
+  options?: UseNotificationOptions;
+}) => {
+  const {
+    maxNotifications = DEFAULT_MAX,
+    autoDismissMs = DEFAULT_AUTO_DISMISS_MS,
+  } = options ?? {};
 
-          if (typeof window !== "undefined") {
-            window.dispatchEvent(new Event("auth:login"));
-          }
+  const [notifications, setNotifications] = useState<ApiNotification[]>([]);
+  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+    new Map(),
+  );
 
-          if (options?.onSuccess) {
-            (options.onSuccess as any)(data, variables, context);
-          }
-        },
+  const dismiss = useCallback((id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    const timer = timersRef.current.get(id);
+    if (timer) {
+      clearTimeout(timer);
+      timersRef.current.delete(id);
+    }
+  }, []);
+
+  const dismissAll = useCallback(() => {
+    setNotifications([]);
+    timersRef.current.forEach((timer) => clearTimeout(timer));
+    timersRef.current.clear();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Captured for safe cleanup in React Strict Mode
+    const timers = timersRef.current;
+
+    const handleNotification = (event: Event) => {
+      const notification = (event as CustomEvent<ApiNotification>).detail;
+      if (!notification?.id) return;
+
+      setNotifications((prev) => {
+        if (prev.some((n) => n.id === notification.id)) return prev;
+        const next = [...prev, notification];
+        return next.length > maxNotifications
+          ? next.slice(next.length - maxNotifications)
+          : next;
       });
 
-      return {
-        login: mutation.mutate,
-        loginAsync: mutation.mutateAsync,
-        ...mutation,
-      };
+      if (autoDismissMs !== false) {
+        const timer = setTimeout(() => {
+          setNotifications((prev) =>
+            prev.filter((n) => n.id !== notification.id),
+          );
+          timers.delete(notification.id);
+        }, autoDismissMs);
+
+        timers.set(notification.id, timer);
+      }
     };
 
-    /**
-     * Logout hook that clears tokens and optionally calls the server logout endpoint.
-     */
-    export const useLogout = (options?: { callServer?: boolean }) => {
-      const { callServer = true } = options ?? {};
-      const logout = useCallback(async () => {
-        try {
-          if (callServer) {
-            if (authConfig.logoutMethod === "POST") {
-              await apiClient.post(authConfig.logoutUrl);
-            } else {
-              await apiClient.get(authConfig.logoutUrl);
-            }
-          }
-          const provider = getActiveProvider();\n          provider?.clearTokens?.();
-          if (typeof window !== "undefined") {
-            window.dispatchEvent(new Event("auth:logout"));
-          }
-        } catch (error) {
-          console.error("[useLogout] Logout failed:", error);
-          const provider = getActiveProvider();\n          provider?.clearTokens?.();
-          if (typeof window !== "undefined") {
-            window.dispatchEvent(new Event("auth:logout"));
-          }
-        }
-      }, [callServer]);
+    window.addEventListener(NOTIFICATION_EVENT, handleNotification);
 
-      return { logout };
+    return () => {
+      window.removeEventListener(NOTIFICATION_EVENT, handleNotification);
+      timers.forEach((timer) => clearTimeout(timer));
+      timers.clear();
     };
+  }, [maxNotifications, autoDismissMs]);
 
-    /**
-     * Hook to check if the user is currently authenticated.
-     */
-    export const useIsAuthenticated = () => {
-      const [isAuthenticated, setIsAuthenticated] = useState(false);
-      const [isLoading, setIsLoading] = useState(true);
+  const contextValue: NotificationContextValue = {
+    notifications,
+    dismiss,
+    dismissAll,
+    pushNotification, // Reference the standalone function for ease of use from the hook
+  };
 
-      useEffect(() => {
-        const checkAuth = async () => {
-          try {
-            const provider = getActiveProvider();\n            const token = await provider?.getToken?.();
-            setIsAuthenticated(!!token);
-          } catch {
-            setIsAuthenticated(false);
-          } finally {
-            setIsLoading(false);
-          }
-        };
-        checkAuth();
+  return React.createElement(
+    NotificationContext.Provider,
+    { value: contextValue },
+    children,
+  );
+};
 
-        const handleLogin = () => setIsAuthenticated(true);
-        const handleLogout = () => setIsAuthenticated(false);
-        if (typeof window !== "undefined") {
-          window.addEventListener("auth:login", handleLogin);
-          window.addEventListener("auth:logout", handleLogout);
-        }
-
-        return () => {
-          if (typeof window !== "undefined") {
-            window.removeEventListener("auth:login", handleLogin);
-            window.removeEventListener("auth:logout", handleLogout);
-          }
-        };
-      }, []);
-
-      return { isAuthenticated, isLoading };
-    };
-    ```
+/**
+ * Hook to consume the centralized notification state.
+ * Must be used within a <NotificationProvider>.
+ */
+export const useNotification = () => {
+  const context = useContext(NotificationContext);
+  if (!context) {
+    throw new Error(
+      "useNotification must be used within a NotificationProvider",
+    );
+  }
+  return context;
+};
+```
 
 ### `providers/` - Query Provider
 
@@ -1298,9 +1437,9 @@ export const apiConfig = {
      * Function to extract tokens from your backend response.
      * Update this if your backend returns tokens in a nested or custom structure.
      */
-    extractTokens: (responseData: Record<string, unknown>) => ({
-      accessToken: (responseData?.accessToken ?? responseData?.access_token ?? responseData?.token) as string | undefined,
-      refreshToken: (responseData?.refreshToken ?? responseData?.refresh_token ?? responseData?.refresh) as string | undefined,
+    extractTokens: (response: Record<string, unknown>) => ({
+      accessToken: response?.accessToken as string | undefined,
+      refreshToken: response?.refreshToken as string | undefined,
     }),
 
     /** Refresh via httpOnly cookie. Edit the method/headers to match your backend. */
