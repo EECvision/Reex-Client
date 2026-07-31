@@ -117,20 +117,18 @@ export default function SetupGuideModal() {
               <h4 className={styles.stepTitle}>Wrap App with ReexProvider</h4>
             </div>
             <p className={styles.stepDescription}>
-              Provide the API context by wrapping your application layout component
-              (e.g. <code>AppLayout.tsx</code>). You must set your chosen authentication
-              method using the <code>strategy</code> prop.
-              <br /><br />
-              <strong>Note:</strong> Avoid wrapping your global <code>RootLayout</code>{" "}
-              if you have static marketing pages. The AuthGuard renders a loading screen{" "}
-              while restoring sessions, which can block the initial render of static pages.
+              Provide the API context by wrapping your application layout
+              component (e.g. <code>AppLayout.tsx</code>). You must set your
+              chosen authentication method using the <code>strategy</code> prop.
             </p>
             <div className={styles.monacoWrapper}>
               <div className={styles.monacoHeader}>
                 <span className={styles.monacoFilename}>AppLayout.tsx</span>
                 <button
                   className={styles.copyBtnFloat}
-                  onClick={() => handleCopy(providerCodeString, setCopiedProvider)}
+                  onClick={() =>
+                    handleCopy(providerCodeString, setCopiedProvider)
+                  }
                   title="Copy code"
                 >
                   {copiedProvider ? (
@@ -159,8 +157,9 @@ export default function SetupGuideModal() {
             </div>
             <p className={styles.stepDescription}>
               Open <code>api-services/api.config.ts</code> in your project to
-              update your base URLs, authentication endpoints, and storage keys
-              to match your backend.
+              update your base URL, authentication endpoints, and token
+              extraction logic to match your backend. You can also toggle{" "}
+              <code>unwrapResponseData</code> and API logging here.
             </p>
           </div>
 
@@ -184,21 +183,42 @@ export default function SetupGuideModal() {
               <h4 className={styles.stepTitle}>Consume APIs in your Code</h4>
             </div>
             <div className={styles.stepDescription}>
-              Use your generated query mutations and the core Reex hooks to manage
-              authentication, headers, tokens, and notifications.
+              Use your generated query mutations and the core Reex hooks to
+              manage authentication, headers, tokens, and notifications.
               <ul className={styles.hooksList}>
-                <li><code>useTokens</code>: Manage auth tokens. Automatically persists based on config.</li>
-                <li><code>useHeaders</code>: Set custom headers (like version or client ID) for all requests.</li>
-                <li><code>useNotification</code>: Fire toast notifications across the app.</li>
-                <li><code>useAuthState</code> & <code>useClearSession</code>: Check if user is logged in or securely clear their session.</li>
+                <li>
+                  <code>useTokens</code>: Manage auth tokens. Automatically
+                  persists based on config.
+                </li>
+                <li>
+                  <code>useHeaders</code>: Set custom headers (like version or
+                  client ID) for all requests.
+                </li>
+                <li>
+                  <code>useNotification</code>: Fire toast notifications across
+                  the app.
+                </li>
+                <li>
+                  <code>useAuthState</code> & <code>useClearSession</code>:
+                  Check if user is logged in or securely clear their session.
+                </li>
               </ul>
             </div>
-            
-            <div className={styles.collapseToggle} onClick={() => setShowConsumeCode(!showConsumeCode)}>
+
+            <div
+              className={styles.collapseToggle}
+              onClick={() => setShowConsumeCode(!showConsumeCode)}
+            >
               <span className={styles.collapseText}>
-                {showConsumeCode ? "Hide comprehensive code example" : "View comprehensive code example"}
+                {showConsumeCode
+                  ? "Hide comprehensive code example"
+                  : "View comprehensive code example"}
               </span>
-              {showConsumeCode ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              {showConsumeCode ? (
+                <ChevronUp size={16} />
+              ) : (
+                <ChevronDown size={16} />
+              )}
             </div>
 
             {showConsumeCode && (
@@ -207,7 +227,9 @@ export default function SetupGuideModal() {
                   <span className={styles.monacoFilename}>App.tsx</span>
                   <button
                     className={styles.copyBtnFloat}
-                    onClick={() => handleCopy(consumeCodeString, setCopiedConsume)}
+                    onClick={() =>
+                      handleCopy(consumeCodeString, setCopiedConsume)
+                    }
                     title="Copy code"
                   >
                     {copiedConsume ? (
@@ -232,9 +254,17 @@ export default function SetupGuideModal() {
 
         <div className={styles.footer}>
           <span className={styles.helpText}>Need help getting started?</span>
-          <span style={{ fontSize: 12, color: "var(--text-secondary, #64748b)" }}>
+          <span
+            style={{ fontSize: 12, color: "var(--text-secondary, #64748b)" }}
+          >
             Ask Docs AI or{" "}
-            <a href="https://reex-api-builder.toolshq.app/support" target="_blank" rel="noopener noreferrer" className={styles.helpLink} style={{ fontSize: 12 }}>
+            <a
+              href="https://reex-api-builder.toolshq.app/support"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.helpLink}
+              style={{ fontSize: 12 }}
+            >
               Contact support.
             </a>
           </span>
