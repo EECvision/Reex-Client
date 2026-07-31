@@ -13,6 +13,7 @@ import WorkspaceView from "@/components/WorkspaceView/WorkspaceView";
 import BackgroundNotification from "@/components/BackgroundNotification/BackgroundNotification";
 import { AuthModal } from "@/components/AuthModal/AuthModal";
 import SandboxModal from "@/components/SandboxModal/SandboxModal";
+import PnaErrorModal from "@/components/PnaErrorModal/PnaErrorModal";
 import { Assistant } from "@/components/Assistant/Assistant";
 import styles from "./page.module.css";
 import { EndpointInfo } from "@/types";
@@ -38,6 +39,7 @@ const App = () => {
     manifest: apiManifest,
     loading: projectLoading,
     error: projectError,
+    connectionError,
     refreshProject,
     projectPath,
     config: projectConfig,
@@ -517,6 +519,7 @@ const App = () => {
       className={`${styles.container} ${isSidebarOpen ? styles.sidebarOpen : ""}`}
       onContextMenu={(e) => e.preventDefault()}
     >
+      {connectionError === 'pna_blocked' && <PnaErrorModal />}
       <BackgroundNotification
         tasks={backgroundTasks}
         onDismiss={dismissBackgroundTask}

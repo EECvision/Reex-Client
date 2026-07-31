@@ -29,6 +29,7 @@ interface ProjectContextType {
   apiServicesDir: string;
   loading: boolean;
   error: string | null;
+  connectionError: 'pna_blocked' | null;
   isStandaloneMode: boolean;
   manualStandaloneMode: boolean;
   toggleStandaloneMode: () => Promise<void>;
@@ -62,6 +63,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [apiServicesDir, setApiServicesDir] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [connectionError, setConnectionError] = useState<'pna_blocked' | null>(null);
   const [isStandaloneMode, setIsStandaloneMode] = useState(false);
   const [manualStandaloneMode, setManualStandaloneMode] = useState(false);
 
@@ -143,7 +145,17 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       }
       
       const realTargetDir = bridgeStatus?.targetDir;
+      const isNetworkError = bridgeStatus?.isNetworkError;
       const bridgeApiServicesDir = bridgeStatus?.apiServicesDir || "";
+
+      // Check if user explicitly requested a local port but network failed (PNA block)
+      if (isNetworkError && typeof window !== 'undefined' && new URLSearchParams(window.location.search).has("localPort")) {
+        setConnectionError('pna_blocked');
+        setLoading(false);
+        return;
+      } else {
+        setConnectionError(null);
+      }
 
       if (!realTargetDir) {
         // No bridge connected - enter standalone mode
@@ -266,6 +278,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       apiServicesDir,
       loading: isStandaloneMode ? isLoadingStandalone : loading, // Use standalone loading when appropriate
       error,
+      connectionError,
       isStandaloneMode,
       manualStandaloneMode,
       toggleStandaloneMode,

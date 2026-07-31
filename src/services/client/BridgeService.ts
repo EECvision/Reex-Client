@@ -39,7 +39,10 @@ export const BridgeService = {
             return await res.json();
         } catch (e) {
             console.warn("Bridge not reachable", e);
-            return { targetDir: null };
+            if (e instanceof TypeError) {
+                return { targetDir: null, isNetworkError: true };
+            }
+            return { targetDir: null, isNetworkError: false };
         }
     },
 
