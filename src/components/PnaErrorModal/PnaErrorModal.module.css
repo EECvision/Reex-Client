@@ -74,6 +74,12 @@
   margin-bottom: 0;
 }
 
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .reloadButton {
   display: block;
   width: 100%;
@@ -90,4 +96,22 @@
 
 .reloadButton:hover {
   background: var(--primary-hover, #0b5ed7);
+}
+
+.secondaryButton {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.secondaryButton:hover {
+  background: var(--hover-bg);
 }

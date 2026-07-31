@@ -4,7 +4,7 @@ import React from "react";
 import styles from "./PnaErrorModal.module.css";
 import Image from "next/image";
 
-export default function PnaErrorModal() {
+export default function PnaErrorModal({ onSwitchToPreview }: { onSwitchToPreview: () => void }) {
   const handleReload = () => {
     window.location.reload();
   };
@@ -28,9 +28,14 @@ export default function PnaErrorModal() {
             </ol>
           </div>
           
-          <button className={styles.reloadButton} onClick={handleReload}>
-            I have fixed it, reload page
-          </button>
+          <div className={styles.actions}>
+            <button className={styles.reloadButton} onClick={handleReload}>
+              I have fixed it, reload page
+            </button>
+            <button className={styles.secondaryButton} onClick={onSwitchToPreview}>
+              Switch to Preview Mode
+            </button>
+          </div>
         </div>
       </div>
     </div>

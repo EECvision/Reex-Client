@@ -101,7 +101,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     removeCollectionFromHistory
   } = useRecentCollections();
 
-
   // Computed merged manifest
   const mergedManifest = React.useMemo(() => {
     if (!isStandaloneMode) return manifest;

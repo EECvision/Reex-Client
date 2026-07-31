@@ -81,20 +81,9 @@ export const useProjectSync = ({ showToast, refreshProject, onImportTaskComplete
                 const res = await fetch(`${bridgeUrl}/api/health`);
                 if (!res.ok) throw new Error("Bridge down");
             } catch (fetchErr) {
-                // If it's a Network/CORS/PNA error and we're actively requesting a localPort, let ProjectContext handle it. Don't reload.
-                const isNetworkError = fetchErr instanceof TypeError;
-                const hasLocalPort = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("localPort");
-                
-                if (isNetworkError && hasLocalPort) {
-                    console.warn("[SSE] Network blocked (PNA or CORS). Letting ProjectContext show the warning modal.");
-                    eventSource.close();
-                    return;
-                }
-
-                console.warn("[SSE] Connection lost and bridge is unreachable. Reloading to switch to preview mode...");
-                if (typeof window !== "undefined") {
-                    window.location.reload();
-                }
+                console.warn("[SSE] Connection lost. Triggering ProjectContext refresh...");
+                eventSource.close();
+                refreshProject();
             }
         };
 

@@ -519,7 +519,18 @@ const App = () => {
       className={`${styles.container} ${isSidebarOpen ? styles.sidebarOpen : ""}`}
       onContextMenu={(e) => e.preventDefault()}
     >
-      {connectionError === 'pna_blocked' && <PnaErrorModal />}
+      {connectionError === 'pna_blocked' && (
+        <PnaErrorModal 
+          onSwitchToPreview={() => {
+            if (typeof window !== 'undefined') {
+              const url = new URL(window.location.href);
+              url.searchParams.delete('localPort');
+              window.history.replaceState({}, '', url.toString());
+            }
+            refreshProject(false);
+          }} 
+        />
+      )}
       <BackgroundNotification
         tasks={backgroundTasks}
         onDismiss={dismissBackgroundTask}
