@@ -56,10 +56,11 @@ Here is the folder structure that gets generated:
 src/
 └── api-services/
     ├── auth-methods/     # Modular authentication strategies & guards
+    ├── custom/           # Custom reusable UI components
     ├── definitions/      # Your API implementations (editable)
     ├── generated/        # Auto-generated React Query hooks
     ├── hooks/            # Authentication & custom hooks
-    ├── providers/        # Application providers (e.g. QueryProvider)
+    ├── providers/        # Application providers (e.g. ReexProvider)
     ├── types/            # TypeScript interfaces
     ├── api.config.ts     # Centralized user configuration
     ├── core.ts           # Core HTTP configuration and proxy
@@ -395,7 +396,6 @@ Provides modular authentication strategies and guards.
         return () => window.removeEventListener("auth:logout", handleLogout);
     }, []);
 
-    // Replace with your app's loading component
     if (!isReady) {
         return Loading...;
     }
@@ -555,7 +555,6 @@ interface CookieTokenProvider extends TokenProvider {
         return () => window.removeEventListener("auth:logout", handleLogout);
     }, []);
 
-    // Replace with your app's loading component
     if (!isReady) return Loading...;
 
     return <>{children}</>;

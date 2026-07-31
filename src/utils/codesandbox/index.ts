@@ -1,6 +1,10 @@
 import * as LZString from "lz-string";
 import {
-  QUERY_PROVIDER_CONTENT,
+  REEX_PROVIDER_CONTENT,
+  CUSTOM_INDEX_CONTENT,
+  LOADING_SCREEN_CONTENT,
+  APP_NOTIFICATION_CONTENT,
+  APP_NOTIFICATION_CSS_CONTENT,
   AUTH_PROVIDER_CONTENT,
   AUTH_MANAGER_CONTENT,
   AUTH_TYPES_CONTENT,
@@ -104,9 +108,26 @@ export const createSandboxPayload = (
   };
 
   // 3. Setup Boilerplate Files (Providers, Auth, Client, Constants, Hooks)
-  files["src/api-services/providers/QueryProvider.tsx"] = {
+  files["src/api-services/providers/ReexProvider.tsx"] = {
     isBinary: false,
-    content: QUERY_PROVIDER_CONTENT,
+    content: REEX_PROVIDER_CONTENT,
+  };
+  
+  files["src/api-services/custom/index.ts"] = {
+    isBinary: false,
+    content: CUSTOM_INDEX_CONTENT,
+  };
+  files["src/api-services/custom/loadingScreen/LoadingScreen.tsx"] = {
+    isBinary: false,
+    content: LOADING_SCREEN_CONTENT,
+  };
+  files["src/api-services/custom/notification/AppNotification/AppNotification.tsx"] = {
+    isBinary: false,
+    content: APP_NOTIFICATION_CONTENT,
+  };
+  files["src/api-services/custom/notification/AppNotification/AppNotification.module.css"] = {
+    isBinary: false,
+    content: APP_NOTIFICATION_CSS_CONTENT,
   };
   files["src/api-services/auth-methods/AuthProvider.tsx"] = {
     isBinary: false,
@@ -322,8 +343,7 @@ ${hooks.join("\n\n")}
     isBinary: false,
     content: `import React from "react";
 import { createRoot } from "react-dom/client";
-import { QueryProvider } from "./api-services/providers/QueryProvider";
-import { AuthProvider } from "./api-services/auth-methods/AuthProvider";
+import { ReexProvider } from "./api-services/providers/ReexProvider";
 import App from "./App";
 
 const rootElement = document.getElementById("root");
@@ -331,11 +351,9 @@ const root = createRoot(rootElement!);
 
 root.render(
   <React.StrictMode>
-    <QueryProvider>
-      <AuthProvider strategy="localstorage">
-         <App />
-      </AuthProvider>
-    </QueryProvider>
+    <ReexProvider strategy="localstorage">
+      <App />
+    </ReexProvider>
   </React.StrictMode>
 );`,
   };
