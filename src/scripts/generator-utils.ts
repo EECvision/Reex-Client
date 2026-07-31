@@ -431,8 +431,8 @@ export const generateFunctionSignature = (config: SignatureConfig): string => {
         });
     }
 
-    // Response Type is the same as function name unless it's a DELETE
-    const returnType = functionName.startsWith('delete_') ? 'any' : functionName;
+    // Response Type is the same as function name
+    const returnType = functionName;
 
     if (params.length === 0) {
         return "  " + functionName + ": (): Promise<" + returnType + "> =>";
@@ -484,9 +484,8 @@ export const generateModuleTemplate = (
     functionDefinitions: string[],
     functionNames: string[]
 ): string => {
-    // Response Type Imports (Exclude DELETE)
+    // Response Type Imports
     const responseTypeImports = functionNames
-        .filter(name => !name.startsWith('delete_'))
         .map(funcName => 'import { type ' + funcName + ' } from "../types/' + moduleName + '/' + funcName + '";')
         .join("\n");
 
