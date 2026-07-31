@@ -42,6 +42,7 @@ export interface SignatureConfig {
     pathParams: string[];
     hasPayload: boolean;
     hasQueryParams: boolean;
+    isMultipart?: boolean;
 }
 
 export interface StandardFunctionDefinition {
@@ -417,7 +418,7 @@ export const generateFunctionSignature = (config: SignatureConfig): string => {
     if (hasPayload) {
         params.push({
             name: "payload",
-            type: `${entityName}Payload`, // Caller must ensure this type exists or is 'any' logic
+            type: config.isMultipart ? `${entityName}Payload | FormData` : `${entityName}Payload`, // Caller must ensure this type exists or is 'any' logic
             isInterface: true,
         });
     }
@@ -698,7 +699,8 @@ export const generateStandardModuleContent = (
                 entityName: entityRequestName,
                 pathParams: func.pathParams,
                 hasPayload: hasPayloadType,
-                hasQueryParams: !!(func.queryParams && func.queryParams.length > 0)
+                hasQueryParams: !!(func.queryParams && func.queryParams.length > 0),
+                isMultipart: func.contentType === 'multipart/form-data'
             });
 
             // 4. Generate Function Body
