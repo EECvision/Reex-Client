@@ -3,6 +3,7 @@ import React from "react";
 import dynamic from "next/dynamic";
 import styles from "./ResultSection.module.css";
 import { Button } from "../ui/Button/Button";
+import { Checkbox } from "../ui/Checkbox/Checkbox";
 import { useSettings, ViewPreferenceType } from "@/providers/SettingsContext";
 import { FileJson, FileText, Code, Info } from "lucide-react";
 
@@ -97,18 +98,23 @@ const ResultSection: React.FC<ResultSectionProps> = ({
 
         {/* Format Toggle */}
         <div className={styles.formatToggle}>
-          <label
-            className={styles.unwrapLabel}
-            data-tooltip="Extracts the nested data object from the API response. Click Send Request again to apply."
-          >
-            <input
-              type="checkbox"
+          <label className={styles.unwrapLabel}>
+            <Checkbox
               checked={unwrapResponseData}
               onChange={(e) => setUnwrapResponseData(e.target.checked)}
               className={styles.unwrapCheckbox}
             />
             Unwrap Data
-            <Info size={14} style={{ color: "#94a3b8", marginLeft: "2px" }} />
+            <span
+              className={styles.infoTooltipWrapper}
+              data-tooltip={
+                !isStandaloneMode
+                  ? "Controls how nested API response data is unwrapped. Must match the unwrapResponseData value in api.config.ts. Resend request to apply."
+                  : "Controls how nested API response data is unwrapped. Resend request to apply."
+              }
+            >
+              <Info size={14} style={{ color: "#f59e0b", marginLeft: "2px" }} />
+            </span>
           </label>
           {VIEW_OPTIONS.map((option) => (
             <button

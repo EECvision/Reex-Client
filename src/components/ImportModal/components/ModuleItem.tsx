@@ -4,6 +4,7 @@ import styles from "./ModuleItem.module.css";
 import { DiffResult } from "../importTypes";
 import StatusBadge from "./StatusBadge";
 import { Button } from "../../ui/Button/Button";
+import { Checkbox } from "../../ui/Checkbox/Checkbox";
 import { FunctionDiff } from "../DiffModal";
 
 interface ModuleItemProps {
@@ -63,9 +64,8 @@ const ModuleItem: React.FC<ModuleItemProps> = ({
             className={styles.moduleCheckboxWrapper}
             onClick={(e) => e.stopPropagation()}
           >
-            <input
+            <Checkbox
               ref={checkboxRef}
-              type="checkbox"
               checked={isSelected && !isMarkedForRemoval}
               onChange={() => onToggleModule(diff)}
               disabled={diff.status === "disabled" || isMarkedForRemoval}
@@ -123,8 +123,7 @@ const ModuleItem: React.FC<ModuleItemProps> = ({
                 key={f.name}
                 className={`${styles.functionItem} ${isFuncRemoved ? styles.removedFunction : ""}`}
               >
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={selectedFunctions.has(f.name) && !isFuncRemoved}
                   onChange={() => onToggleFunction(diff.module, f.name)}
                   disabled={f.status === "disabled" || isFuncRemoved}
@@ -147,8 +146,7 @@ const ModuleItem: React.FC<ModuleItemProps> = ({
                       className={styles.overwriteLabel}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={forceOverwriteFunctions.has(
                           `${diff.module}.${f.name}`,
                         )}

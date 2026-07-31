@@ -62,16 +62,16 @@ export const useProjectSync = ({ showToast, refreshProject, onImportTaskComplete
     useEffect(() => {
         // Don't connect to SSE in standalone mode
         if (isStandaloneMode) {
-            console.log("[SSE] Skipping connection - standalone mode");
+            console.log("[Bridge] Skipping connection - standalone mode");
             return;
         }
 
         const bridgeUrl = api.getBridgeUrl();
-        console.log("[SSE] Connecting to:", bridgeUrl);
+        console.log("[Bridge] Connecting to:", bridgeUrl);
         const eventSource = api.getEventSource(bridgeUrl);
 
         eventSource.onopen = () => {
-            console.log("[SSE] Connected to Bridge");
+            console.log("[Bridge] Connected to Bridge");
             showToast("success", "Connected to local bridge");
         };
 
@@ -81,7 +81,7 @@ export const useProjectSync = ({ showToast, refreshProject, onImportTaskComplete
                 const res = await fetch(`${bridgeUrl}/api/health`);
                 if (!res.ok) throw new Error("Bridge down");
             } catch (fetchErr) {
-                console.warn("[SSE] Connection lost. Triggering ProjectContext refresh...");
+                console.warn("[Bridge] Connection lost. Triggering ProjectContext refresh...");
                 eventSource.close();
                 refreshProject();
             }

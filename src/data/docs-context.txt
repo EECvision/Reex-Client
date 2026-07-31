@@ -413,7 +413,7 @@ let isCookieAuthActive: boolean = false;
 let customHeaders: Record<string, string> | null = null;
 
 // Used to track auth status across tabs, without exposing the actual token to JS
-const COOKIE_FLAG_KEY = "is_cookie_auth_active";
+const COOKIE_FLAG_KEY = "reex_is_cookie_auth_active";
 
 interface CookieTokenProvider extends TokenProvider {
   setTokens: (params: { accessToken?: string; refreshToken?: string }) => void;
@@ -442,7 +442,7 @@ interface CookieTokenProvider extends TokenProvider {
   getCustomHeaders: () => {
     if (customHeaders) return customHeaders;
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("custom_headers");
+      const stored = localStorage.getItem("reex_custom_headers");
       if (stored) {
         try {
           return JSON.parse(stored);
@@ -457,7 +457,7 @@ interface CookieTokenProvider extends TokenProvider {
   setCustomHeaders: (headers) => {
     customHeaders = headers;
     if (typeof window !== "undefined") {
-      localStorage.setItem("custom_headers", JSON.stringify(headers));
+      localStorage.setItem("reex_custom_headers", JSON.stringify(headers));
     }
   },
 
@@ -475,7 +475,7 @@ interface CookieTokenProvider extends TokenProvider {
     customHeaders = null;
     if (typeof window !== "undefined") {
       localStorage.removeItem(COOKIE_FLAG_KEY);
-      localStorage.removeItem("custom_headers");
+      localStorage.removeItem("reex_custom_headers");
     }
   },
 
@@ -593,7 +593,7 @@ interface LocalStorageTokenProvider extends TokenProvider {
   getCustomHeaders: () => {
     if (customHeaders) return customHeaders;
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("custom_headers");
+      const stored = localStorage.getItem("reex_custom_headers");
       if (stored) {
         try {
           return JSON.parse(stored);
@@ -608,7 +608,7 @@ interface LocalStorageTokenProvider extends TokenProvider {
   setCustomHeaders: (headers) => {
     customHeaders = headers;
     if (typeof window !== "undefined") {
-      localStorage.setItem("custom_headers", JSON.stringify(headers));
+      localStorage.setItem("reex_custom_headers", JSON.stringify(headers));
     }
   },
 
@@ -633,7 +633,7 @@ interface LocalStorageTokenProvider extends TokenProvider {
     if (typeof window !== "undefined") {
       localStorage.removeItem(authConfig.refreshTokenKey);
       localStorage.removeItem(authConfig.accessTokenKey);
-      localStorage.removeItem("custom_headers");
+      localStorage.removeItem("reex_custom_headers");
     }
   },
 
@@ -717,7 +717,7 @@ interface NextAuthTokenProvider extends TokenProvider {
   getCustomHeaders: () => {
     if (customHeaders) return customHeaders;
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("custom_headers");
+      const stored = localStorage.getItem("reex_custom_headers");
       if (stored) {
         try {
           return JSON.parse(stored);
@@ -732,7 +732,7 @@ interface NextAuthTokenProvider extends TokenProvider {
   setCustomHeaders: (headers) => {
     customHeaders = headers;
     if (typeof window !== "undefined") {
-      localStorage.setItem("custom_headers", JSON.stringify(headers));
+      localStorage.setItem("reex_custom_headers", JSON.stringify(headers));
     }
   },
 
@@ -750,7 +750,7 @@ interface NextAuthTokenProvider extends TokenProvider {
   clearTokens: () => {
     customHeaders = null;
     if (typeof window !== "undefined") {
-      localStorage.removeItem("custom_headers");
+      localStorage.removeItem("reex_custom_headers");
     }
     if (process.env.NODE_ENV === "development") {
       console.warn(
@@ -1190,14 +1190,14 @@ export const useClearSession = () => {
 
 **`useNotification.ts`**: Utility hook for useNotification.
 ```typescript filename="hooks/useNotification.ts"
+import type { ReactNode } from "react";
 import React, {
   createContext,
-  useContext,
-  useState,
   useCallback,
-  useRef,
+  useContext,
   useEffect,
-  ReactNode,
+  useRef,
+  useState,
 } from "react";
 
 export type NotificationType = "success" | "error" | "warning" | "info";
