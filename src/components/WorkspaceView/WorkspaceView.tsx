@@ -15,6 +15,7 @@ import { HistoryItem } from "@/providers/ProjectContext";
 import LocalhostBanner from "../LocalhostBanner/LocalhostBanner";
 import { isLocalhostUrl } from "@/lib/urlUtils";
 import WelcomeSlideIn from "../WelcomeSlideIn/WelcomeSlideIn";
+import SetupGuideModal from "../SetupGuideModal/SetupGuideModal";
 import TabBar from "../TabBar/TabBar";
 
 // Dynamic import for Monaco
@@ -232,7 +233,8 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
         />
       )}
 
-      {hasCollection && <WelcomeSlideIn />}
+      {hasCollection && isStandaloneMode && <WelcomeSlideIn />}
+      {!isStandaloneMode && <SetupGuideModal />}
 
       <LoginModal
         isOpen={showLogin}
