@@ -204,7 +204,7 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
               onInputModeChange={onInputModeChange}
             />
 
-            {isStandaloneMode && generatedCurl && (
+            {generatedCurl && (
               <div>
                 <CurlSection curlCommand={generatedCurl} />
               </div>
