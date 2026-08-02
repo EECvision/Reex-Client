@@ -19,6 +19,7 @@ import {
   AuthStrategy,
   consumeCodeMap,
   providerCodeMap,
+  nextAuthRouteCodeString,
 } from "./consumeCodeString";
 
 const STRATEGIES: { id: AuthStrategy; label: string }[] = [
@@ -41,6 +42,7 @@ export default function SetupGuideModal() {
   // Copy states
   const [copiedProvider, setCopiedProvider] = useState(false);
   const [copiedConsume, setCopiedConsume] = useState(false);
+  const [copiedNextAuthRoute, setCopiedNextAuthRoute] = useState(false);
 
   // Collapse state
   const [showConsumeCode, setShowConsumeCode] = useState(false);
@@ -273,39 +275,103 @@ export default function SetupGuideModal() {
                   ))}
                 </div>
 
-                <div className={styles.monacoWrapper}>
-                  <div className={styles.monacoHeader}>
-                    <span className={styles.monacoFilename}>
-                      {selectedStrategy === "next-auth"
-                        ? "App.tsx (NextAuth)"
-                        : "App.tsx"}
-                    </span>
-                    <button
-                      className={styles.copyBtnFloat}
-                      onClick={() =>
-                        handleCopy(
-                          consumeCodeMap[selectedStrategy],
-                          setCopiedConsume,
-                        )
-                      }
-                      title="Copy code"
-                    >
-                      {copiedConsume ? (
-                        <CheckCircle2 size={14} color="#10b981" />
-                      ) : (
-                        <Copy size={14} />
-                      )}
-                    </button>
+                {selectedStrategy === "next-auth" ? (
+                  <>
+                    <div className={styles.monacoWrapper}>
+                      <div className={styles.monacoHeader}>
+                        <span className={styles.monacoFilename}>
+                          App.tsx (Client Consumption)
+                        </span>
+                        <button
+                          className={styles.copyBtnFloat}
+                          onClick={() =>
+                            handleCopy(
+                              consumeCodeMap[selectedStrategy],
+                              setCopiedConsume,
+                            )
+                          }
+                          title="Copy client code"
+                        >
+                          {copiedConsume ? (
+                            <CheckCircle2 size={14} color="#10b981" />
+                          ) : (
+                            <Copy size={14} />
+                          )}
+                        </button>
+                      </div>
+                      <div className={styles.monacoContainer}>
+                        <MonacoJsonEditor
+                          value={consumeCodeMap[selectedStrategy]}
+                          language="typescript"
+                          height={280}
+                          readOnly
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.monacoWrapper}>
+                      <div className={styles.monacoHeader}>
+                        <span className={styles.monacoFilename}>
+                          app/api/auth/[...nextauth]/route.ts (Server Route)
+                        </span>
+                        <button
+                          className={styles.copyBtnFloat}
+                          onClick={() =>
+                            handleCopy(
+                              nextAuthRouteCodeString,
+                              setCopiedNextAuthRoute,
+                            )
+                          }
+                          title="Copy route handler code"
+                        >
+                          {copiedNextAuthRoute ? (
+                            <CheckCircle2 size={14} color="#10b981" />
+                          ) : (
+                            <Copy size={14} />
+                          )}
+                        </button>
+                      </div>
+                      <div className={styles.monacoContainer}>
+                        <MonacoJsonEditor
+                          value={nextAuthRouteCodeString}
+                          language="typescript"
+                          height={280}
+                          readOnly
+                        />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className={styles.monacoWrapper}>
+                    <div className={styles.monacoHeader}>
+                      <span className={styles.monacoFilename}>App.tsx</span>
+                      <button
+                        className={styles.copyBtnFloat}
+                        onClick={() =>
+                          handleCopy(
+                            consumeCodeMap[selectedStrategy],
+                            setCopiedConsume,
+                          )
+                        }
+                        title="Copy code"
+                      >
+                        {copiedConsume ? (
+                          <CheckCircle2 size={14} color="#10b981" />
+                        ) : (
+                          <Copy size={14} />
+                        )}
+                      </button>
+                    </div>
+                    <div className={styles.monacoContainer}>
+                      <MonacoJsonEditor
+                        value={consumeCodeMap[selectedStrategy]}
+                        language="typescript"
+                        height={350}
+                        readOnly
+                      />
+                    </div>
                   </div>
-                  <div className={styles.monacoContainer}>
-                    <MonacoJsonEditor
-                      value={consumeCodeMap[selectedStrategy]}
-                      language="typescript"
-                      height={350}
-                      readOnly
-                    />
-                  </div>
-                </div>
+                )}
               </>
             )}
           </div>
