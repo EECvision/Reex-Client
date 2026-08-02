@@ -183,15 +183,27 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
             if (func && (func.getKind() === SyntaxKind.ArrowFunction || func.getKind() === SyntaxKind.FunctionExpression)) {
                 const callSig = func as any;
 
-                // Helper: resolve sub-properties from a ts-morph Type (handles arrays-of-objects and plain objects)
+                // Helper: resolve sub-properties from a ts-morph Type (handles arrays-of-objects, plain objects, and union types like Payload | FormData)
                 const resolveSubProperties = (type: any, depth = 0): any[] | undefined => {
                     if (depth > 2) return undefined; // Limit nesting depth
                     try {
                         let targetType = type;
 
+                        // If union type, filter out FormData / any / null / undefined to find object/interface type
+                        if (targetType.isUnion?.()) {
+                            const unionTypes = targetType.getUnionTypes?.() || [];
+                            const nonFormData = unionTypes.find((t: any) => {
+                                const text = t.getText?.();
+                                return text !== "FormData" && text !== "any" && !t.isNull?.() && !t.isUndefined?.();
+                            });
+                            if (nonFormData) {
+                                targetType = nonFormData;
+                            }
+                        }
+
                         // If array type, get the element type
-                        if (type.isArray?.()) {
-                            targetType = type.getArrayElementType?.();
+                        if (targetType.isArray?.()) {
+                            targetType = targetType.getArrayElementType?.();
                             if (!targetType) return undefined;
                         }
 
@@ -250,10 +262,24 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
                     if (typeNode) {
                         arg.type = typeNode.getText();
 
-                        if (typeNode.getKind() === SyntaxKind.TypeLiteral) {
+                        let effectiveTypeNode = typeNode;
+
+                        // If union type (e.g. BooksControllerCreatePayload | FormData), find the non-FormData type node
+                        if (typeNode.getKind() === SyntaxKind.UnionType) {
+                            const unionTypes = (typeNode as any).getTypeNodes?.() || [];
+                            const targetMember = unionTypes.find((m: any) => {
+                                const text = m.getText?.();
+                                return text !== "FormData" && text !== "any";
+                            });
+                            if (targetMember) {
+                                effectiveTypeNode = targetMember;
+                            }
+                        }
+
+                        if (effectiveTypeNode.getKind() === SyntaxKind.TypeLiteral) {
                             arg.isObject = true;
                             arg.properties = [];
-                            typeNode.getMembers().forEach((m: any) => {
+                            effectiveTypeNode.getMembers().forEach((m: any) => {
                                 if (m.getKind() === SyntaxKind.PropertySignature) {
                                     const propName = m.getName();
                                     const propTypeNode = m.getTypeNode?.();
@@ -280,14 +306,14 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
                                     arg.properties.push(prop);
                                 }
                             });
-                        } else if (typeNode.getKind() === SyntaxKind.TypeReference) {
+                        } else if (effectiveTypeNode.getKind() === SyntaxKind.TypeReference) {
                             // Attempt to resolve the type using the TypeChecker
                             try {
-                                const type = typeNode.getType();
-                                if (type.isObject()) {
+                                const type = effectiveTypeNode.getType();
+                                const resolved = resolveSubProperties(type, 0);
+                                if (resolved && resolved.length > 0) {
                                     arg.isObject = true;
-                                    const resolved = resolveSubProperties(type, 0);
-                                    if (resolved) arg.properties = resolved;
+                                    arg.properties = resolved;
                                 }
                             } catch (e) {
                                 // Fallback or ignore if type resolution fails
