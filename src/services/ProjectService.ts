@@ -20,7 +20,8 @@ import {
     PropertyAccessExpression,
     TypeLiteralNode,
     InterfaceDeclaration,
-    TypeAliasDeclaration
+    TypeAliasDeclaration,
+    UnionTypeNode
 } from "ts-morph";
 
 interface EndpointMetadata {
@@ -272,13 +273,33 @@ class ProjectService {
         const expanded = this.expandTypeRecursively(typeNode, sourceFile);
 
         if (expanded) return { name, isOptional, ...expanded };
-        return { name, isOptional };
+        return { name, isOptional, type: param.getType().getText() };
     }
 
     expandTypeRecursively(typeNode: TypeNode | undefined, sourceFile: SourceFile): any {
         if (!typeNode) return null;
 
         const kind = typeNode.getKind();
+
+        if (kind === SyntaxKind.UnionType) {
+            const unionNode = typeNode as UnionTypeNode;
+            const memberNodes = unionNode.getTypeNodes();
+            // Prioritize object / interface types over FormData or primitives
+            for (const member of memberNodes) {
+                const memberText = member.getText();
+                if (memberText === "FormData" || memberText === "any") continue;
+                const expanded = this.expandTypeRecursively(member, sourceFile);
+                if (expanded && expanded.isObject) {
+                    return expanded;
+                }
+            }
+            // Fallback to any member that expands
+            for (const member of memberNodes) {
+                const expanded = this.expandTypeRecursively(member, sourceFile);
+                if (expanded) return expanded;
+            }
+            return { type: typeNode.getText() };
+        }
 
         if (kind === SyntaxKind.TypeLiteral) {
             const props = (typeNode as TypeLiteralNode).getProperties();

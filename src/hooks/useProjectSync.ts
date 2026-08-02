@@ -18,6 +18,7 @@ export const useProjectSync = ({ showToast, refreshProject, onImportTaskComplete
 
     // We need to track the active task ID to know when a specific initiated action (like delete or import) is done
     const activeTaskIdRef = useRef<string | null>(null);
+    const projectUpdatedTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const registerTaskId = useCallback((taskId: string) => {
         activeTaskIdRef.current = taskId;
@@ -168,8 +169,13 @@ export const useProjectSync = ({ showToast, refreshProject, onImportTaskComplete
                     }
                 } else if (data.type === "project:updated") {
                     setBackgroundTasks(prev => prev.filter(t => t.title !== "Syncing changes..."));
-                    showToast("success", "Project synced");
-                    refreshProject(true);
+                    if (projectUpdatedTimerRef.current) {
+                        clearTimeout(projectUpdatedTimerRef.current);
+                    }
+                    projectUpdatedTimerRef.current = setTimeout(() => {
+                        showToast("success", "Project synced");
+                        refreshProject(true);
+                    }, 500);
                 } else if (data.type === "project:sync-start") {
                     const serverId = data.id ? parseInt(data.id) : Date.now();
                     setBackgroundTasks((prev) => {
@@ -183,6 +189,9 @@ export const useProjectSync = ({ showToast, refreshProject, onImportTaskComplete
         };
 
         return () => {
+            if (projectUpdatedTimerRef.current) {
+                clearTimeout(projectUpdatedTimerRef.current);
+            }
             eventSource.close();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps

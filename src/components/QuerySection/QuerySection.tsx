@@ -177,13 +177,15 @@ const QuerySection: React.FC<QuerySectionProps> = ({
     onParamChange(paramName, undefined);
   };
 
-  const isFileParam = (name: string) => {
-    const fileNames = ['file', 'image', 'photo', 'attachment', 'document', 'upload', 'avatar', 'icon'];
-    return isMultipart && fileNames.some(fn => name.toLowerCase().includes(fn));
+  const isFileParam = (name: string, type?: string) => {
+    const fileNames = ['file', 'image', 'photo', 'attachment', 'document', 'upload', 'avatar', 'icon', 'picture', 'pdf', 'media', 'asset'];
+    const isNameMatch = fileNames.some(fn => name.toLowerCase().includes(fn));
+    const isTypeMatch = type ? (type.toLowerCase().includes('file') || type.toLowerCase().includes('blob')) : false;
+    return isMultipart && (isNameMatch || isTypeMatch);
   };
 
   const renderInput = (name: string, isOptional: boolean, type?: string) => {
-    if (isFileParam(name)) {
+    if (isFileParam(name, type)) {
       const selectedFile = selectedFiles[name];
 
       if (selectedFile) {
