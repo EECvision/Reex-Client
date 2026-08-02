@@ -242,6 +242,46 @@
     background: #333;
 }
 
+.strategyTabs {
+    display: flex;
+    gap: 6px;
+    background: var(--hover-bg, #f1f5f9);
+    padding: 4px;
+    border-radius: 8px;
+    margin-left: 28px;
+    margin-top: 10px;
+    margin-bottom: 6px;
+    width: fit-content;
+}
+
+.strategyTab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    border-radius: 6px 6px 2px 2px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary, #64748b);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.strategyTab:hover {
+    color: var(--text-primary, #0f172a);
+}
+
+.strategyTabActive {
+    background: var(--card-bg, #ffffff);
+    color: var(--primary-color, #3b82f6);
+    font-weight: 600;
+    border-bottom: 2px solid var(--primary-color, #3b82f6);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
 .footer {
     padding: 16px 24px;
     border-top: 1px solid var(--border-color, #e2e8f0);

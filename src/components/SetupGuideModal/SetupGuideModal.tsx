@@ -15,7 +15,17 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import MonacoJsonEditor from "../MonacoJsonEditor/MonacoJsonEditor";
-import { consumeCodeString, providerCodeString } from "./consumeCodeString";
+import {
+  AuthStrategy,
+  consumeCodeMap,
+  providerCodeMap,
+} from "./consumeCodeString";
+
+const STRATEGIES: { id: AuthStrategy; label: string }[] = [
+  { id: "localstorage", label: "localStorage (Token)" },
+  { id: "cookie", label: "Cookie Based" },
+  { id: "next-auth", label: "NextAuth.js" },
+];
 
 export default function SetupGuideModal() {
   const { showToast } = useToast();
@@ -23,6 +33,10 @@ export default function SetupGuideModal() {
   const [mountState, setMountState] = useState<
     "loading" | "show-modal" | "show-fab"
   >("loading");
+
+  // Strategy state
+  const [selectedStrategy, setSelectedStrategy] =
+    useState<AuthStrategy>("localstorage");
 
   // Copy states
   const [copiedProvider, setCopiedProvider] = useState(false);
@@ -105,8 +119,9 @@ export default function SetupGuideModal() {
               <h4 className={styles.stepTitle}>Import your API Collection</h4>
             </div>
             <p className={styles.stepDescription}>
-              If you haven't already, import your OpenAPI specification or
-              Postman collection using the button in the navbar.
+              Import your OpenAPI specification or Postman collection using the button in the navbar.
+              Once imported, Reex automatically scaffolds and syncs ready-to-use API clients, TypeScript types,
+              and React Query hooks directly into your project's <code>api-services/</code> directory.
             </p>
           </div>
 
@@ -118,16 +133,36 @@ export default function SetupGuideModal() {
             </div>
             <p className={styles.stepDescription}>
               Provide the API context by wrapping your application layout
-              component (e.g. <code>AppLayout.tsx</code>). You must set your
-              chosen authentication method using the <code>strategy</code> prop.
+              component (e.g. <code>AppLayout.tsx</code>). Select your
+              authentication strategy below:
             </p>
+            <div className={styles.strategyTabs}>
+              {STRATEGIES.map((s) => (
+                <button
+                  key={s.id}
+                  className={`${styles.strategyTab} ${
+                    selectedStrategy === s.id ? styles.strategyTabActive : ""
+                  }`}
+                  onClick={() => setSelectedStrategy(s.id)}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
             <div className={styles.monacoWrapper}>
               <div className={styles.monacoHeader}>
-                <span className={styles.monacoFilename}>AppLayout.tsx</span>
+                <span className={styles.monacoFilename}>
+                  {selectedStrategy === "next-auth"
+                    ? "RootLayout.tsx"
+                    : "AppLayout.tsx"}
+                </span>
                 <button
                   className={styles.copyBtnFloat}
                   onClick={() =>
-                    handleCopy(providerCodeString, setCopiedProvider)
+                    handleCopy(
+                      providerCodeMap[selectedStrategy],
+                      setCopiedProvider,
+                    )
                   }
                   title="Copy code"
                 >
@@ -140,7 +175,7 @@ export default function SetupGuideModal() {
               </div>
               <div className={styles.monacoContainer}>
                 <MonacoJsonEditor
-                  value={providerCodeString}
+                  value={providerCodeMap[selectedStrategy]}
                   language="typescript"
                   height={150}
                   readOnly
@@ -187,8 +222,7 @@ export default function SetupGuideModal() {
               manage authentication, headers, tokens, and notifications.
               <ul className={styles.hooksList}>
                 <li>
-                  <code>useTokens</code>: Manage auth tokens. Automatically
-                  persists based on config.
+                  <code>useTokens</code>: Manage auth tokens (localStorage strategy).
                 </li>
                 <li>
                   <code>useHeaders</code>: Set custom headers (like version or
@@ -200,7 +234,7 @@ export default function SetupGuideModal() {
                 </li>
                 <li>
                   <code>useAuthState</code> & <code>useClearSession</code>:
-                  Check if user is logged in or securely clear their session.
+                  Check auth state or securely clear session, cancel pending requests & purge query cache.
                 </li>
               </ul>
             </div>
@@ -222,32 +256,57 @@ export default function SetupGuideModal() {
             </div>
 
             {showConsumeCode && (
-              <div className={styles.monacoWrapper}>
-                <div className={styles.monacoHeader}>
-                  <span className={styles.monacoFilename}>App.tsx</span>
-                  <button
-                    className={styles.copyBtnFloat}
-                    onClick={() =>
-                      handleCopy(consumeCodeString, setCopiedConsume)
-                    }
-                    title="Copy code"
-                  >
-                    {copiedConsume ? (
-                      <CheckCircle2 size={14} color="#10b981" />
-                    ) : (
-                      <Copy size={14} />
-                    )}
-                  </button>
+              <>
+                <div className={styles.strategyTabs}>
+                  {STRATEGIES.map((s) => (
+                    <button
+                      key={s.id}
+                      className={`${styles.strategyTab} ${
+                        selectedStrategy === s.id
+                          ? styles.strategyTabActive
+                          : ""
+                      }`}
+                      onClick={() => setSelectedStrategy(s.id)}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
                 </div>
-                <div className={styles.monacoContainer}>
-                  <MonacoJsonEditor
-                    value={consumeCodeString}
-                    language="typescript"
-                    height={350}
-                    readOnly
-                  />
+
+                <div className={styles.monacoWrapper}>
+                  <div className={styles.monacoHeader}>
+                    <span className={styles.monacoFilename}>
+                      {selectedStrategy === "next-auth"
+                        ? "App.tsx (NextAuth)"
+                        : "App.tsx"}
+                    </span>
+                    <button
+                      className={styles.copyBtnFloat}
+                      onClick={() =>
+                        handleCopy(
+                          consumeCodeMap[selectedStrategy],
+                          setCopiedConsume,
+                        )
+                      }
+                      title="Copy code"
+                    >
+                      {copiedConsume ? (
+                        <CheckCircle2 size={14} color="#10b981" />
+                      ) : (
+                        <Copy size={14} />
+                      )}
+                    </button>
+                  </div>
+                  <div className={styles.monacoContainer}>
+                    <MonacoJsonEditor
+                      value={consumeCodeMap[selectedStrategy]}
+                      language="typescript"
+                      height={350}
+                      readOnly
+                    />
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>
