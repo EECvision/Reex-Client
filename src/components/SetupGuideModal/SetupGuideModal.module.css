@@ -49,6 +49,27 @@
     margin: 0;
 }
 
+.npmBadge {
+    font-size: 11px;
+    color: var(--primary-color, #3b82f6);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: var(--hover-tint, rgba(59, 130, 246, 0.1));
+    border: 1px solid var(--border-color, rgba(59, 130, 246, 0.2));
+    margin-left: 4px;
+    transition: all 0.2s ease;
+}
+
+.npmBadge:hover {
+    color: var(--primary-hover, #2563eb);
+    border-color: var(--primary-color, #3b82f6);
+}
+
 .closeBtn {
     background: none;
     border: none;
@@ -72,7 +93,7 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 28px;
 }
 
 .step {
@@ -308,10 +329,10 @@
 
 .fab {
     position: fixed;
-    bottom: 32px;
-    right: 32px;
-    width: 44px;
-    height: 44px;
+    bottom: 13px;
+    right: 16px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     background: var(--card-bg, #ffffff);
     color: var(--primary-color, #3b82f6);

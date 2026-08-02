@@ -12,6 +12,7 @@ import {
   BookOpen,
   ChevronDown,
   ChevronUp,
+  ExternalLink,
 } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import MonacoJsonEditor from "../MonacoJsonEditor/MonacoJsonEditor";
@@ -91,7 +92,7 @@ export default function SetupGuideModal() {
         onClick={handleRestore}
         title="Setup Instructions"
       >
-        <Terminal size={20} />
+        <Terminal size={16} />
       </button>,
       document.body,
     );
@@ -103,6 +104,16 @@ export default function SetupGuideModal() {
         <div className={styles.header}>
           <div className={styles.titleWrapper}>
             <h3 className={styles.title}>Project Setup Guide</h3>
+            <a
+              href="https://www.npmjs.com/package/reex-cli"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.npmBadge}
+              title="View reex-cli on npm"
+            >
+              <span>npm</span>
+              <ExternalLink size={10} />
+            </a>
           </div>
           <button
             className={styles.closeBtn}

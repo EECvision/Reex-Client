@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import styles from './WelcomeSlideIn.module.css';
-import { Terminal, Globe, Copy, CheckCircle2, X, Sparkles } from 'lucide-react';
+import { Terminal, Globe, Copy, CheckCircle2, X, Sparkles, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 
 export default function WelcomeSlideIn() {
@@ -48,7 +48,7 @@ export default function WelcomeSlideIn() {
     if (mountState === 'show-fab') {
         return (
             <button className={styles.fab} onClick={handleRestore} title="Setup Instructions">
-                <Terminal size={20} />
+                <Terminal size={16} />
             </button>
         );
     }
@@ -69,8 +69,10 @@ export default function WelcomeSlideIn() {
                 {/* Localhost section */}
                 <div className={styles.section}>
                     <div className={styles.sectionHeader}>
-                        <Globe size={14} color="#64748b" />
-                        <h4 className={styles.sectionTitle}>Test Localhost APIs</h4>
+                        <div className={styles.sectionHeaderLeft}>
+                            <Globe size={14} color="#64748b" />
+                            <h4 className={styles.sectionTitle}>Test Localhost APIs</h4>
+                        </div>
                     </div>
                     <div className={styles.codeBox}>
                         <div className={styles.codeLines}>
@@ -89,38 +91,54 @@ export default function WelcomeSlideIn() {
                 {/* CLI section */}
                 <div className={styles.section}>
                     <div className={styles.sectionHeader}>
-                        <Terminal size={14} color="#64748b" />
-                        <h4 className={styles.sectionTitle}>Generate APIs to Local Project</h4>
-                    </div>
-                    <div style={{ marginBottom: "6px", fontSize: "12px", color: "var(--text-secondary)", fontWeight: 600 }}>
-                        1. Install globally:
-                    </div>
-                    <div className={styles.codeBox} style={{ marginBottom: "12px" }}>
-                        <div className={styles.codeLines}>
-                            <span className={styles.codeLine}>npm install -g reex-cli</span>
+                        <div className={styles.sectionHeaderLeft}>
+                            <Terminal size={14} color="#64748b" />
+                            <h4 className={styles.sectionTitle}>Generate APIs to Local Project</h4>
                         </div>
-                        <button 
-                            className={styles.copyBtn} 
-                            onClick={() => handleCopy('npm install -g reex-cli', setCopiedCliInstall)}
-                            title="Copy command"
+                        <a
+                            href="https://www.npmjs.com/package/reex-cli"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.npmLink}
+                            title="View reex-cli on npm"
                         >
-                            {copiedCliInstall ? <CheckCircle2 size={14} color="#10b981" /> : <Copy size={14} />}
-                        </button>
+                            <span>npm</span>
+                            <ExternalLink size={11} />
+                        </a>
                     </div>
-                    <div style={{ marginBottom: "6px", fontSize: "12px", color: "var(--text-secondary)", fontWeight: 600 }}>
-                        2. Run in project directory:
-                    </div>
-                    <div className={styles.codeBox}>
-                        <div className={styles.codeLines}>
-                            <span className={styles.codeLine}>reex start</span>
+                    <div className={styles.stepGroup}>
+                        <div className={styles.stepLabel}>
+                            1. Install globally:
                         </div>
-                        <button 
-                            className={styles.copyBtn} 
-                            onClick={() => handleCopy('reex start', setCopiedCliStart)}
-                            title="Copy command"
-                        >
-                            {copiedCliStart ? <CheckCircle2 size={14} color="#10b981" /> : <Copy size={14} />}
-                        </button>
+                        <div className={styles.codeBox}>
+                            <div className={styles.codeLines}>
+                                <span className={styles.codeLine}>npm install -g reex-cli</span>
+                            </div>
+                            <button 
+                                className={styles.copyBtn} 
+                                onClick={() => handleCopy('npm install -g reex-cli', setCopiedCliInstall)}
+                                title="Copy command"
+                            >
+                                {copiedCliInstall ? <CheckCircle2 size={14} color="#10b981" /> : <Copy size={14} />}
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <div className={styles.stepLabel}>
+                            2. Run in project directory:
+                        </div>
+                        <div className={styles.codeBox}>
+                            <div className={styles.codeLines}>
+                                <span className={styles.codeLine}>reex start</span>
+                            </div>
+                            <button 
+                                className={styles.copyBtn} 
+                                onClick={() => handleCopy('reex start', setCopiedCliStart)}
+                                title="Copy command"
+                            >
+                                {copiedCliStart ? <CheckCircle2 size={14} color="#10b981" /> : <Copy size={14} />}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

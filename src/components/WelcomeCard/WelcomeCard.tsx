@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './WelcomeCard.module.css';
-import { Terminal, Globe, Rocket, Copy, CheckCircle2, Sparkles, Folder } from 'lucide-react';
+import { Terminal, Globe, Rocket, Copy, CheckCircle2, Sparkles, Folder, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import Logo from '../Logo/Logo';
 import { Button } from '../ui/Button/Button';
@@ -93,8 +93,18 @@ export default function WelcomeCard({ onImportClick }: WelcomeCardProps) {
                     <p className={styles.cardDesc}>
                         Connect Reex to your React/Next.js project to instantly generate ready-to-use API hooks and TypeScript interfaces.
                     </p>
-                    <div style={{ marginBottom: "6px", fontSize: "12px", color: "var(--text-secondary)", fontWeight: 600 }}>
-                        1. Install globally:
+                    <div className={styles.stepHeader}>
+                        <span className={styles.stepTitle}>1. Install globally:</span>
+                        <a
+                            href="https://www.npmjs.com/package/reex-cli"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.npmLink}
+                            title="View reex-cli on npm"
+                        >
+                            <span>npm</span>
+                            <ExternalLink size={11} />
+                        </a>
                     </div>
                     <div className={styles.codeBox} style={{ marginBottom: "12px" }}>
                         <div className={styles.codeLines}>

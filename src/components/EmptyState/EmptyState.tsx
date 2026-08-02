@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import LoginModal from "../LoginModal/LoginModal";
 
 import WelcomeCard from "../WelcomeCard/WelcomeCard";
+import UserMenu from "../UserMenu/UserMenu";
 
 interface EmptyStateProps {
   hasEndpoints: boolean;
@@ -30,7 +31,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   onGenerateClick,
   recentCollections,
   onHistoryClick,
-  onHistoryDelete
+  onHistoryDelete,
 }) => {
   const { isStandaloneMode } = useProject();
   const { isAuthenticated } = useAuth();
@@ -46,13 +47,21 @@ const EmptyState: React.FC<EmptyStateProps> = ({
     action();
   };
 
-  const hasRecentCollections = recentCollections && recentCollections.length > 0;
+  const hasRecentCollections =
+    recentCollections && recentCollections.length > 0;
 
   if (hasEndpoints) {
     return (
       <div className={styles.emptyState}>
         <div className={styles.emptyIcon}>
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          >
             <path d="M15 15l6 6m-11-4a7 7 0 110-14 7 7 0 010 14z" />
           </svg>
         </div>
@@ -101,7 +110,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
                   )}
                   <Button
                     variant="secondary"
-                    onClick={() => router.push('/docs')}
+                    onClick={() => router.push("/docs")}
                     className={styles.secondaryBtn}
                   >
                     <BookOpen size={16} />
@@ -111,26 +120,31 @@ const EmptyState: React.FC<EmptyStateProps> = ({
               </div>
 
               {/* Recent History */}
-              {recentCollections && recentCollections.length > 0 && onHistoryClick && (
-                <RecentCollectionsList
-                  items={recentCollections}
-                  onItemClick={(item) => {
-                    onHistoryClick(item);
-                  }}
-                  onDelete={onHistoryDelete}
-                />
-              )}
+              {recentCollections &&
+                recentCollections.length > 0 &&
+                onHistoryClick && (
+                  <RecentCollectionsList
+                    items={recentCollections}
+                    onItemClick={(item) => {
+                      onHistoryClick(item);
+                    }}
+                    onDelete={onHistoryDelete}
+                  />
+                )}
             </>
           )}
         </div>
 
         <div className={styles.footerCredits}>
+          <div className={styles.footerLeft}>
+            <UserMenu placement="top" />
+          </div>
           {/* <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
             Built by <a href="https://github.com/EECvision" target="_blank" rel="noopener noreferrer" className={styles.devLink}>EECvision</a>
           </div> */}
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+          {/* <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
             Powered by <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>ToolsHQ</span>
-          </div>
+          </div> */}
         </div>
       </div>
 

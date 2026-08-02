@@ -233,7 +233,7 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
         />
       )}
 
-      {hasCollection && isStandaloneMode && <WelcomeSlideIn />}
+      {isStandaloneMode && <WelcomeSlideIn />}
       {!isStandaloneMode && <SetupGuideModal />}
 
       <LoginModal

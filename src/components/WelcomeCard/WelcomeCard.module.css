@@ -77,6 +77,34 @@
     flex-grow: 1;
 }
 
+.stepHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.stepTitle {
+    font-size: 12px;
+    color: var(--text-secondary, #64748b);
+    font-weight: 600;
+}
+
+.npmLink {
+    font-size: 11px;
+    color: var(--primary-color, #3b82f6);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.npmLink:hover {
+    color: var(--primary-hover, #2563eb);
+}
+
 .codeBox {
     background: #0f172a;
     border-radius: 6px;
