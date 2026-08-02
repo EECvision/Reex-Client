@@ -1,11 +1,11 @@
-export type AuthStrategy = "localstorage" | "cookie" | "next-auth";
+export type AuthStrategy = "jwt" | "cookie" | "next-auth";
 
 export const providerCodeMap: Record<AuthStrategy, string> = {
-  localstorage: `import { ReexProvider } from "@/api-services/providers/ReexProvider";
+  jwt: `import { ReexProvider } from "@/api-services/providers/ReexProvider";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ReexProvider strategy="localstorage">
+    <ReexProvider strategy="jwt">
       {children}
     </ReexProvider>
   );
@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 };
 
 export const consumeCodeMap: Record<AuthStrategy, string> = {
-  localstorage: `import { usePostLoginMutation, usePostLogoutMutation, useGetBooksQuery } from "@/api-services/generated";
+  jwt: `import { usePostLoginMutation, usePostLogoutMutation, useGetBooksQuery } from "@/api-services/generated";
 import { useAuthState } from "@/api-services/hooks/useAuthState";
 import { useClearSession } from "@/api-services/hooks/useClearSession";
 import { useHeaders } from "@/api-services/hooks/useHeaders";
@@ -61,7 +61,7 @@ export function App() {
       { email: "user@gmail.com", password: "password123" },
       {
         onSuccess: (res) => {
-          // REQUIRED: Call \`setTokens\` after successful login to store tokens in localStorage.
+          // REQUIRED: Call \`setTokens\` after successful login.
           setTokens({
             accessToken: res.data.accessToken,
             refreshToken: res.data.refreshToken,
@@ -334,7 +334,7 @@ const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };`;
 
 // Fallback / legacy exports
-export const providerCodeString = providerCodeMap.localstorage;
-export const consumeCodeString = consumeCodeMap.localstorage;
+export const providerCodeString = providerCodeMap.jwt;
+export const consumeCodeString = consumeCodeMap.jwt;
 
 

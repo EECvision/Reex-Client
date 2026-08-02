@@ -11,8 +11,8 @@ import {
   API_CONFIG_CONTENT,
   COOKIE_GUARD_CONTENT,
   COOKIE_PROVIDER_CONTENT,
-  LOCALSTORAGE_GUARD_CONTENT,
-  LOCALSTORAGE_PROVIDER_CONTENT,
+  JWT_GUARD_CONTENT,
+  JWT_PROVIDER_CONTENT,
   USE_AUTH_STATE_HOOK_CONTENT,
   USE_CLEAR_SESSION_HOOK_CONTENT,
   USE_NOTIFICATION_HOOK_CONTENT,
@@ -151,13 +151,13 @@ export const createSandboxPayload = (
     content: COOKIE_PROVIDER_CONTENT,
   };
 
-  files["src/api-services/auth-methods/localstorage-auth/LocalStorageAuthGuard.tsx"] = {
+  files["src/api-services/auth-methods/jwt-auth/JwtAuthGuard.tsx"] = {
     isBinary: false,
-    content: LOCALSTORAGE_GUARD_CONTENT,
+    content: JWT_GUARD_CONTENT,
   };
-  files["src/api-services/auth-methods/localstorage-auth/provider.ts"] = {
+  files["src/api-services/auth-methods/jwt-auth/provider.ts"] = {
     isBinary: false,
-    content: LOCALSTORAGE_PROVIDER_CONTENT,
+    content: JWT_PROVIDER_CONTENT,
   };
 
   const apiConfigContent = API_CONFIG_CONTENT.replace(
@@ -351,7 +351,7 @@ const root = createRoot(rootElement!);
 
 root.render(
   <React.StrictMode>
-    <ReexProvider strategy="localstorage">
+    <ReexProvider strategy="jwt">
       <App />
     </ReexProvider>
   </React.StrictMode>

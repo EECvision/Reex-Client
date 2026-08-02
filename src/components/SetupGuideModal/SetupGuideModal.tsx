@@ -23,7 +23,7 @@ import {
 } from "./consumeCodeString";
 
 const STRATEGIES: { id: AuthStrategy; label: string }[] = [
-  { id: "localstorage", label: "localStorage (Token)" },
+  { id: "jwt", label: "JWT (Token)" },
   { id: "cookie", label: "Cookie Based" },
   { id: "next-auth", label: "NextAuth.js" },
 ];
@@ -37,7 +37,7 @@ export default function SetupGuideModal() {
 
   // Strategy state
   const [selectedStrategy, setSelectedStrategy] =
-    useState<AuthStrategy>("localstorage");
+    useState<AuthStrategy>("jwt");
 
   // Copy states
   const [copiedProvider, setCopiedProvider] = useState(false);
@@ -224,7 +224,7 @@ export default function SetupGuideModal() {
               manage authentication, headers, tokens, and notifications.
               <ul className={styles.hooksList}>
                 <li>
-                  <code>useTokens</code>: Manage auth tokens (localStorage strategy).
+                  <code>useTokens</code>: Manage auth tokens (JWT strategy).
                 </li>
                 <li>
                   <code>useHeaders</code>: Set custom headers (like version or

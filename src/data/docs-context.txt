@@ -24,7 +24,7 @@ Reex API Builder eliminates this boilerplate.
 * **Zero-Boilerplate Generation:** Instantly transform API collections into tested REST API code, React Query hooks, and TypeScript interfaces.
 * **Intelligent Two-Way Sync:** Your code and the tool's UI are always aligned. Edit in your IDE or tweak in the tool—changes reflect perfectly on both sides.
 * **Smart API Diffing:** Never get caught off guard by a backend update. Re-import a collection and instantly see exactly what endpoints, payloads, or types were added or removed before you integrate.
-* **Drop-in Authentication:** Seamlessly manage user sessions with pre-built hooks for LocalStorage, Cookies, or Next-Auth for React and Next.js developers.
+* **Drop-in Authentication:** Seamlessly manage user sessions with pre-built hooks for JWT (Tokens), Cookies, or Next-Auth for React and Next.js developers.
 
 ### Core Modules
 
@@ -277,7 +277,7 @@ Provides modular authentication strategies and guards.
     import React, { useState } from "react";
     import { CookieAuthGuard } from "./cookie-auth/CookieAuthGuard";
     import { NextAuthGuard } from "./next-auth/NextAuthGuard";
-    import { LocalStorageAuthGuard } from "./localstorage-auth/LocalStorageAuthGuard";
+    import { JwtAuthGuard } from "./jwt-auth/JwtAuthGuard";
     import { setActiveStrategy, type AuthStrategy } from "./manager";
 
     export const AuthProvider = ({ strategy, children }: { strategy: AuthStrategy; children: React.ReactNode }) => {
@@ -289,7 +289,7 @@ Provides modular authentication strategies and guards.
       switch (strategy) {
         case "cookie": return {children};
         case "next-auth": return {children};
-        case "localstorage": return {children};
+        case "jwt": return {children};
         default: return {children};
       }
     };
@@ -303,16 +303,16 @@ Provides modular authentication strategies and guards.
     import { type TokenProvider } from "./types";
     import { cookieTokenProvider } from "./cookie-auth/provider";
     import { nextAuthTokenProvider } from "./next-auth/provider";
-    import { localStorageTokenProvider } from "./localstorage-auth/provider";
+    import { jwtTokenProvider } from "./jwt-auth/provider";
 
-    export type AuthStrategy = "cookie" | "next-auth" | "localstorage";
-    let activeTokenProvider: any = localStorageTokenProvider;
+    export type AuthStrategy = "cookie" | "next-auth" | "jwt";
+    let activeTokenProvider: any = jwtTokenProvider;
 
     export const setActiveStrategy = (strategy: AuthStrategy) => {
       switch (strategy) {
         case "cookie": activeTokenProvider = cookieTokenProvider; break;
         case "next-auth": activeTokenProvider = nextAuthTokenProvider; break;
-        case "localstorage": activeTokenProvider = localStorageTokenProvider; break;
+        case "jwt": activeTokenProvider = jwtTokenProvider; break;
       }
     };
 
@@ -502,11 +502,11 @@ interface CookieTokenProvider extends TokenProvider {
 };
 ````
 
-    **Local Storage Strategy**
+    **JWT (Token) Strategy**
 
     View code
 
-```typescript filename="localstorage-auth/LocalStorageAuthGuard.ts"
+```typescript filename="jwt-auth/JwtAuthGuard.ts"
 // @internal — No changes needed
 
 "use client";
@@ -527,15 +527,15 @@ interface CookieTokenProvider extends TokenProvider {
             const hasRefreshToken = !!localStorage.getItem(authConfig.refreshTokenKey);
             const hasAccessToken = !!localStorage.getItem(authConfig.accessTokenKey);
 
-            if (hasRefreshToken && localStorageTokenProvider?.refreshToken) {
+            if (hasRefreshToken && jwtTokenProvider?.refreshToken) {
                 try {
-                    await localStorageTokenProvider.refreshToken();
+                    await jwtTokenProvider.refreshToken();
                 } catch (error) {
                     console.warn("Session restoration failed:", error);
                 }
-            } else if (hasAccessToken && localStorageTokenProvider?.refreshToken) {
+            } else if (hasAccessToken && jwtTokenProvider?.refreshToken) {
                 // Access-token-only fallback: let the provider restore from storage
-                await localStorageTokenProvider.refreshToken();
+                await jwtTokenProvider.refreshToken();
             }
 
             setIsReady(true);
@@ -547,7 +547,7 @@ interface CookieTokenProvider extends TokenProvider {
     // Listen for auth:logout events dispatched by core.ts when token refresh fails
     useEffect(() => {
         const handleLogout = () => {
-            localStorageTokenProvider.clearTokens();
+            jwtTokenProvider.clearTokens();
             setIsReady(true); // Keep app rendered (in unauthenticated state)
         };
 
@@ -561,11 +561,11 @@ interface CookieTokenProvider extends TokenProvider {
 };
 ```
 
-```typescript filename="localstorage-auth/provider.ts"
+```typescript filename="jwt-auth/provider.ts"
 // @internal — No changes needed
 
 /**
- * LocalStorage Token Provider
+ * JWT Token Provider
  * - Access Token & Refresh Token: Persisted in localStorage
  *
  * Edit `authConfig.ts` to customize routes, storage keys, and refresh payload.
@@ -574,7 +574,7 @@ interface CookieTokenProvider extends TokenProvider {
 let accessToken: string | null = null;
 let customHeaders: Record<string, string> | null = null;
 
-interface LocalStorageTokenProvider extends TokenProvider {
+interface JwtTokenProvider extends TokenProvider {
   setTokens: (params: { accessToken: string; refreshToken?: string }) => void;
   clearTokens: () => void;
   setCustomHeaders: (headers: Record<string, string>) => void;
@@ -1625,7 +1625,7 @@ const geistMono = Geist_Mono({
 ```
 
 - **QueryProvider**: Enables TanStack queries.
-- **AuthProvider**: Manages user sessions and authentication. Supports three strategies: `localstorage`, `cookie`, and `next-auth`. Defaults to `localstorage`.
+- **AuthProvider**: Manages user sessions and authentication. Supports three strategies: `jwt`, `cookie`, and `next-auth`. Defaults to `jwt`.
 
 For a deeper look at the auth provider, see the [architecture](../architecture) section.
 
