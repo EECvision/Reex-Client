@@ -77,7 +77,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
     <>
       <div className={styles.wrapper}>
         <div className={styles.container}>
-          {!hasRecentCollections ? (
+          {!hasRecentCollections && isStandaloneMode ? (
             <WelcomeCard onImportClick={() => handleAction(onImportClick)} />
           ) : (
             <>
