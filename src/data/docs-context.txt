@@ -55,6 +55,9 @@ Here is the folder structure that gets generated:
 ```
 src/
 └── api-services/
+    ├── .reex/            # Internal config & project metadata
+    │   ├── config.ts     # Internal config & definition types
+    │   └── metadata.json # Project synchronization metadata
     ├── auth-methods/     # Modular authentication strategies & guards
     ├── custom/           # Custom reusable UI components
     ├── definitions/      # Your API implementations (editable)
@@ -66,6 +69,56 @@ src/
     ├── core.ts           # Core HTTP configuration and proxy
     └── ...
 ```
+
+### `.reex/` - Internal Configuration & Metadata
+
+Contains internal types and metadata used for project synchronization and type enforcement.
+
+    **`.reex/config.ts`**: Internal interfaces (`ReexDefinition` and `ReexConfig`).
+
+    View code
+
+    ```typescript filename=".reex/config.ts"
+    // @internal — No changes needed
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+
+    /**
+     * Enforces the basic structure of Reex definition files.
+     * Use with the `satisfies` operator for maximum IntelliSense:
+     * export const myApi = { ... } satisfies ReexDefinition;
+     */
+    export type ReexDefinition = Record<string, (...args: any[]) => Promise<any>>;
+
+    /**
+     * Enforces the structure of the Reex configuration file (api.config.ts).
+     * Use with the `satisfies` operator for maximum IntelliSense.
+     */
+    export interface ReexConfig {
+      baseURL: string;
+      unwrapResponseData: boolean;
+      enableApiLogging: boolean;
+      auth: {
+        refreshEndpoint: string;
+        accessTokenKey: string;
+        refreshTokenKey: string;
+        extractTokens: (responseBody: any) => { accessToken?: string; refreshToken?: string };
+        refreshWithCookie: () => Promise<import("axios").AxiosResponse<any>>;
+        refreshWithToken: (storedRefreshToken: string) => Promise<import("axios").AxiosResponse<any>>;
+      };
+    }
+    ```
+
+    **`.reex/metadata.json`**: Project metadata.
+
+    View code
+
+    ```json filename=".reex/metadata.json"
+    {
+      "version": "6.0.2",
+      "framework": "react",
+      "updatedAt": "2026-08-04T05:00:00.000Z"
+    }
+    ```
 
 ### `core.ts` - Core API Client
 
@@ -819,6 +872,7 @@ This folder contains `sample` API endpoint definitions.
 
     ```typescript filename="definitions/authentication.ts"
     import { apiClient } from "../core";
+    import { type ReexDefinition } from "../.reex/config";
     import { type post_authRefresh } from "../types/authentication/post_authRefresh";
     import { type post_authSignup } from "../types/authentication/post_authSignup";
     import { type post_authLogin } from "../types/authentication/post_authLogin";
@@ -850,7 +904,7 @@ This folder contains `sample` API endpoint definitions.
       /** @description Logout a user */
       post_authLogout: (): Promise<post_authLogout> =>
         apiClient.post(`/auth/logout`, {})
-    };
+    } satisfies ReexDefinition;
     ```
 
     **`todos.ts`**: CRUD operations for Todos.
@@ -860,6 +914,7 @@ This folder contains `sample` API endpoint definitions.
     ```typescript filename="definitions/todos.ts"
     /* eslint-disable @typescript-eslint/no-explicit-any */
     import { apiClient } from "../core";
+    import { type ReexDefinition } from "../.reex/config";
     import { type get_todos } from "../types/todos/get_todos";
     import { type post_todos } from "../types/todos/post_todos";
     import { type put_todos } from "../types/todos/put_todos";
@@ -883,9 +938,9 @@ This folder contains `sample` API endpoint definitions.
         apiClient.put(`/todos/${id}`, {}),
 
       /** @description Delete a todo @auth @param id The todo ID */
-      delete_todos: (id: string): Promise =>
+      delete_todos: (id: string): Promise<void> =>
         apiClient.delete(`/todos/${id}`)
-    };
+    } satisfies ReexDefinition;
     ```
 
 ### `generated/` - React Query Hooks
@@ -1465,61 +1520,90 @@ This file is designed specifically for you to edit. It contains constants and ma
     View code
 
     ```typescript filename="api.config.ts"
-    // @user-config — changes needed: Update routes, keys, and endpoints to match your backend
-    import axios from "axios";
+    // @user-config — Update routes, keys, and endpoints to match your backend.
 
+    import axios from "axios";
+    import { type ReexConfig } from "./.reex/config";
+
+    // Replace this with your API base URL or an environment variable
+    // (e.g. process.env.NEXT_PUBLIC_API_URL).
     const BASE_URL = "https://example.com/api/v1";
 
-    // @user-config — changes needed: Update routes, keys, and endpoints to match your backend
-import axios from "axios";
+    export const apiConfig: ReexConfig = {
+      baseURL: BASE_URL,
 
-const BASE_URL = "https://example.com/api/v1";
+      // Set to `true` if your API wraps every response in a top-level `data` property.
+      // When enabled, also turn on "Unwrap Response Data" in the Reex UI before
+      // saving or copying generated response interfaces.
+      unwrapResponseData: false,
 
-export const apiConfig = {
-  /**
-   * 1. CORE SETTINGS
-   * Update this to your actual backend URL or rely on environment variables
-   */
-  baseURL: BASE_URL,
+      // Enable request/response logging.
+      // For development only, consider:
+      //   process.env.NODE_ENV === "development"
+      // or
+      //   import.meta.env.DEV
+      enableApiLogging: true,
 
-  /** Set to true if your API wraps responses in a 'data' object */
-  unwrapResponseData: false,
+      auth: {
+        // ---------------------------------------------------------------------------
+        // General authentication configuration
+        // ---------------------------------------------------------------------------
 
-  /**
-   * 2. AUTHENTICATION SETTINGS
-   * Customize these to match your backend's authentication endpoints
-   */
-  auth: {
-    refreshEndpoint: `${BASE_URL}/auth/refresh`,
-    /** Keys used to store your tokens locally in localStorage */
-    accessTokenKey: "access_token",
-    refreshTokenKey: "refresh_token",
-    /**
-     * Function to extract tokens from your backend response.
-     * Update this if your backend returns tokens in a nested or custom structure.
-     */
-    extractTokens: (response: Record<string, unknown>) => ({
-      accessToken: response?.accessToken as string | undefined,
-      refreshToken: response?.refreshToken as string | undefined,
-    }),
+        // Refresh token endpoint. Update this to match your backend.
+        refreshEndpoint: `${BASE_URL}/auth/refresh`,
 
-    /** Refresh via httpOnly cookie. Edit the method/headers to match your backend. */
-    refreshWithCookie: async () => {
-      return await axios.post(apiConfig.auth.refreshEndpoint, undefined, {
-        withCredentials: true,
-      });
-    },
+        // ---------------------------------------------------------------------------
+        // JWT / Bearer token authentication
+        // Use these options when the `ReexProvider` auth strategy is `"jwt"`.
+        // ---------------------------------------------------------------------------
 
-    /** Refresh via stored token payload. Edit the property name <refreshToken> to match your backend eg. refresh_token*/
-    refreshWithToken: async (storedRefreshToken: string) => {
-      return await axios.post(apiConfig.auth.refreshEndpoint, {
-        refreshToken: storedRefreshToken,
-      });
-    },
-  },
-};
+        // Send the refresh token to your backend to obtain a new access token.
+        // Rename `refreshToken` in the request body if your backend expects
+        // a different field name (e.g. `refresh_token`).
+        refreshWithToken: async (storedRefreshToken: string) =>
+          axios.post(apiConfig.auth.refreshEndpoint, {
+            refreshToken: storedRefreshToken,
+          }),
 
-```
+        // Extract authentication tokens from your backend response.
+        //
+        // Note: `responseBody` is affected by the `unwrapResponseData` setting.
+        // - When `unwrapResponseData` is `true`, `responseBody` contains the
+        //   unwrapped `data` object.
+        // - When `unwrapResponseData` is `false`, `responseBody` contains the
+        //   full response body.
+        //
+        // Update these paths to match your API response structure.
+        extractTokens: (responseBody: Record<string, unknown>) => ({
+          accessToken: responseBody?.accessToken as string | undefined,
+          refreshToken: responseBody?.refreshToken as string | undefined,
+        }),
+
+        // Storage key names for authentication tokens.
+        // Change these if you prefer different key names.
+        //
+        // Note: The access token is stored in memory by default.
+        // It is only persisted to localStorage if your backend does not
+        // return a refresh token.
+        accessTokenKey: "access_token",
+        refreshTokenKey: "refresh_token",
+
+        // ---------------------------------------------------------------------------
+        // Cookie-based authentication
+        // Use this when the `ReexProvider` auth strategy is `"cookie"`.
+        // ---------------------------------------------------------------------------
+
+        // Request a new access token using HttpOnly cookies.
+        refreshWithCookie: async () =>
+          axios.post(apiConfig.auth.refreshEndpoint, undefined, {
+            withCredentials: true,
+
+            // Add any headers required by your backend when refreshing tokens.
+            // headers: { "X-Client-ID": "1234" },
+          }),
+      },
+    };
+    ```
 
 ## Project Module > Getting Started
 ---

@@ -20,6 +20,8 @@ import {
   USE_HEADERS_HOOK_CONTENT,
   BASE_API_CLIENT_CONTENT,
   QUERY_CONFIG_CONTENT,
+  REEX_CONFIG_CONTENT,
+  REEX_METADATA_CONTENT,
 } from "./templates";
 import {
   generateKeyFactory,
@@ -160,9 +162,18 @@ export const createSandboxPayload = (
     content: JWT_PROVIDER_CONTENT,
   };
 
+  files["src/api-services/.reex/config.ts"] = {
+    isBinary: false,
+    content: REEX_CONFIG_CONTENT,
+  };
+  files["src/api-services/.reex/metadata.json"] = {
+    isBinary: false,
+    content: REEX_METADATA_CONTENT,
+  };
+
   const apiConfigContent = API_CONFIG_CONTENT.replace(
-    /"https:\/\/api\.money\.orki\.io"/, 
-    `"${baseURL || "https://api.example.com"}"`
+    /"https:\/\/example\.com\/api\/v1"|"https:\/\/api\.money\.orki\.io"/, 
+    `"${baseURL || "https://example.com/api/v1"}"`
   );
   files["src/api-services/api.config.ts"] = {
     isBinary: false,
@@ -330,7 +341,7 @@ ${hooks.join("\n\n")}
 
   files["src/api-services/definitions/index.ts"] = {
     isBinary: false,
-    content: `${moduleNames.map(modName => `import { ${modName}Api } from "./${modName}";`).join("\n")}\n\nexport const api = {\n${moduleNames.map((name) => `  ...${name}Api,`).join("\n")}\n};`,
+    content: `import { type ReexDefinition } from "../.reex/config";\n\n${moduleNames.map((modName) => `import { ${modName}Api } from "./${modName}";`).join("\n")}\n\nexport const api = {\n${moduleNames.map((name) => `  ...${name}Api,`).join("\n")}\n} satisfies ReexDefinition;`,
   };
 
   // 5. Index and App

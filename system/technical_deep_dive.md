@@ -142,7 +142,7 @@ Coordinates the entire regeneration pipeline:
 6. **Type Generation** — Delegates to `TypeService.generateTypes()`
 7. **Barrel File Generation** — Creates `definitions/index.ts` that re-exports all modules:
    ```typescript
-   import { type ReexDefinition } from "../core";
+   import { type ReexDefinition } from "../.reex/config";
    import { usersApi } from "./users";
    import { productsApi } from "./products";
    

@@ -37,8 +37,7 @@ export default function SetupGuideModal() {
   >("loading");
 
   // Strategy state
-  const [selectedStrategy, setSelectedStrategy] =
-    useState<AuthStrategy>("jwt");
+  const [selectedStrategy, setSelectedStrategy] = useState<AuthStrategy>("jwt");
 
   // Copy states
   const [copiedProvider, setCopiedProvider] = useState(false);
@@ -132,9 +131,11 @@ export default function SetupGuideModal() {
               <h4 className={styles.stepTitle}>Import your API Collection</h4>
             </div>
             <p className={styles.stepDescription}>
-              Import your OpenAPI specification or Postman collection using the button in the navbar.
-              Once imported, Reex automatically scaffolds and syncs ready-to-use API clients, TypeScript types,
-              and React Query hooks directly into your project's <code>api-services/</code> directory.
+              Import your OpenAPI specification or Postman collection using the
+              import collection button. Once imported, Reex automatically
+              scaffolds and syncs ready-to-use API clients, TypeScript types,
+              and React Query hooks directly into your project's{" "}
+              <code>api-services/</code> directory.
             </p>
           </div>
 
@@ -207,7 +208,7 @@ export default function SetupGuideModal() {
               Open <code>api-services/api.config.ts</code> in your project to
               update your base URL, authentication endpoints, and token
               extraction logic to match your backend. You can also toggle{" "}
-              <code>unwrapResponseData</code> and API logging here.
+              <code>unwrapResponseData</code> and API logging.
             </p>
           </div>
 
@@ -247,7 +248,8 @@ export default function SetupGuideModal() {
                 </li>
                 <li>
                   <code>useAuthState</code> & <code>useClearSession</code>:
-                  Check auth state or securely clear session, cancel pending requests & purge query cache.
+                  Check auth state or securely clear session, cancel pending
+                  requests & purge query cache.
                 </li>
               </ul>
             </div>

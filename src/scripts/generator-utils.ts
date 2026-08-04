@@ -501,7 +501,8 @@ export const generateModuleTemplate = (
     }
 
     // 2. Imports
-    contentParts.push('import { apiClient, type ReexDefinition } from "../core";');
+    contentParts.push('import { apiClient } from "../core";');
+    contentParts.push('import { type ReexDefinition } from "../.reex/config";');
     if (responseTypeImports) contentParts.push(responseTypeImports);
 
     // 3. Type Definitions
