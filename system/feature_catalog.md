@@ -84,7 +84,7 @@
 ### 10. `reex add hook <name>`
 **What**: Installs a utility hook from the Reex hook repository into the project.
 
-**How**: Copies the hook file from `templates-shared/hooks/` to the project's `api-services/hooks/` directory. Core hooks (`useAuthState`, `useClearSession`, `useNotification`) cannot be removed.
+**How**: Copies the hook file from `templates-shared/hooks/` to the project's `api-services/hooks/` directory. Core hooks (`useAuthSession`, `useNotification`, `useHeaders`, `notification.ts`) cannot be removed.
 
 ---
 
@@ -105,7 +105,7 @@
 ### 13. `reex reset [target]`
 **What**: Resets scaffolded files to their template defaults (with confirmation prompt).
 
-**How**: Supports resetting specific files/folders or everything. Uses fuzzy matching — `reex reset useAuthState` finds `hooks/useAuthState.ts`. Handles ambiguous targets with helpful error messages.
+**How**: Supports resetting specific files/folders or everything. Uses fuzzy matching — `reex reset useAuthSession` finds `hooks/useAuthSession.ts`. Handles ambiguous targets with helpful error messages.
 
 ---
 
@@ -282,7 +282,7 @@
 ---
 
 ### 36. Hook Repository
-**What**: A library of installable utility hooks (`useAuthState`, `useClearSession`, `useNotification`, and more).
+**What**: A library of installable utility hooks (`useAuthSession`, `useNotification`, `useHeaders`, and more).
 
 **How**: Hooks are stored in `templates-shared/hooks/`. `reex list hooks` shows all available hooks. `reex add hook <name>` copies them into the project. Core hooks are protected from removal.
 

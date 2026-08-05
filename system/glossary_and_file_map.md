@@ -61,7 +61,7 @@
 | `api.config.ts` | Default config template (baseURL, auth settings) |
 | `core.ts` | HTTP client builder template (axios instance factory) |
 | `module.template.ts` | Template for `reex add module` scaffolding |
-| `hooks/` | Utility hook templates (useAuthState, useClearSession, useNotification) |
+| `hooks/` | Utility hook templates (useAuthSession, useNotification, useHeaders) |
 | `providers/` | React provider templates (QueryClient, Auth) |
 | `auth-methods/` | Auth strategy templates |
 

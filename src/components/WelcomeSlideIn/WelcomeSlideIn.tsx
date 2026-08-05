@@ -13,19 +13,24 @@ export default function WelcomeSlideIn() {
     const [mountState, setMountState] = useState<'loading' | 'show-slide' | 'show-fab'>('loading');
 
     useEffect(() => {
-        // Wait a small moment after rendering to check localStorage
-        // This prevents hydration mismatch and gives a nice delayed entrance
-        const timer = setTimeout(() => {
-            const dismissed = localStorage.getItem('reex_welcome_slide_dismissed');
-            if (!dismissed) {
-                setMountState('show-slide');
-            } else {
-                setMountState('show-fab');
-            }
-        }, 1500); // 1.5s delay before sliding in
-
-        return () => clearTimeout(timer);
+        const dismissed = localStorage.getItem('reex_welcome_slide_dismissed');
+        if (!dismissed) {
+            setMountState('show-slide');
+            localStorage.setItem('reex_welcome_slide_dismissed', 'true');
+        } else {
+            setMountState('show-fab');
+        }
     }, []);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && mountState === 'show-slide') {
+                handleDismiss();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [mountState]);
 
     const handleCopy = (text: string, setCopied: React.Dispatch<React.SetStateAction<boolean>>) => {
         navigator.clipboard.writeText(text);

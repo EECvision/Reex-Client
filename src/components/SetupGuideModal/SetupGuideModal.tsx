@@ -8,11 +8,10 @@ import {
   Copy,
   CheckCircle2,
   X,
-  Sparkles,
-  BookOpen,
   ChevronDown,
   ChevronUp,
   ExternalLink,
+  Lightbulb,
 } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import MonacoJsonEditor from "../MonacoJsonEditor/MonacoJsonEditor";
@@ -49,20 +48,24 @@ export default function SetupGuideModal() {
 
   useEffect(() => {
     setMounted(true);
-    const timer = setTimeout(() => {
-      const dismissed = localStorage.getItem("reex_setup_guide_dismissed");
-      if (!dismissed) {
-        setMountState("show-modal");
-      } else {
-        setMountState("show-fab");
-      }
-    }, 500);
-
-    return () => {
-      clearTimeout(timer);
-      setMounted(false);
-    };
+    const dismissed = localStorage.getItem("reex_setup_guide_dismissed");
+    if (!dismissed) {
+      setMountState("show-modal");
+      localStorage.setItem("reex_setup_guide_dismissed", "true");
+    } else {
+      setMountState("show-fab");
+    }
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && mountState === "show-modal") {
+        handleDismiss();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mountState]);
 
   const handleCopy = (
     text: string,
@@ -98,8 +101,8 @@ export default function SetupGuideModal() {
   }
 
   const modalContent = (
-    <div className={styles.overlay}>
-      <div className={styles.modal}>
+    <div className={styles.overlay} onClick={handleDismiss}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <div className={styles.titleWrapper}>
             <h3 className={styles.title}>Project Setup Guide</h3>
@@ -137,6 +140,16 @@ export default function SetupGuideModal() {
               and React Query hooks directly into your project's{" "}
               <code>api-services/</code> directory.
             </p>
+            <div className={styles.proTip}>
+              <div className={styles.proTipTitle}>
+                <Lightbulb size={14} /> Pro Tip
+              </div>
+              <p className={styles.proTipText}>
+                For the best experience, we recommend setting up Prettier in
+                your project if not already set. Reex formats generated code
+                using your project's existing configuration.
+              </p>
+            </div>
           </div>
 
           {/* Step 2 */}
@@ -236,7 +249,10 @@ export default function SetupGuideModal() {
               manage authentication, headers, tokens, and notifications.
               <ul className={styles.hooksList}>
                 <li>
-                  <code>useTokens</code>: Manage auth tokens (JWT strategy).
+                  <code>useAuthSession</code>: Manage authentication state,
+                  tokens, optional headers, and securely clear session (
+                  <code>clearSession</code>), cancel pending requests & purge
+                  query cache.
                 </li>
                 <li>
                   <code>useHeaders</code>: Set custom headers (like version or
@@ -245,11 +261,6 @@ export default function SetupGuideModal() {
                 <li>
                   <code>useNotification</code>: Fire toast notifications across
                   the app.
-                </li>
-                <li>
-                  <code>useAuthState</code> & <code>useClearSession</code>:
-                  Check auth state or securely clear session, cancel pending
-                  requests & purge query cache.
                 </li>
               </ul>
             </div>

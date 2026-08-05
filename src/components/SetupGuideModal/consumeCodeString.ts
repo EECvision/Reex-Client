@@ -35,17 +35,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 export const consumeCodeMap: Record<AuthStrategy, string> = {
   jwt: `import { usePostLoginMutation, usePostLogoutMutation, useGetBooksQuery } from "@/api-services/generated";
-import { useAuthState } from "@/api-services/hooks/useAuthState";
-import { useClearSession } from "@/api-services/hooks/useClearSession";
+import { useAuthSession } from "@/api-services/hooks/useAuthSession";
 import { useHeaders } from "@/api-services/hooks/useHeaders";
 import { useNotification } from "@/api-services/hooks/useNotification";
-import { useTokens } from "@/api-services/hooks/useTokens";
 
 export function App() {
   // Core Reex Hooks
-  const { isAuthenticated } = useAuthState();
-  const { clearSession } = useClearSession();
-  const { setTokens } = useTokens();
+  const { isAuthenticated, setSession, clearSession } = useAuthSession();
   const { setCustomHeaders } = useHeaders();
   const { pushNotification } = useNotification();
 
@@ -54,20 +50,21 @@ export function App() {
 
   // Generated API Mutations
   const { mutate: login, isPending: isLoginPending } = usePostLoginMutation();
-  const { mutateAsync: logout, isPending: isLogoutPending } = usePostLogoutMutation();
+  const { mutateAsync: logout, isPending: isLogoutPending } = usePostLogoutMutation({ invalidate: false });
 
   const handleLogin = () => {
     login(
       { email: "user@gmail.com", password: "password123" },
       {
         onSuccess: (res) => {
-          // REQUIRED: Call \`setTokens\` after successful login.
-          setTokens({
+          // REQUIRED: Call \`setSession\` after successful login.
+          
+          // OPTIONAL: Pass custom headers as the second argument,
+          // or call \`setCustomHeaders({ ... })\` before or after login, or at any time.
+          setSession({
             accessToken: res.data.accessToken,
             refreshToken: res.data.refreshToken,
-          });
-          // OPTIONAL: Attach custom headers to all subsequent requests.
-          setCustomHeaders({ "X-App-Version": "1.0.0", "X-Client-ID": "web-client" });
+          }, { "X-App-Version": "1.0.0" });
           pushNotification("Logged in successfully!");
         },
         onError: (err) => {
@@ -101,15 +98,13 @@ export function App() {
 }`,
 
   cookie: `import { usePostLoginMutation, usePostLogoutMutation, useGetBooksQuery } from "@/api-services/generated";
-import { useAuthState } from "@/api-services/hooks/useAuthState";
-import { useClearSession } from "@/api-services/hooks/useClearSession";
+import { useAuthSession } from "@/api-services/hooks/useAuthSession";
 import { useHeaders } from "@/api-services/hooks/useHeaders";
 import { useNotification } from "@/api-services/hooks/useNotification";
 
 export function App() {
   // Core Reex Hooks
-  const { isAuthenticated } = useAuthState();
-  const { clearSession } = useClearSession();
+  const { isAuthenticated, setSession, clearSession } = useAuthSession();
   const { setCustomHeaders } = useHeaders();
   const { pushNotification } = useNotification();
 
@@ -125,9 +120,11 @@ export function App() {
       { email: "user@gmail.com", password: "password123" },
       {
         onSuccess: (res) => {
-          // NOTE: No \`setTokens\` needed! The backend automatically sets HttpOnly cookies.
-          // OPTIONAL: Attach custom headers to all subsequent requests.
-          setCustomHeaders({ "X-App-Version": "1.0.0", "X-Client-ID": "web-client" });
+          // REQUIRED: Call \`setSession()\` after successful login to update authenticated state immediately.
+          
+          // OPTIONAL: Pass custom headers as the second argument,
+          // or call \`setCustomHeaders({ ... })\` before or after login, or at any time.
+          setSession(undefined, { "X-App-Version": "1.0.0" });
           pushNotification("Logged in successfully!");
         },
       }
@@ -159,7 +156,7 @@ export function App() {
 
   "next-auth": `import { useSession, signIn, signOut } from "next-auth/react";
 import { useGetBooksQuery } from "@/api-services/generated";
-import { useClearSession } from "@/api-services/hooks/useClearSession";
+import { useAuthSession } from "@/api-services/hooks/useAuthSession";
 import { useHeaders } from "@/api-services/hooks/useHeaders";
 import { useNotification } from "@/api-services/hooks/useNotification";
 
@@ -169,7 +166,7 @@ export function App() {
   const isAuthenticated = status === "authenticated";
 
   // Core Reex Hooks
-  const { clearSession } = useClearSession();
+  const { clearSession } = useAuthSession();
   const { setCustomHeaders } = useHeaders();
   const { pushNotification } = useNotification();
 

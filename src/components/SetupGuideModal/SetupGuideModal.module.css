@@ -152,6 +152,32 @@
     font-weight: 500;
 }
 
+.proTip {
+    background: rgba(59, 130, 246, 0.08);
+    border-left: 3px solid var(--primary-color, #3b82f6);
+    padding: 12px 16px;
+    margin-left: 28px;
+    border-radius: 4px;
+    margin-top: 12px;
+}
+
+.proTipTitle {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-color, #3b82f6);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.proTipText {
+    font-size: 13px;
+    color: var(--text-secondary, #64748b);
+    line-height: 1.5;
+    margin: 0;
+}
+
 .collapseToggle {
     margin-left: 28px;
     display: inline-flex;

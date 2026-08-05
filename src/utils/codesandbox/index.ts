@@ -13,10 +13,8 @@ import {
   COOKIE_PROVIDER_CONTENT,
   JWT_GUARD_CONTENT,
   JWT_PROVIDER_CONTENT,
-  USE_AUTH_STATE_HOOK_CONTENT,
-  USE_CLEAR_SESSION_HOOK_CONTENT,
+  USE_AUTH_SESSION_HOOK_CONTENT,
   USE_NOTIFICATION_HOOK_CONTENT,
-  USE_TOKENS_HOOK_CONTENT,
   USE_HEADERS_HOOK_CONTENT,
   BASE_API_CLIENT_CONTENT,
   QUERY_CONFIG_CONTENT,
@@ -180,21 +178,13 @@ export const createSandboxPayload = (
     content: apiConfigContent,
   };
 
-  files["src/api-services/hooks/useAuthState.ts"] = {
+  files["src/api-services/hooks/useAuthSession.ts"] = {
     isBinary: false,
-    content: USE_AUTH_STATE_HOOK_CONTENT,
-  };
-  files["src/api-services/hooks/useClearSession.ts"] = {
-    isBinary: false,
-    content: USE_CLEAR_SESSION_HOOK_CONTENT,
+    content: USE_AUTH_SESSION_HOOK_CONTENT,
   };
   files["src/api-services/hooks/useNotification.ts"] = {
     isBinary: false,
     content: USE_NOTIFICATION_HOOK_CONTENT,
-  };
-  files["src/api-services/hooks/useTokens.ts"] = {
-    isBinary: false,
-    content: USE_TOKENS_HOOK_CONTENT,
   };
   files["src/api-services/hooks/useHeaders.ts"] = {
     isBinary: false,
