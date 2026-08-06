@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest",
     "prepare": "husky",
-    "build:docs": "npx tsx src/scripts/build-docs-context.ts"
+    "build:docs": "npx tsx src/scripts/build-docs-context.ts",
+    "sync-templates": "node scripts/sync-templates.js"
   },
   "dependencies": {
     "@ai-sdk/google": "^0.0.52",
