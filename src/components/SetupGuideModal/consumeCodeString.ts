@@ -50,6 +50,8 @@ export function App() {
 
   // Generated API Mutations
   const { mutate: login, isPending: isLoginPending } = usePostLoginMutation();
+  // Pass { invalidate: false } to prevent auth query refetches after
+  // logout, avoiding 401 errors.
   const { mutateAsync: logout, isPending: isLogoutPending } = usePostLogoutMutation({ invalidate: false });
 
   const handleLogin = () => {
@@ -113,7 +115,9 @@ export function App() {
 
   // Generated API Mutations
   const { mutate: login, isPending: isLoginPending } = usePostLoginMutation();
-  const { mutateAsync: logout, isPending: isLogoutPending } = usePostLogoutMutation();
+  // Pass { invalidate: false } to prevent auth query refetches after
+  // logout, avoiding 401 errors.
+  const { mutateAsync: logout, isPending: isLogoutPending } = usePostLogoutMutation({ invalidate: false });
 
   const handleLogin = () => {
     login(
@@ -183,7 +187,7 @@ export function App() {
 
     if (res?.ok) {
       setCustomHeaders({ "X-App-Version": "1.0.0" });
-      pushNotification("Signed in via NextAuth!");
+      pushNotification({ message: "Signed in via NextAuth!", type: "success" });
     }
   };
 
@@ -213,8 +217,27 @@ export const nextAuthRouteCodeString = `// @user-config — Example NextAuth int
 // Update this file to match your authentication API and user model.
 
 import { authApi } from "@/api-services/definitions/auth";
-import NextAuth, { type NextAuthOptions } from "next-auth";
+import NextAuth, { type DefaultSession, type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+
+declare module "next-auth" {
+  interface Session {
+    accessToken?: string;
+    user?: DefaultSession["user"] & {
+      id?: string;
+    };
+  }
+
+  interface User {
+    id?: string;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    accessToken?: string;
+  }
+}
 
 // Update these interfaces to match your backend response.
 interface LoginUser {
@@ -299,9 +322,9 @@ export const authOptions: NextAuthOptions = {
         token.sub = user.id;
         token.name = user.name;
         token.email = user.email;
-
-        // Store the access token for authenticated API requests.
-        token.accessToken = user.accessToken;
+        token.accessToken = (
+          user as LoginUser & { accessToken?: string }
+        ).accessToken;
       }
 
       return token;

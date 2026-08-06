@@ -9,11 +9,15 @@ import {
   AUTH_MANAGER_CONTENT,
   AUTH_TYPES_CONTENT,
   API_CONFIG_CONTENT,
+  NEXT_AUTH_PROVIDER_CONTENT,
+  NEXT_AUTH_GUARD_CONTENT,
   COOKIE_GUARD_CONTENT,
   COOKIE_PROVIDER_CONTENT,
   JWT_GUARD_CONTENT,
   JWT_PROVIDER_CONTENT,
   USE_AUTH_SESSION_HOOK_CONTENT,
+  NOTIFICATION_CONTENT,
+  NOTIFICATION_PROVIDER_CONTENT,
   USE_NOTIFICATION_HOOK_CONTENT,
   USE_HEADERS_HOOK_CONTENT,
   BASE_API_CLIENT_CONTENT,
@@ -142,7 +146,16 @@ export const createSandboxPayload = (
     content: AUTH_TYPES_CONTENT,
   };
 
-  files["src/api-services/auth-methods/cookie-auth/CookieAuthGuard.tsx"] = {
+  
+  files["src/api-services/auth-methods/next-auth/provider.ts"] = {
+    isBinary: false,
+    content: NEXT_AUTH_PROVIDER_CONTENT,
+  };
+  files["src/api-services/auth-methods/next-auth/NextAuthGuard.tsx"] = {
+    isBinary: false,
+    content: NEXT_AUTH_GUARD_CONTENT,
+  };
+files["src/api-services/auth-methods/cookie-auth/CookieAuthGuard.tsx"] = {
     isBinary: false,
     content: COOKIE_GUARD_CONTENT,
   };
@@ -182,9 +195,17 @@ export const createSandboxPayload = (
     isBinary: false,
     content: USE_AUTH_SESSION_HOOK_CONTENT,
   };
+  files["src/api-services/hooks/notification.ts"] = {
+    isBinary: false,
+    content: NOTIFICATION_CONTENT,
+  };
   files["src/api-services/hooks/useNotification.ts"] = {
     isBinary: false,
     content: USE_NOTIFICATION_HOOK_CONTENT,
+  };
+  files["src/api-services/providers/NotificationProvider.tsx"] = {
+    isBinary: false,
+    content: NOTIFICATION_PROVIDER_CONTENT,
   };
   files["src/api-services/hooks/useHeaders.ts"] = {
     isBinary: false,

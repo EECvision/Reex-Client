@@ -191,7 +191,9 @@
   cursor: pointer;
   z-index: 1000;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation:
+    scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards,
+    attentionPulse 1s ease-in-out 0.5s 2;
 }
 
 .fab:hover {
@@ -206,6 +208,21 @@
   }
   to {
     opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes attentionPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6);
+    transform: scale(1);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    transform: scale(1.15);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
     transform: scale(1);
   }
 }

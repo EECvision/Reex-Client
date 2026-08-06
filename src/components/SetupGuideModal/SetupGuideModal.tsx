@@ -13,7 +13,6 @@ import {
   ExternalLink,
   Lightbulb,
 } from "lucide-react";
-import { useToast } from "@/hooks/useToast";
 import MonacoJsonEditor from "../MonacoJsonEditor/MonacoJsonEditor";
 import {
   AuthStrategy,
@@ -29,7 +28,6 @@ const STRATEGIES: { id: AuthStrategy; label: string }[] = [
 ];
 
 export default function SetupGuideModal() {
-  const { showToast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [mountState, setMountState] = useState<
     "loading" | "show-modal" | "show-fab"
@@ -218,10 +216,10 @@ export default function SetupGuideModal() {
               <h4 className={styles.stepTitle}>Configure API Settings</h4>
             </div>
             <p className={styles.stepDescription}>
-              Open <code>api-services/api.config.ts</code> in your project to
-              update your base URL, authentication endpoints, and token
-              extraction logic to match your backend. You can also toggle{" "}
-              <code>unwrapResponseData</code> and API logging.
+              Open <code>api-services/api.config.ts</code> in your project and
+              update the base URL and authentication configuration to match your
+              backend based on the selected authentication strategy. You can
+              also toggle <code>unwrapResponseData</code> and API logging.
             </p>
           </div>
 
@@ -245,24 +243,40 @@ export default function SetupGuideModal() {
               <h4 className={styles.stepTitle}>Consume APIs in your Code</h4>
             </div>
             <div className={styles.stepDescription}>
-              Use your generated query mutations and the core Reex hooks to
-              manage authentication, headers, tokens, and notifications.
+              Easily consume your API across your application using generated
+              hooks or the core API object.
               <ul className={styles.hooksList}>
                 <li>
-                  <code>useAuthSession</code>: Manage authentication state,
-                  tokens, optional headers, and securely clear session (
-                  <code>clearSession</code>), cancel pending requests & purge
-                  query cache.
+                  <strong>Generated Queries:</strong> Fully-typed React Query
+                  hooks are automatically generated for your endpoints in{" "}
+                  <code>api-services/generated/</code>. Use them directly in
+                  your components for effortless data fetching and caching.
                 </li>
                 <li>
-                  <code>useHeaders</code>: Set custom headers (like version or
-                  client ID) for all requests.
+                  <strong>Outside React:</strong> Import the <code>api</code>{" "}
+                  object from <code>api-services/definitions/index.ts</code> to
+                  make requests in utility files, server actions, or vanilla
+                  JavaScript.
                 </li>
                 <li>
-                  <code>useNotification</code>: Fire toast notifications across
-                  the app.
+                  <strong>Core Reex Hooks:</strong> Import{" "}
+                  <code>useAuthSession</code>, <code>useHeaders</code>, and{" "}
+                  <code>useNotification</code> from{" "}
+                  <code>api-services/hooks/</code> to manage auth state, global
+                  headers, and toast alerts.
                 </li>
               </ul>
+            </div>
+
+            <div className={styles.proTip}>
+              <div className={styles.proTipTitle}>
+                <Lightbulb size={14} /> Pro Tip
+              </div>
+              <p className={styles.proTipText}>
+                A default toast notification component is scaffolded at{" "}
+                <code>api-services/custom/notification/AppNotification/</code>.
+                Customize it to match your brand.
+              </p>
             </div>
 
             <div
