@@ -118,7 +118,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top', expanded = false
                                 <span className={styles.userEmail}>{user.email}</span>
                             </div>
                             <div className={styles.menu}>
-                                <button className={styles.menuItem} onClick={() => handleNavigate('/docs')}>
+                                <button className={styles.menuItem} onClick={() => window.open('/docs', '_blank')}>
                                     <Book size={14} />
                                     <span>Docs</span>
                                 </button>
@@ -182,7 +182,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top', expanded = false
                                 <span className={styles.userEmail}>Not signed in</span>
                             </div>
                             <div className={styles.menu}>
-                                <button className={styles.menuItem} onClick={() => handleNavigate('/docs')}>
+                                <button className={styles.menuItem} onClick={() => window.open('/docs', '_blank')}>
                                     <Book size={14} />
                                     <span>Docs</span>
                                 </button>

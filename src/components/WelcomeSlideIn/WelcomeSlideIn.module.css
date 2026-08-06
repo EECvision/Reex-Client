@@ -181,19 +181,47 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: var(--card-bg, #ffffff);
+  background: transparent;
   color: var(--primary-color, #3b82f6);
-  border: 1px solid var(--border-color, #e2e8f0);
+  border: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 1000;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  animation:
-    scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards,
-    attentionPulse 1s ease-in-out 0.5s 2;
+  transition:
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  overflow: hidden;
+}
+
+.fab::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 70%,
+    var(--primary-color, #3b82f6) 100%
+  );
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  animation: spinAndFade 1.5s cubic-bezier(0.4, 0, 0.2, 1) 0.5s 2 forwards;
+  z-index: -2;
+}
+
+.fab::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 50%;
+  background: var(--card-bg, #ffffff);
+  z-index: -1;
 }
 
 .fab:hover {
@@ -212,17 +240,19 @@
   }
 }
 
-@keyframes attentionPulse {
+@keyframes spinAndFade {
   0% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6);
-    transform: scale(1);
+    transform: translate(-50%, -50%) rotate(0deg);
+    opacity: 0;
   }
-  70% {
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
-    transform: scale(1.15);
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-    transform: scale(1);
+    transform: translate(-50%, -50%) rotate(360deg);
+    opacity: 0;
   }
 }
