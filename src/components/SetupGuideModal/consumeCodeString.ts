@@ -291,7 +291,7 @@ export const authOptions: NextAuthOptions = {
           const response = (await authApi.post_authLogin({
             email: credentials.email,
             password: credentials.password,
-          })) as LoginResponse;
+          })) as unknown as  LoginResponse;
 
           const { user, tokens } = response.data;
 
