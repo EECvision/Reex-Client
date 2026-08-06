@@ -463,13 +463,13 @@ export const generateAxiosCallBody = (
 
     const url = urlVariableRaw;
 
-    if (methodLower === 'delete') {
-        return "    apiClient." + methodLower + "(`" + url + "`)";
-    }
-
-    if (methodLower === 'get') {
-        if (hasQueryParams) {
-            return "    apiClient." + methodLower + "(`" + url + "`, { params })";
+    if (methodLower === 'delete' || methodLower === 'get') {
+        const configProps: string[] = [];
+        if (hasBody) configProps.push("data: payload");
+        if (hasQueryParams) configProps.push("params");
+        
+        if (configProps.length > 0) {
+            return "    apiClient." + methodLower + "(`" + url + "`, { " + configProps.join(', ') + " })";
         }
         return "    apiClient." + methodLower + "(`" + url + "`)";
     }
@@ -659,7 +659,7 @@ export const generateStandardModuleContent = (
 
             const entityRequestName = toPascalCase(func.name.replace(/^(get|post|put|delete|patch)_/, ""));
             let hasPayloadType = false;
-            const needsPayload = ["post", "put", "patch"].includes(func.method);
+            const needsPayload = ["get", "post", "put", "delete", "patch"].includes(func.method);
 
             // 1. Generate Types (Payload)
             if (needsPayload && func.bodySchema) {
