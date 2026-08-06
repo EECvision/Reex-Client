@@ -48,10 +48,10 @@ export default function SetupGuideModal() {
 
   useEffect(() => {
     setMounted(true);
-    const dismissed = localStorage.getItem("reex_setup_guide_dismissed");
+    const dismissed = sessionStorage.getItem("reex_setup_guide_dismissed");
     if (!dismissed) {
       setMountState("show-modal");
-      localStorage.setItem("reex_setup_guide_dismissed", "true");
+      sessionStorage.setItem("reex_setup_guide_dismissed", "true");
     } else {
       setMountState("show-fab");
     }
@@ -78,7 +78,7 @@ export default function SetupGuideModal() {
 
   const handleDismiss = () => {
     setMountState("show-fab");
-    localStorage.setItem("reex_setup_guide_dismissed", "true");
+    sessionStorage.setItem("reex_setup_guide_dismissed", "true");
   };
 
   const handleRestore = () => {
