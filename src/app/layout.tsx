@@ -18,7 +18,8 @@ export const metadata: Metadata = {
     default: "Reex API Builder",
     template: "%s | Reex API Builder",
   },
-  description: "Generate API integration code for your projects by uploading collections. A comprehensive toolkit for building, testing, and managing API integrations.",
+  description:
+    "Generate API integration code for your projects by uploading collections. A comprehensive toolkit for building, testing, and managing API integrations.",
   keywords: [
     "API",
     "Builder",
@@ -32,17 +33,18 @@ export const metadata: Metadata = {
     "reex sync",
     "reex add",
     "npx reex-cli",
-    "npm reex-cli"
+    "npm reex-cli",
   ],
-  authors: [{ name: "Reex" }],
+  authors: [{ name: "ToolsHQ" }],
   openGraph: {
     title: "Reex API Builder",
-    description: "Generate API integration code for your projects by uploading collections. A comprehensive toolkit for building, testing, and managing API integrations.",
+    description:
+      "Generate API integration code for your projects by uploading collections. A comprehensive toolkit for building, testing, and managing API integrations.",
     url: "https://reex-api-builder.toolshq.app/",
     siteName: "Reex API Builder",
     images: [
       {
-        url: "/og-image.png",
+        url: "https://reex-api-builder.toolshq.app/og-image.png",
         width: 1200,
         height: 630,
         alt: "Reex API Builder Logo",
@@ -54,8 +56,9 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Reex API Builder",
-    description: "Generate API integration code for your projects by uploading collections.",
-    images: ["/og-image.png"],
+    description:
+      "Generate API integration code for your projects by uploading collections.",
+    images: ["https://reex-api-builder.toolshq.app/og-image.png"],
   },
   robots: {
     index: true,
@@ -90,9 +93,7 @@ export default function RootLayout({
             <AuthProvider>
               <QueryProvider>
                 <ToastProvider>
-                  <ProjectProvider>
-                    {children}
-                  </ProjectProvider>
+                  <ProjectProvider>{children}</ProjectProvider>
                 </ToastProvider>
               </QueryProvider>
             </AuthProvider>
