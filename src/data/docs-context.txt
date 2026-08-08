@@ -26,23 +26,23 @@ Reex API Builder eliminates this boilerplate.
 * **Smart API Diffing:** Never get caught off guard by a backend update. Re-import a collection and instantly see exactly what endpoints, payloads, or types were added or removed before you integrate.
 * **Drop-in Authentication:** Seamlessly manage user sessions with pre-built hooks for JWT (Tokens), Cookies, or Next-Auth for React and Next.js developers.
 
-### Core Modules
+### Core Modes
 
-Reex API Builder is composed of three powerful modules to suit different stages of development:
+Reex API Builder operates in three distinct modes to suit different stages of development:
 
-        Project Module
+        Dev Mode
 
-        Directly integrate API collections into your React application.
+        Directly integrate API collections into your React application alongside your local codebase.
 
-        Standalone Module
+        Preview Mode
 
-      Import and manage collections independently.
+        Import and explore collections as a standard API client — no local project required.
 
-        Test Module
+        API Sandbox
 
-        Rapidly test local and remote API endpoints.
+        Rapidly build and test API requests from scratch.
 
-## Project Module > Architecture
+## Dev Mode > Architecture
 ---
 # Architecture
 
@@ -2163,7 +2163,7 @@ export const apiConfig: ReexConfig = {
 };
 ```
 
-## Project Module > Getting Started
+## Dev Mode > Getting Started
 ---
 # Getting Started
 
@@ -2193,7 +2193,7 @@ npm install -g reex-cli
 Navigate to the root directory of your React project and run:
 
 ```bash
-reex-build
+reex start
 ```
 
 Running this command triggers a health check. Reex API Builder detects any missing dependencies and installs them automatically:
@@ -2215,7 +2215,7 @@ On first launch, you will be prompted to grant **Local Network** permissions to 
 > **Note:** To run multiple projects simultaneously, switch ports using the `-p` flag:
 >
 > ```bash
-> reex-build -p 4002
+> reex start -p 4002
 > ```
 
 ### Step 3: Import a Collection & Configure Authentication
@@ -2281,7 +2281,7 @@ Open the Reex API Builder UI and test your endpoints. For every successful reque
 
 Your setup is complete. You can now start using the generated hooks and services in your project.
 
-## Project Module > Hooks
+## Dev Mode > Hooks
 ---
 # Authentication & Custom Hooks
 
@@ -2339,7 +2339,7 @@ The hooks are available from `api-services/hooks`.
 
 > **Note:** If your backend does not require custom headers, you can omit the `setCustomHeaders` call entirely — token storage and header injection are handled automatically as soon as `setTokens` is called.
 
-## Project Module > Key Features
+## Dev Mode > Key Features
 ---
 # Key Features
 
@@ -2363,19 +2363,19 @@ Edit your API definitions in the Reex API Builder UI or directly in your IDE - c
 
 When APIs change, Reex API Builder shows you exactly what's different through a Git-style diff view, giving you full control over what to accept or reject.
 
-## Project Module
+## Dev Mode
 ---
-# Project Module
+# Dev Mode
 
-The Project Module is the flagship experience of Reex API Builder. It establishes a direct link between the Reex API Builder UI and your local React application.
+Dev Mode is the flagship experience of Reex API Builder. It establishes a direct link between the Reex API Builder UI and your local React application.
 
 In this mode, Reex API Builder acts as a companion app that lives alongside your development server. It installs necessary dependencies for API integration, and injects generated API code directly into your project.
 
-## Project Module > Workflow
+## Dev Mode > Workflow
 ---
-# The Project Workflow
+# The Dev Mode Workflow
 
-Project Mode connects the Reex API Builder UI directly to your local codebase, creating a live link between your API specifications and your frontend logic.
+Dev Mode connects the Reex API Builder UI directly to your local codebase, creating a live link between your API specifications and your frontend logic.
 
 ### Two-Way Sync
 
@@ -2411,25 +2411,25 @@ APIs change. When you re-import a collection, Reex API Builder protects your exi
 - **Conflict Detection**: The tool compares the incoming collection against your current definitions.
 - **Diff View**: A side-by-side, Git-style diff view shows exactly what changed — for example, a new `firstName` field added to a payload — so you can accept or reject each update individually.
 
-## Standalone Module > Getting Started
+## Preview Mode > Getting Started
 ---
-# Getting Started with Standalone Mode
+# Getting Started with Preview Mode
 
-Reex API Builder defaults to Standalone Mode when no project is connected. The app operates in one of three modes at any time: **Project Mode**, **Standalone Mode** or **Test Mode**.
+Reex API Builder defaults to Preview Mode when no project is connected. The app operates in one of three modes at any time: **Dev Mode**, **Preview Mode** or **API Sandbox**.
 
-### Launching Standalone Mode
+### Launching Preview Mode
 
-Visit the web app directly to launch in Standalone Mode:
+Visit the web app directly to launch in Preview Mode:
 
 [https://reex-api-builder.toolshq.app/](https://reex-api-builder.toolshq.app/)
 
 No setup is required — the app is ready for you to import and test collections immediately.
 
-### Switching from Project Mode
+### Switching from Dev Mode
 
-If you are currently in Project Mode, click the **"Switch to Standalone Mode"** button in the bottom-right corner of the app.
+If you are currently in Dev Mode, use the **workspace switcher dropdown** in the top navigation bar and select **Preview Mode**.
 
-## Standalone Module > Multiple Collections
+## Preview Mode > Multiple Collections
 ---
 # Working with Multiple Collections
 
@@ -2466,28 +2466,28 @@ Each collection maintains its own base URL and authentication settings. Click an
 
 ---
 
-### Standalone Mode vs. Project Mode
+### Preview Mode vs. Dev Mode
 
-|                             | Standalone Mode | Project Mode |
-| --------------------------- | --------------- | ------------ |
-| Exploring a new API         | ✅              |              |
-| Debugging in isolation      | ✅              |              |
-| Verifying API documentation | ✅              |              |
-| Working with multiple APIs  | ✅              |              |
-| Generated hooks and types   |                 | ✅           |
-| Codebase sync               |                 | ✅           |
-| Version control             |                 | ✅           |
-| CI/CD integration           |                 | ✅           |
+|                             | Preview Mode | Dev Mode |
+| --------------------------- | ------------ | -------- |
+| Exploring a new API         | ✅           |          |
+| Debugging in isolation      | ✅           |          |
+| Verifying API documentation | ✅           |          |
+| Working with multiple APIs  | ✅           |          |
+| Generated hooks and types   |              | ✅       |
+| Codebase sync               |              | ✅       |
+| Version control             |              | ✅       |
+| CI/CD integration           |              | ✅       |
 
-## Standalone Module
+## Preview Mode
 ---
-# Standalone Mode
+# Preview Mode
 
-Standalone Mode allows you to test and explore API collections without connecting to a project. It's perfect for API exploration, debugging, and testing endpoints in isolation.
+Preview Mode allows you to test and explore API collections without connecting to a project. It's perfect for API exploration, debugging, and testing endpoints in isolation.
 
-### What is Standalone Mode?
+### What is Preview Mode?
 
-Standalone Mode is a lightweight, project-independent environment for working with API collections. Unlike Project Mode which integrates directly with your codebase, Standalone Mode operates independently, making it ideal for:
+Preview Mode is a lightweight, project-independent environment for working with API collections. Unlike Dev Mode which integrates directly with your codebase, Preview Mode operates independently, making it ideal for:
 
 - **API Collection Testing**: Test API endpoints without setting up a full project.
 - **Multiple Collections**: Work with multiple API collections simultaneously.
@@ -2497,7 +2497,7 @@ Standalone Mode is a lightweight, project-independent environment for working wi
   npx reex-proxy
 ```
 
-## Standalone Module > Workflow
+## Preview Mode > Workflow
 ---
 # The Workflow
 
@@ -2622,32 +2622,32 @@ interface GetUserResponse {
 
 Click the **Copy** icon to copy the interface and paste it directly into your project.
 
-## Test Module > Getting Started
+## API Sandbox > Getting Started
 ---
-# Getting Started with Text Mode
+# Getting Started with API Sandbox
 
-### Launching Text Mode
+### Launching API Sandbox
 
-Text Mode is available directly in the Reex API Builder web app:
+API Sandbox is available directly in the Reex API Builder web app:
 
 1. Visit [https://reex-api-builder.toolshq.app/](https://reex-api-builder.toolshq.app/)
-2. Click the **Test API** button in the bottom-right corner of the page.
+2. Open the **workspace switcher dropdown** in the top navigation bar and select **API Sandbox**.
 
 ### Switching from Other Modes
 
-If you are currently in Standalone or Project Mode, click the floating **Test API** button in the bottom-right corner to switch to Text Mode.
+If you are currently in Preview Mode or Dev Mode, open the **workspace switcher dropdown** in the top navigation bar and select **API Sandbox** to switch modes.
 
-> **Auto-save enabled:** All your work in Text Mode is automatically saved in real-time. You won't lose progress even if you close the browser.
+> **Auto-save enabled:** All your work in API Sandbox is automatically saved in real-time. You won't lose progress even if you close the browser.
 
-## Test Module
+## API Sandbox
 ---
-# Text Mode (Test Module)
+# API Sandbox
 
-Text Mode is built specifically for API developers who need a fast, flexible scratchpad for testing endpoints on the fly. Unlike Standalone Mode where you import existing collections, Text Mode lets you create and organize requests from scratch.
+API Sandbox is built specifically for API developers who need a fast, flexible scratchpad for testing endpoints on the fly. Unlike Preview Mode where you import existing collections, API Sandbox lets you create and organize requests from scratch.
 
-### What is Text Mode?
+### What is API Sandbox?
 
-Text Mode is a lightweight, developer-focused environment for rapid API testing and experimentation. It's designed for situations where you need to quickly test an endpoint without the overhead of formal API specifications.
+API Sandbox is a lightweight, developer-focused environment for rapid API testing and experimentation. It's designed for situations where you need to quickly test an endpoint without the overhead of formal API specifications.
 
 **Perfect for:**
 
@@ -2659,11 +2659,11 @@ Text Mode is a lightweight, developer-focused environment for rapid API testing 
   npx reex-proxy
 ```
 
-## Test Module > Real Time Sync
+## API Sandbox > Real Time Sync
 ---
 # Real-time Sync
 
-Everything in Text Mode is automatically saved as you work — no manual saving required. A status indicator displays **Saved** once your changes are synced.
+Everything in API Sandbox is automatically saved as you work — no manual saving required. A status indicator displays **Saved** once your changes are synced.
 
 ### What Gets Saved
 
@@ -2676,11 +2676,11 @@ Everything in Text Mode is automatically saved as you work — no manual saving 
 
 Your data is stored in your browser's local storage and synced to the cloud when you are subscribed, so you can pick up exactly where you left off across sessions and devices.
 
-## Test Module > Workflow
+## API Sandbox > Workflow
 ---
 # The Workflow
 
-Text Mode follows a simple create-and-test workflow.
+API Sandbox follows a simple create-and-test workflow.
 
 ### Step 1: Create a Collection
 
