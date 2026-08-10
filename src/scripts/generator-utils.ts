@@ -24,6 +24,7 @@ export interface GeneratorOptions {
     dryRun?: boolean;
     filterModules?: string[];
     filterFunctions?: Map<string, string[]>;
+    deletedFunctions?: Map<string, string[]>;
     forceOverwrite?: string[];
     returnContent?: boolean;
     existingFiles?: Map<string, string>;
@@ -553,19 +554,24 @@ export const processAndMergeModules = (
         const existingFunctions = new Map<string, string>();
         const existingInterfaces = new Map<string, string>();
 
+        const sourceFile = project.createSourceFile(`${mod.name}_temp.ts`, mod.content, { overwrite: true });
+        const variableDecl = sourceFile.getVariableDeclaration(`${mod.name}Api`);
+        const functionsToInclude = filterFunctions?.get(mod.name);
+        const deletedFunctionsList = options.deletedFunctions?.get(mod.name) || [];
+
         if (existingContent) {
             try {
                 const tempSource = project.createSourceFile(`${mod.name}_existing_temp.ts`, existingContent, { overwrite: true });
-                getExistingFunctions(tempSource, mod.name).forEach((val, key) => existingFunctions.set(key, val));
+                getExistingFunctions(tempSource, mod.name).forEach((val, key) => {
+                    if (!deletedFunctionsList.includes(key)) {
+                        existingFunctions.set(key, val);
+                    }
+                });
                 getExistingInterfaces(tempSource).forEach((val, key) => existingInterfaces.set(key, val));
             } catch (e) {
                 console.warn(`Failed to read existing file for preservation: ${e}`);
             }
         }
-
-        const sourceFile = project.createSourceFile(`${mod.name}_temp.ts`, mod.content, { overwrite: true });
-        const variableDecl = sourceFile.getVariableDeclaration(`${mod.name}Api`);
-        const functionsToInclude = filterFunctions?.get(mod.name);
 
         if (variableDecl) {
             const normalizedForceOverwrite = forceOverwrite?.map(k => k.toLowerCase()) || [];
@@ -575,9 +581,18 @@ export const processAndMergeModules = (
                 if (functionsToInclude && functionsToInclude.length > 0) {
                     const propsToRemove = initializer.getProperties().filter((prop: any) => {
                         if (prop.getKind() === SyntaxKind.PropertyAssignment) {
-                            return !functionsToInclude.includes((prop as PropertyAssignment).getName());
+                            const propName = (prop as PropertyAssignment).getName();
+                            return !functionsToInclude.includes(propName) || deletedFunctionsList.includes(propName);
                         }
                         return true;
+                    });
+                    propsToRemove.forEach((prop: any) => prop.remove());
+                } else if (deletedFunctionsList.length > 0) {
+                    const propsToRemove = initializer.getProperties().filter((prop: any) => {
+                        if (prop.getKind() === SyntaxKind.PropertyAssignment) {
+                            return deletedFunctionsList.includes((prop as PropertyAssignment).getName());
+                        }
+                        return false;
                     });
                     propsToRemove.forEach((prop: any) => prop.remove());
                 }

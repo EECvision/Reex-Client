@@ -423,6 +423,13 @@ export const useImportActions = ({
                 }
             });
 
+            const removedFunctionMapObj: Record<string, string[]> = {};
+            removedFunctions.forEach((value, key) => {
+                if (value.size > 0) {
+                    removedFunctionMapObj[key] = Array.from(value);
+                }
+            });
+
             // Only delete modules explicitly marked for removal
             const deletedModules = Array.from(removedModules);
 
@@ -476,6 +483,7 @@ export const useImportActions = ({
                 modules: Array.from(selectedModules),
                 deletedModules,
                 functions: functionMapObj,
+                deletedFunctions: removedFunctionMapObj,
                 forceOverwrite: Array.from(forceOverwriteFunctions),
                 existingModules,
                 proposedClients,

@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
         const modulesStr = formData.get('modules') as string;
         const deletedModulesStr = formData.get('deletedModules') as string;
         const functionsStr = formData.get('functions') as string;
+        const deletedFunctionsStr = formData.get('deletedFunctions') as string;
         const forceOverwriteStr = formData.get('forceOverwrite') as string;
         const existingModulesStr = formData.get('existingModules') as string;
         const targetDir = formData.get('targetDir') as string;
@@ -54,6 +55,16 @@ export async function POST(req: NextRequest) {
             }
         }
 
+        let deletedFunctions: Map<string, string[]> | undefined;
+        if (deletedFunctionsStr) {
+            try {
+                const obj = JSON.parse(deletedFunctionsStr);
+                deletedFunctions = new Map(Object.entries(obj));
+            } catch (e) {
+                console.warn("Failed to parse deletedFunctions filter", e);
+            }
+        }
+
         // Handle File
         const fileBuffer = file ? Buffer.from(await file.arrayBuffer()) : Buffer.from("");
         const fileName = file ? file.name : "unknown";
@@ -74,6 +85,7 @@ export async function POST(req: NextRequest) {
             returnContent: true,
             filterModules: modules.length > 0 ? modules : undefined,
             filterFunctions: filterFunctions,
+            deletedFunctions: deletedFunctions,
             forceOverwrite: forceOverwrite,
             existingFiles: existingFilesMap
         };
