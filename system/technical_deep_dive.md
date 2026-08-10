@@ -183,7 +183,9 @@ For each module in the manifest, generates a `use{Module}Queries.ts` file contai
     return useApiMutation(usersApi.post_createUser, {
       ...options,
       onSuccess: (data, variables, context) => {
-        queryClient.invalidateQueries({ queryKey: usersKeys.all });
+        if (options?.invalidate !== false) {
+          queryClient.invalidateQueries({ queryKey: usersKeys.all });
+        }
         (options?.onSuccess as any)?.(data, variables, context);
       },
     });

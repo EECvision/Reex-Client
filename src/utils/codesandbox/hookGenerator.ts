@@ -91,18 +91,34 @@ export function toHookContent(
 "  );";
   }
 
+  const isDelete = methodName.startsWith("delete_");
+
   return jsDoc + "export const " + hookName + " = (\n" +
 "  options?: Omit<\n" +
 "    UseMutationOptions<" + apiData + ", Error, " + apiVars + ">,\n" +
 "    \"mutationFn\"\n" +
-"  >\n" +
+"  > & { invalidate?: boolean }\n" +
 ") => {\n" +
 "  const queryClient = useQueryClient();\n" +
 "\n" +
 "  return useApiMutation(" + apiMethod + ", {\n" +
 "    ...options,\n" +
 "    onSuccess: (data, variables, context) => {\n" +
-"      queryClient.invalidateQueries({ queryKey: " + keyFactoryName + ".all });\n" +
+"      if (options?.invalidate !== false) {\n" +
+(isDelete ? 
+"        // Automatically remove detail queries matching these exact variables to prevent 404 refetches\n" +
+"        if (variables !== undefined) {\n" +
+"          queryClient.removeQueries({\n" +
+"            predicate: (query) => {\n" +
+"              return (\n" +
+"                query.queryKey[0] === " + keyFactoryName + ".all[0] &&\n" +
+"                JSON.stringify(query.queryKey[2]) === JSON.stringify(variables)\n" +
+"              );\n" +
+"            },\n" +
+"          });\n" +
+"        }\n" : "") +
+"        queryClient.invalidateQueries({ queryKey: " + keyFactoryName + ".all });\n" +
+"      }\n" +
 "      (options?.onSuccess as any)?.(data, variables, context);\n" +
 "    },\n" +
 "  });\n" +

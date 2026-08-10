@@ -1634,14 +1634,16 @@ Auto-generated hooks based on your `definitions/`.
       options?: Omit<
         UseMutationOptions<ApiData, Error, ApiVars>,
         "mutationFn"
-      >
+      > & { invalidate?: boolean }
     ) => {
       const queryClient = useQueryClient();
 
       return useApiMutation(authenticationApi.post_authSignup, {
         ...options,
         onSuccess: (data, variables, context) => {
-          queryClient.invalidateQueries({ queryKey: authenticationKeys.all });
+          if (options?.invalidate !== false) {
+            queryClient.invalidateQueries({ queryKey: authenticationKeys.all });
+          }
           (options?.onSuccess as any)?.(data, variables, context);
         },
       });
@@ -1651,14 +1653,16 @@ Auto-generated hooks based on your `definitions/`.
       options?: Omit<
         UseMutationOptions<ApiData, Error, ApiVars>,
         "mutationFn"
-      >
+      > & { invalidate?: boolean }
     ) => {
       const queryClient = useQueryClient();
 
       return useApiMutation(authenticationApi.post_authLogin, {
         ...options,
         onSuccess: (data, variables, context) => {
-          queryClient.invalidateQueries({ queryKey: authenticationKeys.all });
+          if (options?.invalidate !== false) {
+            queryClient.invalidateQueries({ queryKey: authenticationKeys.all });
+          }
           (options?.onSuccess as any)?.(data, variables, context);
         },
       });
@@ -1668,14 +1672,16 @@ Auto-generated hooks based on your `definitions/`.
       options?: Omit<
         UseMutationOptions<ApiData, Error, ApiVars>,
         "mutationFn"
-      >
+      > & { invalidate?: boolean }
     ) => {
       const queryClient = useQueryClient();
 
       return useApiMutation(authenticationApi.post_authLogout, {
         ...options,
         onSuccess: (data, variables, context) => {
-          queryClient.invalidateQueries({ queryKey: authenticationKeys.all });
+          if (options?.invalidate !== false) {
+            queryClient.invalidateQueries({ queryKey: authenticationKeys.all });
+          }
           (options?.onSuccess as any)?.(data, variables, context);
         },
       });
@@ -1718,14 +1724,16 @@ Auto-generated hooks based on your `definitions/`.
       options?: Omit<
         UseMutationOptions<ApiData, Error, ApiVars>,
         "mutationFn"
-      >
+      > & { invalidate?: boolean }
     ) => {
       const queryClient = useQueryClient();
 
       return useApiMutation(todosApi.post_todos, {
         ...options,
         onSuccess: (data, variables, context) => {
-          queryClient.invalidateQueries({ queryKey: todosKeys.all });
+          if (options?.invalidate !== false) {
+            queryClient.invalidateQueries({ queryKey: todosKeys.all });
+          }
           (options?.onSuccess as any)?.(data, variables, context);
         },
       });
