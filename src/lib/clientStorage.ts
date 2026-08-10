@@ -176,4 +176,24 @@ export class ClientStorage {
             console.error('[ClientStorage] Failed to save execution result:', e);
         }
     }
+
+    // --- Assistant Message Caching ---
+    static async getAssistantMessages<T>(): Promise<T[]> {
+        return this.get<T>('assistant_messages');
+    }
+
+    static async saveAssistantMessages<T>(messages: T[]): Promise<void> {
+        if (typeof window === 'undefined') return;
+        try {
+            // Apply FIFO Cap (keep latest 20 items)
+            const trimmed = messages.length > 20 ? messages.slice(-20) : messages;
+            await this.save('assistant_messages', trimmed);
+        } catch (e) {
+            console.error('[ClientStorage] Failed to save assistant messages:', e);
+        }
+    }
+
+    static async clearAssistantMessages(): Promise<void> {
+        return this.clear('assistant_messages');
+    }
 }

@@ -130,6 +130,44 @@
   color: var(--text-primary);
 }
 
+.tabNav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--background);
+  flex-shrink: 0;
+}
+
+.tabButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tabButton:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.tabActive {
+  background-color: var(--hover-bg);
+  color: var(--primary-color, #0070f3);
+  font-weight: 600;
+}
+
 .body {
   flex: 1;
   overflow-y: auto;
@@ -137,6 +175,29 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.faqSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.faqHeader {
+  margin-bottom: 0.25rem;
+}
+
+.faqTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+}
+
+.faqSubtitle {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0;
 }
 
 .disclaimer {
