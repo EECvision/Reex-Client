@@ -34,7 +34,7 @@
   background-color: var(--hover-bg, #f9fafb);
 }
 
-:global([data-theme="dark"]) .moduleMainRow:hover {
+[data-theme="dark"] .moduleMainRow:hover {
   background-color: rgba(59, 130, 246, 0.1);
 }
 
@@ -120,7 +120,7 @@
   color: var(--text-primary, #1f2937);
 }
 
-:global([data-theme="dark"]) .functionItem:hover {
+[data-theme="dark"] .functionItem:hover {
   background-color: rgba(59, 130, 246, 0.1);
 }
 
@@ -154,6 +154,11 @@
   padding: 2px 6px;
 }
 
+[data-theme="dark"] .overwriteAction {
+  background-color: rgba(234, 179, 8, 0.1);
+  border-color: rgba(234, 179, 8, 0.2);
+}
+
 .overwriteLabel {
   display: flex;
   align-items: center;
@@ -163,6 +168,10 @@
   font-weight: 500;
   color: #b45309;
   user-select: none;
+}
+
+[data-theme="dark"] .overwriteLabel {
+  color: #fde047;
 }
 
 .overwriteText {
@@ -194,7 +203,7 @@
   background-color: #fef2f2;
 }
 
-:global([data-theme="dark"]) .markedForRemoval {
+[data-theme="dark"] .markedForRemoval {
   background-color: var(--error-bg, rgba(239, 68, 68, 0.1));
   border-color: rgba(239, 68, 68, 0.3);
 }
@@ -223,7 +232,7 @@
   background-color: transparent;
 }
 
-:global([data-theme="dark"]) .removeBtnInner:hover:not(:disabled) {
+[data-theme="dark"] .removeBtnInner:hover:not(:disabled) {
   color: var(--error-color, #f87171);
   background-color: var(--error-bg, rgba(239, 68, 68, 0.1));
 }

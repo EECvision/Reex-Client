@@ -11,7 +11,7 @@ export const MobileGuard = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const check = () => {
       const isMobileUA = /Mobi|Android|iPhone|iPad|iPod/i.test(
-        navigator.userAgent
+        navigator.userAgent,
       );
       setIsMobile(window.innerWidth < BREAKPOINT && isMobileUA);
     };
@@ -66,10 +66,10 @@ export const MobileGuard = ({ children }: { children: React.ReactNode }) => {
                 <path d="M8 21h8M12 17v4" />
               </svg>
             </div>
-            <h1 className={styles.title}>Currently Desktop Only</h1>
+            {/* <h1 className={styles.title}>Open Reex API Builder on a desktop</h1> */}
             <p className={styles.message}>
               Please open Reex API Builder on a desktop or laptop for the best
-              experience.
+              developer experience.
             </p>
           </div>
         </div>
