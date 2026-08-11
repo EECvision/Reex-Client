@@ -81,14 +81,14 @@ Contains internal types and metadata used for project synchronization and type e
     ```typescript filename=".reex/config.ts"
     // @internal — No changes needed
     /* eslint-disable @typescript-eslint/no-explicit-any */
-
+    
     /**
      * Enforces the basic structure of Reex definition files.
      * Use with the `satisfies` operator for maximum IntelliSense:
      * export const myApi = { ... } satisfies ReexDefinition;
      */
     export type ReexDefinition = Record<string, (...args: any[]) => Promise<any>>;
-
+    
     /**
      * Enforces the structure of the Reex configuration file (api.config.ts).
      * Use with the `satisfies` operator for maximum IntelliSense.
@@ -98,6 +98,7 @@ Contains internal types and metadata used for project synchronization and type e
       unwrapResponseData: boolean;
       enableApiLogging: boolean;
       auth: {
+        loginRoute?: string;
         refreshEndpoint: string;
         accessTokenKey: string;
         refreshTokenKey: string;
@@ -106,6 +107,7 @@ Contains internal types and metadata used for project synchronization and type e
         refreshWithToken: (storedRefreshToken: string) => Promise<import("axios").AxiosResponse<any>>;
       };
     }
+    
     ```
 
     **`.reex/metadata.json`**: Project metadata.
@@ -1744,75 +1746,116 @@ Auto-generated hooks based on your `definitions/`.
 
 **`useAuthSession.ts`**: Utility hook for useAuthSession.
 ```typescript filename="hooks/useAuthSession.ts"
-/**
- * Hook to manage authentication state, active sessions, and logout teardown.
- *
- * @example
- * const { status, isAuthenticated, setSession, clearSession } = useAuthSession();
- * if (status === "loading") return <Loading />;
- * if (!isAuthenticated) return <Login />;
- */
-export const useAuthSession = () => {
-  const provider = getActiveProvider();
-  const queryClient = useQueryClient();
-
-  const [status, setStatus] = useState<AuthStatus>("loading");
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const token = await provider?.getToken?.();
-        setStatus(token ? "authenticated" : "unauthenticated");
-      } catch {
+    // @internal — No changes needed
+    import { useCallback, useEffect, useState } from "react";
+    import { useQueryClient } from "@tanstack/react-query";
+    import { getActiveProvider } from "../auth-methods/manager";
+    import { apiConfig } from "../api.config";
+    
+    export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
+    
+    /**
+     * Hook to manage authentication state, active sessions, and logout teardown.
+     *
+     * @example
+     * const { status, isAuthenticated, setSession, clearSession } = useAuthSession();
+     * if (status === "loading") return <Loading />;
+     * if (!isAuthenticated) return <Login />;
+     */
+    export const useAuthSession = () => {
+      const provider = getActiveProvider();
+      const queryClient = useQueryClient();
+    
+      const [status, setStatus] = useState<AuthStatus>("loading");
+    
+      useEffect(() => {
+        const checkAuth = async () => {
+          try {
+            const token = await provider?.getToken?.();
+            setStatus(token ? "authenticated" : "unauthenticated");
+          } catch {
+            setStatus("unauthenticated");
+          }
+        };
+    
+        checkAuth();
+    
+        // Listen to dispatch events to update UI instantly without refresh
+        const handleLogin = () => setStatus("authenticated");
+        const handleLogout = () => {
+          provider?.clearTokens?.();
+          queryClient.cancelQueries();
+          queryClient.clear();
+          setStatus("unauthenticated");
+    
+          if (typeof window !== "undefined") {
+            const route = apiConfig.auth?.loginRoute || window.origin;
+            window.location.href = route;
+          }
+        };
+    
+        if (typeof window !== "undefined") {
+          window.addEventListener("auth:login", handleLogin);
+          window.addEventListener("auth:logout", handleLogout);
+        }
+    
+        return () => {
+          if (typeof window !== "undefined") {
+            window.removeEventListener("auth:login", handleLogin);
+            window.removeEventListener("auth:logout", handleLogout);
+          }
+        };
+      }, [provider, queryClient]);
+    
+      const getToken = useCallback(
+        () => provider?.getToken?.() ?? null,
+        [provider],
+      );
+    
+      const setSession = useCallback(
+        (
+          tokens?: { accessToken?: string; refreshToken?: string },
+          headers?: Record<string, string>,
+        ) => {
+          if (provider?.setSession) {
+            provider.setSession(tokens, headers);
+          } else if (tokens?.accessToken && provider?.setTokens) {
+            provider.setTokens(tokens as { accessToken: string; refreshToken?: string });
+            if (headers && provider?.setCustomHeaders) {
+              provider.setCustomHeaders(headers);
+            }
+          }
+          setStatus("authenticated");
+        },
+        [provider],
+      );
+    
+      const clearSession = useCallback(async () => {
+        provider?.clearTokens?.();
+    
+        // Clear React Query cache
+        await queryClient.cancelQueries();
+        queryClient.clear();
+    
         setStatus("unauthenticated");
-      }
+    
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("auth:logout"));
+          const route = apiConfig.auth?.loginRoute || window.origin;
+          window.location.href = route;
+        }
+      }, [provider, queryClient]);
+    
+      return {
+        status,
+        isAuthenticated: status === "authenticated",
+        isLoading: status === "loading",
+        getToken,
+        setSession,
+        clearSession,
+      };
     };
-
-    checkAuth();
-
-    // Listen to dispatch events to update UI instantly without refresh
-    const handleLogin = () => setStatus("authenticated");
-    const handleLogout = () => {
-      provider?.clearTokens?.();
-      queryClient.cancelQueries();
-      queryClient.clear();
-      setStatus("unauthenticated");
-    };
-
-    if (typeof window !== "undefined") {
-      window.addEventListener("auth:login", handleLogin);
-      window.addEventListener("auth:logout", handleLogout);
-    }
-
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener("auth:login", handleLogin);
-        window.removeEventListener("auth:logout", handleLogout);
-      }
-    };
-  }, [provider, queryClient]);
-
-  const clearSession = useCallback(async () => {
-    provider?.clearTokens?.();
-
-    // Clear React Query cache
-    await queryClient.cancelQueries();
-    queryClient.clear();
-
-    setStatus("unauthenticated");
-
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new Event("auth:logout"));
-    }
-  }, [provider, queryClient]);
-
-  return {
-    status,
-    isAuthenticated: status === "authenticated",
-    isLoading: status === "loading",
-    clearSession,
-  };
-};
+    
 ```
 
 **`useNotification.ts`**: Utility hook for useNotification.
@@ -2086,89 +2129,93 @@ This file is designed specifically for you to edit. It contains constants and ma
     View code
 
     ```typescript filename="api.config.ts"
-// @user-config — Update routes, keys, and endpoints to match your backend.
-
-import axios from "axios";
-import { type ReexConfig } from "./.reex/config";
-
-// Replace this with your API base URL or an environment variable
-// (e.g. process.env.NEXT_PUBLIC_API_URL).
-const BASE_URL = "https://example.com/api/v1";
-
-export const apiConfig: ReexConfig = {
-  baseURL: BASE_URL,
-
-  // Set to `true` if your API wraps every response in a top-level `data` property.
-  // When enabled, also turn on "Unwrap Response Data" in the Reex UI before
-  // saving or copying generated response interfaces.
-  unwrapResponseData: false,
-
-  // Enable request/response logging.
-  // For development only, consider:
-  //   process.env.NODE_ENV === "development"
-  // or
-  //   import.meta.env.DEV
-  enableApiLogging: false,
-
-  auth: {
-    // ---------------------------------------------------------------------------
-    // General authentication configuration
-    // ---------------------------------------------------------------------------
-
-    // Refresh token endpoint. Update this to match your backend.
-    refreshEndpoint: `${BASE_URL}/auth/refresh`,
-
-    // ---------------------------------------------------------------------------
-    // JWT / Bearer token authentication
-    // Use these options when the `ReexProvider` auth strategy is `"jwt"`.
-    // ---------------------------------------------------------------------------
-
-    // Send the refresh token to your backend to obtain a new access token.
-    // Rename `refreshToken` in the request body if your backend expects
-    // a different field name (e.g. `refresh_token`).
-    refreshWithToken: async (storedRefreshToken: string) =>
-      axios.post(apiConfig.auth.refreshEndpoint, {
-        refreshToken: storedRefreshToken,
-      }),
-
-    // Extract authentication tokens from your backend response.
-    //
-    // Note: `responseBody` is affected by the `unwrapResponseData` setting.
-    // - When `unwrapResponseData` is `true`, `responseBody` contains the
-    //   unwrapped `data` object.
-    // - When `unwrapResponseData` is `false`, `responseBody` contains the
-    //   full response body.
-    //
-    // Update these paths to match your API response structure.
-    extractTokens: (responseBody: Record<string, unknown>) => ({
-      accessToken: responseBody?.accessToken as string | undefined,
-      refreshToken: responseBody?.refreshToken as string | undefined,
-    }),
-
-    // Storage key names for authentication tokens.
-    // Change these if you prefer different key names.
-    //
-    // Note: The access token is stored in memory by default.
-    // It is only persisted to localStorage if your backend does not
-    // return a refresh token.
-    accessTokenKey: "access_token",
-    refreshTokenKey: "refresh_token",
-
-    // ---------------------------------------------------------------------------
-    // Cookie-based authentication
-    // Use this when the `ReexProvider` auth strategy is `"cookie"`.
-    // ---------------------------------------------------------------------------
-
-    // Request a new access token using HttpOnly cookies.
-    refreshWithCookie: async () =>
-      axios.post(apiConfig.auth.refreshEndpoint, undefined, {
-        withCredentials: true,
-
-        // Add any headers required by your backend when refreshing tokens.
-        // headers: { "X-Client-ID": "1234" },
-      }),
-  },
-};
+    // @user-config — Update routes, keys, and endpoints to match your backend.
+    
+    import axios from "axios";
+    import { type ReexConfig } from "./.reex/config";
+    
+    // Replace this with your API base URL or an environment variable
+    // (e.g. process.env.NEXT_PUBLIC_API_URL).
+    const BASE_URL = "https://example.com/api/v1";
+    
+    export const apiConfig: ReexConfig = {
+      baseURL: BASE_URL,
+    
+      // Set to `true` if your API wraps every response in a top-level `data` property.
+      // When enabled, also turn on "Unwrap Response Data" in the Reex UI before
+      // saving or copying generated response interfaces.
+      unwrapResponseData: false,
+    
+      // Enable request/response logging.
+      // For development only, consider:
+      //   process.env.NODE_ENV === "development"
+      // or
+      //   import.meta.env.DEV
+      enableApiLogging: false,
+    
+      auth: {
+        // ---------------------------------------------------------------------------
+        // General authentication configuration
+        // ---------------------------------------------------------------------------
+    
+        // The route users will be redirected to when logged out.
+        // If left undefined, it defaults to the application root (window.origin).
+        loginRoute: "/login",
+    
+        // Refresh token endpoint. Update this to match your backend.
+        refreshEndpoint: `${BASE_URL}/auth/refresh`,
+    
+        // ---------------------------------------------------------------------------
+        // JWT / Bearer token authentication
+        // Use these options when the `ReexProvider` auth strategy is `"jwt"`.
+        // ---------------------------------------------------------------------------
+    
+        // Send the refresh token to your backend to obtain a new access token.
+        // Rename `refreshToken` in the request body if your backend expects
+        // a different field name (e.g. `refresh_token`).
+        refreshWithToken: async (storedRefreshToken: string) =>
+          axios.post(apiConfig.auth.refreshEndpoint, {
+            refreshToken: storedRefreshToken,
+          }),
+    
+        // Extract authentication tokens from your backend response.
+        //
+        // Note: `responseBody` is affected by the `unwrapResponseData` setting.
+        // - When `unwrapResponseData` is `true`, `responseBody` contains the
+        //   unwrapped `data` object.
+        // - When `unwrapResponseData` is `false`, `responseBody` contains the
+        //   full response body.
+        //
+        // Update these paths to match your API response structure.
+        extractTokens: (responseBody: Record<string, unknown>) => ({
+          accessToken: responseBody?.accessToken as string | undefined,
+          refreshToken: responseBody?.refreshToken as string | undefined,
+        }),
+    
+        // Storage key names for authentication tokens.
+        // Change these if you prefer different key names.
+        //
+        // Note: The access token is stored in memory by default.
+        // It is only persisted to localStorage if your backend does not
+        // return a refresh token.
+        accessTokenKey: "access_token",
+        refreshTokenKey: "refresh_token",
+    
+        // ---------------------------------------------------------------------------
+        // Cookie-based authentication
+        // Use this when the `ReexProvider` auth strategy is `"cookie"`.
+        // ---------------------------------------------------------------------------
+    
+        // Request a new access token using HttpOnly cookies.
+        refreshWithCookie: async () =>
+          axios.post(apiConfig.auth.refreshEndpoint, undefined, {
+            withCredentials: true,
+    
+            // Add any headers required by your backend when refreshing tokens.
+            // headers: { "X-Client-ID": "1234" },
+          }),
+      },
+    };
 ```
 
 ## Dev Mode > Getting Started
