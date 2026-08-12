@@ -31,6 +31,9 @@ export const parseValue = (value: any, type?: string) => {
       return parsed;
     } catch {
       if (isArrayType && value.trim() !== "") {
+        if (value.includes(",")) {
+            return value.split(",").map((s: string) => s.trim());
+        }
         return [value];
       }
       return value;

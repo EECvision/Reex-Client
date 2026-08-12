@@ -286,7 +286,7 @@ const QuerySection: React.FC<QuerySectionProps> = ({
               const renderParamNode = (prop: EndpointArgProperty | EndpointArg, path: string, depth: number): React.ReactNode => {
                 const hasChildren = prop.properties && prop.properties.length > 0;
                 const isArray = prop.type?.includes('[]') || prop.type?.toLowerCase().includes('array') || prop.type?.toLowerCase().includes('list');
-                const basePath = isArray ? `${path}.0` : path;
+                const basePath = isArray && hasChildren ? `${path}.0` : path;
 
                 if (hasChildren) {
                   return (

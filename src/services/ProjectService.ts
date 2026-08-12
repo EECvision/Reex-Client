@@ -21,7 +21,8 @@ import {
     TypeLiteralNode,
     InterfaceDeclaration,
     TypeAliasDeclaration,
-    UnionTypeNode
+    UnionTypeNode,
+    ArrayTypeNode
 } from "ts-morph";
 
 interface EndpointMetadata {
@@ -281,6 +282,15 @@ class ProjectService {
 
         const kind = typeNode.getKind();
 
+        if (kind === SyntaxKind.ArrayType) {
+            const elementType = (typeNode as ArrayTypeNode).getElementTypeNode();
+            const nested = this.expandTypeRecursively(elementType, sourceFile);
+            if (nested) {
+                return { ...nested, type: typeNode.getText() };
+            }
+            return null;
+        }
+
         if (kind === SyntaxKind.UnionType) {
             const unionNode = typeNode as UnionTypeNode;
             const memberNodes = unionNode.getTypeNodes();
@@ -317,7 +327,18 @@ class ProjectService {
         }
 
         if (kind === SyntaxKind.TypeReference) {
-            const typeName = (typeNode as any).getTypeName().getText();
+            const typeRef = typeNode as any;
+            const typeName = typeRef.getTypeName().getText();
+
+            if (typeName === "Array" && typeRef.getTypeArguments().length > 0) {
+                const elementType = typeRef.getTypeArguments()[0];
+                const nested = this.expandTypeRecursively(elementType, sourceFile);
+                if (nested) {
+                    return { ...nested, type: typeNode.getText() };
+                }
+                return null;
+            }
+
             const declaration =
                 sourceFile.getInterfaces().find((i) => i.getName() === typeName) ||
                 sourceFile.getTypeAliases().find((t) => t.getName() === typeName);

@@ -41,7 +41,8 @@ const getLeafNodes = (args: any[]) => {
     
     const traverse = (prop: any, currentPath: string) => {
         const isArray = prop.type?.includes('[]') || prop.type?.toLowerCase().includes('array') || prop.type?.toLowerCase().includes('list');
-        const basePath = isArray ? `${currentPath}.0` : currentPath;
+        const hasChildren = prop.properties && prop.properties.length > 0;
+        const basePath = isArray && hasChildren ? `${currentPath}.0` : currentPath;
 
         if (prop.properties && prop.properties.length > 0) {
             prop.properties.forEach((child: any) => {
@@ -289,13 +290,29 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             } else if (isMultipart) {
                 // Build FormData for multipart requests
                 const formData = new FormData();
-                Object.entries(remainingData).forEach(([k, v]) => {
-                    if (v instanceof File) {
-                        formData.append(k, v);
-                    } else if (v !== undefined && v !== null) {
-                        formData.append(k, typeof v === 'object' ? JSON.stringify(v) : String(v));
+
+                const appendFormData = (data: any, rootName: string) => {
+                    if (data instanceof File) {
+                        formData.append(rootName, data);
+                    } else if (Array.isArray(data)) {
+                        for (let i = 0; i < data.length; i++) {
+                            appendFormData(data[i], `${rootName}[${i}]`);
+                        }
+                    } else if (typeof data === 'object' && data !== null) {
+                        for (const key in data) {
+                            if (Object.prototype.hasOwnProperty.call(data, key)) {
+                                appendFormData(data[key], `${rootName}[${key}]`);
+                            }
+                        }
+                    } else if (data !== undefined && data !== null) {
+                        formData.append(rootName, String(data));
                     }
+                };
+
+                Object.entries(remainingData).forEach(([k, v]) => {
+                    appendFormData(v, k);
                 });
+                
                 requestData = formData;
                 // Don't set Content-Type for FormData - browser will set it with boundary
             }
