@@ -30,6 +30,8 @@ import {
 import { useRouter } from "next/navigation";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
 import { BaseUrlInput } from "./BaseUrlInput";
+import { useAuth } from "@/providers/AuthContext";
+import LoginModal from "../LoginModal/LoginModal";
 
 interface NavbarProps {
   selectedEndpoint: {
@@ -105,6 +107,8 @@ const Navbar: React.FC<NavbarProps> = ({
   }, []);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const { isAuthenticated } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Reset mobile states when menu closes
   useEffect(() => {
@@ -327,7 +331,13 @@ const Navbar: React.FC<NavbarProps> = ({
             >
               <DropdownMenu.Item
                 className={styles.dropdownItem}
-                onClick={onImportClick}
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    setShowLoginModal(true);
+                    return;
+                  }
+                  onImportClick();
+                }}
               >
                 <Download size={16} />
                 Import File
@@ -335,6 +345,10 @@ const Navbar: React.FC<NavbarProps> = ({
               <DropdownMenu.Item
                 className={styles.dropdownItem}
                 onClick={() => {
+                  if (!isAuthenticated) {
+                    setShowLoginModal(true);
+                    return;
+                  }
                   if (url) {
                     onFetchUrl(url);
                   } else if (onOpenFetchModal) {
@@ -352,7 +366,13 @@ const Navbar: React.FC<NavbarProps> = ({
               {onOpenPostmanModal && (
                 <DropdownMenu.Item
                   className={styles.dropdownItem}
-                  onClick={onOpenPostmanModal}
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      setShowLoginModal(true);
+                      return;
+                    }
+                    onOpenPostmanModal();
+                  }}
                 >
                   <Send size={16} />
                   Import from Postman
@@ -438,6 +458,10 @@ const Navbar: React.FC<NavbarProps> = ({
               <Button
                 variant="ghost"
                 onClick={() => {
+                  if (!isAuthenticated) {
+                    setShowLoginModal(true);
+                    return;
+                  }
                   if (url) {
                     onFetchUrl(url);
                   } else if (onOpenFetchModal) {
@@ -460,6 +484,10 @@ const Navbar: React.FC<NavbarProps> = ({
               <Button
                 variant="ghost"
                 onClick={() => {
+                  if (!isAuthenticated) {
+                    setShowLoginModal(true);
+                    return;
+                  }
                   onImportClick();
                   setIsMobileMenuOpen(false);
                 }}
@@ -504,6 +532,11 @@ const Navbar: React.FC<NavbarProps> = ({
           </>,
           document.body,
         )}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message="You need to be signed in to import or update a collection."
+      />
     </nav>
   );
 };

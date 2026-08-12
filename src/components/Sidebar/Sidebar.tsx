@@ -25,6 +25,8 @@ import { Select } from "../ui/Select/Select";
 import Logo from "../Logo/Logo";
 import UserMenu from "../UserMenu/UserMenu";
 import ContextMenu from "../ui/ContextMenu/ContextMenu";
+import { useAuth } from "@/providers/AuthContext";
+import LoginModal from "../LoginModal/LoginModal";
 
 // ... existing code ...
 
@@ -97,6 +99,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedEndpointId, setCopiedEndpointId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, endpoint: EndpointInfo } | null>(null);
+  const { isAuthenticated } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
   const originalNameRef = useRef<string>("");
@@ -373,6 +377,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     className={styles.dropdownItem}
                                     onClick={(e) => {
                                       e.stopPropagation();
+                                      if (!isAuthenticated) {
+                                        setShowLoginModal(true);
+                                        return;
+                                      }
                                       onUpdateCollection(group.id);
                                     }}
                                   >
@@ -600,6 +608,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         onClose={() => setContextMenu(null)}
       />
     )}
+    <LoginModal
+      isOpen={showLoginModal}
+      onClose={() => setShowLoginModal(false)}
+      message="You need to be signed in to import or update a collection."
+    />
     </>
   );
 };

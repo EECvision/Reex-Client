@@ -394,7 +394,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
               </Button>
               <Button
                 onClick={() => {
-                  if (isStandaloneMode && !isAuthenticated) {
+                  if (!isAuthenticated) {
                     setShowLoginModal(true);
                     return;
                   }
@@ -691,7 +691,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
       <LoginModal
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
-        message="You need to be signed in to update cloud collections."
+        message="You need to be signed in to import or update a collection."
       />
 
       <LimitReachedModal
