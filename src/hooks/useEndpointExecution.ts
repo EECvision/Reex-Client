@@ -4,6 +4,7 @@ import { api } from "@/services/api";
 import { EndpointInfo } from "@/types";
 import { isLocalhostUrl } from "@/lib/urlUtils";
 import { useSettings } from "@/providers/SettingsContext";
+import { parseValue } from "@/utils/parseValue";
 
 type InputMode = "form" | "raw";
 
@@ -93,34 +94,6 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
     const [executedCurls, setExecutedCurls] = useState<Record<string, string | null>>({});
 
     const currentKey = selectedEndpoint ? `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}` : null;
-
-    const parseValue = (value: any, type?: string) => {
-        if (value instanceof File || typeof value !== 'string') {
-            return value;
-        }
-        const t = (type || "").toLowerCase();
-        
-        if (t.includes('number') || t.includes('int') || t.includes('float') || t.includes('double')) {
-            const num = Number(value);
-            return !isNaN(num) ? num : value;
-        }
-        if (t.includes('bool')) {
-            if (value.toLowerCase() === 'true') return true;
-            if (value.toLowerCase() === 'false') return false;
-        }
-        if (t.includes('array') || t.includes('[]') || t.includes('list') || t.includes('object') || t.includes('map') || t.includes('dict')) {
-            try { return JSON.parse(value); } catch { return value; }
-        }
-        
-        // If type is empty/unknown, loosely parse JSON structures for backward compatibility
-        if (!t) {
-            const trimmed = value.trim();
-            if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-                try { return JSON.parse(trimmed); } catch { return value; }
-            }
-        }
-        return value;
-    };
 
     const handleParamChange = (paramName: string, value: any, type?: string) => {
         if (!selectedEndpoint) return;
