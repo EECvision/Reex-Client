@@ -105,8 +105,13 @@ const mapToStandardIR = (
         }));
       }
 
-      // Body Schema (Example/Raw)
-      const bodySchema = (request.body && request.body.raw) ? { raw: request.body.raw } : undefined;
+      // Body Schema (raw JSON or formdata)
+      let bodySchema: any = undefined;
+      if (request.body?.raw) {
+        bodySchema = { raw: request.body.raw };
+      } else if (request.body?.mode === 'formdata' && Array.isArray(request.body.formdata) && request.body.formdata.length > 0) {
+        bodySchema = { formdata: request.body.formdata };
+      }
 
       // Content Type from body mode
       let contentType = 'application/json'; // default

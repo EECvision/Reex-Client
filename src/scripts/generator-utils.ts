@@ -114,7 +114,10 @@ export const toPascalCase = (str: string) => {
 };
 
 export const sanitizeModuleName = (name: string) => {
-    return toCamelCase(name).replace(/[^a-zA-Z0-9]/g, "");
+    let sanitized = toCamelCase(name).replace(/[^a-zA-Z0-9]/g, "");
+    sanitized = sanitized.replace(/^[0-9]+/g, "");
+    if (!sanitized) return "default";
+    return sanitized.charAt(0).toLowerCase() + sanitized.slice(1);
 };
 
 export const calculateFunctionName = (method: string, operationId: string): string => {
@@ -941,7 +944,25 @@ export const inferTypeFromExample = (value: any): string => {
 };
 
 export const generateTypesFromPostmanBody = (body: any, entityName: string): string => {
-    if (!body || !body.raw) return "";
+    if (!body) return "";
+
+    // Handle formdata mode (Postman multipart/form-data body)
+    if (body.formdata && Array.isArray(body.formdata) && body.formdata.length > 0) {
+        const fields = body.formdata.map((field: any) => {
+            const safeName = sanitizePropertyName(field.key);
+            // Postman formdata: type is "text" or "file"
+            const type = field.type === 'file' ? 'File' : 'string';
+            const descComment = field.description
+                ? `  /** ${String(field.description).trim()} */\n`
+                : '';
+            return `${descComment}  ${safeName}?: ${type};`;
+        });
+        if (fields.length === 0) return "";
+        return `\nexport interface ${entityName}Payload {\n${fields.join('\n')}\n}\n`;
+    }
+
+    // Handle raw JSON mode
+    if (!body.raw) return "";
 
     let parsed;
     try {
