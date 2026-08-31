@@ -21,7 +21,7 @@ const GenerateModuleModal: React.FC<GenerateModuleModalProps> = ({
   isOpen,
   onClose,
   onGenerated,
-  onSuccess,
+
   onTaskStarted,
   targetDir, // REQUIRED
 }) => {

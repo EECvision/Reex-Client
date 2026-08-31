@@ -78,7 +78,7 @@ const DynamicParamTable: React.FC<DynamicParamTableProps> = ({
                 const existing = params.filter(p => p.key || p.value);
                 onChange([...existing, ...newParams]);
             }
-        } catch (err) {
+        } catch {
             // Not valid JSON, allow default paste
         }
     };

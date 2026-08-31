@@ -12,9 +12,9 @@ interface RecentCollectionsListProps {
 }
 
 const RecentCollectionsList: React.FC<RecentCollectionsListProps> = ({ items, onItemClick, onDelete }) => {
-    if (!items || items.length === 0) return null;
-
     const [showModal, setShowModal] = useState(false);
+
+    if (!items || items.length === 0) return null;
 
     // Always show top 3 in the preview list
     const displayedItems = items.slice(0, 3);
@@ -81,6 +81,7 @@ const RecentCollectionsList: React.FC<RecentCollectionsListProps> = ({ items, on
             </div>
 
             <HistoryModal
+                key={showModal ? "history-opened" : "history-closed"}
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
                 items={items}

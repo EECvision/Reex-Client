@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './Modal.module.css';
 import { Button } from '../Button/Button';
@@ -29,12 +29,11 @@ export const Modal: React.FC<ModalProps> = ({
     overlayClassName = '',
     closeOnOverlayClick = true
 }) => {
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-        return () => setMounted(false);
-    }, []);
+    const isClient = useSyncExternalStore(
+        () => () => {},
+        () => true,
+        () => false
+    );
 
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
@@ -46,7 +45,7 @@ export const Modal: React.FC<ModalProps> = ({
         return () => window.removeEventListener('keydown', handleEsc);
     }, [isOpen, onClose]);
 
-    if (!isOpen || !mounted) return null;
+    if (!isOpen || !isClient) return null;
 
     const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (closeOnOverlayClick && e.target === e.currentTarget) {

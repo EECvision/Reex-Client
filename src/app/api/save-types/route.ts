@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getBridgeUrl, getApiServicesDir } from "@/app/api/utils";
-// @ts-ignore
+import { getApiServicesDir } from "@/app/api/utils";
 import typeGenerator from "@/services/type-generator";
 
 export async function POST(req: NextRequest) {

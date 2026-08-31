@@ -1,37 +1,33 @@
-import React, { useRef, useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-import styles from "./Navbar.module.css";
-import { Button } from "../ui/Button/Button";
+import { useAuth } from "@/providers/AuthContext";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
-  ChevronDown,
+  Check,
+  ChevronsUpDown,
+  Code,
   Download,
+  ExternalLink,
+  Link,
+  Loader2,
+  Lock,
+  Menu,
+  MonitorPlay,
+  Pencil,
   Plus,
   RefreshCw,
-  Trash2,
-  FileText,
-  Loader2,
-  Folder,
-  Lock,
-  X,
-  Pencil,
-  Menu,
-  PanelLeft,
-  Code,
-  Link,
-  Sparkles,
-  MonitorPlay,
-  ExternalLink,
-  TestTube,
-  ChevronsUpDown,
-  Check,
   Send,
+  Sparkles,
+  TestTube,
+  Trash2,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
-import { BaseUrlInput } from "./BaseUrlInput";
-import { useAuth } from "@/providers/AuthContext";
+import React, { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import LoginModal from "../LoginModal/LoginModal";
+import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
+import { Button } from "../ui/Button/Button";
+import { BaseUrlInput } from "./BaseUrlInput";
+import styles from "./Navbar.module.css";
 
 interface NavbarProps {
   selectedEndpoint: {
@@ -64,7 +60,7 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({
-  selectedEndpoint,
+
   onImportClick,
   hasCollection,
   onDeleteClick,
@@ -75,14 +71,13 @@ const Navbar: React.FC<NavbarProps> = ({
   onGenerateClick,
   baseURL,
   projectPath,
-  collectionName,
+
   onAuthClick,
   isStandaloneMode = false,
-  manualStandaloneMode = false,
+
   onToggleStandaloneMode,
   onBaseUrlChange,
-  onToggleSidebar,
-  isSidebarOpen,
+
   hasAuthConfigured,
   onCodeSandboxClick,
   onAssistantClick,
@@ -97,34 +92,33 @@ const Navbar: React.FC<NavbarProps> = ({
     return "";
   });
 
-  const [isMobileAuthOpen, setIsMobileAuthOpen] = React.useState(false);
 
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
+  const isClient = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const { isAuthenticated } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
 
-  // Reset mobile states when menu closes
-  useEffect(() => {
-    if (!isMobileMenuOpen) {
-      setIsMobileAuthOpen(false);
-    } else {
-      syncUrl();
-    }
-  }, [isMobileMenuOpen]);
-
-  const syncUrl = () => {
+  const syncUrl = useCallback(() => {
     const stored = localStorage.getItem("reex_docs_url");
     if (stored !== null && stored !== url) {
       setUrl(stored);
     }
-  };
+  }, [url]);
+
+  // Reset mobile states when menu closes
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      queueMicrotask(() => {
+        syncUrl();
+      });
+    }
+  }, [isMobileMenuOpen, syncUrl]);
 
   // Helper to format project path
   const formatProjectPath = (path?: string) => {
@@ -241,7 +235,9 @@ const Navbar: React.FC<NavbarProps> = ({
 
               <DropdownMenu.Item
                 className={styles.workspaceOption}
-                onClick={() => onSandboxClick ? onSandboxClick() : router.push("/sandbox")}
+                onClick={() =>
+                  onSandboxClick ? onSandboxClick() : router.push("/sandbox")
+                }
               >
                 <div className={styles.workspaceOptionIcon}>
                   <TestTube size={16} />
@@ -319,8 +315,19 @@ const Navbar: React.FC<NavbarProps> = ({
           }}
         >
           <DropdownMenu.Trigger asChild>
-            <Button variant="ghost" leftIcon={(!isStandaloneMode && hasCollection) ? <RefreshCw size={16} /> : <Plus size={16} />}>
-              {(!isStandaloneMode && hasCollection) ? "Update Collection" : "Add Collection"}
+            <Button
+              variant="ghost"
+              leftIcon={
+                !isStandaloneMode && hasCollection ? (
+                  <RefreshCw size={16} />
+                ) : (
+                  <Plus size={16} />
+                )
+              }
+            >
+              {!isStandaloneMode && hasCollection
+                ? "Update Collection"
+                : "Add Collection"}
             </Button>
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
@@ -428,7 +435,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Menu Dropdown */}
       {isMobileMenuOpen &&
-        mounted &&
+        isClient &&
         createPortal(
           <>
             <div

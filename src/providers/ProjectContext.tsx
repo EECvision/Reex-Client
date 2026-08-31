@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { api } from '../services/api';
 import { useStandaloneCollections } from '../hooks/useStandaloneCollections';
 import { useRecentCollections } from '../hooks/useRecentCollections';
@@ -132,14 +132,14 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     await removeCollectionFromHistory(id);
   };
 
-  const fetchProjectData = async (silent = false, ignoreManual = false) => {
+  const fetchProjectData = useCallback(async (silent = false, ignoreManual = false) => {
     try {
       if (!silent) setLoading(true);
       
       let bridgeStatus;
       try {
         bridgeStatus = await api.fetchBridgeStatus();
-      } catch (e) {
+      } catch {
         // Fallback handled below
       }
       
@@ -215,11 +215,11 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     } finally {
       setLoading(false);
     }
-  };
+  }, [manualStandaloneMode]);
 
   useEffect(() => {
     fetchProjectData();
-  }, [manualStandaloneMode]); // Re-run when manual mode changes
+  }, [fetchProjectData]); // Re-run when manual mode changes
 
   // No local storage persistence
 

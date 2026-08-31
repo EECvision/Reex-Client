@@ -4,8 +4,7 @@ import {
     Trash2,
     ChevronRight,
     ChevronDown,
-    FolderPlus,
-    FilePlus,
+
     Pencil,
     PanelLeft,
     Plus

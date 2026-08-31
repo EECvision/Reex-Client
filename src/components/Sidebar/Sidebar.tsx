@@ -1,4 +1,4 @@
-import React, { SetStateAction, useState, useRef, useEffect } from "react";
+import React, { SetStateAction, useState, useRef, useMemo } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import styles from "./Sidebar.module.css";
 import { EndpointInfo, Methods } from "@/types";
@@ -7,8 +7,7 @@ import {
   Trash2,
   ChevronRight,
   ChevronDown,
-  Lock,
-  TestTube,
+
   Pencil,
   RefreshCw,
   MoreVertical,
@@ -19,7 +18,6 @@ import {
   X,
   Check,
 } from "lucide-react";
-import Link from "next/link";
 import { Button } from "../ui/Button/Button";
 import { Select } from "../ui/Select/Select";
 import Logo from "../Logo/Logo";
@@ -84,14 +82,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   onRenameCollection,
   onUpdateCollection,
   onOpenSandbox,
-  baseURL,
-  collectionName,
+
   isOpen = false,
   onToggleSidebar,
   onDoubleClickEndpoint,
 }) => {
   // Initialize expanded state for collections - default to ALL expanded
-  const [expandedCollections, setExpandedCollections] = React.useState<
+  const [expandedCollections, setExpandedCollections] = useState<
     Set<string>
   >(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -131,7 +128,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // Effect to default expand all when groups change (initial load)
   // Track previous groups to auto-expand ONLY new ones
-  const prevGroupIdsRef = React.useRef<string[]>([]);
+  const prevGroupIdsRef = useRef<string[]>([]);
 
   React.useEffect(() => {
     if (!collectionGroups) return;
@@ -171,25 +168,15 @@ const Sidebar: React.FC<SidebarProps> = ({
     });
   };
 
-  useEffect(() => {
-    if (selectedEndpoint && collectionGroups) {
-      let colId = "default";
-      if (selectedEndpoint.apiKey.startsWith("col_")) {
-        const parts = selectedEndpoint.apiKey.split("__");
-        if (parts.length > 1) {
-          colId = parts[0].replace("col_", "");
-        }
-      }
-      setExpandedCollections((prev) => {
-        if (!prev.has(colId)) {
-          const next = new Set(prev);
-          next.add(colId);
-          return next;
-        }
-        return prev;
-      });
+  // Derive the active category folder ID dynamically
+  const activeColId = useMemo(() => {
+    if (!selectedEndpoint) return null;
+    if (selectedEndpoint.apiKey.startsWith("col_")) {
+      const parts = selectedEndpoint.apiKey.split("__");
+      return parts.length > 1 ? parts[0].replace("col_", "") : "default";
     }
-  }, [selectedEndpoint, collectionGroups]);
+    return "default";
+  }, [selectedEndpoint]);
 
   // Helper to get unique module ID (apiKey) from endpoints list
   const getModuleId = (endpoints: EndpointInfo[], fallbackName: string) => {
@@ -197,7 +184,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     return fallbackName;
   };
 
-  const filteredCollectionGroups = React.useMemo(() => {
+  const filteredCollectionGroups = useMemo(() => {
     if (!collectionGroups) return [];
     if (!searchQuery.trim()) return collectionGroups;
     
@@ -289,7 +276,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {collectionGroups
           ? filteredCollectionGroups.length > 0 ? filteredCollectionGroups.map((group) => {
               const isSearchActive = searchQuery.trim().length > 0;
-              const isExpanded = isSearchActive || expandedCollections.has(group.id);
+              const isExpanded = isSearchActive || expandedCollections.has(group.id) || activeColId === group.id;
               return (
                 <div key={group.id} className={styles.collectionGroup}>
                   {/* Root Folder (Collection) */}
@@ -578,7 +565,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
             ) : null
           : // FALLBACK / LEGACY
-            Object.entries(groupedEndpoints).map(([apiKey, endpoints]) => (
+            Object.entries(groupedEndpoints).map(([apiKey]) => (
               // ... (Existing implementation for safety)
               <div key={apiKey}>
                 {" "}

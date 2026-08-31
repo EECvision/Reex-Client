@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { createClient } from "@supabase/supabase-js";
 
-export async function GET(req: Request) {
+export async function GET() {
     try {
         const session = await auth();
         if (!session?.user) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { Rnd } from 'react-rnd';
 import { X, TestTube, ExternalLink } from 'lucide-react';
@@ -11,14 +11,13 @@ interface SandboxModalProps {
 }
 
 const SandboxModal: React.FC<SandboxModalProps> = ({ isOpen, onClose }) => {
-  const [mounted, setMounted] = useState(false);
+  const isClient = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
-
-  if (!isOpen || !mounted) return null;
+  if (!isOpen || !isClient) return null;
 
   return createPortal(
     <div className={styles.overlay}>

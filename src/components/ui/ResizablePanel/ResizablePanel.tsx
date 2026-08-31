@@ -27,15 +27,6 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
   const isResizing = useRef(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const startResizing = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    isResizing.current = true;
-    setIsDragging(true);
-    document.addEventListener("mousemove", resize);
-    document.addEventListener("mouseup", stopResizing);
-    document.body.style.cursor = "col-resize";
-  }, []);
-
   const resize = useCallback((e: MouseEvent) => {
     if (isResizing.current && panelRef.current) {
       // Use requestAnimationFrame to sync with browser render cycle
@@ -52,13 +43,22 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
     }
   }, [minWidth, maxWidth, resizerPosition]);
 
-  const stopResizing = useCallback(() => {
+  const stopResizing = useCallback(function stop() {
     isResizing.current = false;
     setIsDragging(false);
     document.removeEventListener("mousemove", resize);
-    document.removeEventListener("mouseup", stopResizing);
+    document.removeEventListener("mouseup", stop);
     document.body.style.cursor = "";
   }, [resize]);
+
+  const startResizing = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+    setIsDragging(true);
+    document.addEventListener("mousemove", resize);
+    document.addEventListener("mouseup", stopResizing);
+    document.body.style.cursor = "col-resize";
+  }, [resize, stopResizing]);
 
   useEffect(() => {
     return () => {

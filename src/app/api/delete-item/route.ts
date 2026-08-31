@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
             const variableDecl = sourceFile.getVariableDeclaration(`${moduleName}Api`);
             if (variableDecl) {
-                let initializer = getInitializerObject(variableDecl);
+                const initializer = getInitializerObject(variableDecl);
 
                 if (initializer) {
                     const prop = initializer.getProperty(functionName);

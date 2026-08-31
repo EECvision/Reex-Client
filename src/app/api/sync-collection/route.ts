@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import os from "os";
-import { runCommand, getEnvWithOverride, sendEvent, decompressFilePayload, getApiServicesDir, getBridgeUrl } from "@/app/api/utils";
+import { decompressFilePayload, getApiServicesDir } from "@/app/api/utils";
 
 export async function POST(req: NextRequest) {
-    const taskId = Date.now().toString();
+
     const uploadsDir = path.join(os.tmpdir(), 'api-builder-uploads');
     let filePath: string | null = null;
 
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
         const file = formData.get('file') as File;
         const modulesStr = formData.get('modules') as string;
         const deletedModulesStr = formData.get('deletedModules') as string;
-        const functionsStr = formData.get('functions') as string;
+
         const targetDir = formData.get('targetDir') as string; // Extract targetDir
         const apiServicesDir = formData.get('apiServicesDir') as string;
         
@@ -95,13 +95,13 @@ export async function POST(req: NextRequest) {
         // So we don't need to explicit run it here.
 
         // Cleanup
-        try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch (e) { }
+        try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch {}
 
         return NextResponse.json({ success: true, operations });
 
     } catch (error: any) {
         console.error("Sync failed", error);
-        if (filePath && fs.existsSync(filePath)) try { fs.unlinkSync(filePath); } catch (e) { }
+        if (filePath && fs.existsSync(filePath)) try { fs.unlinkSync(filePath); } catch {}
         return NextResponse.json({ success: false, error: error.toString() }, { status: 500 });
     }
 }

@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require('fs');
-const path = require('path');
+
 
 const templatesPath = 'd:\\Dev\\api-builder\\api-next-server\\src\\utils\\codesandbox\\templates.ts';
 let templatesContent = fs.readFileSync(templatesPath, 'utf8');

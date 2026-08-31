@@ -34,17 +34,7 @@ export const BadgeGroup: React.FC<BadgeGroupProps> = ({
     };
     // We calculate background/border colors based on the main color
     // This matches the logic: backgroundColor: `${color}15`
-    const LabelStyle = {
-        color: color,
-        backgroundColor: `${color}15`, // ~8% opacity if hex
-        // If color is simple hex like #e5e7eb it might not work well with 15 appended if it's not #RRGGBB format
-        // safely assuming standardized colors or standard hex for now.
-        // For the gray defaults in Navbar: color: "#6b7280", backgroundColor: "#f3f4f6"
-        // Let's allow overriding or just use the logic if color provided.
-        // Actually, Navbar uses specific grays. Let's stick to the user's pattern:
-        // dynamic colors usually pass a hex.
-        // If color is gray/default, we might want specific shades.
-    };
+
 
     // Special case for default gray to match exact previous styles if needed,
     // or just rely on the opacity logic.

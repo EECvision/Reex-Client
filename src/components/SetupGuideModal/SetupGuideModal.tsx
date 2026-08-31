@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import styles from "./SetupGuideModal.module.css";
 import {
@@ -28,7 +28,11 @@ const STRATEGIES: { id: AuthStrategy; label: string }[] = [
 ];
 
 export default function SetupGuideModal() {
-  const [mounted, setMounted] = useState(false);
+  const isClient = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const [mountState, setMountState] = useState<
     "loading" | "show-modal" | "show-fab"
   >("loading");
@@ -45,14 +49,20 @@ export default function SetupGuideModal() {
   const [showConsumeCode, setShowConsumeCode] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     const dismissed = sessionStorage.getItem("reex_setup_guide_dismissed");
-    if (!dismissed) {
-      setMountState("show-modal");
-      sessionStorage.setItem("reex_setup_guide_dismissed", "true");
-    } else {
-      setMountState("show-fab");
-    }
+    queueMicrotask(() => {
+      if (!dismissed) {
+        setMountState("show-modal");
+        sessionStorage.setItem("reex_setup_guide_dismissed", "true");
+      } else {
+        setMountState("show-fab");
+      }
+    });
+  }, []);
+
+  const handleDismiss = useCallback(() => {
+    setMountState("show-fab");
+    sessionStorage.setItem("reex_setup_guide_dismissed", "true");
   }, []);
 
   useEffect(() => {
@@ -63,7 +73,7 @@ export default function SetupGuideModal() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [mountState]);
+  }, [mountState, handleDismiss]);
 
   const handleCopy = (
     text: string,
@@ -74,16 +84,13 @@ export default function SetupGuideModal() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDismiss = () => {
-    setMountState("show-fab");
-    sessionStorage.setItem("reex_setup_guide_dismissed", "true");
-  };
+
 
   const handleRestore = () => {
     setMountState("show-modal");
   };
 
-  if (!mounted || mountState === "loading") return null;
+  if (!isClient || mountState === "loading") return null;
 
   if (mountState === "show-fab") {
     return createPortal(
@@ -135,7 +142,7 @@ export default function SetupGuideModal() {
               Import your OpenAPI specification or Postman collection using the
               import collection button. Once imported, Reex automatically
               scaffolds and syncs ready-to-use API clients, TypeScript types,
-              and React Query hooks directly into your project's{" "}
+              and React Query hooks directly into your project&apos;s{" "}
               <code>api-services/</code> directory.
             </p>
             <div className={styles.proTip}>
@@ -145,7 +152,7 @@ export default function SetupGuideModal() {
               <p className={styles.proTipText}>
                 For the best experience, we recommend setting up Prettier in
                 your project if not already set. Reex formats generated code
-                using your project's existing configuration.
+                using your project&apos;s existing configuration.
               </p>
             </div>
           </div>
@@ -231,7 +238,7 @@ export default function SetupGuideModal() {
             </div>
             <p className={styles.stepDescription}>
               Start testing your requests directly in the Reex UI. Once you get
-              a successful response, click the "Save Interface" button to
+              a successful response, click the &quot;Save Interface&quot; button to
               generate accurate TypeScript types into your project.
             </p>
           </div>

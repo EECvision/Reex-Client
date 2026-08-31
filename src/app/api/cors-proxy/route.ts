@@ -23,7 +23,7 @@ const getCurlErrorMessage = (code: number | null): string => {
 };
 
 export async function POST(req: NextRequest) {
-    let tempFiles: string[] = [];
+    const tempFiles: string[] = [];
     try {
         let method, data, formData, headers, url;
         const contentType = req.headers.get('content-type') || '';
@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
             child.on('close', (code) => {
                 // Cleanup temp files
                 tempFiles.forEach(f => {
-                    try { fs.unlinkSync(f); } catch (e) {}
+                    try { fs.unlinkSync(f); } catch {}
                 });
 
                 if (code !== 0) {
@@ -182,7 +182,7 @@ export async function POST(req: NextRequest) {
             child.on('error', (err) => {
                 // Cleanup temp files on error
                 tempFiles.forEach(f => {
-                    try { fs.unlinkSync(f); } catch (e) {}
+                    try { fs.unlinkSync(f); } catch {}
                 });
                 console.error("Failed to spawn curl:", err);
                 resolve(NextResponse.json({ success: false, error: "Failed to execute curl command. Is curl installed?" }, { status: 500 }));
@@ -192,7 +192,7 @@ export async function POST(req: NextRequest) {
     } catch (e: any) {
         // Cleanup temp files on exception
         tempFiles.forEach(f => {
-            try { fs.unlinkSync(f); } catch (err) {}
+            try { fs.unlinkSync(f); } catch {}
         });
         console.error("Proxy Error:", e);
         return NextResponse.json({ success: false, error: e.message || String(e) }, { status: 500 });

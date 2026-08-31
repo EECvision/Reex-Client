@@ -3,7 +3,7 @@ import styles from "./ImportModal.module.css";
 import { useAuth } from "@/providers/AuthContext";
 import { Button } from "../ui/Button/Button";
 import { api } from "@/services/api";
-import { Loader2, Globe, History as HistoryIcon, AlertCircle, X, Lock, Eye, EyeOff } from "lucide-react";
+import { Loader2, Globe, History as HistoryIcon, AlertCircle, Lock, Eye, EyeOff } from "lucide-react";
 import DiffModal, { FunctionDiff } from "./DiffModal";
 import { Modal } from "../ui/Modal/Modal";
 import { DiffResult } from "./importTypes";
@@ -216,8 +216,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
       }
       setFile(initialFile);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialFile]);
+  }, [initialFile, autoAnalyze, setFile]);
 
   // Effect: Resume
   useEffect(() => {
@@ -234,8 +233,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
         setFetchUrl(stored);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [isOpen, fetchUrl]);
 
   // Effect: Auto-analyze after URL fetch
   useEffect(() => {
@@ -243,7 +241,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
       fetchTriggeredRef.current = false;
       startAnalysis(clientMappings);
     }
-  }, [selectedFile, collectionType]);
+  }, [selectedFile, collectionType, startAnalysis, clientMappings]);
 
   // Effect: Task Complete
   useEffect(() => {

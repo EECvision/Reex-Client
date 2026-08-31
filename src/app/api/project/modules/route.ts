@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
-// @ts-ignore
 import { API_MANIFEST_PATH } from "@/paths";
 
 export async function GET() {

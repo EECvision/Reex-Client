@@ -3,14 +3,12 @@
 import React, { useState } from "react";
 import styles from "./support.module.css";
 import { Button } from "@/components/ui/Button/Button";
-import { useAuth } from "@/providers/AuthContext";
 import { MessageSquareWarning, Loader2, CheckCircle, ExternalLink, MessageCircle } from "lucide-react";
 
 const WHATSAPP_GROUP_URL = "https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK";
 import { createIssue } from "@/app/actions/issueActions";
 
 export default function ReportIssuePage() {
-    const { user } = useAuth();
     const [subject, setSubject] = useState("");
     const [description, setDescription] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,7 +47,7 @@ export default function ReportIssuePage() {
                 <div className={styles.header}>
                     <h1 className={styles.title}>Contact Support</h1>
                     <p className={styles.subtitle}>
-                        Need help, found a bug, or have a suggestion? Let us know and we'll get back to you.
+                        Need help, found a bug, or have a suggestion? Let us know and we&apos;ll get back to you.
                     </p>
                     <div style={{ marginTop: '16px' }}>
                         {process.env.NEXT_PUBLIC_GITHUB_REPO_URL && (
@@ -71,7 +69,7 @@ export default function ReportIssuePage() {
                             <CheckCircle size={48} className={styles.successIcon} />
                             <h3 className={styles.successTitle}>Thank You!</h3>
                             <p className={styles.successText}>
-                                Your report has been submitted successfully. We'll look into it right away.
+                                Your report has been submitted successfully. We&apos;ll look into it right away.
                             </p>
                             <Button variant="primary" onClick={() => setIsSuccess(false)}>
                                 Submit Another Report

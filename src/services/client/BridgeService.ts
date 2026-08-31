@@ -49,7 +49,7 @@ export const BridgeService = {
     // Execution could be viewed as separate, but often runs client-side making request
     executeRequest: async (config: { url: string; method: string; data?: any; formData?: any[]; headers?: any; useProxy?: boolean; isStandaloneMode?: boolean }) => {
         try {
-            const { url, method, data, formData, headers, useProxy, isStandaloneMode } = config;
+            const { url, method, data, formData, headers, useProxy } = config;
             const isLocal = isLocalhostUrl(url);
             const isNativeFormData = data instanceof FormData;
             const hasFiles = formData?.some((p: any) => p.type === 'file' && p.file) || false;

@@ -37,7 +37,7 @@ export const Assistant: React.FC<AssistantProps> = ({ isOpen, onClose }) => {
     isLoading,
     append,
     setMessages,
-    error,
+
   } = useChat({
     api: "/api/assistant",
     onResponse: async (response) => {

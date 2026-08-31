@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import os from "os";
-import { sendEvent, getBridgeUrl, decompressFilePayload, getApiServicesDir } from "@/app/api/utils";
+import { decompressFilePayload, getApiServicesDir } from "@/app/api/utils";
 
 // Direct import of generators (same as analyze)
 import { generateOpenApi } from "@/scripts/generate-openapi-collection";
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
         
         const API_SERVICES_DIR = getApiServicesDir(targetDir, apiServicesDir);
 
-        const returnOperations = formData.get('returnOperations') === 'true'; // New flag
+
 
         // Parse inputs
         const modules = modulesStr ? JSON.parse(modulesStr) : [];
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
         );
 
         // Clean up file immediately
-        try { fs.unlinkSync(filePath); } catch (e) { }
+        try { fs.unlinkSync(filePath); } catch {}
         filePath = null;
 
         return NextResponse.json({
@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: error.toString() }, { status: 500 });
     } finally {
         if (filePath && fs.existsSync(filePath)) {
-            try { fs.unlinkSync(filePath); } catch (e) { }
+            try { fs.unlinkSync(filePath); } catch {}
         }
     }
 }

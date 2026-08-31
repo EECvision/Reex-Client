@@ -2,8 +2,8 @@
 
 import * as fs from "fs";
 import * as path from "path";
-// @ts-ignore
-const { API_DEFINITIONS_DIR, API_TYPES_DIR, API_SERVICES_DIR, CLIENT_CONFIG_DIR, API_MANIFEST_PATH, API_MODULES_PATH } = require("../paths");
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { API_DEFINITIONS_DIR, API_TYPES_DIR, API_SERVICES_DIR, API_MODULES_PATH } = require("../paths");
 
 
 

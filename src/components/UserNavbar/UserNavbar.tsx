@@ -10,10 +10,9 @@ import { Button } from "../ui/Button/Button";
 import { ArrowLeft, PanelLeft } from "lucide-react";
 import { useUI } from "@/providers/UIContext";
 
-interface UserNavbarProps {
-}
 
-export default function UserNavbar({ }: UserNavbarProps) {
+
+export default function UserNavbar() {
     const pathname = usePathname();
     const router = useRouter();
     const { toggleSidebar, hasSidebar } = useUI();
@@ -22,7 +21,7 @@ export default function UserNavbar({ }: UserNavbarProps) {
         return null;
     }
 
-    const isActive = (path: string) => pathname?.startsWith(path);
+
 
     return (
         <nav className={styles.navbar}>

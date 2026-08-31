@@ -73,7 +73,7 @@ export const getCommonPrefix = (paths: string[]): string => {
     if (paths.length === 0) return "";
     const splitPaths = paths.map(p => p.split('/').filter(Boolean));
     const firstPath = splitPaths[0];
-    let common = [];
+    const common: string[] = [];
 
     for (let i = 0; i < firstPath.length; i++) {
         const segment = firstPath[i];
@@ -125,7 +125,7 @@ export const calculateFunctionName = (method: string, operationId: string): stri
 
     const methodLower = method.toLowerCase();
 
-    let cleaned = operationId
+    const cleaned = operationId
         // Remove leading HTTP method if present in different formats:
         // 1. "GET " (with space) - REST format
         .replace(/^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)\s+/i, "")
@@ -190,7 +190,7 @@ export const normalizeApiUrl = (url: string, baseUrl?: string) => {
                     normalized = normalized.slice(basePath.length);
                 }
             }
-        } catch(e) {}
+        } catch {}
     }
     
     return normalized.startsWith('/') ? normalized : '/' + normalized;
@@ -256,7 +256,7 @@ export const extractBaseUrl = (data: any): string | undefined => {
                 const u = new URL(candidate);
                 const result = `${u.protocol}//${u.host}`;
                 return result;
-            } catch (e) {
+            } catch {
                 return undefined;
             }
         }
@@ -545,7 +545,7 @@ export const processAndMergeModules = (
     const apiDir = outputDir ? path.resolve(outputDir, "definitions") : "";
 
     if (outputDir && !dryRun && !fs.existsSync(apiDir)) {
-        try { fs.mkdirSync(apiDir, { recursive: true }); } catch (e) { }
+        try { fs.mkdirSync(apiDir, { recursive: true }); } catch { }
     }
 
     modules.forEach((mod) => {
@@ -557,7 +557,7 @@ export const processAndMergeModules = (
         } else if (outputDir) {
             const filePath = path.join(apiDir, `${mod.name}.ts`);
             if (fs.existsSync(filePath)) {
-                try { existingContent = fs.readFileSync(filePath, "utf8"); } catch (e) { }
+                try { existingContent = fs.readFileSync(filePath, "utf8"); } catch { }
             }
         }
 
@@ -967,13 +967,13 @@ export const generateTypesFromPostmanBody = (body: any, entityName: string): str
     let parsed;
     try {
         parsed = JSON.parse(body.raw);
-    } catch (e) {
+    } catch {
         try {
             // Fallback: simple comment stripping to try and rescue invalid JSON
             let cleanJson = body.raw.replace(/\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
             cleanJson = cleanJson.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
             parsed = JSON.parse(cleanJson);
-        } catch (e2) {
+        } catch {
             return "";
         }
     }
@@ -1056,6 +1056,7 @@ export const runGeneratorCLI = async (
 
     const specPath = path.resolve(args[0]);
     // Assuming strict folder structure overlap with the original scripts
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { API_SERVICES_DIR } = require("../paths");
     const outputDir = API_SERVICES_DIR;
 

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import styles from "./QuerySection.module.css";
 import { Button } from "../ui/Button/Button";
@@ -80,7 +80,7 @@ const QuerySection: React.FC<QuerySectionProps> = ({
   const isMultipart = selectedEndpoint.contentType === 'multipart/form-data';
 
   // Generate default JSON template from endpoint args, using type info for correct structure
-  const generateDefaultTemplate = () => {
+  const generateDefaultTemplate = useCallback(() => {
     // Build a value for a property based on its type and sub-properties
     const buildValue = (prop: EndpointArgProperty): any => {
       const isArray = prop.type?.includes('[]');
@@ -132,7 +132,7 @@ const QuerySection: React.FC<QuerySectionProps> = ({
     });
 
     return JSON.stringify(template, null, 2);
-  };
+  }, [selectedEndpoint]);
 
   // Sync with parent if controlled
   useEffect(() => {
@@ -148,7 +148,7 @@ const QuerySection: React.FC<QuerySectionProps> = ({
       setLocalRawPayload(defaultTemplate);
       onRawPayloadChange?.(defaultTemplate);
     }
-  }, [rawPayload, selectedEndpoint]);
+  }, [rawPayload, selectedEndpoint, generateDefaultTemplate, onRawPayloadChange]);
 
   const handleModeChange = (mode: InputMode) => {
     setLocalInputMode(mode);

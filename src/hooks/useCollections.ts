@@ -31,7 +31,7 @@ export const useCollections = (userId?: string) => {
     const {
         data: collections = [],
         isLoading,
-        error
+
     } = useQuery<Collection[]>({
         queryKey: ['collections', userId, isPro],
         queryFn: async () => {
@@ -294,7 +294,7 @@ export const useCollections = (userId?: string) => {
             });
             // showToast('success', 'Request saved');
         },
-        onError: (err: any) => {
+        onError: () => {
             // showToast('error', err.message || 'Failed to save request');
         }
     });

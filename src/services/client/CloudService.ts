@@ -138,7 +138,7 @@ export const CloudService = {
         const formData = new FormData();
 
         const file = payload.file;
-        let fileName = payload.fileName || (file ? file.name : undefined);
+        const fileName = payload.fileName || (file ? file.name : undefined);
 
         if (file) {
             const { blob, fileName: finalName } = await compressFilePayload(file, fileName);
@@ -186,7 +186,7 @@ export const CloudService = {
         const formData = new FormData();
 
         const file = payload.file;
-        let fileName = payload.fileName || (file ? file.name : undefined);
+        const fileName = payload.fileName || (file ? file.name : undefined);
 
         if (file) {
             const { blob, fileName: finalName } = await compressFilePayload(file, fileName);

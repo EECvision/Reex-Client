@@ -8,8 +8,8 @@ import { parseValue } from "@/utils/parseValue";
 
 type InputMode = "form" | "raw";
 
-const PROXY_PORT = 9876;
-const PROXY_URL = `http://localhost:${PROXY_PORT}`;
+
+
 
 
 interface UseEndpointExecutionProps {
@@ -186,7 +186,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             if (currentInputMode === "raw" && currentRawPayload.trim()) {
                 try {
                     argsMap = JSON.parse(currentRawPayload);
-                } catch (parseErr) {
+                } catch {
                     throw new Error("Invalid JSON in raw payload. Please check your input.");
                 }
             } else if (currentInputMode === "form") {
@@ -213,7 +213,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
                 clientBase = (projectConfig.clients?.[clientName] || projectConfig.baseURL || "http://localhost:3000/api").trim();
             }
 
-            let urlTemplate = (endpointDef?.url || selectedEndpoint.url || "").trim();
+            const urlTemplate = (endpointDef?.url || selectedEndpoint.url || "").trim();
             let finalUrl = urlTemplate;
             const consumedParams = new Set<string>();
 
@@ -262,7 +262,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             let requestData: Record<string, any> | FormData | undefined = remainingData;
 
             // Prepare Request Headers
-            let headers: Record<string, string> = {};
+            const headers: Record<string, string> = {};
             if (authToken) {
                 headers['Authorization'] = `Bearer ${authToken}`;
             }
@@ -352,11 +352,10 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             // -----------------------------
             // -----------------------------
 
-            let execRes: any;
             const isLocal = isLocalhostUrl(requestUrl);
 
             // External URL or Bridge Mode — use server-side proxy
-            execRes = await api.executeRequest({
+            const execRes = await api.executeRequest({
                 url: requestUrl,
                 method,
                 data: requestData,

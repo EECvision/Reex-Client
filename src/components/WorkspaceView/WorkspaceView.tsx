@@ -7,7 +7,7 @@ import EmptyState from "../EmptyState/EmptyState";
 import styles from "./WorkspaceView.module.css";
 import { EndpointInfo } from "@/types";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
-import { Lock, Info } from "lucide-react";
+import { Lock } from "lucide-react";
 import CurlSection from "../CurlSection/CurlSection";
 import { useAuth } from "@/providers/AuthContext";
 import LoginModal from "../LoginModal/LoginModal";

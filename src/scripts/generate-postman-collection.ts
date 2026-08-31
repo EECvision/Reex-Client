@@ -14,7 +14,7 @@ import {
   extractBaseUrl,
   extractPostmanPathParams,
   resolveClientAndPath,
-  getCommonPrefix,
+
   proposeClientForFunctions,
   calculateFunctionName
 } from "./generator-utils";

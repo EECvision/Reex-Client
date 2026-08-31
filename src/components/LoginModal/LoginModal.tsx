@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import styles from "./LoginModal.module.css";
 import { Button } from "../ui/Button/Button";
@@ -16,14 +16,13 @@ interface LoginModalProps {
 
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, message }) => {
     const { login } = useAuth();
-    const [mounted, setMounted] = useState(false);
+    const isClient = useSyncExternalStore(
+        () => () => {},
+        () => true,
+        () => false
+    );
 
-    useEffect(() => {
-        setMounted(true);
-        return () => setMounted(false);
-    }, []);
-
-    if (!isOpen || !mounted) return null;
+    if (!isOpen || !isClient) return null;
 
     const handleGoogleLogin = () => {
         login("google");

@@ -15,7 +15,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { transaction_id, plan_id, billing_cycle } = body;
+        const { transaction_id, plan_id } = body;
 
         if (!transaction_id || !plan_id) {
             return NextResponse.json({ success: false, message: "Missing transaction_id or plan_id" }, { status: 400 });

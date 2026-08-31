@@ -5,14 +5,7 @@ import { SessionProvider } from "next-auth/react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { isSubscriptionActive } from "@/lib/subscription";
 
-interface AuthContextType {
-    user: any;
-    isAuthenticated: boolean;
-    login: (provider: string) => void;
-    logout: () => void;
-    isLoading: boolean;
-    isPro: boolean;
-}
+
 
 // Re-export hook for backward compatibility with existing components
 // that expect useAuth()

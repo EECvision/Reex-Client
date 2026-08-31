@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './WelcomeCard.module.css';
-import { Terminal, Globe, Rocket, Copy, CheckCircle2, Sparkles, Folder, ExternalLink } from 'lucide-react';
+import { Terminal, Globe, Rocket, Copy, CheckCircle2, Folder, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import Logo from '../Logo/Logo';
 import { Button } from '../ui/Button/Button';

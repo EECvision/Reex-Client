@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { createClient } from "@supabase/supabase-js";
 import axios from "axios";
 
-export async function POST(req: Request) {
+export async function POST() {
     try {
         const session = await auth();
         if (!session?.user) {

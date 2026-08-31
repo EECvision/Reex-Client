@@ -30,14 +30,18 @@ interface FlutterwaveConfig {
 }
 
 export const useFlutterwaveCustom = (config: FlutterwaveConfig) => {
-    const [scriptLoaded, setScriptLoaded] = useState(false);
+    const [scriptLoaded, setScriptLoaded] = useState(() => {
+        if (typeof document !== "undefined") {
+            return !!document.getElementById('flutterwave-script');
+        }
+        return false;
+    });
 
     useEffect(() => {
         const scriptId = 'flutterwave-script';
 
         // Check if script is already loaded
         if (document.getElementById(scriptId)) {
-            setScriptLoaded(true);
             return;
         }
 

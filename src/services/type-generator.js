@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const jsonToTS = require("json-to-ts");
 
 class TypeGenerator {

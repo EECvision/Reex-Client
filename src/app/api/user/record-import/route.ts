@@ -1,11 +1,11 @@
 
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { createClient } from "@supabase/supabase-js";
 import { FREE_PROJECT_IMPORT_LIMIT } from "@/lib/constants";
 import { isSubscriptionActive } from "@/lib/subscription";
 
-export async function POST(req: NextRequest) {
+export async function POST() {
     const session = await auth();
 
     if (!session || !session.user) {

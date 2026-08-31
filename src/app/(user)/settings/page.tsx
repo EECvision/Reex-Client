@@ -4,17 +4,15 @@ import React, { useState } from "react";
 import styles from "./settings.module.css";
 import { Button } from "@/components/ui/Button/Button";
 import { useAuth } from "@/providers/AuthContext";
-import { useSettings } from "@/providers/SettingsContext";
+
 import { useRouter } from "next/navigation";
 import { useSubscription } from "@/hooks/useSubscription";
 import { InvoiceModal } from "@/components/InvoiceModal/InvoiceModal";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal/DeleteConfirmModal";
 import { FileText, Eye, Loader2 } from "lucide-react";
-import { PLAN_IDS } from "@/config/pricing";
 
 export default function SettingsPage() {
-    const { user, logout } = useAuth();
-    const { theme, toggleTheme } = useSettings();
+    const { user } = useAuth();
     const { isPro, user: subscriptionUser } = useSubscription();
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<'account' | 'billing' | 'integrations'>('account');
@@ -87,10 +85,6 @@ export default function SettingsPage() {
         }
     };
 
-    const handleSignOut = () => {
-        logout();
-        router.push("/");
-    };
 
     return (
         <main className={styles.container}>

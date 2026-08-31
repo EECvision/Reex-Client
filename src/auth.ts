@@ -20,7 +20,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         secret: process.env.SUPABASE_SERVICE_ROLE_KEY!,
     }),
     callbacks: {
-        async jwt({ token, user, trigger, session }) {
+        async jwt({ token, user, trigger }) {
             if (user) {
                 token.id = user.id;
                 token.subscription_status = user.subscription_status;

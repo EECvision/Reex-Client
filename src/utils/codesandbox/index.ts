@@ -238,7 +238,7 @@ files["src/api-services/auth-methods/cookie-auth/CookieAuthGuard.tsx"] = {
 
   moduleNames.forEach((modName) => {
     // A. Definitions
-    let cleanContent = modules[modName].replace(
+    const cleanContent = modules[modName].replace(
       /import\s+{([^}]+)}\s+from\s+['"].*?['"];?/g,
       (match, imports) => {
         if (imports.includes("CLIENT") || imports.includes("apiClient")) {
@@ -381,7 +381,7 @@ root.render(
   };
 
   // Find a query hook to demonstrate
-  let firstMod = moduleNames.length > 0 ? moduleNames[0] : null;
+  const firstMod = moduleNames.length > 0 ? moduleNames[0] : null;
   let demoHook = null;
   let pascalFirstMod = "";
 

@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { API_SERVICES_DIR } = require('../paths');
 
 const definitionsDir = path.join(API_SERVICES_DIR, 'definitions');

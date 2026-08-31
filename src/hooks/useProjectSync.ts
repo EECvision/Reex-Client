@@ -76,12 +76,12 @@ export const useProjectSync = ({ showToast, refreshProject, onImportTaskComplete
             showToast("success", "Connected to local bridge");
         };
 
-        eventSource.onerror = async (err) => {
+        eventSource.onerror = async () => {
             // Prevent false positive reloads (e.g. from HMR network blips) by double checking if the bridge is actually dead
             try {
                 const res = await fetch(`${bridgeUrl}/api/health`);
                 if (!res.ok) throw new Error("Bridge down");
-            } catch (fetchErr) {
+            } catch {
                 console.warn("[Bridge] Connection lost. Triggering ProjectContext refresh...");
                 eventSource.close();
                 refreshProject();

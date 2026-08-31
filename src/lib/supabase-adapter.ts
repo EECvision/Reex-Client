@@ -1,6 +1,6 @@
 
 import { type Adapter } from "@auth/core/adapters"
-import { createClient, type SupabaseClient } from "@supabase/supabase-js"
+import { createClient } from "@supabase/supabase-js"
 
 export function CustomSupabaseAdapter(options: { url: string; secret: string }): Adapter {
     const supabase = createClient(options.url, options.secret, {
@@ -32,7 +32,7 @@ export function CustomSupabaseAdapter(options: { url: string; secret: string }):
         },
         async getUser(id) {
             //   console.log("[CustomAdapter] getUser", id)
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from("users")
                 .select()
                 .eq("id", id)
@@ -43,7 +43,7 @@ export function CustomSupabaseAdapter(options: { url: string; secret: string }):
         },
         async getUserByEmail(email) {
             //   console.log("[CustomAdapter] getUserByEmail", email)
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from("users")
                 .select()
                 .eq("email", email)
@@ -54,7 +54,7 @@ export function CustomSupabaseAdapter(options: { url: string; secret: string }):
         },
         async getUserByAccount({ providerAccountId, provider }) {
             console.log("[CustomAdapter] getUserByAccount", { provider, providerAccountId })
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from("accounts")
                 .select("item: users(*)")
                 .eq("provider", provider)
@@ -62,7 +62,7 @@ export function CustomSupabaseAdapter(options: { url: string; secret: string }):
                 .single()
 
             if (!data?.item) return null
-            // @ts-ignore - Supabase types are tricky with generic adapters
+
             return formatUser(data.item)
         },
         async updateUser(user) {
@@ -138,7 +138,7 @@ export function CustomSupabaseAdapter(options: { url: string; secret: string }):
         },
         async getSessionAndUser(sessionToken) {
             //   console.log("[CustomAdapter] getSessionAndUser", sessionToken)
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from("sessions")
                 .select("*, user: users(*)")
                 .eq("sessionToken", sessionToken)
@@ -149,7 +149,7 @@ export function CustomSupabaseAdapter(options: { url: string; secret: string }):
             const { user, ...session } = data
 
             return {
-                // @ts-ignore
+
                 user: formatUser(user),
                 session: formatSession(session),
             }

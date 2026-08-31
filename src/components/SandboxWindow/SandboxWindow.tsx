@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import styles from './SandboxWindow.module.css';
-import CollectionSidebar, { Collection, RequestItem } from '@/components/TestApi/CollectionSidebar';
+import CollectionSidebar, { RequestItem } from '@/components/TestApi/CollectionSidebar';
 import RequestEditor from '@/components/TestApi/RequestEditor';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import { Modal } from '@/components/ui/Modal/Modal';

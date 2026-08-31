@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import {
   Send,
@@ -6,8 +6,7 @@ import {
   Pencil,
   Loader2,
   Check,
-  Terminal,
-  Info,
+
 } from "lucide-react";
 import { api } from "@/services/api";
 import { ClientStorage } from "@/lib/clientStorage";
@@ -88,7 +87,7 @@ export default function RequestEditor({
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [interfacePreview, setInterfacePreview] = useState<string | null>(null);
-  const [savingInterface, setSavingInterface] = useState(false);
+
   const [copied, setCopied] = useState(false);
   const [executedCurl, setExecutedCurl] = useState<string | undefined>(
     undefined,
@@ -96,16 +95,18 @@ export default function RequestEditor({
   const [isSaving, setIsSaving] = useState(false);
 
   // Sync state with props (Initial Load)
+  const initialDataRef = useRef(data);
   useEffect(() => {
-    if (data) {
-      setMethod(data.method || "GET");
-      setUrl(data.url || "");
-      setBaseUrl(data.baseUrl || "");
+    const initialData = initialDataRef.current;
+    if (initialData) {
+      setMethod(initialData.method || "GET");
+      setUrl(initialData.url || "");
+      setBaseUrl(initialData.baseUrl || "");
       setQueryParams(
-        data.queryParams || [{ id: "1", key: "", value: "", active: true }],
+        initialData.queryParams || [{ id: "1", key: "", value: "", active: true }],
       );
       setHeaders(
-        data.headers || [
+        initialData.headers || [
           {
             id: "1",
             key: "Content-Type",
@@ -114,12 +115,12 @@ export default function RequestEditor({
           },
         ],
       );
-      setAuthType(data.authType || "none");
-      setAuthToken(data.authToken || "");
-      setBodyType(data.bodyType || "json");
-      setBody(data.body || "{\n  \n}");
+      setAuthType(initialData.authType || "none");
+      setAuthToken(initialData.authToken || "");
+      setBodyType(initialData.bodyType || "json");
+      setBody(initialData.body || "{\n  \n}");
       setFormData(
-        data.formData || [{ id: "1", key: "", value: "", active: true }],
+        initialData.formData || [{ id: "1", key: "", value: "", active: true }],
       );
       // Clear results temporarily until cache loads
       setResult(null);
@@ -142,16 +143,23 @@ export default function RequestEditor({
       }
     }
     setName(requestName);
-  }, []); // Run only on mount (key forces remount on switch)
+  }, [requestName, requestId]); // Run only on mount (key forces remount on switch)
+
+  const dataBaseUrl = data?.baseUrl;
+  const dataAuthType = data?.authType;
+  const dataAuthToken = data?.authToken;
 
   // Sync inherited properties if they change externally (e.g., from Navbar)
   useEffect(() => {
-    if (data) {
-      if (data.baseUrl !== undefined) setBaseUrl(data.baseUrl);
-      setAuthType(data.authType || "none");
-      setAuthToken(data.authToken || "");
-    }
-  }, [data?.baseUrl, data?.authType, data?.authToken]);
+    if (dataBaseUrl !== undefined) setBaseUrl(dataBaseUrl);
+    setAuthType(dataAuthType || "none");
+    setAuthToken(dataAuthToken || "");
+  }, [dataBaseUrl, dataAuthType, dataAuthToken]);
+
+  const onSaveRef = useRef(onSave);
+  useEffect(() => {
+    onSaveRef.current = onSave;
+  }, [onSave]);
 
   // Auto-Save Effect
   useEffect(() => {
@@ -166,7 +174,7 @@ export default function RequestEditor({
         body,
         formData,
       };
-      onSave(name, config);
+      onSaveRef.current(name, config);
       setIsSaving(false);
     }, 1000);
 
@@ -231,7 +239,7 @@ export default function RequestEditor({
             if (body && body.trim()) {
               requestData = JSON.parse(body);
             }
-          } catch (e) {
+          } catch {
             throw new Error("Invalid JSON body");
           }
         } else if (bodyType === "form-data") {
@@ -290,7 +298,7 @@ export default function RequestEditor({
             }),
           });
           execRes = await proxyRes.json();
-        } catch (e: any) {
+        } catch {
           throw new Error(
             "Could not connect to the local proxy. Run `npx reex-proxy` in your terminal first.",
           );
@@ -593,7 +601,7 @@ export default function RequestEditor({
           onCopy={handleCopy}
           interfacePreview={interfacePreview}
           onUpdateInterface={() => {}}
-          updatingInterface={savingInterface}
+          updatingInterface={false}
           isStandaloneMode={true}
         />
       </div>

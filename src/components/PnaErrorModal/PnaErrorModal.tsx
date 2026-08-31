@@ -2,7 +2,7 @@
 
 import React from "react";
 import styles from "./PnaErrorModal.module.css";
-import Image from "next/image";
+
 import { Button } from "@/components/ui/Button/Button";
 
 export default function PnaErrorModal({

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import Sidebar from "./Sidebar";
 import { EndpointInfo, Methods } from "@/types";
 import { useProject } from "@/providers/ProjectContext";
@@ -57,18 +57,14 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
     });
   };
 
-  useEffect(() => {
+  // Derive folders that are expanded based on user toggles and the active endpoint
+  const derivedExpandedFolders = useMemo(() => {
+    const newSet = new Set(expandedFolders);
     if (selectedEndpoint) {
-      setExpandedFolders((prev) => {
-        if (!prev.has(selectedEndpoint.apiKey)) {
-          const newSet = new Set(prev);
-          newSet.add(selectedEndpoint.apiKey);
-          return newSet;
-        }
-        return prev;
-      });
+      newSet.add(selectedEndpoint.apiKey);
     }
-  }, [selectedEndpoint]);
+    return newSet;
+  }, [expandedFolders, selectedEndpoint]);
 
   const endpoints = useMemo(() => {
     if (!apiManifest) return [];
@@ -100,18 +96,7 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
     return result;
   }, [apiManifest, methodFilter]);
 
-  const groupedEndpoints = useMemo(() => {
-    return endpoints.reduce(
-      (acc, endpoint) => {
-        if (!acc[endpoint.apiKey]) {
-          acc[endpoint.apiKey] = [];
-        }
-        acc[endpoint.apiKey].push(endpoint);
-        return acc;
-      },
-      {} as Record<string, EndpointInfo[]>,
-    );
-  }, [endpoints]);
+
 
   const { isStandaloneMode, config, collections } = useProject();
 
@@ -182,7 +167,7 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
       <Sidebar
         groupedEndpoints={{}} // Deprecated/Unused if collectionGroups provided
         collectionGroups={collectionGroups}
-        expandedFolders={expandedFolders}
+        expandedFolders={derivedExpandedFolders}
         selectedEndpoint={selectedEndpoint}
         methodFilter={methodFilter}
         onToggleFolder={toggleFolder}

@@ -23,7 +23,7 @@ async function testConnection() {
 
     try {
         // Try to select from users table
-        const { data, error } = await supabase.from('users').select('count', { count: 'exact', head: true });
+        const { error } = await supabase.from('users').select('count', { count: 'exact', head: true });
 
         if (error) {
             console.error("❌ Supabase Error:", error);

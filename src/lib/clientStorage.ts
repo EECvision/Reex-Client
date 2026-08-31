@@ -116,7 +116,7 @@ export class ClientStorage {
         try {
             await this.save(key, data);
             return true;
-        } catch (e) {
+        } catch {
             console.warn(`[ClientStorage] Save failed for "${key}", starting eviction...`);
         }
 
@@ -128,7 +128,7 @@ export class ClientStorage {
                 await this.save(key, data);
                 console.log(`[ClientStorage] ✅ Saved "${key}" after evicting "${evictKey}"`);
                 return true;
-            } catch (e) {
+            } catch {
                 console.warn(`[ClientStorage] Still failed after evicting "${evictKey}"`);
             }
         }

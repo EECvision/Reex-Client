@@ -89,7 +89,7 @@ class ProjectService {
             const exports = sourceFile.getExportedDeclarations();
             let count = 0;
 
-            for (const [_, declarations] of exports) {
+            for (const [, declarations] of exports) {
                 for (const declaration of declarations) {
                     const kind = declaration.getKind();
 
@@ -247,7 +247,7 @@ class ProjectService {
                             if (baseURLProp && baseURLProp.getKind() === SyntaxKind.PropertyAssignment) {
                                 const initializer = (baseURLProp as PropertyAssignment).getInitializer();
                                 if (!initializer) continue;
-                                let urlVal = initializer.getText();
+                                const urlVal = initializer.getText();
                                 // Evaluate "baseURL + '/v1'" -> we can't easily eval, but we can return the raw string or try to simplistically resolve it.
                                 // e.g. "baseURL + "/v1""
                                 if (urlVal.startsWith("baseURL +")) {

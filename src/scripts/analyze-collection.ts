@@ -3,8 +3,7 @@ import * as path from "path";
 import * as prettier from "prettier";
 import { Project, SyntaxKind, PropertyAssignment } from "ts-morph";
 import { getInitializerObject } from "@/utils/ast";
-// @ts-ignore
-const { API_DEFINITIONS_DIR } = require("../paths");
+
 import yaml from 'js-yaml';
 import { generateOpenApi } from "./generate-openapi-collection";
 import { generatePostman } from "./generate-postman-collection";
@@ -62,7 +61,7 @@ const formatCode = async (code: string) => {
             printWidth: 80,
             tabWidth: 2,
         });
-    } catch (e) {
+    } catch {
         // Fallback to original code if formatting fails (e.g. syntax error in fragment)
         return code;
     }
@@ -73,7 +72,7 @@ const getAllTypes = (sourceFile: any) => {
     const types = new Map<string, string>();
     // Try-catch or check existence of methods just to be safe, though ts-morph SourceFile should have them
     const tryAdd = (decl: any) => {
-        try { types.set(decl.getName(), decl.getText()); } catch (e) { }
+        try { types.set(decl.getName(), decl.getText()); } catch {}
     };
 
     if (sourceFile.getInterfaces) sourceFile.getInterfaces().forEach(tryAdd);
@@ -239,12 +238,12 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
                                             propObj.properties = subProps;
                                         }
                                     }
-                                } catch (e) { /* ignore */ }
+                                } catch {}
 
                                 return propObj;
                             });
                         }
-                    } catch (e) { /* ignore */ }
+                    } catch {}
                     return undefined;
                 };
 
@@ -301,7 +300,7 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
                                                 prop.properties = subProps;
                                             }
                                         }
-                                    } catch (e) { /* ignore */ }
+                                    } catch {}
 
                                     arg.properties.push(prop);
                                 }
@@ -315,7 +314,7 @@ const getFunctionsFromModule = (sourceFile: any, moduleName: string) => {
                                     arg.isObject = true;
                                     arg.properties = resolved;
                                 }
-                            } catch (e) {
+                            } catch {
                                 // Fallback or ignore if type resolution fails
                             }
                         }
@@ -421,7 +420,7 @@ export const analyze = async (specContent: string, existingModules: Map<string, 
                 const newFuncs = getFunctionsFromModule(sourceFileNew, mod.name);
 
                 const functionDiffs: FunctionDiff[] = [];
-                for (const [name, _] of newFuncs) {
+                for (const [name] of newFuncs) {
                     const formattedNew = await formatCode(newFuncs.get(name)!.content);
                     const args = newFuncs.get(name)!.args;
                     const requiresAuth = newFuncs.get(name)!.requiresAuth;

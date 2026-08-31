@@ -53,7 +53,6 @@ vi.mock('@/auth', () => ({
 import {
     getStandaloneCollections,
     createStandaloneCollection,
-    updateStandaloneCollection,
     deleteStandaloneCollection
 } from './standaloneActions';
 

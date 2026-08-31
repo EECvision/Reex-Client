@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 const zlib = require('zlib');
 // Native fetch and FormData are available in Node.js 18+

@@ -5,8 +5,8 @@ import * as fs from "fs";
 import * as path from "path";
 import { Project, } from "ts-morph";
 import { getInitializerObject } from "@/utils/ast";
-import { exec } from "child_process";
-// @ts-ignore
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { API_DEFINITIONS_DIR, API_TYPES_DIR } = require("../paths");
 
 interface DeleteRequest {
@@ -17,18 +17,7 @@ interface DeleteRequest {
 
 
 
-function runCommand(cmd: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-        exec(cmd, { cwd: process.cwd() }, (err, stdout, stderr) => {
-            if (err) {
-                console.error(`Command failed: ${cmd}`, stderr);
-                return reject(stderr);
-            }
-            console.log(stdout);
-            resolve();
-        });
-    });
-}
+
 
 async function deleteItem(request: DeleteRequest) {
     const { type, moduleName, functionName } = request;

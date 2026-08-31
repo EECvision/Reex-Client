@@ -103,11 +103,7 @@ export const TestApiAuthModal: React.FC<AuthModalProps> = ({
     onSave(selectedId, draftToken, headersObj);
   };
 
-  const handleClear = () => {
-    setDraftToken("");
-    setDraftHeaders([]);
-    // Auto-save immediately on clear, or make them click Save? Better to explicitly click Save.
-  };
+
 
   // Check if a collection has auth configured to show a tiny green dot
   const hasAuth = (col: Collection) => {

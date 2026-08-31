@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-// @ts-ignore
 import typeGenerator from "@/services/type-generator";
 
 export async function POST(req: NextRequest) {

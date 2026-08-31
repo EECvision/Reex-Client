@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styles from './WelcomeSlideIn.module.css';
 import { Terminal, Globe, Copy, CheckCircle2, X, Sparkles, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
@@ -14,12 +14,19 @@ export default function WelcomeSlideIn() {
 
     useEffect(() => {
         const dismissed = localStorage.getItem('reex_welcome_slide_dismissed');
-        if (!dismissed) {
-            setMountState('show-slide');
-            localStorage.setItem('reex_welcome_slide_dismissed', 'true');
-        } else {
-            setMountState('show-fab');
-        }
+        queueMicrotask(() => {
+            if (!dismissed) {
+                setMountState('show-slide');
+                localStorage.setItem('reex_welcome_slide_dismissed', 'true');
+            } else {
+                setMountState('show-fab');
+            }
+        });
+    }, []);
+
+    const handleDismiss = useCallback(() => {
+        setMountState('show-fab');
+        localStorage.setItem('reex_welcome_slide_dismissed', 'true');
     }, []);
 
     useEffect(() => {
@@ -30,7 +37,7 @@ export default function WelcomeSlideIn() {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [mountState]);
+    }, [mountState, handleDismiss]);
 
     const handleCopy = (text: string, setCopied: React.Dispatch<React.SetStateAction<boolean>>) => {
         navigator.clipboard.writeText(text);
@@ -39,10 +46,7 @@ export default function WelcomeSlideIn() {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const handleDismiss = () => {
-        setMountState('show-fab');
-        localStorage.setItem('reex_welcome_slide_dismissed', 'true');
-    };
+
 
     const handleRestore = () => {
         setMountState('show-slide');

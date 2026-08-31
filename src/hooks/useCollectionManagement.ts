@@ -23,7 +23,7 @@ export const useCollectionManagement = ({
     isStandaloneMode = false,
     setManifest,
     removeCollection,
-    activeCollectionId,
+
     setCollections,
     clearAllCollections
 }: UseCollectionManagementProps) => {

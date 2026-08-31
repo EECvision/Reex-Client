@@ -52,32 +52,9 @@ export const useImportActions = ({
     const [baseUrl, setBaseUrl] = useState<string | undefined>(undefined);
     const [collectionName, setCollectionName] = useState<string | undefined>(undefined);
     // Store full analysis data for standalone mode
-    const [analysisData, setAnalysisData] = useState<any>(null);
+
     const [fileContent, setFileContent] = useState<string | null>(null);
 
-    // Reconstruct TypeScript code from a manifest object
-    const reconstructCodeFromManifest = (manifest: any): Record<string, string> => {
-        if (!manifest) return {};
-        const modules: Record<string, string> = {};
-        
-        for (const [moduleName, endpoints] of Object.entries(manifest)) {
-            let code = `import { type ReexDefinition } from "../.reex/config";\n\nexport const ${moduleName}Api = {\n`;
-            for (const [fnName, ep] of Object.entries(endpoints as Record<string, any>)) {
-                // Ensure correct case for the extracted URL handling
-                const method = ep.method?.toLowerCase() || 'get';
-                const url = ep.url || '';
-                const client = ep.client || 'BASE_CLIENT';
-                const requiresAuthStr = ep.requiresAuth ? '\n   * @auth' : '';
-                const contentTypeStr = ep.contentType ? `\n   * @contentType ${ep.contentType}` : '';
-                
-                code += `  /**${requiresAuthStr}${contentTypeStr}\n   */\n`;
-                code += `  ${fnName}: () => ${client}.${method}(\`${url}\`),\n`;
-            }
-            code += `} satisfies ReexDefinition;\n`;
-            modules[moduleName] = code;
-        }
-        return modules;
-    };
 
     const startAnalysis = async (clientMappings?: Record<string, string>) => {
         if (!selectedFile) return;
@@ -130,8 +107,6 @@ export const useImportActions = ({
                 proposedClients = responseData.proposedClients;
                 setBaseUrl(responseData.baseUrl);
                 setCollectionName(responseData.collectionName);
-                // Store full data for standalone mode
-                setAnalysisData(responseData);
             }
 
             setDiffs(diffs);

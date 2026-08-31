@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { unzipSync, gunzipSync } from "zlib";
+
 // Direct import of the refactored script
 import { analyze } from "@/scripts/analyze-collection";
 import { decompressFilePayload } from "../utils";

@@ -1,7 +1,7 @@
 import React, { forwardRef } from 'react';
 import styles from './Checkbox.module.css';
 
-export interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+export type CheckboxProps = React.InputHTMLAttributes<HTMLInputElement>;
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   ({ className, style, disabled, ...props }, ref) => {

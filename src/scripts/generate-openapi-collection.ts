@@ -14,7 +14,7 @@ import {
   StandardFunctionDefinition,
   generateStandardModuleContent,
   resolveClientAndPath,
-  getCommonPrefix,
+
   proposeClientForFunctions,
   calculateFunctionName
 } from "./generator-utils";

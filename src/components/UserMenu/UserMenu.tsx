@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import styles from "./UserMenu.module.css";
 import { useAuth } from "@/providers/AuthContext";
 import { useSettings } from "@/providers/SettingsContext";
-import { User, LogOut, LogIn, Settings, CreditCard, LayoutDashboard, Sun, Moon, Monitor, Palette, Book, MessageSquareWarning, ChevronsUpDown } from "lucide-react";
+import { User, LogOut, LogIn, Settings, CreditCard, Sun, Moon, Monitor, Palette, Book, MessageSquareWarning, ChevronsUpDown } from "lucide-react";
 import LoginModal from "../LoginModal/LoginModal";
 import { useRouter } from "next/navigation";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -57,6 +57,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top', expanded = false
                 <div className={`${styles.avatarWrapper} ${isSubscribed ? styles.subscribed : ""}`}>
                     {isAuthenticated && user ? (
                         user.image ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
                             <img
                                 src={user.image}
                                 alt={user.name || "User"}
