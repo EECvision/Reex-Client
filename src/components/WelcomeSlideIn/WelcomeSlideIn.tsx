@@ -56,14 +56,14 @@ export default function WelcomeSlideIn() {
 
     if (mountState === 'show-fab') {
         return (
-            <button className={styles.fab} onClick={handleRestore} title="Setup Instructions">
+            <button data-tour="setup-guide" className={styles.fab} onClick={handleRestore} title="Setup Instructions">
                 <Terminal size={16} />
             </button>
         );
     }
 
     return (
-        <div className={styles.slideIn}>
+        <div data-tour="setup-guide" className={styles.slideIn}>
             <div className={styles.header}>
                 <div className={styles.titleWrapper}>
                     <Sparkles size={16} color="#3b82f6" />

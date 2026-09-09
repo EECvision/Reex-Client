@@ -150,6 +150,7 @@ const Navbar: React.FC<NavbarProps> = ({
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
             <div
+              data-tour="workspace-mode"
               className={styles.workspaceSwitcherTrigger}
               title={isStandaloneMode ? "Preview Mode" : projectPath}
             >
@@ -258,22 +259,24 @@ const Navbar: React.FC<NavbarProps> = ({
           </DropdownMenu.Portal>
         </DropdownMenu.Root>
 
-        {onBaseUrlChange && isStandaloneMode && hasCollection ? (
-          <div className={styles.baseUrlInputWrapper}>
-            <span className={styles.baseUrlLabel}>BASE</span>
-            <BaseUrlInput value={baseURL || ""} onChange={onBaseUrlChange} />
-            <Pencil
-              size={14}
-              color="#9ca3af"
-              style={{ marginRight: 8, opacity: 0.8 }}
-            />
-          </div>
-        ) : (
-          hasCollection &&
-          baseURL && (
-            <BadgeGroup label="BASE" value={baseURL || "No Base URL"} />
-          )
-        )}
+        <div data-tour="base-url">
+          {onBaseUrlChange && isStandaloneMode && hasCollection ? (
+            <div className={styles.baseUrlInputWrapper}>
+              <span className={styles.baseUrlLabel}>BASE</span>
+              <BaseUrlInput value={baseURL || ""} onChange={onBaseUrlChange} />
+              <Pencil
+                size={14}
+                color="#9ca3af"
+                style={{ marginRight: 8, opacity: 0.8 }}
+              />
+            </div>
+          ) : (
+            hasCollection &&
+            baseURL && (
+              <BadgeGroup label="BASE" value={baseURL || "No Base URL"} />
+            )
+          )}
+        </div>
       </div>
 
       <div className={styles.rightSection}>
@@ -289,7 +292,7 @@ const Navbar: React.FC<NavbarProps> = ({
         )}
 
         {onAuthClick && hasCollection && (
-          <div className={styles.actionGroup}>
+          <div data-tour="auth" className={styles.actionGroup}>
             <Button
               variant="ghost"
               onClick={onAuthClick}
@@ -315,20 +318,22 @@ const Navbar: React.FC<NavbarProps> = ({
           }}
         >
           <DropdownMenu.Trigger asChild>
-            <Button
-              variant="ghost"
-              leftIcon={
-                !isStandaloneMode && hasCollection ? (
-                  <RefreshCw size={16} />
-                ) : (
-                  <Plus size={16} />
-                )
-              }
-            >
-              {!isStandaloneMode && hasCollection
-                ? "Update Collection"
-                : "Add Collection"}
-            </Button>
+            <div data-tour="add-collection">
+              <Button
+                variant="ghost"
+                leftIcon={
+                  !isStandaloneMode && hasCollection ? (
+                    <RefreshCw size={16} />
+                  ) : (
+                    <Plus size={16} />
+                  )
+                }
+              >
+                {!isStandaloneMode && hasCollection
+                  ? "Update Collection"
+                  : "Add Collection"}
+              </Button>
+            </div>
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
             <DropdownMenu.Content
@@ -412,15 +417,17 @@ const Navbar: React.FC<NavbarProps> = ({
         <div className={styles.separator}></div>
 
         {onAssistantClick && !isAssistantOpen && (
-          <Button
-            variant="ghost"
-            onClick={onAssistantClick}
-            leftIcon={<Sparkles size={16} />}
-            title="Ask Docs"
-            className={styles.mobileAssistantBtn}
-          >
-            <span className={styles.hideOnMobile}>Ask Docs</span>
-          </Button>
+          <div data-tour="ask-docs">
+            <Button
+              variant="ghost"
+              onClick={onAssistantClick}
+              leftIcon={<Sparkles size={16} />}
+              title="Ask Docs"
+              className={styles.mobileAssistantBtn}
+            >
+              <span className={styles.hideOnMobile}>Ask Docs</span>
+            </Button>
+          </div>
         )}
 
         {/* Mobile Menu Toggle */}

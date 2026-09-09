@@ -136,7 +136,7 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
   };
 
   return (
-    <div className={styles.workspace}>
+    <div data-tour="workspace-area" className={styles.workspace}>
       {tabs.length > 0 && onSelectTab && onCloseTab && onPinTab && (
         <TabBar
           tabs={tabs}

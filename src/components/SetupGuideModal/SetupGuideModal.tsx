@@ -95,6 +95,7 @@ export default function SetupGuideModal() {
   if (mountState === "show-fab") {
     return createPortal(
       <button
+        data-tour="setup-guide"
         className={styles.fab}
         onClick={handleRestore}
         title="Setup Instructions"
@@ -107,7 +108,7 @@ export default function SetupGuideModal() {
 
   const modalContent = (
     <div className={styles.overlay} onClick={handleDismiss}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div data-tour="setup-guide" className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <div className={styles.titleWrapper}>
             <h3 className={styles.title}>Project Setup Guide</h3>

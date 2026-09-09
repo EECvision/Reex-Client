@@ -255,7 +255,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      <div className={styles.filterSection}>
+      <div data-tour="method-filter" className={styles.filterSection}>
         <div className={styles.selectWrapper}>
           <Select
             options={METHOD_OPTIONS}
@@ -285,7 +285,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      <div className={styles.folderList}>
+      <div data-tour="files-section" className={styles.folderList}>
         {collectionGroups
           ? filteredCollectionGroups.length > 0 ? filteredCollectionGroups.map((group) => {
               const isSearchActive = searchQuery.trim().length > 0;
@@ -345,7 +345,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         onRenameCollection ||
                         onDownloadCollection ||
                         onDeleteCollection) && (
-                        <div className={styles.collectionHeaderActions}>
+                        <div data-tour="collection-menu" className={styles.collectionHeaderActions}>
                           <DropdownMenu.Root>
                             <DropdownMenu.Trigger asChild>
                               <Button

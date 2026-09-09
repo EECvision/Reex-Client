@@ -4,10 +4,11 @@ import React, { useState, useRef, useEffect } from "react";
 import styles from "./UserMenu.module.css";
 import { useAuth } from "@/providers/AuthContext";
 import { useSettings } from "@/providers/SettingsContext";
-import { User, LogOut, LogIn, Settings, CreditCard, Sun, Moon, Monitor, Palette, Book, MessageSquareWarning, ChevronsUpDown } from "lucide-react";
+import { User, LogOut, LogIn, Settings, CreditCard, Sun, Moon, Monitor, Palette, Book, MessageSquareWarning, ChevronsUpDown, Compass } from "lucide-react";
 import LoginModal from "../LoginModal/LoginModal";
 import { useRouter } from "next/navigation";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useTour } from "../ProductTour";
 
 interface UserMenuProps {
     placement?: 'top' | 'bottom';
@@ -23,6 +24,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top', expanded = false
     const [showLogin, setShowLogin] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
+    const { startTour } = useTour();
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -48,7 +50,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top', expanded = false
     const popoverClass = `${styles.popover} ${placement === 'top' ? styles.popoverTop : styles.popoverBottom}`;
 
     return (
-        <div className={`${styles.container} ${expanded ? styles.containerExpanded : ''}`} ref={containerRef}>
+        <div data-tour="user-menu" className={`${styles.container} ${expanded ? styles.containerExpanded : ''}`} ref={containerRef}>
             <button
                 className={`${styles.trigger} ${expanded ? styles.triggerExpanded : ''}`}
                 onClick={() => setIsOpen(!isOpen)}
@@ -166,6 +168,10 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top', expanded = false
                                     <MessageSquareWarning size={14} />
                                     <span>Contact Support</span>
                                 </button>
+                                <button className={styles.menuItem} onClick={() => { setIsOpen(false); startTour(0); }}>
+                                    <Compass size={14} />
+                                    <span>Product Tour</span>
+                                </button>
                                 <div className={styles.separator} />
                                 <button
                                     className={`${styles.menuItem} ${styles.menuItemDanger}`}
@@ -186,6 +192,10 @@ const UserMenu: React.FC<UserMenuProps> = ({ placement = 'top', expanded = false
                                 <button className={styles.menuItem} onClick={() => window.open('/docs', '_blank')}>
                                     <Book size={14} />
                                     <span>Docs</span>
+                                </button>
+                                <button className={styles.menuItem} onClick={() => { setIsOpen(false); startTour(0); }}>
+                                    <Compass size={14} />
+                                    <span>Product Tour</span>
                                 </button>
                                 <div className={styles.separator} />
                                 <div className={styles.themeRow}>

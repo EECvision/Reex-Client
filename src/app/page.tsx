@@ -23,6 +23,7 @@ import {
   selectEndpoint,
   doubleClickEndpoint,
 } from "@/utils/tabManagement";
+import { TourProvider, ProductTour } from "@/components/ProductTour";
 
 // Hooks
 import { useToast } from "@/hooks/useToast";
@@ -45,7 +46,7 @@ const useMediaQuery = (query: string): boolean => {
   );
 };
 
-const App = () => {
+const AppContent = () => {
   // Prevent default browser right-click context menu globally
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => {
@@ -833,8 +834,15 @@ const App = () => {
         isOpen={isSandboxOpen}
         onClose={() => setIsSandboxOpen(false)}
       />
+      <ProductTour />
     </div>
   );
 };
 
-export default App;
+export default function App() {
+  return (
+    <TourProvider>
+      <AppContent />
+    </TourProvider>
+  );
+}
