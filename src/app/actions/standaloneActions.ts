@@ -5,6 +5,7 @@ import { Database } from '@/types/supabase';
 import { auth } from '@/auth';
 import { verifyProStatus } from '@/lib/verifyProStatus';
 import { PRO_STANDALONE_LIMIT } from '@/lib/constants';
+import { StandaloneCollection } from '@/types';
 
 
 
@@ -31,7 +32,7 @@ export async function getStandaloneCollections() {
 
     // SUPABASE STORAGE (PRO)
     const { data, error } = await supabase
-        .from('standalone_collections' as any)
+        .from('standalone_collections')
         .select('*')
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: true });
@@ -41,7 +42,7 @@ export async function getStandaloneCollections() {
         return [];
     }
 
-    return (data || []).map((item: any) => {
+    return (data || []).map((item) => {
         let content = item.content;
         // Robustness: Handle double-stringified or string-returned JSON
         if (typeof content === 'string') {
@@ -53,8 +54,10 @@ export async function getStandaloneCollections() {
             }
         }
 
+        const contentRecord = (content || {}) as Record<string, unknown>;
+
         return {
-            ...content,
+            ...contentRecord,
             id: item.id, // Ensure DB ID is used
             // Ensure name is synced if changed outside content
             name: item.name
@@ -62,7 +65,9 @@ export async function getStandaloneCollections() {
     });
 }
 
-export async function createStandaloneCollection(collection: any) {
+export async function createStandaloneCollection(
+    collection: StandaloneCollection | (Record<string, unknown> & { id?: string; name: string })
+) {
     const session = await auth();
     if (!session?.user?.id) return { error: 'Unauthorized' };
 
@@ -80,7 +85,7 @@ export async function createStandaloneCollection(collection: any) {
 
     // LIMIT CHECK: Max 20 standalone collections
     const { count } = await supabase
-        .from('standalone_collections' as any)
+        .from('standalone_collections')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', session.user.id);
 
@@ -90,11 +95,11 @@ export async function createStandaloneCollection(collection: any) {
 
     // SUPABASE STORAGE (PRO)
     const { data, error } = await supabase
-        .from('standalone_collections' as any)
+        .from('standalone_collections')
         .insert({
             user_id: session.user.id,
             name: name,
-            content: { id, name, ...content },
+            content: { id, name, ...content } as unknown as Database['public']['Tables']['standalone_collections']['Insert']['content'],
             updated_at: new Date().toISOString()
         })
         .select()
@@ -108,25 +113,12 @@ export async function createStandaloneCollection(collection: any) {
     return { success: true, data };
 }
 
-export async function updateStandaloneCollection(id: string, updates: any) {
+export async function updateStandaloneCollection(
+    id: string,
+    updates: Partial<StandaloneCollection> | Record<string, unknown>
+) {
     const session = await auth();
     if (!session?.user?.id) return { error: 'Unauthorized' };
-
-    // Fetch existing validation?
-    // For now direct update
-
-    // We need to fetch current content to merge updates if we are just patching?
-    // Or we simply blindly update content.
-    // The ProjectContext passes partial updates. We probably need to be careful.
-    // Let's first fetch the existing item to merge content properly server-side
-    // OR, ProjectContext should pass the FULL object.
-
-    // Simplest strategy: Caller passes FULL content or we handle merge.
-    // Current ProjectContext logic: setCollections(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
-    // So the client has the full state. It can pass the full new state.
-    // But updateCollection in Context takes Partial.
-
-    // Let's implement a SMART update.
 
     // HYBRID STORAGE CHECK
     const isPro = await verifyProStatus(session.user.id);
@@ -136,7 +128,7 @@ export async function updateStandaloneCollection(id: string, updates: any) {
 
     // SUPABASE STORAGE (PRO)
     const { data: existing } = await supabase
-        .from('standalone_collections' as any)
+        .from('standalone_collections')
         .select('content')
         .eq('id', id)
         .eq('user_id', session.user.id)
@@ -144,14 +136,14 @@ export async function updateStandaloneCollection(id: string, updates: any) {
 
     if (!existing) return { error: 'Collection not found' };
 
-    const record = existing as any; // Cast to avoid TS error on content access
-    const newContent = { ...record.content, ...updates };
+    const recordContent = (existing.content as Record<string, unknown>) || {};
+    const newContent: Record<string, unknown> = { ...recordContent, ...updates };
 
     const { error } = await supabase
-        .from('standalone_collections' as any)
+        .from('standalone_collections')
         .update({
-            name: newContent.name, // Update top-level name too
-            content: newContent,
+            name: typeof newContent.name === 'string' ? newContent.name : undefined,
+            content: newContent as unknown as Database['public']['Tables']['standalone_collections']['Update']['content'],
             updated_at: new Date().toISOString()
         })
         .eq('id', id)
@@ -176,7 +168,7 @@ export async function deleteStandaloneCollection(id: string) {
     }
 
     const { error } = await supabase
-        .from('standalone_collections' as any)
+        .from('standalone_collections')
         .delete()
         .eq('id', id)
         .eq('user_id', session.user.id);
@@ -200,7 +192,7 @@ export async function deleteAllStandaloneCollections() {
     }
 
     const { error } = await supabase
-        .from('standalone_collections' as any)
+        .from('standalone_collections')
         .delete()
         .eq('user_id', session.user.id);
 

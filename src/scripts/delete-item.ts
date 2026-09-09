@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // scripts/delete-item.ts - Delete a module or function from the collection
 
 import * as fs from "fs";

@@ -30,7 +30,7 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
             if (!isPro) {
                 return await ClientStorage.get<StandaloneCollection>(STANDALONE_KEY);
             }
-            return await getStandaloneCollections();
+            return (await getStandaloneCollections()) as unknown as StandaloneCollection[];
         },
         enabled: enabled,
     });
@@ -52,12 +52,12 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
             if (res.error) return { error: res.error };
             return {
                 ...collection,
-                id: (res.data as any)?.id || collection.id // Use DB ID if available
+                id: (res.data as { id?: string })?.id || collection.id // Use DB ID if available
             };
         },
         onSuccess: (newCollection) => {
-            if ((newCollection as any).error) {
-                showToast('error', String((newCollection as any).error));
+            if ((newCollection as Record<string, unknown>).error) {
+                showToast('error', String((newCollection as Record<string, unknown>).error));
                 return;
             }
             const collection = newCollection as StandaloneCollection;
@@ -69,7 +69,7 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
             });
             showToast('success', 'Collection created');
         },
-        onError: (err: any) => {
+        onError: (err: Error) => {
             showToast('error', err.message || 'Failed to create standalone collection');
         }
     });
@@ -87,8 +87,8 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
             return { id, updates };
         },
         onSuccess: (result) => {
-            if ((result as any).error) {
-                showToast('error', String((result as any).error));
+            if ((result as Record<string, unknown>).error) {
+                showToast('error', String((result as Record<string, unknown>).error));
                 return;
             }
             const { id, updates } = result as { id: string, updates: Partial<StandaloneCollection> };
@@ -97,7 +97,7 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
             });
             showToast('success', 'Collection updated');
         },
-        onError: (err: any) => {
+        onError: (err: Error) => {
             showToast('error', err.message || 'Failed to update standalone collection');
         }
     });
@@ -115,8 +115,8 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
             return id;
         },
         onSuccess: (result) => {
-            if ((result as any).error) {
-                showToast('error', String((result as any).error));
+            if ((result as Record<string, unknown>).error) {
+                showToast('error', String((result as Record<string, unknown>).error));
                 return;
             }
             const deletedId = result as string;
@@ -125,7 +125,7 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
             });
             showToast('success', 'Collection deleted');
         },
-        onError: (err: any) => {
+        onError: (err: Error) => {
             showToast('error', err.message || 'Failed to delete standalone collection');
         }
     });
@@ -147,7 +147,7 @@ export const useStandaloneCollections = (enabled: boolean = true) => {
         onSuccess: () => {
             queryClient.setQueryData(QUERY_KEY, []);
         },
-        onError: (err: any) => {
+        onError: (err: Error) => {
             console.error('Failed to clear standalone collections', err);
         }
     });

@@ -4,6 +4,12 @@ import fs from "fs";
 import os from "os";
 import { decompressFilePayload, getApiServicesDir } from "@/app/api/utils";
 
+interface SyncOperation {
+    type: 'write' | 'delete' | string;
+    filePath: string;
+    [key: string]: unknown;
+}
+
 export async function POST(req: NextRequest) {
 
     const uploadsDir = path.join(os.tmpdir(), 'api-builder-uploads');
@@ -44,7 +50,7 @@ export async function POST(req: NextRequest) {
             // functionsStr parsing logic omitted but could be added if needed for sync (sync usually full)
         };
 
-        let operations: any[] = [];
+        let operations: SyncOperation[] = [];
 
         // 1. Deletions
         if (deletedModules.length > 0) {
@@ -68,11 +74,11 @@ export async function POST(req: NextRequest) {
         const { generateOpenApi } = await import("@/scripts/generate-openapi-collection");
         const { generatePostman } = await import("@/scripts/generate-postman-collection");
 
-        let genOps: any[] = [];
+        let genOps: SyncOperation[] = [];
         if (isPostman) {
-            genOps = await generatePostman(options) as any[];
+            genOps = await generatePostman(options) as SyncOperation[];
         } else {
-            genOps = await generateOpenApi(options) as any[];
+            genOps = await generateOpenApi(options) as SyncOperation[];
         }
 
         operations = [...operations, ...genOps];
@@ -99,9 +105,10 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, operations });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
         console.error("Sync failed", error);
         if (filePath && fs.existsSync(filePath)) try { fs.unlinkSync(filePath); } catch {}
-        return NextResponse.json({ success: false, error: error.toString() }, { status: 500 });
+        return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
     }
 }

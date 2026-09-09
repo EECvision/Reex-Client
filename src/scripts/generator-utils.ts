@@ -1,7 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
-import { Project, SourceFile, SyntaxKind, PropertyAssignment, InterfaceDeclaration } from "ts-morph";
+import { Project, SourceFile, SyntaxKind, PropertyAssignment, InterfaceDeclaration, ObjectLiteralExpression, Node } from "ts-morph";
 import { getInitializerObject } from "@/utils/ast";
+import { OpenAPISpec } from "@/types";
 
 // --- Types ---
 
@@ -19,7 +20,7 @@ export interface ModuleContent {
 
 export interface GeneratorOptions {
     specPath?: string;
-    specData?: any;
+    specData?: unknown;
     outputDir?: string;
     dryRun?: boolean;
     filterModules?: string[];
@@ -54,7 +55,7 @@ export interface StandardFunctionDefinition {
     pathParams: string[];
     pathParamDescriptions?: Record<string, string>; // param name -> description
     queryParams?: GenericParam[];
-    bodySchema?: any; // Raw JSON (Postman) or OpenAPI Schema
+    bodySchema?: Record<string, unknown>; // Raw JSON (Postman) or OpenAPI Schema
     isPostman?: boolean;
     clientName?: string; // e.g. "AUTH_CLIENT"
     requiresAuth?: boolean;
@@ -196,25 +197,26 @@ export const normalizeApiUrl = (url: string, baseUrl?: string) => {
     return normalized.startsWith('/') ? normalized : '/' + normalized;
 };
 
-export const extractBaseUrl = (data: any): string | undefined => {
+export const extractBaseUrl = (data: OpenAPISpec | Record<string, unknown> | null | undefined): string | undefined => {
     if (!data) return undefined;
+    const spec = data as OpenAPISpec;
 
     // OpenAPI 3
-    if (data.servers && Array.isArray(data.servers) && data.servers.length > 0) {
-        return data.servers[0].url;
+    if (spec.servers && Array.isArray(spec.servers) && spec.servers.length > 0) {
+        return spec.servers[0]?.url;
     }
 
     // Swagger 2
-    if (data.host) {
-        const scheme = (data.schemes && data.schemes[0]) || 'https';
-        const result = `${scheme}://${data.host}${data.basePath || ''}`;
+    if (spec.host) {
+        const scheme = (spec.schemes && spec.schemes[0]) || 'https';
+        const result = `${scheme}://${spec.host}${spec.basePath || ''}`;
         return result;
     }
 
     // Postman
-    if (data.info && data.item) {
+    if (spec.info && spec.item) {
         // Try to find in variables
-        if (data.variable && Array.isArray(data.variable)) {
+        if (spec.variable && Array.isArray(spec.variable)) {
             const BASE_URL_KEYS = new Set([
                 "baseurl",
                 "base_url",
@@ -227,7 +229,7 @@ export const extractBaseUrl = (data: any): string | undefined => {
                 "host",
             ]);
 
-            const baseUrlVar = data.variable.find((v: any) =>
+            const baseUrlVar = spec.variable.find((v) =>
                 !v.disabled &&
                 typeof v.key === "string" &&
                 BASE_URL_KEYS.has(v.key.toLowerCase())
@@ -240,17 +242,19 @@ export const extractBaseUrl = (data: any): string | undefined => {
 
         // Fallback: check first item request url
         let candidate: string | undefined;
-        const findUrl = (items: any[]) => {
+        const findUrl = (items: Array<Record<string, unknown>>): boolean => {
             for (const item of items) {
-                if (item.request?.url?.raw) {
-                    candidate = item.request.url.raw;
+                const req = item.request as Record<string, unknown> | undefined;
+                const urlObj = req?.url as Record<string, unknown> | undefined;
+                if (typeof urlObj?.raw === "string") {
+                    candidate = urlObj.raw;
                     return true;
                 }
-                if (item.item && findUrl(item.item)) return true;
+                if (item.item && Array.isArray(item.item) && findUrl(item.item as Array<Record<string, unknown>>)) return true;
             }
             return false;
         };
-        if (findUrl(data.item) && candidate) {
+        if (Array.isArray(spec.item) && findUrl(spec.item as Array<Record<string, unknown>>) && candidate) {
             // Extract base from full URL if possible
             try {
                 const u = new URL(candidate);
@@ -264,17 +268,18 @@ export const extractBaseUrl = (data: any): string | undefined => {
     return undefined;
 };
 
-export const extractCollectionName = (data: any): string | undefined => {
+export const extractCollectionName = (data: OpenAPISpec | Record<string, unknown> | null | undefined): string | undefined => {
     if (!data) return undefined;
+    const spec = data as OpenAPISpec;
 
     // OpenAPI 3 / Swagger 2
-    if (data.info?.title) {
-        return data.info.title;
+    if (spec.info?.title) {
+        return spec.info.title;
     }
 
     // Postman
-    if (data.info?.name) {
-        return data.info.name;
+    if (spec.info?.name) {
+        return spec.info.name;
     }
 
     return undefined;
@@ -310,7 +315,7 @@ export const getExistingInterfaces = (sourceFile: SourceFile): Map<string, strin
 };
 
 export const mergePreservedFunctions = (
-    initializer: any,
+    initializer: ObjectLiteralExpression,
     moduleName: string,
     existingFunctions: Map<string, string>,
     forceOverwrite: string[]
@@ -589,22 +594,22 @@ export const processAndMergeModules = (
 
             if (initializer) {
                 if (functionsToInclude && functionsToInclude.length > 0) {
-                    const propsToRemove = initializer.getProperties().filter((prop: any) => {
-                        if (prop.getKind() === SyntaxKind.PropertyAssignment) {
-                            const propName = (prop as PropertyAssignment).getName();
+                    const propsToRemove = initializer.getProperties().filter((prop) => {
+                        if (Node.isPropertyAssignment(prop)) {
+                            const propName = prop.getName();
                             return !functionsToInclude.includes(propName) || deletedFunctionsList.includes(propName);
                         }
                         return true;
                     });
-                    propsToRemove.forEach((prop: any) => prop.remove());
+                    propsToRemove.forEach((prop) => prop.remove());
                 } else if (deletedFunctionsList.length > 0) {
-                    const propsToRemove = initializer.getProperties().filter((prop: any) => {
-                        if (prop.getKind() === SyntaxKind.PropertyAssignment) {
-                            return deletedFunctionsList.includes((prop as PropertyAssignment).getName());
+                    const propsToRemove = initializer.getProperties().filter((prop) => {
+                        if (Node.isPropertyAssignment(prop)) {
+                            return deletedFunctionsList.includes(prop.getName());
                         }
                         return false;
                     });
-                    propsToRemove.forEach((prop: any) => prop.remove());
+                    propsToRemove.forEach((prop) => prop.remove());
                 }
                 mergePreservedFunctions(initializer, mod.name, existingFunctions, normalizedForceOverwrite);
             }
@@ -668,7 +673,7 @@ export const processAndMergeModules = (
 
 export const generateStandardModuleContent = (
     modules: StandardModuleDefinition[],
-    specData?: any // Optional, mostly for OpenAPI ref resolution
+    specData?: unknown // Optional, mostly for OpenAPI ref resolution
 ): ModuleContent[] => {
     const generatedModules: ModuleContent[] = [];
 
@@ -687,15 +692,15 @@ export const generateStandardModuleContent = (
             const needsPayload = ["post", "put", "delete", "patch"].includes(func.method);
 
             // 1. Generate Types (Payload)
-            if (needsPayload && func.bodySchema) {
+            if (needsPayload && func.bodySchema && typeof func.bodySchema === 'object') {
                 let bodyType = "";
                 const typeName = entityRequestName + "Payload";
 
                 if (func.isPostman) {
-                    bodyType = generateTypesFromPostmanBody(func.bodySchema, entityRequestName);
+                    bodyType = generateTypesFromPostmanBody(func.bodySchema as Record<string, unknown>, entityRequestName);
                 } else {
                     bodyType = generateTypesFromOpenAPISchema(
-                        func.bodySchema,
+                        func.bodySchema as Record<string, unknown>,
                         entityRequestName,
                         "Payload",
                         specData
@@ -780,16 +785,20 @@ export const generateStandardModuleContent = (
 
 // --- OpenAPI Specific Helpers ---
 
-export const resolveSchema = (schema: any, spec: any): any => {
+export const resolveSchema = (schema: Record<string, unknown> | null | undefined, spec: unknown): Record<string, unknown> | null | undefined => {
     if (!schema) return null;
-    if (schema.$ref) {
+    if (typeof schema.$ref === "string") {
         const refPath = schema.$ref.replace(/^#\//, "").split("/");
-        let resolved = spec;
+        let resolved: unknown = spec;
         for (const segment of refPath) {
-            resolved = resolved?.[segment];
+            if (resolved && typeof resolved === "object") {
+                resolved = (resolved as Record<string, unknown>)[segment];
+            } else {
+                return null;
+            }
             if (!resolved) return null;
         }
-        return resolved;
+        return resolved as Record<string, unknown>;
     }
     return schema;
 };
@@ -840,65 +849,65 @@ export const resolveClientAndPath = (
     return { clientName: undefined, path: pathForSubstitution };
 };
 
-export const convertOpenAPITypeToTS = (schema: any, spec?: any): string => {
-    if (!schema) return "any";
+export const convertOpenAPITypeToTS = (schema: Record<string, unknown> | null | undefined, spec?: unknown): string => {
+    if (!schema) return "unknown";
     const resolvedSchema = spec ? resolveSchema(schema, spec) : schema;
-    if (!resolvedSchema) return "any";
+    if (!resolvedSchema) return "unknown";
 
     // 1. Handle Enums
-    if (resolvedSchema.enum) {
-        return resolvedSchema.enum.map((v: any) => typeof v === 'string' ? `'${v}'` : v).join(' | ');
+    if (Array.isArray(resolvedSchema.enum)) {
+        return resolvedSchema.enum.map((v: unknown) => typeof v === 'string' ? `'${v}'` : String(v)).join(' | ');
     }
 
     // 2. Handle Union Types (oneOf/anyOf)
-    if (resolvedSchema.oneOf || resolvedSchema.anyOf) {
-        const variants = resolvedSchema.oneOf || resolvedSchema.anyOf;
-        return variants.map((v: any) => convertOpenAPITypeToTS(v, spec)).join(' | ');
+    const variants = (resolvedSchema.oneOf || resolvedSchema.anyOf) as Record<string, unknown>[] | undefined;
+    if (variants && Array.isArray(variants)) {
+        return variants.map((v: Record<string, unknown>) => convertOpenAPITypeToTS(v, spec)).join(' | ');
     }
 
     if (resolvedSchema.type === "string") return "string";
     if (resolvedSchema.type === "number" || resolvedSchema.type === "integer") return "number";
     if (resolvedSchema.type === "boolean") return "boolean";
     if (resolvedSchema.type === "array") {
-        const itemType = convertOpenAPITypeToTS(resolvedSchema.items, spec);
+        const itemType = convertOpenAPITypeToTS(resolvedSchema.items as Record<string, unknown>, spec);
         return `${itemType}[]`;
     }
     if (resolvedSchema.type === "object") {
         if (resolvedSchema.properties) {
-            const fields = Object.entries(resolvedSchema.properties).map(
-                ([key, prop]: [string, any]) => {
-                    const required = resolvedSchema.required?.includes(key);
+            const fields = Object.entries(resolvedSchema.properties as Record<string, Record<string, unknown>>).map(
+                ([key, prop]: [string, Record<string, unknown>]) => {
+                    const required = Array.isArray(resolvedSchema.required) ? (resolvedSchema.required as string[]).includes(key) : false;
                     const type = convertOpenAPITypeToTS(prop, spec);
                     return `  ${sanitizePropertyName(key)}${required ? "" : "?"}: ${type};`;
                 }
             );
             return `{\n${fields.join("\n")}\n}`;
         }
-        return "Record<string, any>";
+        return "Record<string, unknown>";
     }
-    return "any";
+    return "unknown";
 };
 
 export const generateTypesFromOpenAPISchema = (
-    schema: any,
+    schema: Record<string, unknown> | null | undefined,
     entityName: string,
     suffix: string,
-    spec: any
+    spec: unknown
 ): string => {
     if (!schema) return "";
     const resolvedSchema = resolveSchema(schema, spec);
     if (!resolvedSchema || !resolvedSchema.properties) return "";
 
     const fields: string[] = [];
-    const required = resolvedSchema.required || [];
+    const required = (resolvedSchema.required as string[]) || [];
 
-    Object.entries(resolvedSchema.properties).forEach(
-        ([key, prop]: [string, any]) => {
+    Object.entries(resolvedSchema.properties as Record<string, Record<string, unknown>>).forEach(
+        ([key, prop]: [string, Record<string, unknown>]) => {
             const isRequired = required.includes(key);
             const type = convertOpenAPITypeToTS(prop, spec);
             const optional = isRequired ? "" : "?";
 
-            if (prop.description) {
+            if (typeof prop.description === "string") {
                 // Clean up description newlines
                 const cleanDesc = prop.description.trim().replace(/\n/g, "\n   * ");
                 fields.push(`  /** ${cleanDesc} */\n  ${sanitizePropertyName(key)}${optional}: ${type};`);
@@ -933,23 +942,23 @@ export const extractPostmanPathParams = (url: string): string[] => {
     return [...new Set(params)]; // Deduplicate
 };
 
-export const inferTypeFromExample = (value: any): string => {
-    if (value === null || value === undefined) return "any";
+export const inferTypeFromExample = (value: unknown): string => {
+    if (value === null || value === undefined) return "unknown";
     if (typeof value === "string") return "string";
     if (typeof value === "number") return "number";
     if (typeof value === "boolean") return "boolean";
-    if (Array.isArray(value)) return value.length > 0 ? `${inferTypeFromExample(value[0])}[]` : "any[]";
-    if (typeof value === "object") return "Record<string, any>";
-    return "any";
+    if (Array.isArray(value)) return value.length > 0 ? `${inferTypeFromExample(value[0])}[]` : "unknown[]";
+    if (typeof value === "object") return "Record<string, unknown>";
+    return "unknown";
 };
 
-export const generateTypesFromPostmanBody = (body: any, entityName: string): string => {
+export const generateTypesFromPostmanBody = (body: Record<string, unknown> | null | undefined, entityName: string): string => {
     if (!body) return "";
 
     // Handle formdata mode (Postman multipart/form-data body)
     if (body.formdata && Array.isArray(body.formdata) && body.formdata.length > 0) {
-        const fields = body.formdata.map((field: any) => {
-            const safeName = sanitizePropertyName(field.key);
+        const fields = body.formdata.map((field: Record<string, unknown>) => {
+            const safeName = sanitizePropertyName(String(field.key || ""));
             // Postman formdata: type is "text" or "file"
             const type = field.type === 'file' ? 'File' : 'string';
             const descComment = field.description
@@ -962,9 +971,9 @@ export const generateTypesFromPostmanBody = (body: any, entityName: string): str
     }
 
     // Handle raw JSON mode
-    if (!body.raw) return "";
+    if (typeof body.raw !== "string") return "";
 
-    let parsed;
+    let parsed: unknown;
     try {
         parsed = JSON.parse(body.raw);
     } catch {
@@ -981,7 +990,7 @@ export const generateTypesFromPostmanBody = (body: any, entityName: string): str
     // Collect all generated interfaces (main + sub-interfaces)
     const interfaces: string[] = [];
 
-    const generateInterface = (obj: Record<string, any>, interfaceName: string) => {
+    const generateInterface = (obj: Record<string, unknown>, interfaceName: string) => {
         const fields: string[] = [];
         Object.entries(obj).forEach(([key, value]) => {
             const safeName = sanitizePropertyName(key);
@@ -990,12 +999,12 @@ export const generateTypesFromPostmanBody = (body: any, entityName: string): str
             if (Array.isArray(value) && value.length > 0 && typeof value[0] === "object" && value[0] !== null) {
                 // Array of objects → generate a sub-interface for the item
                 const itemInterfaceName = interfaceName + toPascalCase(key) + "Item";
-                generateInterface(value[0], itemInterfaceName);
+                generateInterface(value[0] as Record<string, unknown>, itemInterfaceName);
                 fields.push(`  ${safeName}${optional}: ${itemInterfaceName}[];`);
             } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
                 // Nested object → generate a sub-interface
                 const subInterfaceName = interfaceName + toPascalCase(key);
-                generateInterface(value, subInterfaceName);
+                generateInterface(value as Record<string, unknown>, subInterfaceName);
                 fields.push(`  ${safeName}${optional}: ${subInterfaceName};`);
             } else {
                 const type = inferTypeFromExample(value);
@@ -1007,7 +1016,9 @@ export const generateTypesFromPostmanBody = (body: any, entityName: string): str
         interfaces.push(`\nexport interface ${interfaceName} {\n${fields.join("\n")}\n}\n`);
     };
 
-    generateInterface(parsed, entityName + "Payload");
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        generateInterface(parsed as Record<string, unknown>, entityName + "Payload");
+    }
 
     if (interfaces.length === 0) return "";
     // Return generated interfaces (sub-interfaces first, then root)
@@ -1046,7 +1057,7 @@ export const proposeClientForFunctions = (functions: StandardFunctionDefinition[
 
 export const runGeneratorCLI = async (
     generatorName: string,
-    generatorFn: (opts: GeneratorOptions) => Promise<any>
+    generatorFn: (opts: GeneratorOptions) => Promise<unknown>
 ) => {
     const args = process.argv.slice(2);
     if (args.length === 0) {
@@ -1085,8 +1096,9 @@ export const runGeneratorCLI = async (
             filterModules,
             filterFunctions,
         });
-    } catch (err: any) {
-        console.error("✗ Error:", err.message);
+    } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+        console.error("✗ Error:", errorMessage);
         process.exit(1);
     }
 };

@@ -21,16 +21,16 @@ import {
 
 // --- Main Processing ---
 
-export const processPostmanCollection = (collectionData: any) => {
-  const processedModules = new Map<string, any[]>();
+export const processPostmanCollection = (collectionData: Record<string, unknown>) => {
+  const processedModules = new Map<string, Record<string, unknown>[]>();
 
-  const processItem = (item: any, folderName?: string, parentAuth?: any) => {
+  const processItem = (item: Record<string, unknown>, folderName?: string, parentAuth?: unknown) => {
     // 1. Resolve Auth (Local > Parent)
     const currentAuth = item.auth || parentAuth;
 
     if (item.item) {
-      const folder = folderName || item.name;
-      item.item.forEach((subItem: any) => processItem(subItem, folder, currentAuth));
+      const folder = folderName || (item.name as string);
+      (item.item as Record<string, unknown>[]).forEach((subItem: Record<string, unknown>) => processItem(subItem, folder, currentAuth));
     } else if (item.request) {
       const folder = folderName || "general";
       const moduleName = sanitizeModuleName(folder);
@@ -45,13 +45,13 @@ export const processPostmanCollection = (collectionData: any) => {
   // Start processing from root
   // Collection itself might have auth
   const collectionAuth = collectionData.auth;
-  if (collectionData.item) collectionData.item.forEach((item: any) => processItem(item, undefined, collectionAuth));
+  if (collectionData.item) (collectionData.item as Record<string, unknown>[]).forEach((item: Record<string, unknown>) => processItem(item, undefined, collectionAuth));
 
   return processedModules;
 };
 
 const mapToStandardIR = (
-  processedModules: Map<string, any[]>,
+  processedModules: Map<string, Record<string, unknown>[]>,
   filterModules?: string[],
   clientMappings?: Record<string, string>,
   baseUrl?: string
@@ -65,10 +65,10 @@ const mapToStandardIR = (
     const generatedFunctions = new Set<string>();
 
     items.forEach((item) => {
-      const { request } = item;
-      if (!request || !request.url || !request.method) return;
+      const request = item.request as Record<string, unknown>;
+      if (!request || !request.url || typeof request.method !== 'string') return;
 
-      const requestName = item.name;
+      const requestName = item.name as string;
       const method = request.method.toLowerCase();
       // Aggressively clean requestName to avoid "get_getSomething"
       const functionName = calculateFunctionName(method, requestName);
@@ -78,8 +78,11 @@ const mapToStandardIR = (
       // URL Handling
       let url = "";
       if (typeof request.url === "string") url = request.url;
-      else if (request.url.raw) url = request.url.raw;
-      else if (request.url.path) url = "/" + request.url.path.join("/");
+      else if (typeof request.url === "object" && request.url !== null) {
+        const urlObj = request.url as Record<string, unknown>;
+        if (urlObj.raw && typeof urlObj.raw === 'string') url = urlObj.raw;
+        else if (Array.isArray(urlObj.path)) url = "/" + urlObj.path.join("/");
+      }
 
       if (!url) return;
 
@@ -95,29 +98,31 @@ const mapToStandardIR = (
       });
 
       // Query Params
-      const queryParams = typeof request.url === "object" ? request.url.query : null;
+      const urlObj = typeof request.url === "object" ? (request.url as Record<string, unknown>) : null;
+      const queryParams = urlObj?.query;
       let genericQueryParams: GenericParam[] = [];
-      if (queryParams && queryParams.length > 0) {
-        genericQueryParams = queryParams.map((p: any) => ({
-          name: decodeURIComponent(p.key),
+      if (Array.isArray(queryParams) && queryParams.length > 0) {
+        genericQueryParams = queryParams.map((p: Record<string, unknown>) => ({
+          name: typeof p.key === 'string' ? decodeURIComponent(p.key) : '',
           required: false,
-          description: p.description
+          description: typeof p.description === 'string' ? p.description : ''
         }));
       }
 
       // Body Schema (raw JSON or formdata)
-      let bodySchema: any = undefined;
-      if (request.body?.raw) {
-        bodySchema = { raw: request.body.raw };
-      } else if (request.body?.mode === 'formdata' && Array.isArray(request.body.formdata) && request.body.formdata.length > 0) {
-        bodySchema = { formdata: request.body.formdata };
+      let bodySchema: Record<string, unknown> | undefined = undefined;
+      const requestBody = request.body as Record<string, unknown> | undefined;
+      if (requestBody?.raw) {
+        bodySchema = { raw: requestBody.raw };
+      } else if (requestBody?.mode === 'formdata' && Array.isArray(requestBody.formdata) && requestBody.formdata.length > 0) {
+        bodySchema = { formdata: requestBody.formdata };
       }
 
       // Content Type from body mode
       let contentType = 'application/json'; // default
-      if (request.body?.mode === 'formdata') {
+      if (requestBody?.mode === 'formdata') {
         contentType = 'multipart/form-data';
-      } else if (request.body?.mode === 'urlencoded') {
+      } else if (requestBody?.mode === 'urlencoded') {
         contentType = 'application/x-www-form-urlencoded';
       }
 
@@ -126,11 +131,11 @@ const mapToStandardIR = (
 
       // Auth (Postman)
       // 1. Check specific request auth OR inherited auth
-      const auth = request.auth || item.inheritedAuth;
+      const auth = (request.auth || item.inheritedAuth) as Record<string, unknown> | undefined;
 
       // 2. Check for manual Authorization header
       const hasAuthHeader = request.header && Array.isArray(request.header)
-        ? request.header.some((h: any) => h.key.toLowerCase() === 'authorization')
+        ? request.header.some((h: Record<string, unknown>) => typeof h.key === 'string' && h.key.toLowerCase() === 'authorization')
         : false;
 
       // Logic:
@@ -157,19 +162,19 @@ const mapToStandardIR = (
 
       // Path Variable Descriptions (from Postman url.variable array)
       const pathParamDescriptions: Record<string, string> = {};
-      if (typeof request.url === "object" && Array.isArray(request.url.variable)) {
-        request.url.variable.forEach((v: any) => {
-          if (v.key && v.description) {
-            pathParamDescriptions[v.key] = typeof v.description === 'string' ? v.description : v.description.content || '';
+      if (urlObj && Array.isArray(urlObj.variable)) {
+        urlObj.variable.forEach((v: Record<string, unknown>) => {
+          if (typeof v.key === 'string' && v.description) {
+            pathParamDescriptions[v.key] = typeof v.description === 'string' ? v.description : (v.description as Record<string, string>).content || '';
           }
         });
       }
 
       functions.push({
         name: functionName,
-        method: method as any,
+        method: method as StandardFunctionDefinition['method'],
         path: finalPath, // Pre-normalized
-        description: typeof request.description === 'string' ? request.description : request.description?.content,
+        description: typeof request.description === 'string' ? request.description : (request.description as Record<string, string>)?.content,
         pathParams,
         pathParamDescriptions: Object.keys(pathParamDescriptions).length > 0 ? pathParamDescriptions : undefined,
         queryParams: genericQueryParams,
@@ -198,11 +203,11 @@ const mapToStandardIR = (
 
 export const generatePostman = async (options: GeneratorOptions): Promise<ModuleContent[] | FileOperation[]> => {
   const { specPath, specData } = options;
-  let data = specData;
+  let data: Record<string, unknown> | undefined = specData as Record<string, unknown> | undefined;
 
   if (!data && specPath) {
     if (!fs.existsSync(specPath)) throw new Error(`File not found: ${specPath}`);
-    data = JSON.parse(fs.readFileSync(specPath, "utf8"));
+    data = JSON.parse(fs.readFileSync(specPath, "utf8")) as Record<string, unknown>;
   }
   if (!data) throw new Error("No collection data provided");
 

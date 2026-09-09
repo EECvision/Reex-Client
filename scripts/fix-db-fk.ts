@@ -33,9 +33,10 @@ END $$;
         await client.query(sql);
         console.log('Fix applied successfully! The table now references auth.users.');
 
-    } catch (err: any) {
+    } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
         console.error('Error applying fix:', err);
-        console.error('Details:', err.message);
+        console.error('Details:', errorMessage);
     } finally {
         await client.end();
     }

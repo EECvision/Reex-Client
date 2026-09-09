@@ -1,6 +1,23 @@
-
 import { getLocalUrl, cloudUrl } from "./utils";
 import { isLocalhostUrl } from "@/lib/urlUtils";
+
+export interface RequestFormField {
+    key: string;
+    value?: unknown;
+    type?: string;
+    file?: File | Blob | null;
+    active?: boolean;
+}
+
+export interface ExecuteRequestConfig {
+    url: string;
+    method: string;
+    data?: unknown;
+    formData?: RequestFormField[];
+    headers?: Record<string, string>;
+    useProxy?: boolean;
+    isStandaloneMode?: boolean;
+}
 
 export const BridgeService = {
     readFile: async (filePath: string, bridgeUrl?: string) => {
@@ -32,11 +49,16 @@ export const BridgeService = {
         return res.json();
     },
 
+    // Health / Discovery
     fetchBridgeStatus: async () => {
         try {
-            const res = await fetch(`${getLocalUrl()}/api/health`);
-            if (!res.ok) throw new Error(`Status ${res.status}`);
-            return await res.json();
+            const url = getLocalUrl();
+            const res = await fetch(`${url}/api/health`);
+            if (res.ok) {
+                const data = await res.json();
+                return { targetDir: data.targetDir, isNetworkError: false, apiServicesDir: data.apiServicesDir };
+            }
+            return { targetDir: null, isNetworkError: false };
         } catch (e) {
             console.warn("Bridge not reachable", e);
             if (e instanceof TypeError) {
@@ -47,12 +69,12 @@ export const BridgeService = {
     },
 
     // Execution could be viewed as separate, but often runs client-side making request
-    executeRequest: async (config: { url: string; method: string; data?: any; formData?: any[]; headers?: any; useProxy?: boolean; isStandaloneMode?: boolean }) => {
+    executeRequest: async (config: ExecuteRequestConfig) => {
         try {
             const { url, method, data, formData, headers, useProxy } = config;
             const isLocal = isLocalhostUrl(url);
             const isNativeFormData = data instanceof FormData;
-            const hasFiles = formData?.some((p: any) => p.type === 'file' && p.file) || false;
+            const hasFiles = formData?.some((p: RequestFormField) => p.type === 'file' && p.file) || false;
 
             const getProxyOptions = (): RequestInit => {
                 if (hasFiles || isNativeFormData) {
@@ -62,7 +84,7 @@ export const BridgeService = {
                     if (headers) proxyData.append('headers', JSON.stringify(headers));
 
                     if (isNativeFormData) {
-                        const metadata: any[] = [];
+                        const metadata: unknown[] = [];
                         let fileIndex = 0;
                         (data as FormData).forEach((value, key) => {
                             if (value instanceof File) {
@@ -75,13 +97,13 @@ export const BridgeService = {
                         });
                         proxyData.append('formDataStr', JSON.stringify(metadata));
                     } else if (formData) {
-                         const metadata = formData.map((p: any) => ({ key: p.key, value: p.value, type: p.type }));
-                         proxyData.append('formDataStr', JSON.stringify(metadata));
-                         formData.forEach((p: any, index: number) => {
-                             if (p.type === 'file' && p.file) {
-                                 proxyData.append(`file_${index}`, p.file);
-                             }
-                         });
+                        const metadata = formData.map((p: RequestFormField) => ({ key: p.key, value: p.value, type: p.type }));
+                        proxyData.append('formDataStr', JSON.stringify(metadata));
+                        formData.forEach((p: RequestFormField, index: number) => {
+                            if (p.type === 'file' && p.file) {
+                                proxyData.append(`file_${index}`, p.file);
+                            }
+                        });
                     }
                     return { method: 'POST', body: proxyData };
                 }
@@ -98,7 +120,7 @@ export const BridgeService = {
                 try {
                     const proxyRes = await fetch(proxyUrl, getProxyOptions());
                     return await proxyRes.json();
-                } catch (e: any) {
+                } catch (e: unknown) {
                     if (isLocal) {
                         return { success: false, error: 'Could not connect to the local proxy. Run `npx reex-proxy` in your terminal first.' };
                     }
@@ -125,18 +147,17 @@ export const BridgeService = {
             let res;
             try {
                 res = await fetch(url, options);
-            } catch (fetchError: any) {
+            } catch (fetchError: unknown) {
                 // If direct fetch fails due to network/CORS error, try falling back to Proxy
                 // Browsers throw a TypeError for CORS blocks and connection refused
                 if (fetchError instanceof TypeError) {
                     const fallbackProxyUrl = isLocal ? 'http://localhost:9876/proxy' : '/api/cors-proxy';
-                    
 
                     console.warn(`[CORS Fallback] Direct request to ${url} failed. Retrying via proxy (${fallbackProxyUrl})...`);
                     try {
                         const proxyRes = await fetch(fallbackProxyUrl, getProxyOptions());
                         return await proxyRes.json();
-                    } catch (e: any) {
+                    } catch (e: unknown) {
                         if (isLocal) {
                             return { success: false, error: 'Request blocked by CORS (or server unreachable). We tried using the local proxy but it failed. Run `npx reex-proxy` in your terminal to bypass CORS for localhost.' };
                         }
@@ -147,7 +168,7 @@ export const BridgeService = {
             }
 
             // Try to parse JSON
-            let responseData;
+            let responseData: unknown;
             const contentType = res.headers.get("content-type");
             if (contentType && contentType.includes("application/json")) {
                 responseData = await res.json();
@@ -156,14 +177,17 @@ export const BridgeService = {
             }
 
             if (!res.ok) {
-                const errorMessage = responseData?.message || responseData?.msg || (typeof responseData === 'object' ? JSON.stringify(responseData) : responseData) || `Error ${res.status}`;
+                const errorMessage = typeof responseData === 'string'
+                    ? responseData
+                    : ((responseData as Record<string, unknown>)?.error ? String((responseData as Record<string, unknown>).error) : `Request failed with status ${res.status}`);
                 return { success: false, error: errorMessage };
             }
 
             return { success: true, data: responseData };
-        } catch (e: any) {
+        } catch (e: unknown) {
+            const errorMessage = e instanceof Error ? e.message : String(e);
             console.error("Execution Failed:", e);
-            return { success: false, error: e.message || String(e) };
+            return { success: false, error: errorMessage };
         }
     },
 

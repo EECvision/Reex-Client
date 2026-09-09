@@ -1,7 +1,28 @@
 import { cloudUrl, getLocalUrl, handleOperationResponse, compressFilePayload, getApiServicesDir } from "./utils";
 
+export interface DeleteItemPayload {
+    type?: string;
+    moduleName?: string;
+    existingContent?: string;
+    [key: string]: unknown;
+}
+
+export interface CollectionOperationPayload {
+    file?: File;
+    fileName?: string;
+    modules?: unknown;
+    deletedModules?: unknown;
+    functions?: unknown;
+    deletedFunctions?: unknown;
+    forceOverwrite?: unknown;
+    existingModules?: unknown;
+    proposedClients?: unknown;
+    baseUrl?: string;
+    [key: string]: unknown;
+}
+
 export const CloudService = {
-    generateTemplate: async (data: any, targetDir: string, bridgeUrl?: string, taskId?: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
+    generateTemplate: async (data: Record<string, unknown>, targetDir: string, bridgeUrl?: string, taskId?: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
         try {
             const apiServicesDir = await getApiServicesDir();
             const payload = { ...data, targetDir, bridgeUrl, taskId, apiServicesDir };
@@ -11,12 +32,13 @@ export const CloudService = {
                 body: JSON.stringify(payload),
             });
             return handleOperationResponse(res);
-        } catch (error: any) {
-            return { success: false, error: error.message || String(error) };
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return { success: false, error: errorMessage || String(error) };
         }
     },
 
-    analyzeCollection: async (file: File, fileName: string | undefined, targetDir: string, clientMappings?: Record<string, string>, isStandaloneMode?: boolean, existingModules?: Record<string, string>, existingManifest?: any) => {
+    analyzeCollection: async (file: File, fileName: string | undefined, targetDir: string, clientMappings?: Record<string, string>, isStandaloneMode?: boolean, existingModules?: Record<string, string>, existingManifest?: unknown) => {
         const formData = new FormData();
 
         const { blob, fileName: finalName } = await compressFilePayload(file, fileName);
@@ -60,7 +82,7 @@ export const CloudService = {
         return res.json();
     },
 
-    previewTypes: async (data: any) => {
+    previewTypes: async (data: Record<string, unknown>) => {
         const res = await fetch(`${cloudUrl}/preview-types`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -87,13 +109,14 @@ export const CloudService = {
                 body: JSON.stringify({ targetDir, bridgeUrl, taskId, apiServicesDir }),
             });
             return handleOperationResponse(res);
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             console.error("Delete Collection Failed:", error);
-            return { success: false, error: error.message || String(error) };
+            return { success: false, error: errorMessage || String(error) };
         }
     },
 
-    deleteItem: async (itemInfo: any, targetDir: string, bridgeUrl?: string, taskId?: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
+    deleteItem: async (itemInfo: DeleteItemPayload, targetDir: string, bridgeUrl?: string, taskId?: string): Promise<{ success: boolean; taskId?: string; error?: string; message?: string }> => {
         try {
             let contentToAdd = itemInfo.existingContent;
 
@@ -129,12 +152,13 @@ export const CloudService = {
                 body: JSON.stringify(payload)
             });
             return handleOperationResponse(res);
-        } catch (error: any) {
-            return { success: false, error: error.message || String(error) };
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return { success: false, error: errorMessage || String(error) };
         }
     },
 
-    updateCollection: async (payload: any, targetDir: string, bridgeUrl?: string, taskId?: string) => {
+    updateCollection: async (payload: CollectionOperationPayload, targetDir: string, bridgeUrl?: string, taskId?: string) => {
         const formData = new FormData();
 
         const file = payload.file;
@@ -168,7 +192,7 @@ export const CloudService = {
         return res.json();
     },
 
-    saveTypes: async (data: any) => {
+    saveTypes: async (data: Record<string, unknown>) => {
         try {
             const apiServicesDir = await getApiServicesDir();
             const res = await fetch(`${cloudUrl}/save-types`, {
@@ -177,12 +201,13 @@ export const CloudService = {
                 body: JSON.stringify({ ...data, apiServicesDir }),
             });
             return handleOperationResponse(res);
-        } catch (error: any) {
-            return { success: false, error: error.message || String(error) };
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return { success: false, error: errorMessage || String(error) };
         }
     },
 
-    syncCollection: async (payload: any, targetDir: string) => {
+    syncCollection: async (payload: CollectionOperationPayload, targetDir: string) => {
         const formData = new FormData();
 
         const file = payload.file;

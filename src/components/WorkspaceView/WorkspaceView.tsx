@@ -30,12 +30,12 @@ interface Tab {
 
 interface WorkspaceViewProps {
   selectedEndpoint: EndpointInfo | null;
-  currentParams: Record<string, any>;
-  onParamChange: (paramName: string, value: any, type?: string) => void;
+  currentParams: Record<string, unknown>;
+  onParamChange: (paramName: string, value: unknown, type?: string) => void;
   onSubmit: () => void;
   loading: boolean;
   isSubmitDisabled: boolean;
-  result: any;
+  result: unknown;
   error: string | null;
   interfacePreview: string | null;
   updatingInterface: boolean;

@@ -47,11 +47,13 @@ export async function POST() {
                     headers: { Authorization: `Bearer ${FLUTTERWAVE_SECRET_KEY}` },
                 }
             );
-        } catch (axiosError: any) {
-            console.error("Flutterwave API error on cancel:", axiosError?.response?.data || axiosError.message);
-            // If it returns a 404, it might already be cancelled or invalid. We'll proceed to cancel locally 
-            // to ensure the user's DB state aligns with their intent to cancel.
-        }
+        } catch (axiosError: unknown) {
+            const errorMessage = axiosError instanceof Error ? axiosError.message : String(axiosError);
+            const axiosErrorData = axiosError && typeof axiosError === 'object' && 'response' in axiosError ? (axiosError as Record<string, Record<string, unknown>>).response?.data : undefined;
+                console.error("Flutterwave API error on cancel:", axiosErrorData || errorMessage);
+                // If it returns a 404, it might already be cancelled or invalid. We'll proceed to cancel locally 
+                // to ensure the user's DB state aligns with their intent to cancel.
+            }
 
         // Update database to mark as canceled
         const { error } = await supabase

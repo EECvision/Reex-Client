@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => {
     const single = vi.fn();
 
     // Make mockSupabase 'thenable' so it can be awaited at the end of a chain.
-    const mockSupabase: any = {
+    const mockSupabase: Record<string, unknown> = {
         from,
         select,
         insert,
@@ -23,7 +23,7 @@ const mocks = vi.hoisted(() => {
         order,
         single,
         // Default promise behavior: resolves to success
-        then: (resolve: any) => resolve({ data: [], error: null })
+        then: (resolve: (value: unknown) => void) => resolve({ data: [], error: null })
     };
 
     // Setup chainable returns (builder pattern)
@@ -50,6 +50,10 @@ vi.mock('@/auth', () => ({
     auth: vi.fn().mockResolvedValue({ user: { id: 'test-user-id' } })
 }));
 
+vi.mock('@/lib/verifyProStatus', () => ({
+    verifyProStatus: vi.fn().mockResolvedValue(true)
+}));
+
 import {
     getStandaloneCollections,
     createStandaloneCollection,
@@ -63,7 +67,7 @@ describe('Standalone Actions', () => {
         // We will override resolution in tests by overwriting the `then` method 
         // or effectively stubbing the return if needed. 
         // Actually, since `then` is a property, we can just assign it.
-        mocks.mockSupabase.then = (resolve: any) => resolve({ data: [], error: null });
+        mocks.mockSupabase.then = (resolve: (value: unknown) => void) => resolve({ data: [], error: null });
     });
 
     it('getStandaloneCollections should fetch collections for user', async () => {
@@ -71,7 +75,7 @@ describe('Standalone Actions', () => {
 
         // Mock the resolved value of the chain.
         // getStandaloneCollections awaits: from().select().eq().order()
-        mocks.mockSupabase.then = (resolve: any) => resolve({ data: mockData, error: null });
+        mocks.mockSupabase.then = (resolve: (value: unknown) => void) => resolve({ data: mockData, error: null });
 
         const result = await getStandaloneCollections();
 
@@ -87,7 +91,7 @@ describe('Standalone Actions', () => {
         const newCol = { id: 'new-1', name: 'New Col', modules: [] };
         // Chain: from().insert().select().single()
         // Resolution should simulate the result of single()
-        mocks.mockSupabase.then = (resolve: any) => resolve({ data: { id: 'new-1' }, error: null });
+        mocks.mockSupabase.then = (resolve: (value: unknown) => void) => resolve({ data: { id: 'new-1' }, error: null });
 
         const result = await createStandaloneCollection(newCol);
 
@@ -101,7 +105,7 @@ describe('Standalone Actions', () => {
     it('deleteStandaloneCollection should delete collection', async () => {
         // Chain: from().delete().eq().eq()
         // Resolution should success
-        mocks.mockSupabase.then = (resolve: any) => resolve({ error: null });
+        mocks.mockSupabase.then = (resolve: (value: unknown) => void) => resolve({ error: null });
 
         const result = await deleteStandaloneCollection('1');
 

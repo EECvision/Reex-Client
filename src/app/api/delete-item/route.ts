@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const { type, moduleName, functionName, existingContent, targetDir, apiServicesDir } = body;
 
-        const operations: any[] = [];
+        const operations: unknown[] = [];
         const API_SERVICES_DIR = getApiServicesDir(targetDir || process.env.API_TARGET_DIR || process.cwd(), apiServicesDir);
 
         if (type === 'module') {
@@ -71,7 +71,8 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, operations });
 
-    } catch (e: any) {
-        return NextResponse.json({ success: false, error: e.toString() }, { status: 500 });
+    } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
+        return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
     }
 }

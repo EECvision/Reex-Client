@@ -4,11 +4,12 @@ import { Modal } from "@/components/ui/Modal/Modal";
 import { Button } from "@/components/ui/Button/Button";
 import { Download, CreditCard, Calendar, CheckCircle, XCircle } from "lucide-react";
 import { PLAN_IDS } from "@/config/pricing";
+import { Invoice } from "@/types";
 
 interface InvoiceModalProps {
     isOpen: boolean;
     onClose: () => void;
-    invoice: any;
+    invoice: Invoice | null;
 }
 
 export const InvoiceModal = ({ isOpen, onClose, invoice }: InvoiceModalProps) => {
@@ -67,8 +68,8 @@ export const InvoiceModal = ({ isOpen, onClose, invoice }: InvoiceModalProps) =>
                     <h4 className={styles.sectionTitle}>Line Items</h4>
                     <div className={styles.lineItem}>
                         <span>{
-                            invoice.plan_id === PLAN_IDS.monthly ? "Pro Developer Plan (Monthly)" :
-                                invoice.plan_id === PLAN_IDS.yearly ? "Pro Developer Plan (Yearly)" :
+                            String(invoice.plan_id) === PLAN_IDS.monthly ? "Pro Developer Plan (Monthly)" :
+                                String(invoice.plan_id) === PLAN_IDS.yearly ? "Pro Developer Plan (Yearly)" :
                                     invoice.plan_id || "Subscription"
                         }</span>
                         <span>{invoice.currency} {invoice.amount}</span>

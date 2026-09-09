@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
 
+interface AmdDefine {
+    (...args: unknown[]): unknown;
+    amd?: boolean | Record<string, unknown>;
+}
+
 // Extend window interface
 declare global {
     interface Window {
-        FlutterwaveCheckout: (config: any) => void;
-        define: any; // Add define to window for AMD hack
+        FlutterwaveCheckout?: (config: unknown) => void;
+        define?: AmdDefine;
     }
 }
 
@@ -25,7 +30,7 @@ interface FlutterwaveConfig {
         description: string;
         logo: string;
     };
-    callback?: (response: any) => void;
+    callback?: (response: unknown) => void;
     onClose?: () => void;
 }
 
@@ -87,7 +92,7 @@ export const useFlutterwaveCustom = (config: FlutterwaveConfig) => {
         };
     }, []);
 
-    const handlePayment = (options?: { callback?: (response: any) => void; onClose?: () => void }) => {
+    const handlePayment = (options?: { callback?: (response: unknown) => void; onClose?: () => void }) => {
         if (!scriptLoaded) {
             console.warn("Flutterwave script not loaded yet");
             return;

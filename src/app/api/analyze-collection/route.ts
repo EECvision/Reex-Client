@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 // Direct import of the refactored script
 import { analyze } from "@/scripts/analyze-collection";
 import { decompressFilePayload } from "../utils";
+import { EndpointInfo } from "@/types";
 
 export async function POST(req: NextRequest) {
     try {
@@ -32,10 +33,10 @@ export async function POST(req: NextRequest) {
         }
 
         // Parse existing manifest
-        let existingManifest: any = undefined;
+        let existingManifest: Record<string, Record<string, EndpointInfo>> | undefined = undefined;
         if (existingManifestJson) {
             try {
-                existingManifest = JSON.parse(existingManifestJson);
+                existingManifest = JSON.parse(existingManifestJson) as Record<string, Record<string, EndpointInfo>>;
             } catch (e) {
                 console.warn("Failed to parse existingManifest", e);
             }
@@ -56,8 +57,9 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, data });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         console.error("Analysis Error:", error);
-        return NextResponse.json({ success: false, error: error.toString() }, { status: 500 });
+        return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
     }
 }

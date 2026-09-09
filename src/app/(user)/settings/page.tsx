@@ -10,6 +10,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { InvoiceModal } from "@/components/InvoiceModal/InvoiceModal";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal/DeleteConfirmModal";
 import { FileText, Eye, Loader2 } from "lucide-react";
+import { Invoice } from "@/types";
 
 export default function SettingsPage() {
     const { user } = useAuth();
@@ -18,9 +19,9 @@ export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState<'account' | 'billing' | 'integrations'>('account');
 
     // Invoice State
-    const [invoices, setInvoices] = useState<any[]>([]);
+    const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
-    const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+    const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
     // Cancel Subscription State
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -199,31 +200,33 @@ export default function SettingsPage() {
                                         </div>
                                     ) : invoices.length > 0 ? (
                                         <div className={styles.invoiceList}>
-                                            {invoices.map((invoice) => (
-                                                <div key={invoice.id} className={styles.invoiceItem}>
+                                            {invoices.map((invoice: Invoice) => {
+                                                const inv = invoice;
+                                                return (
+                                                <div key={inv.id} className={styles.invoiceItem}>
                                                     <div className={styles.invoiceInfo}>
                                                         <div className={styles.invoiceIcon}>
                                                             <FileText size={16} />
                                                         </div>
                                                         <div className={styles.invoiceMeta}>
                                                             <p className={styles.invoiceTitle}>
-                                                                {invoice.plan_id === 'monthly' ? "Pro Plan (Monthly)" :
-                                                                    invoice.plan_id === 'yearly' ? "Pro Plan (Yearly)" :
+                                                                {inv.plan_id === 'monthly' ? "Pro Plan (Monthly)" :
+                                                                    inv.plan_id === 'yearly' ? "Pro Plan (Yearly)" :
                                                                         "Subscription"}
                                                             </p>
                                                             <p className={styles.invoiceDate}>
-                                                                {new Date(invoice.created_at).toLocaleDateString()}
+                                                                {new Date(inv.created_at as string).toLocaleDateString()}
                                                             </p>
                                                         </div>
                                                     </div>
                                                     <div className={styles.invoiceActions}>
-                                                        <span className={styles.invoiceAmount}>{invoice.currency} {invoice.amount}</span>
+                                                        <span className={styles.invoiceAmount}>{inv.currency} {inv.amount}</span>
                                                         <Button variant="ghost" size="sm" onClick={() => setSelectedInvoice(invoice)}>
                                                             <Eye size={16} className="mr-2" /> View
                                                         </Button>
                                                     </div>
                                                 </div>
-                                            ))}
+                                            )})}
                                         </div>
                                     ) : (
                                         <div className={styles.emptyState}>

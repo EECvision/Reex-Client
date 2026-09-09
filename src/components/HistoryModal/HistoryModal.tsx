@@ -15,13 +15,26 @@ interface HistoryModalProps {
 const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, items, onItemClick, onDelete }) => {
     const [search, setSearch] = useState("");
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
     const inputRef = useRef<HTMLInputElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
 
-    // Focus search input on mount
+    // Reset state when opened
+    if (isOpen !== prevIsOpen) {
+        setPrevIsOpen(isOpen);
+        if (isOpen) {
+            setSearch("");
+            setSelectedIndex(0);
+        }
+    }
+
+    // Focus search input when opened
     useEffect(() => {
-        setTimeout(() => inputRef.current?.focus(), 50);
-    }, []);
+        if (isOpen) {
+            const timer = setTimeout(() => inputRef.current?.focus(), 50);
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen]);
 
     const filteredItems = items.filter(item =>
         item.name.toLowerCase().includes(search.toLowerCase())

@@ -5,13 +5,13 @@ import { exec, ExecOptions } from 'child_process';
 
 interface ExecutionResult {
     success?: boolean;
-    data?: any;
+    data?: unknown;
     rawOutput?: string;
 }
 
 class ExecutionService {
 
-    async executeFunction(targetDir: string, apiKey: string, fnName: string, args: any[] = []): Promise<ExecutionResult> {
+    async executeFunction(targetDir: string, apiKey: string, fnName: string, args: unknown[] = []): Promise<ExecutionResult> {
         // targetDir is .../src/api-services/definitions
 
         const scriptPath = path.join(targetDir, `temp_exec_${Date.now()}.js`);

@@ -31,9 +31,27 @@ const MonacoJsonEditor = dynamic(
 
 const METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
 
+export interface RequestConfigPayload {
+  method: string;
+  url: string;
+  queryParams: ParamRow[];
+  headers: ParamRow[];
+  auth: { type: "bearer" | "none"; token: string };
+  bodyType: "none" | "json" | "form-data";
+  body: string;
+  formData: ParamRow[];
+}
+
+export interface RequestEditorData extends Partial<RequestConfigPayload> {
+  baseUrl?: string;
+  authType?: "bearer" | "none";
+  authToken?: string;
+  customHeaders?: Record<string, string>;
+}
+
 interface RequestEditorProps {
-  data?: any; // The request data (method, url, etc)
-  onSave: (name: string, config: any) => void;
+  data?: RequestEditorData; // The request data (method, url, etc)
+  onSave: (name: string, config: RequestConfigPayload) => void;
   requestName: string;
   requestId: string;
 }
@@ -84,7 +102,7 @@ export default function RequestEditor({
 
   // Response State
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
   const [interfacePreview, setInterfacePreview] = useState<string | null>(null);
 
@@ -281,7 +299,7 @@ export default function RequestEditor({
 
       // 5. Execute
       const isLocal = isLocalhostUrl(finalUrl);
-      let execRes: any;
+      let execRes: { success?: boolean; error?: string; data?: unknown; [key: string]: unknown } = {};
 
       if (isLocal) {
         // Route through user's local reex-proxy to reach localhost
@@ -312,7 +330,7 @@ export default function RequestEditor({
           formData: activeFormData.length > 0 ? activeFormData : undefined,
           headers: finalHeaders,
           useProxy: true,
-        } as any);
+        });
       }
 
       if (!execRes.success) {
@@ -320,42 +338,43 @@ export default function RequestEditor({
       }
 
       setResult(execRes.data);
-      showToast("success", `Status: ${execRes.data.status || 200}`);
+      showToast("success", `Status: ${(execRes.data as Record<string, unknown>)?.status || 200}`);
 
-      let currentPreview = null;
+      let currentPreview: string | null = null;
       // Generate Interface Preview
       try {
         const previewRes = await api.previewTypes({
           data: execRes.data,
           fnName: "ManualRequest",
         });
-        if ((previewRes as any).success) {
-          currentPreview = (previewRes as any).interfaceString;
+        const res = previewRes as { success?: boolean; interfaceString?: string };
+        if (res.success) {
+          currentPreview = res.interfaceString || null;
           setInterfacePreview(currentPreview);
         }
       } catch (e) {
         console.warn("Failed to generate type preview", e);
       }
-
       // Save to LRU Cache
       ClientStorage.saveExecutionResult(requestId, {
         result: execRes.data,
-        error: null,
+        error: undefined,
         executedCurl: curlCmd,
-        interfacePreview: currentPreview,
+        interfacePreview: currentPreview || undefined,
       }).catch((e) => console.error(e));
-    } catch (err: any) {
-      const errMsg = err.message || "Unknown error occurred";
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      const errMsg = errorMessage || "Unknown error occurred";
       setError(errMsg);
       showToast("error", "Error: Failed to fetch");
 
       // Wait, curlCmd is scoped to the try block. It might not exist here.
       // But executedCurl state is already updated before the fetch starts!
       ClientStorage.saveExecutionResult(requestId, {
-        result: null,
+        result: undefined,
         error: errMsg,
         executedCurl: undefined, // We'll just omit it here, state will use undefined or old value
-        interfacePreview: null,
+        interfacePreview: undefined,
       }).catch((e) => console.error(e));
     } finally {
       setLoading(false);

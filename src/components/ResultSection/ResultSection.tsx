@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import dynamic from "next/dynamic";
 import styles from "./ResultSection.module.css";
@@ -30,7 +29,7 @@ const VIEW_OPTIONS: {
 
 interface ResultSectionProps {
   error: string | null;
-  result: any;
+  result: unknown;
   copied: boolean;
   onCopy: () => void;
   interfacePreview: string | null;
@@ -65,7 +64,7 @@ const ResultSection: React.FC<ResultSectionProps> = ({
     }
   };
 
-  const formatResult = (data: any): string => {
+  const formatResult = (data: unknown): string => {
     switch (viewPreference) {
       case "raw":
         return typeof data === "string" ? data : JSON.stringify(data);
@@ -150,7 +149,7 @@ const ResultSection: React.FC<ResultSectionProps> = ({
         </div>
       )}
 
-      {result && (
+      {!!result && (
         <div className={styles.splitView}>
           <div className={styles.resultBox}>
             <div className={styles.resultHeader}>

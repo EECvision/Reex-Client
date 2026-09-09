@@ -5,7 +5,7 @@ import { Copy, Check } from 'lucide-react';
 import styles from './Assistant.module.css';
 
 interface AssistantMessageProps {
-  role: 'user' | 'assistant' | 'system' | 'data';
+  role: 'user' | 'assistant' | 'system' | 'data' | 'function' | 'tool';
   content: string;
 }
 

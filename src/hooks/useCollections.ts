@@ -10,7 +10,7 @@ import {
     deleteRequest
 } from '@/app/actions/testCollectionActions';
 import { useToast } from '@/hooks/useToast';
-import { Collection } from '@/components/TestApi/CollectionSidebar';
+import { Collection, RequestItem } from '@/components/TestApi/CollectionSidebar';
 import { useSubscription } from '@/hooks/useSubscription';
 import { ClientStorage } from '@/lib/clientStorage';
 import { FREE_TEST_COLLECTION_LIMIT, FREE_TEST_REQUEST_LIMIT } from '@/lib/constants';
@@ -80,8 +80,8 @@ export const useCollections = (userId?: string) => {
         },
         onSuccess: (newCollection) => {
             if (!newCollection) return;
-            if ((newCollection as any).error) {
-                showToast('error', String((newCollection as any).error));
+            if ((newCollection as Record<string, unknown>).error) {
+                showToast('error', String((newCollection as Record<string, unknown>).error));
                 return;
             }
             queryClient.setQueryData(['collections', userId, isPro], (old: Collection[] = []) => {
@@ -89,7 +89,7 @@ export const useCollections = (userId?: string) => {
             });
             showToast('success', 'Collection created');
         },
-        onError: (err: any) => {
+        onError: (err: Error) => {
             showToast('error', err.message || 'Failed to create collection');
         }
     });
@@ -109,7 +109,7 @@ export const useCollections = (userId?: string) => {
         },
         onSuccess: (result) => {
             if (result && typeof result === 'object' && 'error' in result) {
-                showToast('error', result.error);
+                showToast('error', String((result as Record<string, unknown>).error));
                 return;
             }
             const deletedId = result as string;
@@ -118,7 +118,7 @@ export const useCollections = (userId?: string) => {
             });
             showToast('success', 'Collection deleted');
         },
-        onError: (err: any) => {
+        onError: (err: Error) => {
             showToast('error', err.message || 'Failed to delete collection');
         }
     });
@@ -140,8 +140,8 @@ export const useCollections = (userId?: string) => {
             return { id, name };
         },
         onSuccess: (result) => {
-            if ((result as any).error) {
-                showToast('error', String((result as any).error));
+            if ((result as Record<string, unknown>).error) {
+                showToast('error', String((result as Record<string, unknown>).error));
                 return;
             }
             const { id, name } = result as { id: string; name: string };
@@ -149,14 +149,14 @@ export const useCollections = (userId?: string) => {
                 old.map(c => c.id === id ? { ...c, name } : c)
             );
         },
-        onError: (err: any) => {
+        onError: (err: Error) => {
             showToast('error', err.message || 'Failed to rename collection');
         }
     });
 
     // Mutation: Update Collection
     const updateCollectionMutation = useMutation({
-        mutationFn: async ({ id, updates }: { id: string; updates: { base_url?: string; auth?: any } }) => {
+        mutationFn: async ({ id, updates }: { id: string; updates: { base_url?: string; auth?: Record<string, unknown> } }) => {
             if (!isPro) {
                 const all = await ClientStorage.get<Collection>(COLLECTIONS_KEY);
                 const col = all.find(c => c.id === id);
@@ -171,16 +171,16 @@ export const useCollections = (userId?: string) => {
             return { id, updates };
         },
         onSuccess: (result) => {
-            if ((result as any).error) {
-                showToast('error', String((result as any).error));
+            if ((result as Record<string, unknown>).error) {
+                showToast('error', String((result as Record<string, unknown>).error));
                 return;
             }
-            const { id, updates } = result as { id: string; updates: { base_url?: string; auth?: any } };
+            const { id, updates } = result as { id: string; updates: { base_url?: string; auth?: Record<string, unknown> } };
             queryClient.setQueryData(['collections', userId, isPro], (old: Collection[] = []) =>
                 old.map(c => c.id === id ? { ...c, ...updates } : c)
             );
         },
-        onError: (err: any) => {
+        onError: (err: Error) => {
             showToast('error', err.message || 'Failed to update collection');
         }
     });
@@ -203,7 +203,7 @@ export const useCollections = (userId?: string) => {
                 };
 
                 if (col) {
-                    col.requests.push(newReq as any);
+                    col.requests.push(newReq as RequestItem);
                     await ClientStorage.update(COLLECTIONS_KEY, collectionId, col);
                 }
                 return newReq;
@@ -214,8 +214,8 @@ export const useCollections = (userId?: string) => {
         },
         onSuccess: (newRequest, variables) => {
             if (!newRequest) return;
-            if ((newRequest as any).error) {
-                showToast('error', String((newRequest as any).error));
+            if ((newRequest as { error?: string }).error) {
+                showToast('error', String((newRequest as { error?: string }).error));
                 return;
             }
             queryClient.setQueryData(['collections', userId, isPro], (old: Collection[] = []) => {
@@ -228,14 +228,14 @@ export const useCollections = (userId?: string) => {
             });
             showToast('success', 'Request created');
         },
-        onError: (err: any) => {
+        onError: (err: Error) => {
             showToast('error', err.message || 'Failed to create request');
         }
     });
 
     // Mutation: Update Request
     const updateRequestMutation = useMutation({
-        mutationFn: async ({ id, updates }: { id: string, updates: any }) => {
+        mutationFn: async ({ id, updates }: { id: string, updates: Partial<RequestItem> & { config?: Record<string, unknown> } }) => {
             if (!isPro) {
                 const collections = await ClientStorage.get<Collection>(COLLECTIONS_KEY);
                 // Find collection containing request
@@ -248,7 +248,7 @@ export const useCollections = (userId?: string) => {
                         const updatedReq = {
                             ...req,
                             ...updates,
-                            config: { ...req.config, ...updates.config }
+                            config: { ...(req.config as Record<string, unknown>), ...updates.config }
                         };
                         // Top level fields
                         if (updates.name) updatedReq.name = updates.name;
@@ -270,10 +270,10 @@ export const useCollections = (userId?: string) => {
         },
         onSuccess: (result) => {
             if (result && typeof result === 'object' && 'error' in result) {
-                showToast('error', (result as any).error);
+                showToast('error', String((result as Record<string, unknown>).error));
                 return;
             }
-            const { id, updates } = result as { id: string, updates: any };
+            const { id, updates } = result as { id: string, updates: Partial<RequestItem> & { config?: Record<string, unknown> } };
             // Optimistic update or refetch. Here we manipulate cache manually to avoid refetch lag.
             queryClient.setQueryData(['collections', userId, isPro], (old: Collection[] = []) => {
                 return old.map(c => {
@@ -282,7 +282,7 @@ export const useCollections = (userId?: string) => {
                     if (reqIndex === -1) return c;
 
                     const updatedRequests = [...c.requests];
-                    updatedRequests[reqIndex] = { ...updatedRequests[reqIndex], ...updates, config: { ...updatedRequests[reqIndex].config, ...updates.config } };
+                    updatedRequests[reqIndex] = { ...updatedRequests[reqIndex], ...updates, config: { ...(updatedRequests[reqIndex].config as Record<string, unknown>), ...updates.config } };
 
                     // If method/name changed at top level
                     if (updates.name) updatedRequests[reqIndex].name = updates.name;
@@ -320,7 +320,7 @@ export const useCollections = (userId?: string) => {
         },
         onSuccess: (result) => {
             if (result && typeof result === 'object' && 'error' in result) {
-                showToast('error', (result as any).error);
+                showToast('error', String((result as Record<string, unknown>).error));
                 return;
             }
             const { collectionId, requestId } = result as { collectionId: string, requestId: string };
@@ -334,7 +334,7 @@ export const useCollections = (userId?: string) => {
             });
             showToast('success', 'Request deleted');
         },
-        onError: (err: any) => {
+        onError: (err: Error) => {
             showToast('error', err.message || 'Failed to delete request');
         }
     });

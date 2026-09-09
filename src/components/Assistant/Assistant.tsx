@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { useChat } from "ai/react";
+import { useChat, Message } from "ai/react";
 import { X, ArrowUp, Sparkles, ExternalLink, MessageSquare, HelpCircle, Trash2 } from "lucide-react";
 import styles from "./Assistant.module.css";
 import { AssistantMessage } from "./AssistantMessage";
@@ -61,7 +61,7 @@ export const Assistant: React.FC<AssistantProps> = ({ isOpen, onClose }) => {
 
   // Hydrate stored messages from IndexedDB on mount
   useEffect(() => {
-    ClientStorage.getAssistantMessages<any>().then((saved) => {
+    ClientStorage.getAssistantMessages<Message>().then((saved) => {
       if (saved && saved.length > 0) {
         setMessages(saved);
       }
@@ -231,7 +231,7 @@ export const Assistant: React.FC<AssistantProps> = ({ isOpen, onClose }) => {
                 {messages.map((message) => (
                   <AssistantMessage
                     key={message.id}
-                    role={message.role as any}
+                    role={message.role}
                     content={message.content}
                   />
                 ))}

@@ -9,7 +9,8 @@ export async function POST(req: NextRequest) {
         const { apiKey, fnName, args } = body;
         const result = await executionService.executeFunction(apiTargetDir, apiKey, fnName, args);
         return NextResponse.json({ success: true, data: result });
-    } catch (e: any) {
-        return NextResponse.json({ success: false, error: e.toString() }, { status: 500 });
+    } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
+        return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
     }
 }

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState } from "react";
@@ -83,8 +82,9 @@ const GenerateModuleModal: React.FC<GenerateModuleModalProps> = ({
       setError(null);
       setGenerating(false);
       onClose();
-    } catch (err: any) {
-      setError(err.message || "Failed to generate module");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setError(errorMessage || "Failed to generate module");
       setGenerating(false);
     }
   };

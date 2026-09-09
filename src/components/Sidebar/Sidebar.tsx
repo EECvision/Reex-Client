@@ -178,6 +178,19 @@ const Sidebar: React.FC<SidebarProps> = ({
     return "default";
   }, [selectedEndpoint]);
 
+  // Auto-expand collection when active collection changes
+  const [prevActiveColId, setPrevActiveColId] = useState<string | null>(activeColId);
+  if (activeColId && activeColId !== prevActiveColId) {
+    setPrevActiveColId(activeColId);
+    if (!expandedCollections.has(activeColId)) {
+      setExpandedCollections((prev) => {
+        const next = new Set(prev);
+        next.add(activeColId);
+        return next;
+      });
+    }
+  }
+
   // Helper to get unique module ID (apiKey) from endpoints list
   const getModuleId = (endpoints: EndpointInfo[], fallbackName: string) => {
     if (endpoints.length > 0) return endpoints[0].apiKey;
@@ -276,7 +289,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {collectionGroups
           ? filteredCollectionGroups.length > 0 ? filteredCollectionGroups.map((group) => {
               const isSearchActive = searchQuery.trim().length > 0;
-              const isExpanded = isSearchActive || expandedCollections.has(group.id) || activeColId === group.id;
+              const isExpanded = isSearchActive || expandedCollections.has(group.id);
               return (
                 <div key={group.id} className={styles.collectionGroup}>
                   {/* Root Folder (Collection) */}

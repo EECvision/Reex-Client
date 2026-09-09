@@ -22,7 +22,7 @@ const VIEW_PREF_KEY = 'reex_view_preference';
 const UNWRAP_DATA_KEY = 'reex_unwrap_data';
 
 // Reactive local storage store helper utilizing useSyncExternalStore
-const createLocalStorageStore = <T extends string | boolean>(key: string, defaultValue: T, validator?: (val: any) => boolean) => {
+const createLocalStorageStore = <T extends string | boolean>(key: string, defaultValue: T, validator?: (val: unknown) => boolean) => {
     const listeners = new Set<() => void>();
     
     return {
@@ -34,7 +34,7 @@ const createLocalStorageStore = <T extends string | boolean>(key: string, defaul
             if (typeof window !== "undefined") {
                 const val = localStorage.getItem(key);
                 if (val !== null) {
-                    let parsed: any = val;
+                    let parsed: unknown = val;
                     if (typeof defaultValue === "boolean") {
                         parsed = val === "true";
                     }
@@ -57,8 +57,8 @@ const createLocalStorageStore = <T extends string | boolean>(key: string, defaul
     };
 };
 
-const themeStore = createLocalStorageStore<ThemeType>(THEME_KEY, 'light', (val) => ['light', 'dark', 'system'].includes(val));
-const viewPrefStore = createLocalStorageStore<ViewPreferenceType>(VIEW_PREF_KEY, 'json', (val) => ['json', 'raw', 'pretty'].includes(val));
+const themeStore = createLocalStorageStore<ThemeType>(THEME_KEY, 'light', (val) => ['light', 'dark', 'system'].includes(val as string));
+const viewPrefStore = createLocalStorageStore<ViewPreferenceType>(VIEW_PREF_KEY, 'json', (val) => ['json', 'raw', 'pretty'].includes(val as string));
 const unwrapStore = createLocalStorageStore<boolean>(UNWRAP_DATA_KEY, false);
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {

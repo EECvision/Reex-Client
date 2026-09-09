@@ -20,6 +20,15 @@ function openDB(): Promise<IDBDatabase> {
     });
 }
 
+export interface CachedExecutionResult {
+    id: string;
+    result?: unknown;
+    error?: string;
+    executedCurl?: string;
+    interfacePreview?: string;
+    timestamp?: number;
+}
+
 export class ClientStorage {
     static async get<T>(key: string): Promise<T[]> {
         if (typeof window === 'undefined') return [];
@@ -138,16 +147,16 @@ export class ClientStorage {
     }
 
     // --- Execution Result Caching ---
-    static async getExecutionResult(requestId: string): Promise<any> {
-        const items = await this.get<any>('request_results');
+    static async getExecutionResult(requestId: string): Promise<CachedExecutionResult | undefined> {
+        const items = await this.get<CachedExecutionResult>('request_results');
         return items.find(i => i.id === requestId);
     }
 
-    static async saveExecutionResult(requestId: string, resultData: any): Promise<void> {
+    static async saveExecutionResult(requestId: string, resultData: Omit<CachedExecutionResult, 'id' | 'timestamp'>): Promise<void> {
         if (typeof window === 'undefined') return;
         
         try {
-            const items = await this.get<any>('request_results');
+            const items = await this.get<CachedExecutionResult>('request_results');
             
             // Remove older instance
             let filtered = items.filter(i => i.id !== requestId);

@@ -80,7 +80,7 @@ export async function POST(req: Request) {
         // We unwrap it to match standard exported Postman JSON structure.
         return NextResponse.json(data.collection);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Postman Fetch Route Error:", error);
         return NextResponse.json(
             { error: "Internal server error occurred while fetching collection." },

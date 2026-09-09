@@ -37,10 +37,12 @@ export async function POST(req: Request) {
                     headers: { Authorization: `Bearer ${FLUTTERWAVE_SECRET_KEY}` },
                 }
             );
-        } catch (axiosError: any) {
-            console.error("Flutterwave API error:", axiosError?.response?.data || axiosError.message);
-            return NextResponse.json({ success: false, message: "Failed to reach Flutterwave API" }, { status: 502 });
-        }
+        } catch (axiosError: unknown) {
+            const errorMessage = axiosError instanceof Error ? axiosError.message : String(axiosError);
+            const axiosErrorData = axiosError && typeof axiosError === 'object' && 'response' in axiosError ? (axiosError as Record<string, Record<string, unknown>>).response?.data : undefined;
+                console.error("Flutterwave API error:", axiosErrorData || errorMessage);
+                return NextResponse.json({ success: false, message: "Failed to reach Flutterwave API" }, { status: 502 });
+            }
 
         const data = response.data;
         const fwData = data.data;
@@ -88,7 +90,7 @@ export async function POST(req: Request) {
                 ? addYears(baseDate, 1)
                 : addMonths(baseDate, 1);
 
-            const updatePayload: any = {
+            const updatePayload: Record<string, string> = {
                 subscription_status: 'active',
                 current_period_end: currentPeriodEnd.toISOString(),
                 subscription_plan: trueBillingCycle

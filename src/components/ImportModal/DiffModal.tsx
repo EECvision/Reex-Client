@@ -9,7 +9,7 @@ export interface FunctionDiff {
     status: "new" | "modified" | "deleted" | "unchanged" | "disabled";
     oldContent?: string;
     newContent?: string;
-    args?: any[];
+    args?: unknown[];
     requiresAuth?: boolean;
     contentType?: string;
     description?: string;

@@ -54,7 +54,7 @@ export async function POST(req: Request) {
             const currentPeriodEnd = isYearly ? addYears(baseDate, 1) : addMonths(baseDate, 1);
 
             const subscriptionId = data.subscription_id ? String(data.subscription_id) : undefined;
-            const updatePayload: any = {
+            const updatePayload: Record<string, string> = {
                 subscription_status: "active",
                 current_period_end: currentPeriodEnd.toISOString(),
             };

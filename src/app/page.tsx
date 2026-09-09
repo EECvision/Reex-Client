@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 // Static imports removed in favor of ProjectContext
-import { useProject } from "@/providers/ProjectContext";
+import { useProject, StandaloneCollection } from "@/providers/ProjectContext";
 import ImportModal from "@/components/ImportModal/ImportModal";
 import HistoryModal from "@/components/HistoryModal/HistoryModal";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal/DeleteConfirmModal";
@@ -18,6 +18,11 @@ import { Assistant } from "@/components/Assistant/Assistant";
 import styles from "./page.module.css";
 import { EndpointInfo } from "@/types";
 import { openInCodeSandbox } from "@/utils/codesandbox/index";
+import {
+  TabPointer,
+  selectEndpoint,
+  doubleClickEndpoint,
+} from "@/utils/tabManagement";
 
 // Hooks
 import { useToast } from "@/hooks/useToast";
@@ -97,15 +102,9 @@ const App = () => {
     endpoint: EndpointInfo;
     isPinned: boolean;
   };
-  type TabPointer = {
-    apiKey: string;
-    fnName: string;
-    isPinned: boolean;
-  };
   const [tabPointers, setTabPointers] = useState<TabPointer[]>(() => {
     if (typeof window !== "undefined") {
-      const modeSuffix = isStandaloneMode ? "_standalone" : "";
-      const savedPointers = localStorage.getItem(`reex_project_tabs${modeSuffix}`);
+      const savedPointers = localStorage.getItem("reex_project_tabs");
       if (savedPointers) {
         try {
           return JSON.parse(savedPointers);
@@ -116,13 +115,12 @@ const App = () => {
     }
     return [];
   });
-  const [activeTabIndex, setActiveTabIndex] = useState<number>(() => {
+  const [activeTabKey, setActiveTabKey] = useState<string>(() => {
     if (typeof window !== "undefined") {
-      const modeSuffix = isStandaloneMode ? "_standalone" : "";
-      const savedIndex = localStorage.getItem(`reex_project_active_tab${modeSuffix}`);
-      return savedIndex ? Number(savedIndex) : -1;
+      const savedKey = localStorage.getItem("reex_project_active_tab_key");
+      if (savedKey) return savedKey;
     }
-    return -1;
+    return "";
   });
 
   // Derive fully hydrated tabs dynamically on the fly from pointers and apiManifest
@@ -152,143 +150,111 @@ const App = () => {
       .filter((t): t is Tab => t !== null);
   }, [tabPointers, apiManifest, projectLoading]);
 
-  // Load tab pointers from localStorage when standalone mode switches after mount
-  const isFirstRender = useRef(true);
+  // Track hydration status to prevent overwriting localStorage on initial render
+  const isHydrated = useRef(false);
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    if (typeof window !== "undefined") {
-      queueMicrotask(() => {
-        try {
-          const modeSuffix = isStandaloneMode ? "_standalone" : "";
-          const savedPointers = localStorage.getItem(`reex_project_tabs${modeSuffix}`);
-          const savedIndex = localStorage.getItem(`reex_project_active_tab${modeSuffix}`);
-          if (savedPointers) {
-              const parsed = JSON.parse(savedPointers);
-              setTabPointers(parsed);
-          } else {
-              setTabPointers([]);
-          }
-          if (savedIndex) {
-              setActiveTabIndex(Number(savedIndex));
-          } else {
-              setActiveTabIndex(-1);
-          }
-        } catch (e) {
-          console.error("Failed to load tab pointers on standalone mode switch", e);
-        }
-      });
-    }
-  }, [isStandaloneMode]);
+    isHydrated.current = true;
+  }, []);
 
-  // Save tab pointers to localStorage
+  // Derive active tab index strictly from tabs matching activeTabKey
+  const activeTabIndex = useMemo(() => {
+    if (tabs.length === 0) return -1;
+    const index = tabs.findIndex(
+      (t) => `${t.endpoint.apiKey}__${t.endpoint.fnName}` === activeTabKey
+    );
+    return index >= 0 ? index : 0;
+  }, [tabs, activeTabKey]);
+
+  // Save tab pointers and active tab key to localStorage
   useEffect(() => {
+    if (!isHydrated.current) return;
     if (typeof window !== "undefined") {
-      const modeSuffix = isStandaloneMode ? "_standalone" : "";
-      localStorage.setItem(`reex_project_tabs${modeSuffix}`, JSON.stringify(tabPointers));
-      localStorage.setItem(`reex_project_active_tab${modeSuffix}`, String(activeTabIndex));
+      localStorage.setItem("reex_project_tabs", JSON.stringify(tabPointers));
+      localStorage.setItem("reex_project_active_tab_key", activeTabKey);
     }
-  }, [tabPointers, activeTabIndex, isStandaloneMode]);
+  }, [tabPointers, activeTabKey]);
 
-  const selectedEndpoint = activeTabIndex >= 0 && activeTabIndex < tabs.length 
-    ? tabs[activeTabIndex].endpoint 
-    : null;
+  const selectedEndpoint = useMemo(() => {
+    if (tabs.length === 0 || activeTabIndex < 0 || activeTabIndex >= tabs.length) {
+      return null;
+    }
+    return tabs[activeTabIndex].endpoint;
+  }, [tabs, activeTabIndex]);
 
   const handleSelectEndpoint = (endpoint: EndpointInfo) => {
-    setTabPointers((currentPointers) => {
-      const existingIndex = currentPointers.findIndex(p => p.apiKey === endpoint.apiKey && p.fnName === endpoint.fnName);
-      if (existingIndex >= 0) {
-        setActiveTabIndex(existingIndex);
-        return currentPointers;
-      }
-      
-      const unpinnedIndex = currentPointers.findIndex(p => !p.isPinned);
-      if (unpinnedIndex >= 0) {
-        const newPointers = [...currentPointers];
-        newPointers[unpinnedIndex] = { apiKey: endpoint.apiKey, fnName: endpoint.fnName, isPinned: false };
-        setActiveTabIndex(unpinnedIndex);
-        return newPointers;
-      }
-      
-      const newPointers = [...currentPointers, { apiKey: endpoint.apiKey, fnName: endpoint.fnName, isPinned: false }];
-      setActiveTabIndex(newPointers.length - 1);
-      return newPointers;
-    });
+    const { newPointers, newActiveKey } = selectEndpoint(tabPointers, endpoint);
+    setTabPointers(newPointers);
+    setActiveTabKey(newActiveKey);
   };
 
   const handleDoubleClickEndpoint = (endpoint: EndpointInfo) => {
-    setTabPointers((currentPointers) => {
-      const existingIndex = currentPointers.findIndex(p => p.apiKey === endpoint.apiKey && p.fnName === endpoint.fnName);
-      if (existingIndex >= 0) {
-        const newPointers = [...currentPointers];
-        newPointers[existingIndex] = { ...newPointers[existingIndex], isPinned: true };
-        setActiveTabIndex(existingIndex);
-        return newPointers;
-      }
-      const newPointers = [...currentPointers, { apiKey: endpoint.apiKey, fnName: endpoint.fnName, isPinned: true }];
-      setActiveTabIndex(newPointers.length - 1);
-      return newPointers;
-    });
+    const { newPointers, newActiveKey } = doubleClickEndpoint(tabPointers, endpoint);
+    setTabPointers(newPointers);
+    setActiveTabKey(newActiveKey);
   };
 
   const handleCloseTab = (index: number) => {
-    setTabPointers((currentPointers) => {
-      const newPointers = currentPointers.filter((_, i) => i !== index);
-      if (newPointers.length === 0) {
-        setActiveTabIndex(-1);
-      } else if (index === activeTabIndex) {
-        setActiveTabIndex(Math.min(index, newPointers.length - 1));
-      } else if (index < activeTabIndex) {
-        setActiveTabIndex(activeTabIndex - 1);
+    if (index < 0 || index >= tabs.length) return;
+    const tabToClose = tabs[index];
+    const keyToClose = `${tabToClose.endpoint.apiKey}__${tabToClose.endpoint.fnName}`;
+
+    let nextKey = activeTabKey;
+    if (keyToClose === activeTabKey) {
+      if (tabs.length <= 1) {
+        nextKey = "";
+      } else if (index === tabs.length - 1) {
+        const prev = tabs[index - 1];
+        nextKey = `${prev.endpoint.apiKey}__${prev.endpoint.fnName}`;
+      } else {
+        const next = tabs[index + 1];
+        nextKey = `${next.endpoint.apiKey}__${next.endpoint.fnName}`;
       }
-      return newPointers;
-    });
+    }
+
+    setTabPointers((prev) => prev.filter((p) => `${p.apiKey}__${p.fnName}` !== keyToClose));
+    setActiveTabKey(nextKey);
   };
 
   const handleCloseAllTabs = () => {
     setTabPointers([]);
-    setActiveTabIndex(-1);
+    setActiveTabKey("");
   };
 
   const handleCloseOthers = (index: number) => {
-    setTabPointers((currentPointers) => {
-      if (index < 0 || index >= currentPointers.length) return currentPointers;
-      return [currentPointers[index]];
-    });
-    setActiveTabIndex(0);
+    if (index < 0 || index >= tabs.length) return;
+    const target = tabs[index];
+    setTabPointers([{ apiKey: target.endpoint.apiKey, fnName: target.endpoint.fnName, isPinned: true }]);
+    setActiveTabKey(`${target.endpoint.apiKey}__${target.endpoint.fnName}`);
   };
 
   const handleCloseToRight = (index: number) => {
-    setTabPointers((currentPointers) => {
-      if (index < 0 || index >= currentPointers.length) return currentPointers;
-      return currentPointers.slice(0, index + 1);
-    });
-    setActiveTabIndex((currentActive) => (currentActive > index ? Math.max(0, index) : currentActive));
+    if (index < 0 || index >= tabs.length) return;
+    const kept = tabs.slice(0, index + 1);
+    const keptKeys = new Set(kept.map((t) => `${t.endpoint.apiKey}__${t.endpoint.fnName}`));
+    setTabPointers((prev) => prev.filter((p) => keptKeys.has(`${p.apiKey}__${p.fnName}`)));
+    if (!keptKeys.has(activeTabKey)) {
+      const lastKept = kept[kept.length - 1];
+      setActiveTabKey(`${lastKept.endpoint.apiKey}__${lastKept.endpoint.fnName}`);
+    }
   };
 
   const handleTabsDeletion = (filterFn: (pointer: TabPointer) => boolean) => {
-    setTabPointers((prev) => {
-      const newPointers = prev.filter(filterFn);
-      if (newPointers.length !== prev.length) {
-        const activePointer = prev[activeTabIndex];
-        if (activePointer && newPointers.some(p => p.apiKey === activePointer.apiKey && p.fnName === activePointer.fnName)) {
-          setActiveTabIndex(newPointers.findIndex(p => p.apiKey === activePointer.apiKey && p.fnName === activePointer.fnName));
-        } else {
-          setActiveTabIndex(newPointers.length > 0 ? 0 : -1);
-        }
+    const newPointers = tabPointers.filter(filterFn);
+    if (newPointers.length !== tabPointers.length) {
+      setTabPointers(newPointers);
+      if (!newPointers.some((p) => `${p.apiKey}__${p.fnName}` === activeTabKey)) {
+        setActiveTabKey(newPointers.length > 0 ? `${newPointers[0].apiKey}__${newPointers[0].fnName}` : "");
       }
-      return newPointers;
-    });
+    }
   };
 
   const handlePinTab = (index: number) => {
-    setTabPointers((currentPointers) => {
-      const newPointers = [...currentPointers];
-      newPointers[index] = { ...newPointers[index], isPinned: true };
-      return newPointers;
-    });
+    if (index < 0 || index >= tabs.length) return;
+    const target = tabs[index];
+    const key = `${target.endpoint.apiKey}__${target.endpoint.fnName}`;
+    setTabPointers((prev) =>
+      prev.map((p) => (`${p.apiKey}__${p.fnName}` === key ? { ...p, isPinned: true } : p))
+    );
   };
 
   // Derived Active Config for Standalone Mode
@@ -310,7 +276,7 @@ const App = () => {
 
   const activeCollection = getActiveCollection();
   const activeConfig = isStandaloneMode
-    ? activeCollection?.config || {}
+    ? activeCollection?.config ?? null
     : projectConfig;
   const activeCollectionName = isStandaloneMode
     ? activeCollection?.name || "Collection"
@@ -446,7 +412,7 @@ const App = () => {
 
 
 
-  const hasEndpoints = apiManifest && Object.keys(apiManifest).length > 0;
+  const hasEndpoints = !!(apiManifest && Object.keys(apiManifest).length > 0);
 
   const handleDownloadCollection = (id: string) => {
     let col = collections.find((c) => c.id === id);
@@ -459,9 +425,10 @@ const App = () => {
         name: activeConfig?.collectionName || "Collection",
         manifest: apiManifest || {},
         modules: {},
+        config: activeConfig ?? {},
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      } as any;
+      } as StandaloneCollection;
     }
 
     // Try to find the original Postman/OpenAPI content in history first
@@ -553,7 +520,7 @@ const App = () => {
             if (col && activeConfig) {
               openInCodeSandbox(
                 col.name,
-                activeConfig.baseURL,
+                activeConfig.baseURL || "",
                 col.modules || {},
                 { ...activeConfig, manifest: col.manifest },
               );
@@ -670,7 +637,7 @@ const App = () => {
             updateCollection={updateCollection}
             collections={collections}
             addCollectionToHistory={addCollectionToHistory}
-            hasHistory={recentCollections && recentCollections.length > 0}
+            hasHistory={!!(recentCollections && recentCollections.length > 0)}
             autoAnalyze={autoAnalyzeImport}
             onOpenHistory={() => {
               setShowHistoryModal(true);
@@ -712,7 +679,7 @@ const App = () => {
 
             if (isClearAll || !isStandaloneMode) {
               setTabPointers([]);
-              setActiveTabIndex(-1);
+              setActiveTabKey("");
             } else if (colId) {
               handleTabsDeletion((p) => !p.apiKey.startsWith(`col_${colId}__`));
             }
@@ -786,10 +753,10 @@ const App = () => {
                   {
                     id: "project",
                     name: activeCollectionName || "Project",
-                    manifest: apiManifest,
+                    manifest: apiManifest ?? {},
                     modules: {} as Record<string, string>,
-                    config: projectConfig,
-                  },
+                    config: projectConfig ?? {},
+                  } as StandaloneCollection,
                 ]
           }
           activeCollectionId={
@@ -845,7 +812,11 @@ const App = () => {
           onHistoryDelete={removeCollectionFromHistory}
           tabs={tabs}
           activeTabIndex={activeTabIndex}
-          onSelectTab={setActiveTabIndex}
+          onSelectTab={(index) => {
+            if (tabs[index]) {
+              setActiveTabKey(`${tabs[index].endpoint.apiKey}__${tabs[index].endpoint.fnName}`);
+            }
+          }}
           onCloseTab={handleCloseTab}
           onCloseAllTabs={handleCloseAllTabs}
           onCloseOthers={handleCloseOthers}

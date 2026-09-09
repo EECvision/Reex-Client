@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import styles from './SandboxWindow.module.css';
 import CollectionSidebar, { RequestItem } from '@/components/TestApi/CollectionSidebar';
-import RequestEditor from '@/components/TestApi/RequestEditor';
+import RequestEditor, { RequestConfigPayload } from '@/components/TestApi/RequestEditor';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import { Modal } from '@/components/ui/Modal/Modal';
 import { Button } from '@/components/ui/Button/Button';
@@ -141,7 +141,7 @@ export const SandboxWindow = () => {
       } else {
         if (!targetColId) return;
         const result = await createRequest({ collectionId: targetColId, name: newItemName });
-        if (result && (result as any).error) {
+        if (result && (result as Record<string, unknown>).error) {
           // Error handled in hook toast
           return;
         }
@@ -172,7 +172,7 @@ export const SandboxWindow = () => {
     toggleCollection(id);
   };
 
-  const handleSaveRequest = async (name: string, config: any) => {
+  const handleSaveRequest = async (name: string, config: RequestConfigPayload) => {
     if (!activeRequest) return;
 
     const activeCol = collections.find(c => c.requests.some(r => r.id === activeRequest.id));
@@ -185,7 +185,7 @@ export const SandboxWindow = () => {
           name,
           method: config.method,
           url: config.url,
-          config
+          config: config as unknown as Record<string, unknown>
         }
       });
 
@@ -198,12 +198,12 @@ export const SandboxWindow = () => {
   const activeCollection = collections.find(c => c.requests.some(r => r.id === activeRequest?.id));
 
   const editorData = activeRequest ? {
-    ...activeRequest.config,
+    ...(activeRequest.config as Partial<RequestConfigPayload>),
     method: activeRequest.method,
     url: activeRequest.url,
     baseUrl: activeCollection?.base_url || '',
-    authType: activeCollection?.auth?.type || activeRequest.config?.auth?.type || 'none',
-    authToken: activeCollection?.auth?.token || activeRequest.config?.auth?.token || '',
+    authType: (activeCollection?.auth?.type || (activeRequest.config as Partial<RequestConfigPayload>)?.auth?.type || 'none') as "bearer" | "none",
+    authToken: activeCollection?.auth?.token || (activeRequest.config as Partial<RequestConfigPayload>)?.auth?.token || '',
     customHeaders: activeCollection?.auth?.customHeaders || {}
   } : undefined;
 

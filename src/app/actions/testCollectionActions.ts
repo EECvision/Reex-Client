@@ -63,8 +63,8 @@ export async function getCollections() {
 
 
     // 3. Merge and Transform
-    return collections.map((col: any) => {
-        const colRequests = requests?.filter((r: any) => r.collection_id === col.id) || [];
+    return collections.map((col) => {
+        const colRequests = requests?.filter((r) => r.collection_id === col.id) || [];
 
         return {
             id: col.id,
@@ -72,8 +72,8 @@ export async function getCollections() {
             auth: col.auth,
             base_url: col.base_url,
             requests: colRequests
-                .sort((a: any, b: any) => (a.sort_order - b.sort_order) || new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-                .map((req: any) => ({
+                .sort((a, b) => (a.sort_order - b.sort_order) || new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                .map((req) => ({
                     id: req.id,
                     name: req.name,
                     method: req.method,
@@ -129,7 +129,7 @@ export async function createCollection(name: string) {
                 name,
                 user_id: session.user.id,
                 auth: {}
-            } as any)
+            })
             .select()
             .single();
 
@@ -150,9 +150,10 @@ export async function createCollection(name: string) {
                 isOpen: true
             }
         };
-    } catch (e: any) {
+    } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
         console.error('[Action] Unexpected error:', e);
-        return { error: e.message || 'Unexpected server error' };
+        return { error: errorMessage || 'Unexpected server error' };
     }
 }
 
@@ -185,7 +186,7 @@ export async function renameCollection(id: string, name: string) {
 
     const { error } = await supabase
         .from('test_collections')
-        .update({ name } as any)
+        .update({ name })
         .eq('id', id)
         .eq('user_id', session.user.id); // enforce ownership
 
@@ -194,7 +195,7 @@ export async function renameCollection(id: string, name: string) {
     return { success: true };
 }
 
-export async function updateCollection(id: string, updates: { base_url?: string; auth?: any }) {
+export async function updateCollection(id: string, updates: { base_url?: string; auth?: unknown }) {
     const session = await auth();
     if (!session?.user?.id) return { error: 'Unauthorized' };
 
@@ -203,7 +204,7 @@ export async function updateCollection(id: string, updates: { base_url?: string;
 
     const { error } = await supabase
         .from('test_collections')
-        .update(updates as any)
+        .update(updates as Database['public']['Tables']['test_collections']['Update'])
         .eq('id', id)
         .eq('user_id', session.user.id); // enforce ownership
 
@@ -212,7 +213,7 @@ export async function updateCollection(id: string, updates: { base_url?: string;
     return { success: true };
 }
 
-export async function createRequest(collectionId: string, request: any) {
+export async function createRequest(collectionId: string, request: { name?: string; method?: string; url?: string; config?: { headers?: unknown; queryParams?: unknown; body?: unknown; auth?: unknown } }) {
     const session = await auth();
     if (!session?.user?.id) return { error: 'Unauthorized' };
 
@@ -243,11 +244,11 @@ export async function createRequest(collectionId: string, request: any) {
             name: request.name || 'New Request',
             method: request.method || 'GET',
             url: request.url || '',
-            headers: request.config?.headers || [],
-            params: request.config?.queryParams || [], // Mapped frontend queryParams to DB params
-            body: request.config?.body || null,
-            auth: request.config?.auth || null
-        } as any)
+            headers: (request.config?.headers as Record<string, unknown>) || [],
+            params: (request.config?.queryParams as Record<string, unknown>) || [],
+            body: (request.config?.body as Record<string, unknown>) || null,
+            auth: (request.config?.auth as Record<string, unknown>) || null
+        } as unknown as Database['public']['Tables']['test_collection_requests']['Insert'])
         .select()
         .single();
 
@@ -269,7 +270,7 @@ export async function createRequest(collectionId: string, request: any) {
 }
 
 
-export async function updateRequest(id: string, updates: any) {
+export async function updateRequest(id: string, updates: { name?: string; method?: string; url?: string; config?: { headers?: unknown; queryParams?: unknown; body?: unknown; auth?: unknown } }) {
     const session = await auth();
     if (!session?.user?.id) return { error: 'Unauthorized' };
 
@@ -282,21 +283,21 @@ export async function updateRequest(id: string, updates: any) {
         return;
     }
 
-    const dbUpdates: any = {};
+    const dbUpdates: Database['public']['Tables']['test_collection_requests']['Update'] = {};
     if (updates.name) dbUpdates.name = updates.name;
     if (updates.method) dbUpdates.method = updates.method;
     if (updates.url !== undefined) dbUpdates.url = updates.url;
 
     if (updates.config) {
-        if (updates.config.headers) dbUpdates.headers = updates.config.headers;
-        if (updates.config.queryParams) dbUpdates.params = updates.config.queryParams; // Fixed mapping
-        if (updates.config.body) dbUpdates.body = updates.config.body;
-        if (updates.config.auth) dbUpdates.auth = updates.config.auth;
+        if (updates.config.headers) dbUpdates.headers = updates.config.headers as Database['public']['Tables']['test_collection_requests']['Update']['headers'];
+        if (updates.config.queryParams) dbUpdates.params = updates.config.queryParams as Database['public']['Tables']['test_collection_requests']['Update']['params'];
+        if (updates.config.body) dbUpdates.body = updates.config.body as Database['public']['Tables']['test_collection_requests']['Update']['body'];
+        if (updates.config.auth) dbUpdates.auth = updates.config.auth as Database['public']['Tables']['test_collection_requests']['Update']['auth'];
     }
 
     const { error } = await supabase
         .from('test_collection_requests')
-        .update(dbUpdates as any)
+        .update(dbUpdates)
         .eq('id', id);
 
     if (error) throw error;

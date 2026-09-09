@@ -41,11 +41,12 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(data);
 
-    } catch (error: any) {
-        console.error(`[SERVER] Fetch error:`, error.message);
-        if (error.code === 'ECONNABORTED') {
+    } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error(`[SERVER] Fetch error:`, errorMessage);
+        if (typeof error === 'object' && error !== null && 'code' in error && (error as Record<string, unknown>).code === 'ECONNABORTED') {
             return NextResponse.json({ error: "Fetch timed out after 10s" }, { status: 504 });
         }
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }

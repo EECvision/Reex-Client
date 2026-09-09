@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { api } from '../../../services/api';
 import { useSubscription } from '@/hooks/useSubscription';
 import { DiffResult, ImportStep } from '../importTypes';
 import yaml from 'js-yaml';
+import { EndpointInfo, ProjectConfig } from '@/types';
+import { StandaloneCollection } from '@/providers/ProjectContext';
 
 interface UseImportActionsProps {
     selectedFile: File | null;
@@ -18,12 +20,12 @@ interface UseImportActionsProps {
     onError: (message: string) => void;
     // Standalone mode props
     isStandaloneMode?: boolean;
-    onManifestUpdate?: (manifest: any) => void;
-    onConfigUpdate?: (config: any) => void;
-    addCollection?: (collection: any) => void;
-    updateCollection?: (id: string, updates: any) => void;
-    existingCollection?: any;
-    addCollectionToHistory?: (name: string, content: any) => Promise<void>;
+    onManifestUpdate?: (manifest: Record<string, Record<string, EndpointInfo>> | null) => void;
+    onConfigUpdate?: (config: ProjectConfig | null) => void;
+    addCollection?: (collection: StandaloneCollection) => void;
+    updateCollection?: (id: string, updates: Partial<StandaloneCollection>) => void;
+    existingCollection?: StandaloneCollection;
+    addCollectionToHistory?: (name: string, content: Record<string, unknown>) => Promise<void>;
 }
 
 export const useImportActions = ({
@@ -54,10 +56,11 @@ export const useImportActions = ({
     // Store full analysis data for standalone mode
 
     const [fileContent, setFileContent] = useState<string | null>(null);
+    const isAnalyzingRef = useRef(false);
 
-
-    const startAnalysis = async (clientMappings?: Record<string, string>) => {
-        if (!selectedFile) return;
+    const startAnalysis = useCallback(async (clientMappings?: Record<string, string>) => {
+        if (!selectedFile || isAnalyzingRef.current) return;
+        isAnalyzingRef.current = true;
         setStep("analyzing");
 
         let fileToAnalyze = selectedFile;
@@ -144,8 +147,23 @@ export const useImportActions = ({
             console.error(err);
             onError(`Analysis failed: ${(err as Error).message}`);
             setStep("upload");
+        } finally {
+            isAnalyzingRef.current = false;
         }
-    };
+    }, [
+        selectedFile,
+        existingCollection?.modules,
+        existingCollection?.manifest,
+        targetDir,
+        isStandaloneMode,
+        setDiffs,
+        setProposedClients,
+        setSelectedModules,
+        setRemovedModules,
+        setSelectedFunctions,
+        setRemovedFunctions,
+        onError
+    ]);
 
     // Helper to extract metadata from generated function code
     // This mirrors the extractMetadata function in ProjectService but uses regex
@@ -190,8 +208,8 @@ export const useImportActions = ({
     };
 
     // Build manifest from diffs for standalone mode
-    const buildManifestFromDiffs = (diffs: DiffResult[], selectedModules: Set<string>, selectedFunctions: Map<string, Set<string>>, removedModules: Set<string>, removedFunctions: Map<string, Set<string>>): any => {
-        const manifest: any = {};
+    const buildManifestFromDiffs = (diffs: DiffResult[], selectedModules: Set<string>, selectedFunctions: Map<string, Set<string>>, removedModules: Set<string>, removedFunctions: Map<string, Set<string>>): Record<string, Record<string, EndpointInfo>> => {
+        const manifest: Record<string, Record<string, EndpointInfo>> = {};
 
         // 1. Process all selected diffs (new, modified, unchanged present in new analysis)
         diffs.forEach((diff) => {
@@ -209,8 +227,8 @@ export const useImportActions = ({
                 if (!moduleFunctions.has(fn.name)) return;
                 if (removedModFuncs?.has(fn.name)) return;
 
-                // Cast to any to access optional metadata fields from analysis response
-                const fnData = fn as any;
+                // Cast to access optional metadata fields from analysis response
+                const fnData = fn as unknown as EndpointInfo & { newContent?: string; path?: string; params?: EndpointInfo['args'] };
                 const fnCode = fnData.newContent || '';
                 const existingFnMeta = existingCollection?.manifest?.[diff.module]?.[fn.name];
 
@@ -244,7 +262,7 @@ export const useImportActions = ({
         // 2. Persist existing modules and functions not in the diffs
         // Skip modules/functions explicitly marked for removal
         if (existingCollection?.manifest) {
-            Object.entries(existingCollection.manifest).forEach(([modName, endpoints]: [string, any]) => {
+            Object.entries(existingCollection.manifest).forEach(([modName, endpoints]: [string, Record<string, EndpointInfo>]) => {
                 if (removedModules.has(modName)) return; // Exclude if explicitly removed
 
                 if (!manifest[modName]) manifest[modName] = {};
@@ -345,7 +363,7 @@ export const useImportActions = ({
                     });
                 } else if (addCollection) {
                     // New Multi-Collection Flow
-                    const newCollection = {
+                    const newCollection: StandaloneCollection = {
                         id: crypto.randomUUID(), // Or Date.now().toString() if crypto not avail
                         name: collectionName || 'Imported Collection',
                         manifest,
@@ -439,14 +457,15 @@ export const useImportActions = ({
                     if (updateSession) {
                         updateSession();
                     }
-                } catch (e: any) {
+                } catch (e: unknown) {
+                const errorMessage = e instanceof Error ? e.message : String(e);
                     // Propagate the error to stop the process
-                    if (e.message?.includes("Free limit reached")) {
-                        console.warn("Import limit reached:", e.message);
+                    if (errorMessage?.includes("Free limit reached")) {
+                        console.warn("Import limit reached:", errorMessage);
                     } else {
                         console.error("Limit check failed:", e);
                     }
-                    onError(e.message);
+                    onError(errorMessage);
                     setStep("review");
                     return;
                 }

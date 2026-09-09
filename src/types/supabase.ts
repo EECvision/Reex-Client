@@ -9,6 +9,60 @@ export type Json =
 export type Database = {
     public: {
         Tables: {
+            users: {
+                Row: {
+                    id: string
+                    email: string | null
+                    name: string | null
+                    image: string | null
+                    subscription_status?: string | null
+                    current_period_end?: string | null
+                }
+                Insert: {
+                    id?: string
+                    email?: string | null
+                    name?: string | null
+                    image?: string | null
+                    subscription_status?: string | null
+                    current_period_end?: string | null
+                }
+                Update: {
+                    id?: string
+                    email?: string | null
+                    name?: string | null
+                    image?: string | null
+                    subscription_status?: string | null
+                    current_period_end?: string | null
+                }
+                Relationships: []
+            }
+            standalone_collections: {
+                Row: {
+                    id: string
+                    user_id: string
+                    name: string
+                    content: Json
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    user_id: string
+                    name: string
+                    content: Json
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    user_id?: string
+                    name?: string
+                    content?: Json
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: []
+            }
             test_collections: {
                 Row: {
                     id: string

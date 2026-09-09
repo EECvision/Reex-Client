@@ -17,7 +17,7 @@ export async function verifyProStatus(userId: string): Promise<boolean> {
 
     try {
         const { data: user, error } = await supabase
-            .from("users" as any)
+            .from("users")
             .select("subscription_status, current_period_end")
             .eq("id", userId)
             .single();
@@ -26,8 +26,7 @@ export async function verifyProStatus(userId: string): Promise<boolean> {
             return false;
         }
 
-        const userData = user as any;
-        const isActive = isSubscriptionActive(userData.subscription_status, userData.current_period_end);
+        const isActive = isSubscriptionActive(user.subscription_status, user.current_period_end);
 
         return isActive;
     } catch (error) {

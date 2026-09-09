@@ -14,10 +14,10 @@ import {
   StandardFunctionDefinition,
   generateStandardModuleContent,
   resolveClientAndPath,
-
   proposeClientForFunctions,
   calculateFunctionName
 } from "./generator-utils";
+import { OpenAPISpec, OpenAPIOperation } from "@/types";
 
 // --- Helpers ---
 
@@ -29,22 +29,33 @@ const extractPathParams = (url: string): string[] => {
 
 // --- Main Processing ---
 
-export const processOpenAPI = (spec: any) => {
-  const processedModules = new Map<string, any[]>();
-  Object.entries(spec.paths).forEach(([path, pathItem]: [string, any]) => {
-    Object.entries(pathItem).forEach(([method, operation]: [string, any]) => {
-      if (["get", "post", "put", "patch", "delete"].includes(method)) {
-        const tag = (operation.tags || ["general"])[0];
+export const processOpenAPI = (spec: OpenAPISpec | Record<string, unknown>) => {
+  const processedModules = new Map<string, Array<{
+    method: string;
+    path: string;
+    operation: OpenAPIOperation;
+    operationId?: string;
+    summary?: string;
+    spec: OpenAPISpec;
+  }>>();
+
+  const paths = (spec.paths || {}) as Record<string, Record<string, OpenAPIOperation>>;
+
+  Object.entries(paths).forEach(([path, pathItem]) => {
+    Object.entries(pathItem).forEach(([method, operation]) => {
+      if (["get", "post", "put", "patch", "delete"].includes(method.toLowerCase())) {
+        const op = operation as OpenAPIOperation;
+        const tag = (op.tags && op.tags.length > 0 ? op.tags[0] : "general") || "general";
         const moduleName = sanitizeModuleName(tag);
         if (!processedModules.has(moduleName)) processedModules.set(moduleName, []);
 
         processedModules.get(moduleName)!.push({
           method,
           path, // Raw path e.g. /users/{id}
-          operation,
-          operationId: operation.operationId,
-          summary: operation.summary || operation.description,
-          spec,
+          operation: op,
+          operationId: op.operationId,
+          summary: op.summary || op.description,
+          spec: spec as OpenAPISpec,
         });
       }
     });
@@ -53,7 +64,14 @@ export const processOpenAPI = (spec: any) => {
 };
 
 const mapToStandardIR = (
-  processedModules: Map<string, any[]>,
+  processedModules: Map<string, Array<{
+    method: string;
+    path: string;
+    operation: OpenAPIOperation;
+    operationId?: string;
+    summary?: string;
+    spec: OpenAPISpec;
+  }>>,
   filterModules?: string[],
   clientMappings?: Record<string, string>,
   baseUrl?: string
@@ -67,16 +85,16 @@ const mapToStandardIR = (
     const generatedFunctions = new Set<string>();
 
     items.forEach((item) => {
-      const { method, path, operation, operationId } = item;
+      const { method, path, operation, operationId, spec } = item;
 
       // Determine Function Name
-      const prefix = method.toLowerCase();
+      const prefix = String(method).toLowerCase();
       let functionName = "";
 
       if (operationId) {
-        functionName = calculateFunctionName(method, operationId);
+        functionName = calculateFunctionName(String(method), String(operationId));
       } else {
-        const cleanPath = path
+        const cleanPath = String(path)
           .replace(/\{[^}]+\}/g, "")
           .replace(/\/+/g, "_")
           .replace(/^_|_$/g, "")
@@ -88,10 +106,8 @@ const mapToStandardIR = (
 
       // Extract Path Params & Normalize Path
       // Convert /users/{id} -> /users/${id}
-      // Extract Path Params & Normalize Path
-      // Convert /users/{id} -> /users/${id}
-      const pathParams = extractPathParams(path);
-      let normalizedPath = normalizeApiUrl(path, baseUrl);
+      const pathParams = extractPathParams(String(path));
+      let normalizedPath = normalizeApiUrl(String(path), baseUrl);
       // Ensure no query params leak into the path
       normalizedPath = normalizedPath.split("?")[0];
 
@@ -101,20 +117,21 @@ const mapToStandardIR = (
 
       // Query Params
       const queryParams: GenericParam[] = [];
-      const hasQueryParams = operation.parameters?.some((p: any) => p.in === "query");
-      if (hasQueryParams) {
-        operation.parameters.filter((p: any) => p.in === "query").forEach((p: any) => {
+      const params = operation.parameters;
+      const hasQueryParams = params?.some((p) => p.in === "query");
+      if (hasQueryParams && params) {
+        params.filter((p) => p.in === "query").forEach((p) => {
           queryParams.push({
-            name: decodeURIComponent(p.name),
-            required: p.required,
-            description: p.description
+            name: decodeURIComponent(String(p.name || "")),
+            required: p.required as boolean | undefined,
+            description: p.description as string | undefined
           });
         });
       }
 
       // Body Schema - Check for multipart/form-data first, then application/json
       const requestBodyContent = operation.requestBody?.content;
-      let bodySchema = null;
+      let bodySchema: Record<string, unknown> | undefined = undefined;
       let contentType = 'application/json'; // default
 
       if (requestBodyContent) {
@@ -128,38 +145,34 @@ const mapToStandardIR = (
           // Fallback to first available content type
           const firstKey = Object.keys(requestBodyContent)[0];
           if (firstKey) {
-            bodySchema = requestBodyContent[firstKey].schema;
+            bodySchema = requestBodyContent[firstKey]?.schema;
             contentType = firstKey;
           }
         }
       }
 
       // Resolve Client and Adjust Path
-      const { clientName, path: finalPath } = resolveClientAndPath(path, normalizedPath, clientMappings);
+      const { clientName, path: finalPath } = resolveClientAndPath(String(path), normalizedPath, clientMappings);
 
       // Security / Auth
-      const globalSecurity = item.spec.security || [];
+      const globalSecurity = spec?.security || [];
       const operationSecurity = operation.security;
       const security = operationSecurity !== undefined ? operationSecurity : globalSecurity;
-      // If security array exists and has at least one requirement with scopes or scheme named
-      // Empty array [] usually means no security used.
-      // [{}] usually means optional security (public allowed).
-      // We will flag requiresAuth if there is AT LEAST one non-empty requirement.
-      const requiresAuth = Array.isArray(security) && security.length > 0; // Simplified for now
+      const requiresAuth = Array.isArray(security) && security.length > 0;
 
       // Path Param Descriptions (from OpenAPI parameters where in === 'path')
       const pathParamDescriptions: Record<string, string> = {};
-      if (operation.parameters) {
-        operation.parameters.filter((p: any) => p.in === 'path').forEach((p: any) => {
+      if (params) {
+        params.filter((p) => p.in === 'path').forEach((p) => {
           if (p.name && p.description) {
-            pathParamDescriptions[p.name] = p.description;
+            pathParamDescriptions[String(p.name)] = String(p.description);
           }
         });
       }
 
       functions.push({
         name: functionName,
-        method: method.toLowerCase() as any,
+        method: String(method).toLowerCase() as "get" | "post" | "put" | "delete" | "patch",
         path: finalPath, // Pre-normalized to ${param} syntax
         description: operation.summary || operation.description,
         pathParams,
@@ -190,11 +203,11 @@ const mapToStandardIR = (
 
 export const generateOpenApi = async (options: GeneratorOptions): Promise<ModuleContent[] | FileOperation[]> => {
   const { specPath, specData } = options;
-  let data = specData;
+  let data: OpenAPISpec | undefined = specData as OpenAPISpec | undefined;
 
   if (!data && specPath) {
     if (!fs.existsSync(specPath)) throw new Error(`File not found: ${specPath}`);
-    data = JSON.parse(fs.readFileSync(specPath, "utf8"));
+    data = JSON.parse(fs.readFileSync(specPath, "utf8")) as OpenAPISpec;
   }
   if (!data) throw new Error("No specification data provided");
   if (!data.openapi && !data.swagger) throw new Error("Invalid OpenAPI/Swagger format.");

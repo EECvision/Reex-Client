@@ -34,8 +34,9 @@ async function test() {
             console.error("API:", apiKeys);
             process.exit(1);
         }
-    } catch (e: any) {
-        console.error("❌ Failed to fetch /project/manifest:", e.message);
+    } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
+        console.error("❌ Failed to fetch /project/manifest:", errorMessage);
         process.exit(1);
     }
 
@@ -58,8 +59,9 @@ async function test() {
             console.error("API:", moduleKeys);
             process.exit(1);
         }
-    } catch (e: any) {
-        console.error("❌ Failed to fetch /project/modules:", e.message);
+    } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
+        console.error("❌ Failed to fetch /project/modules:", errorMessage);
         process.exit(1);
     }
 

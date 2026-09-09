@@ -4,7 +4,7 @@ import { eventEmitter } from '@/app/api/utils';
 export async function GET(req: NextRequest) {
     const stream = new ReadableStream({
         start(controller) {
-            const listener = (data: any) => {
+            const listener = (data: unknown) => {
                 const payload = `data: ${JSON.stringify(data)}\n\n`;
                 controller.enqueue(new TextEncoder().encode(payload));
             };

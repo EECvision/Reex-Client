@@ -25,11 +25,16 @@ import {
   REEX_CONFIG_CONTENT,
   REEX_METADATA_CONTENT,
 } from "./templates";
+import { EndpointInfo, ProjectConfig } from "@/types";
 import {
   generateKeyFactory,
   toHookContent,
   getHookName,
 } from "./hookGenerator";
+
+export interface SandboxConfig extends ProjectConfig {
+  manifest?: Record<string, Record<string, EndpointInfo>>;
+}
 
 function compress(string: string) {
   return LZString.compressToBase64(string)
@@ -42,7 +47,7 @@ export const createSandboxPayload = (
   collectionName: string,
   baseURL: string,
   modules: Record<string, string>,
-  config: any,
+  config: SandboxConfig,
 ) => {
   const files: Record<string, { content: string; isBinary: boolean }> = {};
 
@@ -308,15 +313,14 @@ files["src/api-services/auth-methods/cookie-auth/CookieAuthGuard.tsx"] = {
         .join(", ");
       const pascalModule = modName.charAt(0).toUpperCase() + modName.slice(1);
 
-      const hookFileContent = `/* eslint-disable @typescript-eslint/no-explicit-any */
-// Generated file - DO NOT EDIT
+      const hookFileContent = `// Generated file - DO NOT EDIT
 ${tanstackImportLine}
 import { ${modName}Api } from "../definitions/${modName}";
 ${commonImports ? `import { ${commonImports} } from "./query.config";` : ""}
 
 // Helper Types
-type ApiData<T extends (...args: any) => any> = Awaited<ReturnType<T>>;
-type ApiVars<T extends (...args: any) => any> = Parameters<T> extends [] ? void : Parameters<T>[0];
+type ApiData<T extends (...args: never[]) => unknown> = Awaited<ReturnType<T>>;
+type ApiVars<T extends (...args: never[]) => unknown> = Parameters<T> extends [] ? void : Parameters<T>[0];
 
 ${keyFactory}
 
@@ -404,7 +408,7 @@ export default function App() {
   // Using the generated React Query hook!
   const { data, isLoading, error, refetch } = ${demoHook}();
 
-  const isCorsError = error && (error as any).message === "Network Error";
+  const isCorsError = error && (error as unknown).message === "Network Error";
 
   return (
     <div style={{ padding: '20px', fontFamily: 'system-ui, sans-serif' }}>
@@ -424,7 +428,7 @@ export default function App() {
 
           {error && (
             <div style={{ marginTop: '16px', padding: '12px', background: '#fef2f2', borderLeft: '4px solid #ef4444', borderRadius: '4px' }}>
-                <p style={{ color: '#b91c1c', margin: 0, fontWeight: 600 }}>Error: {(error as any).message}</p>
+                <p style={{ color: '#b91c1c', margin: 0, fontWeight: 600 }}>Error: {(error as unknown).message}</p>
                 {isCorsError && (
                     <p style={{ color: '#991b1b', fontSize: '14px', marginTop: '8px', marginBottom: 0 }}>
                         <strong>Note:</strong> A "Network Error" usually means your backend API is blocking requests from CodeSandbox due to CORS (Cross-Origin Resource Sharing). 
@@ -449,7 +453,7 @@ export default function App() {
 import { api } from './api-services/definitions';
 
 export default function App() {
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<unknown>(null);
 
   const testApi = async () => {
     try {
@@ -478,7 +482,7 @@ export const openInCodeSandbox = (
   collectionName: string,
   baseURL: string,
   modules: Record<string, string>,
-  config: any,
+  config: SandboxConfig,
 ) => {
   const payload = createSandboxPayload(
     collectionName,

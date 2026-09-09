@@ -20,25 +20,28 @@ const supabase = createClient<Database>(supabaseUrl, supabaseServiceKey, {
     }
 });
 
-async function ensureUserExists(user: any) {
+async function ensureUserExists(user: { id?: string | null; email?: string | null; name?: string | null; image?: string | null }) {
     if (!user || !user.id) return;
     try {
-        const { data } = await supabase.from('users' as any).select('id').eq('id', user.id).single();
+        const { data } = await supabase.from('users').select('id').eq('id', user.id).single();
         if (!data) {
             console.log('[Action] Self-healing: Syncing user to DB', user.id);
-            await supabase.from('users' as any).upsert({
+            await supabase.from('users').upsert({
                 id: user.id,
                 email: user.email,
                 name: user.name || 'User',
                 image: user.image
-            } as any, { onConflict: 'id' });
+            }, { onConflict: 'id' });
         }
     } catch (e) {
         console.warn('[Action] Sync attempt failed:', e);
     }
 }
 
-export async function addToHistory(name: string, content: any) {
+export async function addToHistory(
+    name: string,
+    content: Database['public']['Tables']['recent_collections']['Insert']['content'] | Record<string, unknown>
+) {
     const session = await auth();
     if (!session?.user?.id) return { error: 'Unauthorized' };
 
@@ -58,9 +61,9 @@ export async function addToHistory(name: string, content: any) {
         .upsert({
             user_id: session.user.id,
             name,
-            content,
+            content: content as Database['public']['Tables']['recent_collections']['Insert']['content'],
             updated_at: new Date().toISOString()
-        } as any, { onConflict: 'user_id, name' });
+        }, { onConflict: 'user_id, name' });
 
     if (error) {
         console.error('Error adding to history:', error);

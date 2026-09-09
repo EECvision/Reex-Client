@@ -43,7 +43,7 @@ interface QuerySectionProps {
   currentParams: Record<string, any>;
   loading: boolean;
   isSubmitDisabled: boolean;
-  onParamChange: (paramName: string, value: any, type?: string) => void;
+  onParamChange: (paramName: string, value: unknown, type?: string) => void;
   onSubmit: () => void;
   rawPayload?: string;
   onRawPayloadChange?: (value: string) => void;
@@ -82,7 +82,7 @@ const QuerySection: React.FC<QuerySectionProps> = ({
   // Generate default JSON template from endpoint args, using type info for correct structure
   const generateDefaultTemplate = useCallback(() => {
     // Build a value for a property based on its type and sub-properties
-    const buildValue = (prop: EndpointArgProperty): any => {
+    const buildValue = (prop: EndpointArgProperty): unknown => {
       const isArray = prop.type?.includes('[]');
       const hasSubs = prop.properties && prop.properties.length > 0;
 

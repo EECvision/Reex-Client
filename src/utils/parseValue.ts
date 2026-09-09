@@ -1,4 +1,4 @@
-export const parseValue = (value: any, type?: string) => {
+export const parseValue = (value: unknown, type?: string) => {
   if (value instanceof File || typeof value !== "string") {
     return value;
   }

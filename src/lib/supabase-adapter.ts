@@ -1,6 +1,20 @@
 
-import { type Adapter } from "@auth/core/adapters"
+import { type Adapter, type AdapterUser, type AdapterSession, type AdapterAccount } from "@auth/core/adapters"
 import { createClient } from "@supabase/supabase-js"
+
+interface DbUser {
+    id: string
+    name?: string | null
+    email?: string | null
+    emailVerified?: string | Date | null
+    image?: string | null
+}
+
+interface DbSession {
+    sessionToken: string
+    userId: string
+    expires: string | Date
+}
 
 export function CustomSupabaseAdapter(options: { url: string; secret: string }): Adapter {
     const supabase = createClient(options.url, options.secret, {
@@ -63,7 +77,10 @@ export function CustomSupabaseAdapter(options: { url: string; secret: string }):
 
             if (!data?.item) return null
 
-            return formatUser(data.item)
+            const userObj = Array.isArray(data.item) ? data.item[0] : data.item;
+            if (!userObj) return null;
+
+            return formatUser(userObj as DbUser)
         },
         async updateUser(user) {
             console.log("[CustomAdapter] updateUser", user)
@@ -179,20 +196,24 @@ export function CustomSupabaseAdapter(options: { url: string; secret: string }):
 }
 
 // Helpers to ensure dates are Date objects, not strings (Supabase returns strings)
-function formatUser(user: any) {
+function formatUser(user: DbUser): AdapterUser {
     return {
-        ...user,
+        id: user.id,
+        name: user.name ?? null,
+        email: user.email ?? "",
         emailVerified: user.emailVerified ? new Date(user.emailVerified) : null,
+        image: user.image ?? null,
     }
 }
 
-function formatSession(session: any) {
+function formatSession(session: DbSession): AdapterSession {
     return {
-        ...session,
+        sessionToken: session.sessionToken,
+        userId: session.userId,
         expires: new Date(session.expires),
     }
 }
 
-function formatAccount(account: any) {
+function formatAccount(account: AdapterAccount): AdapterAccount {
     return account
 }

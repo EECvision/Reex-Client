@@ -1,7 +1,7 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { api } from "@/services/api";
-import { EndpointInfo } from "@/types";
+import { EndpointInfo, ProjectConfig, EndpointArgProperty, EndpointArg } from "@/types";
 import { isLocalhostUrl } from "@/lib/urlUtils";
 import { useSettings } from "@/providers/SettingsContext";
 import { parseValue } from "@/utils/parseValue";
@@ -13,8 +13,8 @@ type InputMode = "form" | "raw";
 
 
 interface UseEndpointExecutionProps {
-    projectConfig: any;
-    apiManifest: any;
+    projectConfig: ProjectConfig | null;
+    apiManifest: Record<string, Record<string, EndpointInfo>> | null;
     showToast: (type: "success" | "error", message: string) => void;
     authToken?: string;
     customHeaders?: Record<string, string>;
@@ -22,7 +22,7 @@ interface UseEndpointExecutionProps {
     selectedEndpoint: EndpointInfo | null;
 }
 
-const setNestedValue = (obj: any, path: string, value: any) => {
+const setNestedValue = (obj: Record<string, unknown>, path: string, value: unknown) => {
     const keys = path.split('.');
     let current = obj;
     for (let i = 0; i < keys.length - 1; i++) {
@@ -31,21 +31,21 @@ const setNestedValue = (obj: any, path: string, value: any) => {
         if (!current[key]) {
             current[key] = /^\d+$/.test(nextKey) ? [] : {};
         }
-        current = current[key];
+        current = current[key] as Record<string, unknown>;
     }
     current[keys[keys.length - 1]] = value;
 };
 
-const getLeafNodes = (args: any[]) => {
+const getLeafNodes = (args: EndpointArg[]) => {
     const leaves: { path: string; isOptional: boolean }[] = [];
     
-    const traverse = (prop: any, currentPath: string) => {
+    const traverse = (prop: EndpointArgProperty, currentPath: string) => {
         const isArray = prop.type?.includes('[]') || prop.type?.toLowerCase().includes('array') || prop.type?.toLowerCase().includes('list');
         const hasChildren = prop.properties && prop.properties.length > 0;
         const basePath = isArray && hasChildren ? `${currentPath}.0` : currentPath;
 
         if (prop.properties && prop.properties.length > 0) {
-            prop.properties.forEach((child: any) => {
+            prop.properties.forEach((child: EndpointArgProperty) => {
                 traverse(child, `${basePath}.${child.name}`);
             });
         } else {
@@ -53,11 +53,11 @@ const getLeafNodes = (args: any[]) => {
         }
     };
 
-    args.forEach((arg: any) => {
+    args.forEach((arg: EndpointArg) => {
         if (arg.isObject && Array.isArray(arg.properties)) {
-            arg.properties.forEach((prop: any) => traverse(prop, prop.name));
+            arg.properties.forEach((prop: EndpointArgProperty) => traverse(prop, prop.name));
         } else {
-            traverse(arg, arg.name);
+            traverse(arg as unknown as EndpointArgProperty, arg.name);
         }
     });
 
@@ -66,7 +66,7 @@ const getLeafNodes = (args: any[]) => {
 
 type ParamsState = {
     [key: string]: {
-        [key: string]: any;
+        [key: string]: unknown;
     };
 };
 
@@ -85,7 +85,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
     const [params, setParams] = useState<ParamsState>({});
     const [rawPayloads, setRawPayloads] = useState<RawPayloadState>({});
     const [inputModes, setInputModes] = useState<InputModeState>({});
-    const [results, setResults] = useState<Record<string, any>>({});
+    const [results, setResults] = useState<Record<string, unknown>>({});
     const [errors, setErrors] = useState<Record<string, string | null>>({});
     const [loading, setLoading] = useState(false);
 
@@ -96,7 +96,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
 
     const currentKey = selectedEndpoint ? `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}` : null;
 
-    const handleParamChange = (paramName: string, value: any, type?: string) => {
+    const handleParamChange = (paramName: string, value: unknown, type?: string) => {
         if (!selectedEndpoint) return;
         const key = `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}`;
         setParams((prev) => ({
@@ -108,17 +108,17 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
         }));
     };
 
-    const handleRawPayloadChange = (value: string) => {
+    const handleRawPayloadChange = useCallback((value: string) => {
         if (!selectedEndpoint) return;
         const key = `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}`;
         setRawPayloads((prev) => ({ ...prev, [key]: value }));
-    };
+    }, [selectedEndpoint]);
 
-    const handleInputModeChange = (mode: InputMode) => {
+    const handleInputModeChange = useCallback((mode: InputMode) => {
         if (!selectedEndpoint) return;
         const key = `${selectedEndpoint.apiKey}.${selectedEndpoint.fnName}`;
         setInputModes((prev) => ({ ...prev, [key]: mode }));
-    };
+    }, [selectedEndpoint]);
 
     const getCurrentInputMode = (): InputMode => {
         if (!selectedEndpoint) return "form";
@@ -180,7 +180,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             const currentParams = params[key] || {};
 
             // 1. Prepare Arguments Map
-            let argsMap: Record<string, any> = {};
+            let argsMap: Record<string, unknown> = {};
 
             // If in raw mode, parse the raw JSON payload
             if (currentInputMode === "raw" && currentRawPayload.trim()) {
@@ -231,7 +231,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             }
 
             // 3. Prepare Payload / Query
-            let remainingData: Record<string, any> = {};
+            let remainingData: Record<string, unknown> = {};
             Object.keys(argsMap).forEach(k => {
                 if (!consumedParams.has(k)) {
                     remainingData[k] = argsMap[k];
@@ -249,7 +249,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
                 !(remainingData[remainingKeys[0]] instanceof File) &&
                 !Array.isArray(remainingData[remainingKeys[0]])
             ) {
-                remainingData = remainingData[remainingKeys[0]];
+                remainingData = remainingData[remainingKeys[0]] as Record<string, unknown>;
             }
 
             const cleanBase = clientBase.replace(/\/+$/, "");
@@ -259,7 +259,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             // console.log("[Execution] URL Construction:", { clientBase, cleanBase, cleanPath, fullUrl });
 
             let requestUrl = fullUrl;
-            let requestData: Record<string, any> | FormData | undefined = remainingData;
+            let requestData: Record<string, unknown> | FormData | undefined = remainingData;
 
             // Prepare Request Headers
             const headers: Record<string, string> = {};
@@ -291,7 +291,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
                 // Build FormData for multipart requests
                 const formData = new FormData();
 
-                const appendFormData = (data: any, rootName: string) => {
+                const appendFormData = (data: unknown, rootName: string) => {
                     if (data instanceof File) {
                         formData.append(rootName, data);
                     } else if (Array.isArray(data)) {
@@ -301,7 +301,7 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
                     } else if (typeof data === 'object' && data !== null) {
                         for (const key in data) {
                             if (Object.prototype.hasOwnProperty.call(data, key)) {
-                                appendFormData(data[key], `${rootName}[${key}]`);
+                                appendFormData((data as Record<string, unknown>)[key], `${rootName}[${key}]`);
                             }
                         }
                     } else if (data !== undefined && data !== null) {
@@ -385,15 +385,16 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
                         fnName: selectedEndpoint.fnName,
                     });
                     if (previewData && previewData.success) {
-                        setInterfacePreviews(prev => ({ ...prev, [currentKey]: (previewData as any).interfaceString }));
+                        setInterfacePreviews(prev => ({ ...prev, [currentKey]: (previewData as Record<string, string>).interfaceString }));
                     }
                 } catch (e) {
                     console.error("Failed to generate preview", e);
                 }
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
             console.error(err);
-            setErrors(prev => ({ ...prev, [currentKey]: err.message || "Unknown error" }));
+            setErrors(prev => ({ ...prev, [currentKey]: errorMessage || "Unknown error" }));
         } finally {
             setLoading(false);
         }
@@ -415,8 +416,9 @@ export const useEndpointExecution = ({ projectConfig, apiManifest, showToast, au
             } else {
                 showToast("error", data?.error || "Failed to update interface");
             }
-        } catch (e: any) {
-            showToast("error", e.message);
+        } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : String(e);
+            showToast("error", errorMessage);
         } finally {
             setSavingInterface(false);
         }

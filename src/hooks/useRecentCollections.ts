@@ -29,13 +29,13 @@ export const useRecentCollections = () => {
                     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
                     .slice(0, FREE_RECENT_COLLECTION_LIMIT);
             }
-            return await getHistory();
+            return (await getHistory()) as unknown as HistoryItem[];
         }
     });
 
     // Mutation: Add to History
     const addHistoryMutation = useMutation({
-        mutationFn: async ({ name, content }: { name: string, content: any }) => {
+        mutationFn: async ({ name, content }: { name: string, content: Record<string, unknown> }) => {
             if (!isPro) {
                 const newItem = {
                     id: crypto.randomUUID(),
@@ -74,7 +74,7 @@ export const useRecentCollections = () => {
             }
             queryClient.invalidateQueries({ queryKey: QUERY_KEY });
         },
-        onError: (err: any) => {
+        onError: (err: Error) => {
             showToast('error', err.message || 'Failed to add to history');
         }
     });
@@ -94,7 +94,7 @@ export const useRecentCollections = () => {
         },
         onSuccess: (result) => {
             if (result && typeof result === 'object' && 'error' in result) {
-                showToast('error', String((result as any).error));
+                showToast('error', String((result as Record<string, unknown>).error));
                 return;
             }
             const deletedId = result as string;
@@ -104,7 +104,7 @@ export const useRecentCollections = () => {
             queryClient.invalidateQueries({ queryKey: QUERY_KEY });
             showToast('success', 'Removed from history');
         },
-        onError: (err: any) => {
+        onError: (err: Error) => {
             showToast('error', err.message || 'Failed to delete from history');
         }
     });

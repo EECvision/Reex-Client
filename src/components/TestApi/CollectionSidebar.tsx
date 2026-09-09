@@ -20,7 +20,7 @@ export interface RequestItem {
     method: string;
     url: string;
     // We'll store the full request config here in state
-    config?: any;
+    config?: unknown;
 }
 
 export interface Collection {

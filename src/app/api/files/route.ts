@@ -12,7 +12,8 @@ export async function GET() {
             size: file.isFile() ? (await fs.promises.stat(path.join(cwd, file.name))).size : 0
         })));
         return NextResponse.json({ files: fileList });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }

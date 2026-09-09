@@ -22,8 +22,12 @@ import {
     InterfaceDeclaration,
     TypeAliasDeclaration,
     UnionTypeNode,
-    ArrayTypeNode
+    ArrayTypeNode,
+    BinaryExpression,
+    TypeReferenceNode,
+    PropertySignature
 } from "ts-morph";
+import { EndpointArgProperty } from "@/types";
 
 interface EndpointMetadata {
     client: string;
@@ -37,7 +41,7 @@ interface EndpointArg {
     isOptional: boolean;
     type?: string;
     isObject?: boolean;
-    properties?: any[]; // Recursive type
+    properties?: EndpointArgProperty[];
 }
 
 interface ModuleExports {
@@ -211,14 +215,14 @@ class ProjectService {
      * Reads the project config to get BaseURLs.
      * @param configDir - Path to src/api-services/config
      */
-    getProjectConfig(configDir: string): any {
+    getProjectConfig(configDir: string): unknown {
         if (!fs.existsSync(configDir)) return {};
         const filePath = path.join(configDir, "index.ts");
         if (!fs.existsSync(filePath)) return {};
 
         const project = new Project({ skipAddingFilesFromTsConfig: true });
         const sourceFile = project.addSourceFileAtPath(filePath);
-        const config: any = { clients: {} };
+        const config: { baseURL?: string; clients: Record<string, string> } = { clients: {} };
 
         // 1. Get baseURL
         const baseURLDecl = sourceFile.getVariableDeclaration("baseURL");
@@ -226,7 +230,7 @@ class ProjectService {
             const init = baseURLDecl.getInitializer();
             // Handle: import.meta.env.V || "http..."
             if (init && init.getKind() === SyntaxKind.BinaryExpression) {
-                config.baseURL = (init as any).getRight().getText().replace(/"/g, '');
+                config.baseURL = (init as BinaryExpression).getRight().getText().replace(/"/g, '');
             } else if (init && init.getKind() === SyntaxKind.StringLiteral) {
                 config.baseURL = (init as StringLiteral).getLiteralValue();
             }
@@ -254,7 +258,7 @@ class ProjectService {
                                     const suffix = urlVal.split('+')[1].trim().replace(/"/g, '').replace(/'/g, '');
                                     config.clients[name] = (config.baseURL || "") + suffix;
                                 } else if (urlVal === "baseURL") {
-                                    config.clients[name] = config.baseURL;
+                                    config.clients[name] = config.baseURL || "";
                                 } else {
                                     config.clients[name] = urlVal.replace(/"/g, '');
                                 }
@@ -277,7 +281,7 @@ class ProjectService {
         return { name, isOptional, type: param.getType().getText() };
     }
 
-    expandTypeRecursively(typeNode: TypeNode | undefined, sourceFile: SourceFile): any {
+    expandTypeRecursively(typeNode: TypeNode | undefined, sourceFile: SourceFile): { isObject?: boolean; properties?: EndpointArgProperty[]; type?: string } | null {
         if (!typeNode) return null;
 
         const kind = typeNode.getKind();
@@ -327,7 +331,7 @@ class ProjectService {
         }
 
         if (kind === SyntaxKind.TypeReference) {
-            const typeRef = typeNode as any;
+            const typeRef = typeNode as TypeReferenceNode;
             const typeName = typeRef.getTypeName().getText();
 
             if (typeName === "Array" && typeRef.getTypeArguments().length > 0) {
@@ -345,7 +349,7 @@ class ProjectService {
 
             if (!declaration) return { type: typeName };
 
-            let props: any[] = [];
+            let props: PropertySignature[] = [];
             if (declaration.getKind() === SyntaxKind.InterfaceDeclaration) {
                 props = (declaration as InterfaceDeclaration).getProperties();
             } else if (declaration.getKind() === SyntaxKind.TypeAliasDeclaration) {
@@ -357,7 +361,7 @@ class ProjectService {
 
             return {
                 isObject: true,
-                properties: props.map((prop) => {
+                properties: props.map((prop: PropertySignature) => {
                     const name = prop.getName();
                     const optional = prop.hasQuestionToken();
                     const propTypeNode = prop.getTypeNode();

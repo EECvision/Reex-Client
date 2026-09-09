@@ -189,12 +189,13 @@ export async function POST(req: NextRequest) {
             });
         });
 
-    } catch (e: any) {
+    } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
         // Cleanup temp files on exception
         tempFiles.forEach(f => {
             try { fs.unlinkSync(f); } catch {}
         });
         console.error("Proxy Error:", e);
-        return NextResponse.json({ success: false, error: e.message || String(e) }, { status: 500 });
+        return NextResponse.json({ success: false, error: errorMessage || String(e) }, { status: 500 });
     }
 }

@@ -174,7 +174,7 @@ export default function TestApiPage() {
           collectionId: targetColId,
           name: newItemName,
         });
-        if (result && (result as any).error) {
+        if (result && (result as Record<string, unknown>).error) {
           // Error handled in hook toast
           return;
         }
@@ -206,7 +206,7 @@ export default function TestApiPage() {
     toggleCollection(id);
   };
 
-  const handleSaveRequest = async (name: string, config: any) => {
+  const handleSaveRequest = async (name: string, config: unknown) => {
     if (!activeRequest) return;
 
     const activeCol = collections.find((c) =>
@@ -215,18 +215,19 @@ export default function TestApiPage() {
     if (!activeCol) return;
 
     try {
+      const configObj = config as Record<string, string>;
       await updateRequest({
         id: activeRequest.id,
         updates: {
           name,
-          method: config.method,
-          url: config.url,
-          config,
+          method: configObj.method,
+          url: configObj.url,
+          config: config as Record<string, unknown>,
         },
       });
 
       setActiveRequest((prev) =>
-        prev ? { ...prev, name, method: config.method, config } : null,
+        prev ? { ...prev, name, method: configObj.method, config } : null,
       );
     } catch (error) {
       console.error(error);
@@ -241,19 +242,20 @@ export default function TestApiPage() {
     ? collections.find((c) => c.id === activeCollectionId)
     : requestCollection;
 
+  const configObj = activeRequest?.config as Record<string, unknown> | undefined;
   const editorData = activeRequest
     ? {
-        ...activeRequest.config,
+        ...(configObj || {}),
         method: activeRequest.method,
         url: activeRequest.url,
         baseUrl: requestCollection?.base_url || "",
         authType:
-          requestCollection?.auth?.type ||
-          activeRequest.config?.auth?.type ||
-          "none",
+          (requestCollection?.auth?.type ||
+          (configObj?.auth as Record<string, string>)?.type ||
+          "none") as "bearer" | "none",
         authToken:
           requestCollection?.auth?.token ||
-          activeRequest.config?.auth?.token ||
+          (configObj?.auth as Record<string, string>)?.token ||
           "",
         customHeaders: requestCollection?.auth?.customHeaders || {},
       }

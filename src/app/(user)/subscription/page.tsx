@@ -82,18 +82,19 @@ export default function SubscriptionPage() {
         const currentConfig = billingCycle === 'monthly' ? configMonthly : configYearly;
 
         handleFlutterPayment({
-            callback: async (response) => {
-                console.log("Payment response:", response);
+            callback: async (response: unknown) => {
+                const res = response as Record<string, unknown>;
+                console.log("Payment response:", res);
                 closePaymentModal();
 
-                if (response.status === "successful") {
+                if (res.status === "successful") {
                     setIsProcessing(true);
                     try {
                         const verifyRes = await fetch("/api/subscription/verify", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
-                                transaction_id: response.transaction_id,
+                                transaction_id: res.transaction_id,
                                 plan_id: currentConfig.payment_plan,
                                 billing_cycle: billingCycle
                             }),
@@ -134,7 +135,7 @@ export default function SubscriptionPage() {
                     }
                 } else {
                     // Only show error if explicitly failed, not just closed
-                    if (response.status === "failed") {
+                    if (res.status === "failed") {
                         setStatusModal({
                             isOpen: true,
                             status: 'error',

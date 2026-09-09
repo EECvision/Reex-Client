@@ -123,7 +123,8 @@ try {
 
     console.log("\n🎉 ALL TESTS PASSED!");
 
-} catch (e: any) {
-    console.error("\n❌ TESTS FAILED:", e.message);
+} catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    console.error("\n❌ TESTS FAILED:", errorMessage);
     process.exit(1);
 }

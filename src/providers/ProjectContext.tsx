@@ -5,26 +5,21 @@ import React, { createContext, useContext, useEffect, useState, ReactNode, useCa
 import { api } from '../services/api';
 import { useStandaloneCollections } from '../hooks/useStandaloneCollections';
 import { useRecentCollections } from '../hooks/useRecentCollections';
+import { ProjectConfig, EndpointInfo, StandaloneCollection } from '../types';
 
-export interface StandaloneCollection {
-  id: string;
-  name: string;
-  manifest: any;
-  modules: Record<string, string>;
-  config: any;
-}
+export type { StandaloneCollection };
 
 export interface HistoryItem {
   id: string;
   name: string;
   updated_at: string;
-  content: any;
+  content: Record<string, unknown>;
 }
 
 interface ProjectContextType {
-  manifest: any;
-  modules: any[];
-  config: any;
+  manifest: Record<string, Record<string, EndpointInfo>> | null;
+  modules: Record<string, boolean>;
+  config: ProjectConfig | null;
   projectPath: string;
   apiServicesDir: string;
   loading: boolean;
@@ -35,9 +30,9 @@ interface ProjectContextType {
   toggleStandaloneMode: () => Promise<void>;
   refreshProject: (silent?: boolean) => Promise<void>;
   // State setters for standalone mode
-  setManifest: (manifest: any) => void;
-  setConfig: (config: any) => void;
-  setModules: (modules: any[]) => void;
+  setManifest: (manifest: Record<string, Record<string, EndpointInfo>> | null) => void;
+  setConfig: (config: ProjectConfig | null) => void;
+  setModules: (modules: Record<string, boolean>) => void;
   // Multiple Collections Support
   collections: StandaloneCollection[];
   setCollections: (collections: StandaloneCollection[]) => void;
@@ -47,7 +42,7 @@ interface ProjectContextType {
   clearAllCollections: () => Promise<void>;
   // History Support
   recentCollections: HistoryItem[];
-  addCollectionToHistory: (name: string, content: any) => Promise<void>;
+  addCollectionToHistory: (name: string, content: Record<string, unknown>) => Promise<void>;
   removeCollectionFromHistory: (id: string) => Promise<void>;
 }
 
@@ -56,9 +51,9 @@ const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 
 export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [manifest, setManifest] = useState<any>(null);
-  const [modules, setModules] = useState<any[]>([]);
-  const [config, setConfig] = useState<any>(null);
+  const [manifest, setManifest] = useState<Record<string, Record<string, EndpointInfo>> | null>(null);
+  const [modules, setModules] = useState<Record<string, boolean>>({});
+  const [config, setConfig] = useState<ProjectConfig | null>(null);
   const [projectPath, setProjectPath] = useState<string>("");
   const [apiServicesDir, setApiServicesDir] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -102,11 +97,11 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   } = useRecentCollections();
 
   // Computed merged manifest
-  const mergedManifest = React.useMemo(() => {
+  const mergedManifest = React.useMemo((): Record<string, Record<string, EndpointInfo>> | null => {
     if (!isStandaloneMode) return manifest;
     // Merge logic
-    const merged: any = {};
-    const sourceCollections = isStandaloneMode ? standaloneCollections : collections;
+    const merged: Record<string, Record<string, EndpointInfo>> = {};
+    const sourceCollections = (isStandaloneMode ? standaloneCollections : collections) as StandaloneCollection[];
 
     sourceCollections.forEach(col => {
       if (!col.manifest) {
@@ -124,7 +119,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
 
 
   // Wrappers to match Context Interface signatures
-  const addHistoryWrapper = async (name: string, content: any) => {
+  const addHistoryWrapper = async (name: string, content: Record<string, unknown>) => {
     await addCollectionToHistory({ name, content });
   };
 
@@ -206,7 +201,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       setConfig(finalConfig);
 
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to load project:", err);
       // On error, also enter standalone mode
       setIsStandaloneMode(true);
@@ -285,13 +280,13 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       setManifest,
       setConfig,
       setModules,
-      collections: isStandaloneMode ? standaloneCollections : collections,
+      collections: (isStandaloneMode ? standaloneCollections : collections) as StandaloneCollection[],
       setCollections,
       addCollection,
       updateCollection,
       removeCollection,
       clearAllCollections, // Expose
-      recentCollections,
+      recentCollections: (recentCollections ?? []) as HistoryItem[],
       addCollectionToHistory: addHistoryWrapper,
       removeCollectionFromHistory: removeHistoryWrapper
     }}>

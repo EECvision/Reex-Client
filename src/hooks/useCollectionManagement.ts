@@ -1,6 +1,8 @@
 
 import { useState } from "react";
 import { api } from "@/services/api";
+import { EndpointInfo } from "@/types";
+import { StandaloneCollection } from "@/providers/ProjectContext";
 
 interface UseCollectionManagementProps {
     projectPath: string;
@@ -8,10 +10,10 @@ interface UseCollectionManagementProps {
     refreshProject: (force?: boolean) => void;
     registerTaskId: (taskId: string) => void;
     isStandaloneMode?: boolean;
-    setManifest?: (manifest: any) => void;
+    setManifest?: (manifest: Record<string, Record<string, EndpointInfo>> | null) => void;
     removeCollection?: (id: string) => void;
     activeCollectionId?: string;
-    setCollections?: (cols: any[]) => void;
+    setCollections?: (cols: StandaloneCollection[]) => void;
     clearAllCollections?: () => Promise<void>;
 }
 
@@ -88,8 +90,9 @@ export const useCollectionManagement = ({
 
             setImportFile(file);
             setShowImportModal(true);
-        } catch (err: any) {
-            showToast("error", err.message);
+        } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+            showToast("error", errorMessage);
         } finally {
             setFetchingUrl(false);
         }
@@ -140,8 +143,9 @@ export const useCollectionManagement = ({
                 refreshProject(true);
             }
             // If data.taskId exists, we wait for SSE in useProjectSync
-        } catch (err: any) {
-            showToast("error", err.message || "Failed to delete collection");
+        } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+            showToast("error", errorMessage || "Failed to delete collection");
             setDeleting(false);
         }
     };
@@ -193,8 +197,9 @@ export const useCollectionManagement = ({
                 setDeletingItem(false);
                 refreshProject(true);
             }
-        } catch (err: any) {
-            showToast("error", err.message || "Failed to delete item");
+        } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+            showToast("error", errorMessage || "Failed to delete item");
             setDeletingItem(false);
         }
     };

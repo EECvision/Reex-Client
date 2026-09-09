@@ -26,8 +26,9 @@ export async function POST(req: NextRequest) {
                 content: typeContent
             }
         });
-    } catch (e: any) {
+    } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
         console.error("Save types error:", e);
-        return NextResponse.json({ success: false, error: e.toString() }, { status: 500 });
+        return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
     }
 }

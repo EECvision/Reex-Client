@@ -7,6 +7,8 @@ import { Loader2, Globe, History as HistoryIcon, AlertCircle, Lock, Eye, EyeOff 
 import DiffModal, { FunctionDiff } from "./DiffModal";
 import { Modal } from "../ui/Modal/Modal";
 import { DiffResult } from "./importTypes";
+import { EndpointInfo, ProjectConfig } from "@/types";
+import { StandaloneCollection } from "@/providers/ProjectContext";
 
 // Components
 import DropZone from "./components/DropZone";
@@ -36,13 +38,13 @@ interface ImportModalProps {
   clientMappings?: Record<string, string>;
   onError: (message: string) => void;
   isStandaloneMode?: boolean;
-  onManifestUpdate?: (manifest: any) => void;
-  onConfigUpdate?: (config: any) => void;
-  addCollection?: (collection: any) => void;
-  updateCollection?: (id: string, updates: any) => void;
-  addCollectionToHistory?: (name: string, content: any) => Promise<void>;
+  onManifestUpdate?: (manifest: Record<string, Record<string, EndpointInfo>> | null) => void;
+  onConfigUpdate?: (config: ProjectConfig | null) => void;
+  addCollection?: (collection: StandaloneCollection) => void;
+  updateCollection?: (id: string, updates: Partial<StandaloneCollection>) => void;
+  addCollectionToHistory?: (name: string, content: Record<string, unknown>) => Promise<void>;
   targetCollectionId?: string;
-  collections?: any[];
+  collections?: StandaloneCollection[];
   onOpenHistory?: () => void;
   hasHistory?: boolean;
   autoAnalyze?: boolean;
@@ -208,13 +210,21 @@ const ImportModal: React.FC<ImportModalProps> = ({
     addCollectionToHistory
   });
 
+  // Track processed initialFile to prevent re-processing on re-renders
+  const processedInitialFileRef = useRef<File | null>(null);
+
   // Effect: Initialize from props
   useEffect(() => {
     if (initialFile) {
-      if (autoAnalyze) {
-        fetchTriggeredRef.current = true;
+      if (initialFile !== processedInitialFileRef.current) {
+        processedInitialFileRef.current = initialFile;
+        if (autoAnalyze) {
+          fetchTriggeredRef.current = true;
+        }
+        setFile(initialFile);
       }
-      setFile(initialFile);
+    } else {
+      processedInitialFileRef.current = null;
     }
   }, [initialFile, autoAnalyze, setFile]);
 
@@ -237,11 +247,11 @@ const ImportModal: React.FC<ImportModalProps> = ({
 
   // Effect: Auto-analyze after URL fetch
   useEffect(() => {
-    if (fetchTriggeredRef.current && selectedFile && collectionType !== "unknown") {
+    if (fetchTriggeredRef.current && selectedFile && collectionType !== "unknown" && step === "upload") {
       fetchTriggeredRef.current = false;
       startAnalysis(clientMappings);
     }
-  }, [selectedFile, collectionType, startAnalysis, clientMappings]);
+  }, [selectedFile, collectionType, startAnalysis, clientMappings, step]);
 
   // Effect: Task Complete
   useEffect(() => {
@@ -297,8 +307,9 @@ const ImportModal: React.FC<ImportModalProps> = ({
       setFile(file);
       // Switch to file tab so user can see the selected file
       setActiveTab('file');
-    } catch (err: any) {
-      setFetchError(err.message || 'Failed to fetch URL');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setFetchError(errorMessage || 'Failed to fetch URL');
     } finally {
       setIsFetchingUrl(false);
     }
@@ -326,8 +337,9 @@ const ImportModal: React.FC<ImportModalProps> = ({
       fetchTriggeredRef.current = true;
       setFile(file);
       setActiveTab('file');
-    } catch (err: any) {
-      setPostmanError(err.message || 'Failed to fetch from Postman');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setPostmanError(errorMessage || 'Failed to fetch from Postman');
     } finally {
       setIsFetchingPostman(false);
     }
@@ -341,6 +353,8 @@ const ImportModal: React.FC<ImportModalProps> = ({
     setFetchUrl('');
     setFetchError('');
     setActiveTab('file');
+    fetchTriggeredRef.current = false;
+    processedInitialFileRef.current = null;
   };
 
   const handleModalClose = () => {

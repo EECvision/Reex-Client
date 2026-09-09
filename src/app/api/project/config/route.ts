@@ -11,8 +11,9 @@ export async function GET(req: NextRequest) {
     try {
         const config = projectService.getProjectConfig(configDir);
         return NextResponse.json(config);
-    } catch (e: any) {
+    } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
         console.error("Config parse error:", e);
-        return NextResponse.json({ error: e.message }, { status: 500 });
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }

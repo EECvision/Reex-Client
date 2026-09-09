@@ -1,3 +1,5 @@
+import { EndpointArg, EndpointInfo } from "@/types";
+
 export function getHookName(methodName: string) {
   const isQuery = methodName.startsWith("get_");
   const parts = methodName.split("_");
@@ -12,7 +14,11 @@ export function getHookName(methodName: string) {
   return "use" + cleanPrefix + suffix + (isQuery ? "Query" : "Mutation");
 }
 
-export function generateKeyFactory(moduleName: string, methodNames: string[], methods: any) {
+export function generateKeyFactory(
+  moduleName: string,
+  methodNames: string[],
+  methods: Record<string, EndpointInfo>
+) {
   const lines = [
     "export const " + moduleName + "Keys = {",
     "  all: [\"" + moduleName + "\"] as const,",
@@ -21,7 +27,7 @@ export function generateKeyFactory(moduleName: string, methodNames: string[], me
   methodNames
     .filter((m) => m.startsWith("get_"))
     .forEach((method) => {
-      const hasArgs = methods[method].args && methods[method].args.length > 0;
+      const hasArgs = methods[method]?.args && methods[method].args.length > 0;
 
       const paramDef = hasArgs
         ? "params: ApiVars<typeof " + moduleName + "Api." + method + ">"
@@ -38,7 +44,7 @@ export function generateKeyFactory(moduleName: string, methodNames: string[], me
 
 export function toHookContent(
   methodName: string,
-  args: any[],
+  args: EndpointArg[],
   moduleName: string,
   keyFactoryName: string,
   requiresAuth = false,
@@ -119,7 +125,7 @@ export function toHookContent(
 "        }\n" : "") +
 "        queryClient.invalidateQueries({ queryKey: " + keyFactoryName + ".all });\n" +
 "      }\n" +
-"      (options?.onSuccess as any)?.(data, variables, context);\n" +
+"      (options?.onSuccess as ((...args: unknown[]) => unknown) | undefined)?.(data, variables, context);\n" +
 "    },\n" +
 "  });\n" +
 "};";

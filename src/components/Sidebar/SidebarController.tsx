@@ -8,7 +8,7 @@ import { ResizablePanel } from "@/components/ui/ResizablePanel";
 import styles from "./Sidebar.module.css";
 
 interface SidebarControllerProps {
-  apiManifest: any;
+  apiManifest: Record<string, Record<string, EndpointInfo>> | null;
   selectedEndpoint: EndpointInfo | null;
   onSelectEndpoint: (endpoint: EndpointInfo) => void;
   onDeleteModule: (moduleName: string) => void;
@@ -41,9 +41,29 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
   onDoubleClickEndpoint,
 }) => {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
-    new Set(),
+    () => new Set(selectedEndpoint ? [selectedEndpoint.apiKey] : []),
   );
   const [methodFilter, setMethodFilter] = useState<Methods>("ALL");
+
+  // Track the previous endpoint key to auto-expand the module only when selected endpoint changes
+  const [prevEndpointKey, setPrevEndpointKey] = useState<string | null>(
+    selectedEndpoint ? `${selectedEndpoint.apiKey}__${selectedEndpoint.fnName}` : null,
+  );
+
+  const currentKey = selectedEndpoint
+    ? `${selectedEndpoint.apiKey}__${selectedEndpoint.fnName}`
+    : null;
+
+  if (currentKey !== prevEndpointKey) {
+    setPrevEndpointKey(currentKey);
+    if (selectedEndpoint && !expandedFolders.has(selectedEndpoint.apiKey)) {
+      setExpandedFolders((prev) => {
+        const next = new Set(prev);
+        next.add(selectedEndpoint.apiKey);
+        return next;
+      });
+    }
+  }
 
   const toggleFolder = (apiKey: string) => {
     setExpandedFolders((prev) => {
@@ -56,15 +76,6 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
       return newSet;
     });
   };
-
-  // Derive folders that are expanded based on user toggles and the active endpoint
-  const derivedExpandedFolders = useMemo(() => {
-    const newSet = new Set(expandedFolders);
-    if (selectedEndpoint) {
-      newSet.add(selectedEndpoint.apiKey);
-    }
-    return newSet;
-  }, [expandedFolders, selectedEndpoint]);
 
   const endpoints = useMemo(() => {
     if (!apiManifest) return [];
@@ -167,7 +178,7 @@ const SidebarController: React.FC<SidebarControllerProps> = ({
       <Sidebar
         groupedEndpoints={{}} // Deprecated/Unused if collectionGroups provided
         collectionGroups={collectionGroups}
-        expandedFolders={derivedExpandedFolders}
+        expandedFolders={expandedFolders}
         selectedEndpoint={selectedEndpoint}
         methodFilter={methodFilter}
         onToggleFolder={toggleFolder}

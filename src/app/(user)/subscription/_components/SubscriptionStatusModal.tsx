@@ -31,11 +31,11 @@ export const SubscriptionStatusModal: React.FC<SubscriptionStatusModalProps> = (
                 return Math.random() * (max - min) + min;
             }
 
-            const interval: any = setInterval(function () {
+            const interval: unknown = setInterval(function () {
                 const timeLeft = animationEnd - Date.now();
 
                 if (timeLeft <= 0) {
-                    return clearInterval(interval);
+                    return clearInterval(interval as NodeJS.Timeout);
                 }
 
                 const particleCount = 50 * (timeLeft / duration);
@@ -45,7 +45,7 @@ export const SubscriptionStatusModal: React.FC<SubscriptionStatusModalProps> = (
                 confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
             }, 250);
 
-            return () => clearInterval(interval);
+            return () => clearInterval(interval as NodeJS.Timeout);
         }
     }, [isOpen, status]);
 

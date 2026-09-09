@@ -4,6 +4,12 @@ import fs from "fs";
 import os from "os";
 import { decompressFilePayload, getApiServicesDir } from "@/app/api/utils";
 
+interface SyncOperation {
+    type: 'write' | 'delete' | string;
+    filePath: string;
+    [key: string]: unknown;
+}
+
 // Direct import of generators (same as analyze)
 import { generateOpenApi } from "@/scripts/generate-openapi-collection";
 import { generatePostman } from "@/scripts/generate-postman-collection";
@@ -91,7 +97,7 @@ export async function POST(req: NextRequest) {
         };
 
         // Generate Operations (Synchronous wait)
-        let operations: any[] = [];
+        let operations: SyncOperation[] = [];
 
         // 0. Prepend Deletions (if any)
         // 0. Prepend Deletions (if any)
@@ -113,10 +119,10 @@ export async function POST(req: NextRequest) {
         console.log("[UPDATE-COLLECTION] Received baseUrl:", baseUrl);
 
         if (isPostman) {
-            const genOps = await generatePostman(options) as any[];
+            const genOps = await generatePostman(options) as SyncOperation[];
             operations = [...operations, ...genOps];
         } else {
-            const genOps = await generateOpenApi(options) as any[];
+            const genOps = await generateOpenApi(options) as SyncOperation[];
             operations = [...operations, ...genOps];
         }
 
@@ -147,9 +153,9 @@ export async function POST(req: NextRequest) {
             proposedClients
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Update failed", error);
-        return NextResponse.json({ success: false, error: error.toString() }, { status: 500 });
+        return NextResponse.json({ success: false, error: error instanceof Error ? error.message : String(error) }, { status: 500 });
     } finally {
         if (filePath && fs.existsSync(filePath)) {
             try { fs.unlinkSync(filePath); } catch {}

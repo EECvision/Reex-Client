@@ -73,9 +73,10 @@ ${docsContext}
     });
 
     return result.toDataStreamResponse();
-    } catch (error: any) {
+    } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error('Assistant API Error:', error);
-    const message = error?.message || 'An unexpected error occurred';
+    const message = errorMessage || 'An unexpected error occurred';
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

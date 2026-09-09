@@ -10,7 +10,8 @@ export async function POST(req: NextRequest) {
 
         const interfaceString = typeGenerator.generateInterface(interfaceName, data);
         return NextResponse.json({ success: true, interfaceString });
-    } catch (e: any) {
-        return NextResponse.json({ success: false, error: e.toString() }, { status: 500 });
+    } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
+        return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
     }
 }

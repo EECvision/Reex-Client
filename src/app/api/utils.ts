@@ -24,7 +24,7 @@ export const eventEmitter = globalForEvents.eventEmitter || new EventEmitter();
 
 if (process.env.NODE_ENV !== 'production') globalForEvents.eventEmitter = eventEmitter;
 
-export const runCommand = (cmd: string, options: any = {}) => {
+export const runCommand = (cmd: string, options: { cwd?: string; env?: NodeJS.ProcessEnv } = {}) => {
     const cwd = options.cwd || process.cwd();
     const env = options.env || process.env;
 

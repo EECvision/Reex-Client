@@ -1,18 +1,19 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // This file is auto-generated.
+
+export interface ApiProperty {
+  name: string;
+  isOptional: boolean;
+  type?: string;
+  isObject?: boolean;
+  properties?: ApiProperty[];
+}
 
 export interface ApiParameter {
   name: string;
   isOptional: boolean;
   type?: string;
   isObject?: boolean;
-  properties?: Array<{
-    name: string;
-    isOptional: boolean;
-    type?: string;
-    isObject?: boolean;
-    properties?: any[];
-  }>;
+  properties?: ApiProperty[];
 }
 
 export interface ApiMethod {

@@ -47,11 +47,13 @@ export async function POST() {
                     headers: { Authorization: `Bearer ${FLUTTERWAVE_SECRET_KEY}` },
                 }
             );
-        } catch (axiosError: any) {
-            console.error("Flutterwave API error on activate:", axiosError?.response?.data || axiosError.message);
-            // We'll proceed to activate locally even if Flutterwave fails or says it's already active,
-            // to ensure the user's DB state aligns with what it should be.
-        }
+        } catch (axiosError: unknown) {
+            const errorMessage = axiosError instanceof Error ? axiosError.message : String(axiosError);
+            const axiosErrorData = axiosError && typeof axiosError === 'object' && 'response' in axiosError ? (axiosError as Record<string, Record<string, unknown>>).response?.data : undefined;
+                console.error("Flutterwave API error on activate:", axiosErrorData || errorMessage);
+                // We'll proceed to activate locally even if Flutterwave fails or says it's already active,
+                // to ensure the user's DB state aligns with what it should be.
+            }
 
         // Update database to mark as active
         const { error } = await supabase

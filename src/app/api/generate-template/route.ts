@@ -61,11 +61,11 @@ function generateTemplateContent(moduleName: string) {
     "    apiClient.delete(`/path/to/" + moduleName + "/${id}`),",
     "",
     "  // --- Example: Functions with multiple parameters must wrap them in an object ---",
-    "  // ❌ INVALID: post_pay: (id: string, amount: number): Promise<any> =>",
+    "  // ❌ INVALID: post_pay: (id: string, amount: number): Promise<unknown> =>",
     "  //   apiClient.post(`/path/to/" + moduleName + "/${id}/pay`, { amount }),",
     "  //",
     "  // ✅ VALID:",
-    "  // post_pay: ({ id, amount } : { id: string, amount: number }): Promise<any> =>",
+    "  // post_pay: ({ id, amount } : { id: string, amount: number }): Promise<unknown> =>",
     "  //   apiClient.post(`/path/to/" + moduleName + "/${id}/pay`, { amount }),",
     "} satisfies ReexDefinition;",
     ""
@@ -96,7 +96,8 @@ export async function POST(req: NextRequest) {
       }
     });
 
-  } catch (e: any) {
-    return NextResponse.json({ success: false, error: e.toString() }, { status: 500 });
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
