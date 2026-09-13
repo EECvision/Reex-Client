@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "./TestApiNavbar.module.css";
 import { Button } from "../ui/Button/Button";
-import { Plus, TestTube, Lock, Sparkles, Pencil } from "lucide-react";
+import { Plus, TestTube, Lock, Pencil, BookOpen } from "lucide-react";
 import { BaseUrlInput } from "../Navbar/BaseUrlInput";
 import { Collection } from "../TestApi/CollectionSidebar";
 
@@ -89,11 +89,11 @@ export default function TestApiNavbar({
             <Button
               variant="ghost"
               onClick={onAskDocsClick}
-              leftIcon={<Sparkles size={16} />}
-              title="Ask Docs"
+              leftIcon={<BookOpen size={16} />}
+              title="Docs"
               className={styles.mobileAssistantBtn}
             >
-              <span className={styles.hideOnMobile}>Ask Docs</span>
+              <span className={styles.hideOnMobile}>Docs</span>
             </Button>
           </>
         )}

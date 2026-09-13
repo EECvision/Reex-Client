@@ -139,7 +139,7 @@ export const Assistant: React.FC<AssistantProps> = ({ isOpen, onClose }) => {
           <div className={styles.header}>
             <div className={styles.headerTitle}>
               <Sparkles size={16} color="var(--primary-color, #0070f3)" />
-              Ask Docs
+              Ask AI
             </div>
             <div className={styles.headerActions}>
               <a

@@ -28,14 +28,21 @@
 }
 
 .noParams {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 2.5rem 2rem;
   text-align: center;
   color: var(--text-muted, #94a3b8);
   font-size: 0.875rem;
-  background: var(--hover-bg, linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%));
   border-radius: 10px;
   border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
   margin: 0 0 1.5rem 0;
+}
+
+.noParams p {
+  margin: 0;
 }
 
 .noParamsIcon {
@@ -78,7 +85,7 @@
 
 .paramType {
   font-size: 0.6875rem;
-  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-family: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
   color: var(--text-muted, #94a3b8);
   background-color: var(--hover-bg, #f1f5f9);
   padding: 1px 6px;
@@ -114,14 +121,14 @@
 
 .subPropertyName {
   font-size: 0.75rem;
-  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-family: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
   color: var(--text-primary, #e2e8f0);
   font-weight: 500;
 }
 
 .subPropertyType {
   font-size: 0.6875rem;
-  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-family: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
   color: var(--accent-color, #60a5fa);
   font-weight: 400;
 }
@@ -144,7 +151,7 @@
 .paramInput {
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
-  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-family: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
   border: 1.5px solid var(--border-color, #e2e8f0);
   border-radius: 8px;
   background-color: var(--input-bg, #fff);
@@ -231,7 +238,10 @@
 
 .fileInputLabel:hover {
   border-color: var(--primary-color, #3b82f6);
-  background: var(--file-input-hover-bg, linear-gradient(135deg, #eff6ff 0%, #fff 100%));
+  background: var(
+    --file-input-hover-bg,
+    linear-gradient(135deg, #eff6ff 0%, #fff 100%)
+  );
   color: var(--file-input-hover-color, #3b82f6);
 }
 
@@ -274,7 +284,6 @@
 .removeFileBtn:hover {
   background-color: var(--error-hover-bg, #fee2e2);
 }
-
 
 /* Header with toggle */
 .queryHeader {
@@ -332,7 +341,7 @@
   min-height: 200px;
   padding: 1rem;
   font-size: 0.875rem;
-  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-family: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
   border: 1.5px solid var(--border-color, #e2e8f0);
   border-radius: 8px;
   background-color: var(--input-bg, #fff);

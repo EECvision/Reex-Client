@@ -1,5 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
+  BookOpen,
   Check,
   ChevronsUpDown,
   Code,
@@ -14,7 +15,6 @@ import {
   Plus,
   RefreshCw,
   Send,
-  Sparkles,
   TestTube,
   Trash2,
   X,
@@ -397,20 +397,21 @@ const Navbar: React.FC<NavbarProps> = ({
           </Button>
         )} */}
 
-        <div className={styles.separator}></div>
-
         {onAssistantClick && !isAssistantOpen && (
-          <div data-tour="ask-docs">
-            <Button
-              variant="ghost"
-              onClick={onAssistantClick}
-              leftIcon={<Sparkles size={16} />}
-              title="Ask Docs"
-              className={styles.mobileAssistantBtn}
-            >
-              <span className={styles.hideOnMobile}>Ask Docs</span>
-            </Button>
-          </div>
+          <>
+            <div className={styles.separator}></div>
+            <div data-tour="ask-docs">
+              <Button
+                variant="ghost"
+                onClick={onAssistantClick}
+                leftIcon={<BookOpen size={16} />}
+                title="Docs"
+                className={styles.mobileAssistantBtn}
+              >
+                <span className={styles.hideOnMobile}>Docs</span>
+              </Button>
+            </div>
+          </>
         )}
 
         {/* Mobile Menu Toggle */}

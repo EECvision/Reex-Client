@@ -10,7 +10,7 @@ import {
   Monitor,
   Palette,
   Book,
-  MessageSquareWarning,
+  HelpCircle,
   ChevronsUpDown,
   Compass,
 } from "lucide-react";
@@ -105,7 +105,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
               className={styles.menuItem}
               onClick={() => navigate("/settings")}
             >
-              <Settings size={14} />
+              <Settings size={16} />
               <span>Settings</span>
             </button>
             <button
@@ -115,13 +115,13 @@ const UserMenu: React.FC<UserMenuProps> = ({
                 setIsOpen(false);
               }}
             >
-              <Book size={14} />
+              <Book size={16} />
               <span>Docs</span>
             </button>
             <div className={styles.separator} />
             <div className={styles.themeRow}>
               <span className={styles.themeLabel}>
-                <Palette size={14} />
+                <Palette size={16} />
                 <span>Theme</span>
               </span>
               <div className={styles.themeSwitcher}>
@@ -149,8 +149,8 @@ const UserMenu: React.FC<UserMenuProps> = ({
               className={styles.menuItem}
               onClick={() => navigate("/support")}
             >
-              <MessageSquareWarning size={14} />
-              <span>Report an issue</span>
+              <HelpCircle size={16} />
+              <span>Support</span>
             </button>
             <button
               className={styles.menuItem}
@@ -159,7 +159,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
                 startTour(0);
               }}
             >
-              <Compass size={14} />
+              <Compass size={16} />
               <span>Product Tour</span>
             </button>
           </div>
