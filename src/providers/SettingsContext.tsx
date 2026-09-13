@@ -60,7 +60,7 @@ const createLocalStorageStore = <T extends string | boolean>(key: string, defaul
     };
 };
 
-const themeStore = createLocalStorageStore<ThemeType>(THEME_KEY, 'light', (val) => ['light', 'dark', 'system'].includes(val as string));
+const themeStore = createLocalStorageStore<ThemeType>(THEME_KEY, 'dark', (val) => ['light', 'dark', 'system'].includes(val as string));
 const viewPrefStore = createLocalStorageStore<ViewPreferenceType>(VIEW_PREF_KEY, 'json', (val) => ['json', 'raw', 'pretty'].includes(val as string));
 const pinTabsStore = createLocalStorageStore<boolean>(PIN_TABS_KEY, false);
 const unwrapStore = createLocalStorageStore<boolean>(UNWRAP_DATA_KEY, false);

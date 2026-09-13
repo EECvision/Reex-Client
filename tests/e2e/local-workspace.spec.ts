@@ -216,10 +216,12 @@ test("settings and support work anonymously, and old account endpoints are gone"
   await expect(
     page.getByRole("heading", { name: "Workspace settings" }),
   ).toBeVisible();
-  await page.getByLabel("Appearance").selectOption("dark");
-  await page.reload();
   await expect(page.getByLabel("Appearance")).toHaveValue("dark");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.getByLabel("Appearance").selectOption("light");
+  await page.reload();
+  await expect(page.getByLabel("Appearance")).toHaveValue("light");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await page.goto("/support");
   await expect(
     page.getByRole("link", { name: "Open an issue on GitHub" }),
