@@ -73,7 +73,7 @@
 
 .logo {
   margin-bottom: 1rem;
-  color: #111827;
+  color: var(--text-primary, #111827);
 }
 
 .appName {
@@ -144,7 +144,7 @@
 }
 
 :global([data-theme="dark"]) .emptyIcon {
-  background-color: var(--card-bg, #1f2937);
+  background-color: var(--card-bg, #252526);
   color: var(--text-secondary);
 }
 

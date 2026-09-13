@@ -230,12 +230,13 @@
 }
 
 .codeBox {
-  background: #0f172a;
+  background: var(--input-bg, #181818);
+  border: 1px solid var(--border-color, #333333);
   border-radius: 6px;
   padding: 12px;
   font-family: monospace;
   font-size: 12px;
-  color: #e2e8f0;
+  color: var(--text-color, #cccccc);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;

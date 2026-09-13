@@ -6,9 +6,8 @@ import styles from './BadgeGroup.module.css';
 
 interface BadgeGroupProps {
     label: React.ReactNode;
-
     value: string;
-    color?: string; // hex color
+    color?: string; // hex color or CSS variable
     title?: string;
     valueClassName?: string;
     style?: React.CSSProperties;
@@ -18,7 +17,7 @@ interface BadgeGroupProps {
 export const BadgeGroup: React.FC<BadgeGroupProps> = ({
     label,
     value,
-    color = "#6b7280", // default gray
+    color = "#6b7280",
     title,
     valueClassName,
     style,
@@ -32,33 +31,26 @@ export const BadgeGroup: React.FC<BadgeGroupProps> = ({
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
-    // We calculate background/border colors based on the main color
-    // This matches the logic: backgroundColor: `${color}15`
 
-
-    // Special case for default gray to match exact previous styles if needed,
-    // or just rely on the opacity logic.
-    // Previous "PROJECT" badge: color: "#6b7280", backgroundColor: "#f3f4f6"
-    // Previous "GET" badge: color: "#3b82f6", backgroundColor: "#3b82f615"
-
-    // Let's refine the style generation:
-    const isDefault = color === "#6b7280";
-    const bgStyle = isDefault ? undefined : `${color}15`; // Use CSS variable for default
-    const borderStyle = isDefault ? undefined : `${color}30`; // Use CSS variable for default
+    const isDefault = !color || color === "#6b7280" || color === "var(--text-secondary, #6b7280)";
+    const pillBg = isDefault
+        ? "var(--hover-bg, rgba(255, 255, 255, 0.06))"
+        : `color-mix(in srgb, ${color} 14%, transparent)`;
+    const pillBorder = isDefault
+        ? "var(--border-color, rgba(255, 255, 255, 0.1))"
+        : `color-mix(in srgb, ${color} 28%, transparent)`;
 
     return (
         <div
             className={styles.group}
-            style={{
-                borderColor: borderStyle,
-                ...style
-            }}
+            style={style}
         >
             <div
-                className={styles.label}
+                className={styles.pill}
                 style={{
                     color: color,
-                    backgroundColor: bgStyle
+                    backgroundColor: pillBg,
+                    borderColor: pillBorder,
                 }}
             >
                 {label}
@@ -66,9 +58,6 @@ export const BadgeGroup: React.FC<BadgeGroupProps> = ({
             <div
                 className={styles.value}
                 title={title || value}
-                style={{
-                    borderLeftColor: borderStyle
-                }}
             >
                 <span className={`${styles.valueText} ${valueClassName || ''}`}>
                     {value}
@@ -76,12 +65,13 @@ export const BadgeGroup: React.FC<BadgeGroupProps> = ({
             </div>
             {showCopy && (
                 <button
+                    type="button"
                     className={styles.copyButton}
                     onClick={handleCopy}
                     title="Copy to clipboard"
-                    style={{ borderLeftColor: borderStyle }}
+                    aria-label="Copy to clipboard"
                 >
-                    {copied ? <Check size={14} color="#10b981" /> : <Copy size={14} />}
+                    {copied ? <Check size={14} color="#4ade80" /> : <Copy size={14} />}
                 </button>
             )}
         </div>

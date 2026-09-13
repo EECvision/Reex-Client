@@ -108,22 +108,22 @@
 
 /* Dark theme overrides */
 :global([data-theme="dark"]) .settingsBar {
-  --border-color: #374151;
-  --settings-bg: #1f2937;
-  --icon-color: #9ca3af;
-  --icon-hover-color: #e5e7eb;
-  --hover-bg: #374151;
-  --active-bg: #1f2937;
-  --primary-color: #60a5fa;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --settings-bg: #252526;
+  --icon-color: #9d9d9d;
+  --icon-hover-color: #ffffff;
+  --hover-bg: #2a2d2e;
+  --active-bg: #37373d;
+  --primary-color: #007acc;
 }
 
 :global([data-theme="dark"]) .viewMenu {
-  --menu-bg: #1f2937;
-  --border-color: #374151;
-  --menu-header-bg: #111827;
-  --text-secondary: #6b7280;
-  --text-primary: #e5e7eb;
-  --hover-bg: #374151;
-  --active-bg: #1f2937;
-  --primary-color: #60a5fa;
+  --menu-bg: #252526;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --menu-header-bg: #181818;
+  --text-secondary: #858585;
+  --text-primary: #cccccc;
+  --hover-bg: #2a2d2e;
+  --active-bg: #37373d;
+  --primary-color: #007acc;
 }

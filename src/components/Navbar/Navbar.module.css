@@ -128,11 +128,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #3b82f6; /* Blue icon for items */
+  color: var(--primary-color, #007acc);
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: #eff6ff; /* Light blue bg */
+  background: var(--hover-bg, #eff6ff);
   flex-shrink: 0;
 }
 
@@ -282,8 +282,8 @@
 }
 
 .popoverInput:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  border-color: var(--primary-color, #007acc);
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
 }
 
 .inputError {
@@ -327,7 +327,7 @@
 
 .spin {
   animation: spin 1s linear infinite;
-  color: #3b82f6;
+  color: var(--primary-color, #007acc);
 }
 
 .authActive {
@@ -351,14 +351,13 @@
 }
 
 .baseUrlInputWrapper:hover {
-  border-color: #3b82f6;
-  /* Blue border on hover */
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1);
+  border-color: var(--primary-color, #007acc);
+  box-shadow: 0 0 0 1px rgba(0, 122, 204, 0.1);
 }
 
 .baseUrlInputWrapper:focus-within {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: var(--primary-color, #007acc);
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
 }
 
 .baseUrlLabel {
@@ -508,8 +507,8 @@
 }
 
 .toggleModeBtn:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-  color: #374151;
+  background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
+  color: var(--text-primary, #374151);
 }
 
 .reconnectBtn {
@@ -526,8 +525,8 @@
 }
 
 .disconnectBtn:hover {
-  background-color: #f3f4f6;
-  color: #111827;
+  background-color: var(--hover-bg, #f3f4f6);
+  color: var(--text-primary, #111827);
 }
 
 /* Media Queries */

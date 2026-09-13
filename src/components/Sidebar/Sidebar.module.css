@@ -331,30 +331,30 @@
 }
 
 .get {
-  background-color: #3b82f6;
+  background-color: var(--method-get, #38bdf8);
 }
 
 .post {
-  background-color: #10b981;
+  background-color: var(--method-post, #4ade80);
 }
 
 .put {
-  background-color: #f59e0b;
+  background-color: var(--method-put, #fbbf24);
 }
 
 .delete {
-  background-color: #ef4444;
+  background-color: var(--method-delete, #f87171);
 }
 
 .patch {
-  background-color: #8b5cf6;
+  background-color: var(--method-patch, #c084fc);
 }
 
 /* Delete Button */
 .deleteBtn {
-  color: #9ca3af;
-  opacity: 0;
-  transition: all 0.2s;
+  color: var(--text-dim, #6e6e6e);
+  opacity: 0.35;
+  transition: all 0.15s ease;
   /* Prevent the button from stretching the folder header height */
   height: 24px !important;
   width: 24px !important;
@@ -363,19 +363,36 @@
   display: flex !important;
   align-items: center;
   justify-content: center;
+  border-radius: 4px;
 }
 
 .deleteBtn svg {
-  transition: all 0.2s;
+  transition: all 0.15s ease;
+  color: inherit;
+  stroke: currentColor;
 }
 
 .deleteBtn:hover {
-  color: #ef4444;
+  opacity: 1 !important;
+  color: var(--error-color, #f14c4c) !important;
+  background-color: var(--error-bg, rgba(241, 76, 76, 0.15)) !important;
 }
 
 .deleteBtn:hover svg {
-  color: #ef4444;
-  stroke: #ef4444;
+  color: var(--error-color, #f14c4c) !important;
+  stroke: var(--error-color, #f14c4c) !important;
+}
+
+.folderHeader:hover .deleteBtn,
+.file:hover .deleteBtn {
+  opacity: 0.7;
+  color: var(--text-secondary, #9d9d9d);
+}
+
+.folderHeader:hover .deleteBtn:hover,
+.file:hover .deleteBtn:hover {
+  opacity: 1 !important;
+  color: var(--error-color, #f14c4c) !important;
 }
 
 .fileActions {
@@ -483,7 +500,7 @@
 .folderHeader .deleteBtn,
 .folderHeader .renameBtn,
 .file .deleteBtn {
-  opacity: 1; /* Made always visible as requested */
+  opacity: 0.35;
 }
 
 /* Inline rename input */

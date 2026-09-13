@@ -39,8 +39,8 @@
 }
 
 .selectTrigger.open {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    border-color: var(--primary-color, #007acc);
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
 }
 
 .value {
@@ -57,7 +57,7 @@
 
 .selectTrigger.open .icon {
     transform: rotate(180deg);
-    color: #3b82f6;
+    color: var(--primary-color, #007acc);
 }
 
 .dropdownMenu {
@@ -88,12 +88,12 @@
 }
 
 .option.selected {
-    background-color: #2563eb;
+    background-color: var(--primary-color, #007acc);
     color: white;
 }
 
 .option.selected:hover {
-    background-color: #1d4ed8;
+    background-color: var(--primary-hover, #0062a3);
 }
 
 @keyframes slideDown {

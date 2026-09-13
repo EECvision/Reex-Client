@@ -103,20 +103,20 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
   onPinTab,
 }) => {
   const getMethodColor = (m?: string) => {
-    if (m === "BASE") return "#6b7280";
+    if (m === "BASE") return "var(--text-secondary, #6b7280)";
     switch (m?.toUpperCase()) {
       case "GET":
-        return "#3b82f6";
+        return "var(--method-get, #38bdf8)";
       case "POST":
-        return "#10b981";
+        return "var(--method-post, #4ade80)";
       case "PUT":
-        return "#f59e0b";
+        return "var(--method-put, #fbbf24)";
       case "DELETE":
-        return "#ef4444";
+        return "var(--method-delete, #f87171)";
       case "PATCH":
-        return "#8b5cf6";
+        return "var(--method-patch, #c084fc)";
       default:
-        return "#6b7280";
+        return "var(--text-secondary, #6b7280)";
     }
   };
 

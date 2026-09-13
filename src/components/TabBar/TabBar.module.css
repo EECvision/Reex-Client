@@ -101,22 +101,22 @@
 }
 
 .get {
-  background-color: var(--method-get, #10b981);
+  background-color: var(--method-get, #38bdf8);
 }
 .post {
-  background-color: var(--method-post, #3b82f6);
+  background-color: var(--method-post, #4ade80);
 }
 .put {
-  background-color: var(--method-put, #f59e0b);
+  background-color: var(--method-put, #fbbf24);
 }
 .delete {
-  background-color: var(--method-delete, #ef4444);
+  background-color: var(--method-delete, #f87171);
 }
 .patch {
-  background-color: var(--method-patch, #8b5cf6);
+  background-color: var(--method-patch, #c084fc);
 }
 .defaultMethod {
-  background-color: var(--text-tertiary);
+  background-color: var(--text-muted, #858585);
 }
 
 

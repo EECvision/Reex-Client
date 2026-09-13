@@ -1,52 +1,64 @@
-:root {
-  /* Base Colors */
-  --background: #111827;
-  --foreground: #ededed;
+:root,
+[data-theme="dark"] {
+  /* VS Code Dark Modern Theme - Base Colors */
+  --background: #1f1f1f;
+  --foreground: #cccccc;
+  --bg-primary: #1f1f1f;
+  --bg-secondary: #181818;
+  --bg-hover: #2a2d2e;
+  --nav-bg: #181818;
 
   /* Sidebar */
-  --sidebar-bg: #111827;
-  --sidebar-border: #374151;
-  --sidebar-header-border: #374151;
+  --sidebar-bg: #181818;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-header-border: rgba(255, 255, 255, 0.08);
 
-  /* Text */
-  --text-primary: #f3f4f6;
-  --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
+  /* Text Hierarchy */
+  --text-primary: #cccccc;
+  --text-secondary: #9d9d9d;
+  --text-muted: #858585;
+  --text-dim: #6e6e6e;
 
   /* Borders */
-  --border-color: #374151;
-  --border-light: #374151;
-  /* Changed from #1f2937 to be visible against menu-bg */
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-light: rgba(255, 255, 255, 0.05);
 
   /* Interactive */
-  --hover-bg: #1f2937;
-  --active-bg: #1f2937;
-  --primary-color: #60a5fa;
-  --primary-hover: #3b82f6;
-  --hover-tint: rgba(59, 130, 246, 0.1);
-  --collection-icon: #a78bfa;
-  --item-hover-bg: rgba(255, 255, 255, 0.05);
+  --hover-bg: #2a2d2e;
+  --active-bg: #37373d;
+  --primary-color: #007acc;
+  --primary-hover: #0e639c;
+  --hover-tint: rgba(0, 122, 204, 0.1);
+  --collection-icon: #c586c0;
+  --item-hover-bg: rgba(255, 255, 255, 0.04);
 
   /* Components */
-  --input-bg: #1f2937;
-  --input-border: #374151;
-  --card-bg: #1f2937;
-  --menu-bg: #1f2937;
+  --input-bg: #181818;
+  --input-border: rgba(255, 255, 255, 0.14);
+  --card-bg: #252526;
+  --menu-bg: #252526;
 
   /* File Input */
-  --file-input-hover-bg: rgba(59, 130, 246, 0.1);
-  --file-input-hover-color: #60a5fa;
+  --file-input-hover-bg: rgba(0, 122, 204, 0.1);
+  --file-input-hover-color: #3794ff;
 
   /* Selected/Success States */
-  --selected-bg: rgba(34, 197, 94, 0.1);
-  --selected-border: rgba(34, 197, 94, 0.3);
-  --selected-color: #86efac;
-  --success-icon: #22c55e;
+  --selected-bg: rgba(38, 79, 120, 0.5);
+  --selected-border: rgba(0, 120, 212, 0.4);
+  --selected-color: #ffffff;
+  --success-icon: #4ec9b0;
 
   /* Error States */
-  --error-color: #f87171;
-  --error-bg: rgba(239, 68, 68, 0.1);
-  --error-hover-bg: rgba(239, 68, 68, 0.2);
+  --error-color: #f14c4c;
+  --error-bg: rgba(241, 76, 76, 0.15);
+  --error-hover-bg: rgba(241, 76, 76, 0.25);
+
+  /* HTTP Methods */
+  --method-get: #38bdf8;
+  --method-post: #4ade80;
+  --method-put: #fbbf24;
+  --method-delete: #f87171;
+  --method-patch: #c084fc;
 }
 
 /* Light Theme */
@@ -54,6 +66,10 @@
   /* Base Colors */
   --background: #ffffff;
   --foreground: #171717;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-hover: #f3f4f6;
+  --nav-bg: #ffffff;
 
   /* Sidebar */
   --sidebar-bg: #ffffff;
@@ -71,13 +87,10 @@
 
   /* Interactive */
   --hover-bg: #f9fafb;
-  /* gray-50 */
   --active-bg: #f3f4f6;
-  /* gray-100 */
   --primary-color: #3b82f6;
   --primary-hover: #2563eb;
   --hover-tint: rgba(0, 0, 0, 0.05);
-  /* neutral tint */
   --collection-icon: #8b5cf6;
   --item-hover-bg: rgba(0, 0, 0, 0.05);
 
@@ -101,12 +114,18 @@
   --error-color: #dc2626;
   --error-bg: #fee2e2;
   --error-hover-bg: #fee2e2;
+
+  /* HTTP Methods */
+  --method-get: #0284c7;
+  --method-post: #16a34a;
+  --method-put: #d97706;
+  --method-delete: #dc2626;
+  --method-patch: #9333ea;
 }
 
 html,
 body {
   max-width: 100vw;
-  /* min-width: 1280px; */
   overflow-x: hidden;
 }
 
@@ -129,28 +148,35 @@ a {
   text-decoration: none;
 }
 
-/* Global Scrollbar Styling */
+/* Global Scrollbar Styling (VS Code Minimalist) */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--hover-bg, #f1f5f9);
-  border-radius: 5px;
+  background: var(--sidebar-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color, #cbd5e1);
-  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted, #94a3b8);
+  background: rgba(255, 255, 255, 0.22);
 }
 
-/* Firefox scrollbar */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-color, #cbd5e1) var(--hover-bg, #f1f5f9);
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.32);
+}
+
+/* Selection */
+::selection {
+  background-color: #264f78;
+  color: #ffffff;
 }

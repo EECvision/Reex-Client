@@ -159,72 +159,72 @@
 
 /* Dark Mode Overrides */
 :global([data-theme="dark"]) .diffModal {
-    background-color: #1f2937;
-    border: 1px solid #374151;
+    background-color: #1f1f1f;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 :global([data-theme="dark"]) .diffHeader {
-    background-color: #1f2937;
-    border-bottom: 1px solid #374151;
+    background-color: #181818;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 :global([data-theme="dark"]) .diffHeader h3 {
-    color: #f3f4f6;
+    color: #cccccc;
 }
 
 :global([data-theme="dark"]) .diffBody {
-    background-color: #1f2937;
+    background-color: #1f1f1f;
 }
 
 :global([data-theme="dark"]) .diffRow {
-    border-bottom: 1px solid #374151;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 :global([data-theme="dark"]) .diffSplit {
-    border-right: 1px solid #374151;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 :global([data-theme="dark"]) .diffRow:first-child {
-    background-color: #111827;
-    border-bottom: 1px solid #374151;
+    background-color: #181818;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 :global([data-theme="dark"]) .diffPaneHeader {
-    color: #9ca3af;
+    color: #9d9d9d;
 }
 
 :global([data-theme="dark"]) .diffLineNumber {
-    background-color: #111827;
-    color: #6b7280;
-    border-right: 1px solid #374151;
+    background-color: #181818;
+    color: #6e6e6e;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 :global([data-theme="dark"]) .diffContent {
-    color: #e5e7eb;
+    color: #cccccc;
 }
 
 :global([data-theme="dark"]) .diffRemoved {
-    background-color: rgba(127, 29, 29, 0.25);
-    color: #fca5a5;
+    background-color: rgba(248, 81, 73, 0.2);
+    color: #ce9178;
 }
 
 :global([data-theme="dark"]) .diffAdded {
-    background-color: rgba(6, 95, 70, 0.25);
-    color: #86efac;
+    background-color: rgba(46, 160, 67, 0.2);
+    color: #4ec9b0;
 }
 
 :global([data-theme="dark"]) .diffEmpty {
-    background-color: #111827;
+    background-color: #181818;
     background-image: repeating-linear-gradient(45deg,
-            #1f2937 25%,
+            #1f1f1f 25%,
             transparent 25%,
             transparent 75%,
-            #1f2937 75%,
-            #1f2937),
+            #1f1f1f 75%,
+            #1f1f1f),
         repeating-linear-gradient(45deg,
-            #1f2937 25%,
-            #111827 25%,
-            #111827 75%,
-            #1f2937 75%,
-            #1f2937);
+            #1f1f1f 25%,
+            #181818 25%,
+            #181818 75%,
+            #1f1f1f 75%,
+            #1f1f1f);
 }

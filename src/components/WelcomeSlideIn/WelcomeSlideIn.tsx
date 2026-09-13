@@ -66,7 +66,7 @@ export default function WelcomeSlideIn() {
         <div data-tour="setup-guide" className={styles.slideIn}>
             <div className={styles.header}>
                 <div className={styles.titleWrapper}>
-                    <Sparkles size={16} color="#3b82f6" />
+                    <Sparkles size={16} color="#fbbf24" />
                     <h3 className={styles.title}>Developer Tools</h3>
                 </div>
                 <button className={styles.closeBtn} onClick={handleDismiss} title="Dismiss">
@@ -79,20 +79,23 @@ export default function WelcomeSlideIn() {
                 <div className={styles.section}>
                     <div className={styles.sectionHeader}>
                         <div className={styles.sectionHeaderLeft}>
-                            <Globe size={14} color="#64748b" />
+                            <Globe size={15} color="#38bdf8" />
                             <h4 className={styles.sectionTitle}>Test Localhost APIs</h4>
                         </div>
                     </div>
                     <div className={styles.codeBox}>
                         <div className={styles.codeLines}>
-                            <span className={styles.codeLine}>npx reex-proxy</span>
+                            <span className={styles.codeLine}>
+                                <span className={styles.codePrompt}>$</span>{" "}
+                                <span className={styles.codeCmd}>npx</span> reex-proxy
+                            </span>
                         </div>
                         <button 
                             className={styles.copyBtn} 
                             onClick={() => handleCopy('npx reex-proxy', setCopiedProxy)}
                             title="Copy command"
                         >
-                            {copiedProxy ? <CheckCircle2 size={14} color="#10b981" /> : <Copy size={14} />}
+                            {copiedProxy ? <CheckCircle2 size={14} color="#4ade80" /> : <Copy size={14} />}
                         </button>
                     </div>
                 </div>
@@ -101,7 +104,7 @@ export default function WelcomeSlideIn() {
                 <div className={styles.section}>
                     <div className={styles.sectionHeader}>
                         <div className={styles.sectionHeaderLeft}>
-                            <Terminal size={14} color="#64748b" />
+                            <Terminal size={15} color="#4ec9b0" />
                             <h4 className={styles.sectionTitle}>Generate APIs to Local Project</h4>
                         </div>
                         <a
@@ -121,14 +124,17 @@ export default function WelcomeSlideIn() {
                         </div>
                         <div className={styles.codeBox}>
                             <div className={styles.codeLines}>
-                                <span className={styles.codeLine}>npm install -g reex-cli</span>
+                                <span className={styles.codeLine}>
+                                    <span className={styles.codePrompt}>$</span>{" "}
+                                    <span className={styles.codeCmd}>npm</span> install -g reex-cli
+                                </span>
                             </div>
                             <button 
                                 className={styles.copyBtn} 
                                 onClick={() => handleCopy('npm install -g reex-cli', setCopiedCliInstall)}
                                 title="Copy command"
                             >
-                                {copiedCliInstall ? <CheckCircle2 size={14} color="#10b981" /> : <Copy size={14} />}
+                                {copiedCliInstall ? <CheckCircle2 size={14} color="#4ade80" /> : <Copy size={14} />}
                             </button>
                         </div>
                     </div>
@@ -138,14 +144,17 @@ export default function WelcomeSlideIn() {
                         </div>
                         <div className={styles.codeBox}>
                             <div className={styles.codeLines}>
-                                <span className={styles.codeLine}>reex start</span>
+                                <span className={styles.codeLine}>
+                                    <span className={styles.codePrompt}>$</span>{" "}
+                                    <span className={styles.codeCmd}>reex</span> start
+                                </span>
                             </div>
                             <button 
                                 className={styles.copyBtn} 
                                 onClick={() => handleCopy('reex start', setCopiedCliStart)}
                                 title="Copy command"
                             >
-                                {copiedCliStart ? <CheckCircle2 size={14} color="#10b981" /> : <Copy size={14} />}
+                                {copiedCliStart ? <CheckCircle2 size={14} color="#4ade80" /> : <Copy size={14} />}
                             </button>
                         </div>
                     </div>

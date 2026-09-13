@@ -322,23 +322,23 @@
 }
 
 .get {
-  color: #3b82f6;
+  color: var(--method-get, #38bdf8);
 }
 
 .post {
-  color: #10b981;
+  color: var(--method-post, #4ade80);
 }
 
 .put {
-  color: #f59e0b;
+  color: var(--method-put, #fbbf24);
 }
 
 .delete {
-  color: #ef4444;
+  color: var(--method-delete, #f87171);
 }
 
 .patch {
-  color: #8b5cf6;
+  color: var(--method-patch, #c084fc);
 }
 
 /* Footer Credits (Copied from Sidebar.module.css) */
