@@ -216,15 +216,15 @@ test("settings and support work anonymously, and old account endpoints are gone"
   await expect(
     page.getByRole("heading", { name: "Workspace settings" }),
   ).toBeVisible();
-  await expect(page.getByLabel("Appearance")).toHaveValue("dark");
+  await expect(page.getByRole("button", { name: /^Dark Theme/ })).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await page.getByLabel("Appearance").selectOption("light");
+  await page.getByRole("button", { name: /^Light Theme/ }).click();
   await page.reload();
-  await expect(page.getByLabel("Appearance")).toHaveValue("light");
+  await expect(page.getByRole("button", { name: /^Light Theme/ })).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await page.goto("/support");
   await expect(
-    page.getByRole("link", { name: "Open an issue on GitHub" }),
+    page.getByRole("link", { name: "Browse Open Issues" }),
   ).toHaveAttribute("href", /\/issues\/new\/choose$/);
   for (const endpoint of [
     "/api/auth/session",
@@ -321,11 +321,11 @@ test("saves the tab preference and pins previews with double-click or keyboard s
   page,
 }) => {
   await page.goto("/settings");
-  await expect(page.getByLabel("Tab behavior")).toHaveValue("preview");
-  await page.getByLabel("Tab behavior").selectOption("pinned");
-  await page.getByLabel("Tab behavior").selectOption("preview");
+  await expect(page.getByRole("button", { name: /^Preview Mode/ })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: /^Pin Tabs by Default/ }).click();
+  await page.getByRole("button", { name: /^Preview Mode/ }).click();
   await page.reload();
-  await expect(page.getByLabel("Tab behavior")).toHaveValue("preview");
+  await expect(page.getByRole("button", { name: /^Preview Mode/ })).toHaveAttribute("aria-pressed", "true");
   await seedStore(page, "standalone_collections", [
     {
       id: "tabs",
@@ -389,7 +389,7 @@ test("saves the tab preference and pins previews with double-click or keyboard s
   await expect(tab("epsilon")).toHaveClass(/unpinned/);
 
   await page.goto("/settings");
-  await page.getByLabel("Tab behavior").selectOption("pinned");
+  await page.getByRole("button", { name: /^Pin Tabs by Default/ }).click();
   await page.goto("/");
   await page.getByPlaceholder("Search endpoints...").fill("get_");
   await endpoint("zeta").click();

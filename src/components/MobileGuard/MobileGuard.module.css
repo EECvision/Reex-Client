@@ -1,132 +1,41 @@
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 0;
-  background: var(--background);
-  background: color-mix(in srgb, var(--background) 85%, transparent);
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
+.notice {
+  display: none;
 }
 
-.banner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  width: 100%;
-  gap: 16px;
-  background: var(--card-bg);
-  border: none;
-  border-bottom: 1px solid var(--border-color);
-  padding: 24px 16px;
-  padding-top: max(24px, env(safe-area-inset-top));
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
-}
-
-.iconWrap {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.icon {
-  width: 36px;
-  height: 36px;
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-
-.arrowIcon {
-  width: 18px;
-  height: 18px;
-  color: var(--text-secondary);
-  flex-shrink: 0;
-}
-
-.desktopIcon {
-  width: 44px;
-  height: 44px;
-  color: var(--primary-color);
-  flex-shrink: 0;
-}
-
-.title {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-  letter-spacing: -0.3px;
-}
-
-.message {
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--primary-color) 25%, transparent);
-  border-radius: 999px;
-  padding: 6px 14px;
-  font-size: 12px;
-  color: var(--primary-color);
-  font-weight: 500;
-}
-
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--primary-color);
-  flex-shrink: 0;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.35;
-  }
-}
-
-@media (max-width: 480px) {
-  .icon {
-    width: 28px;
-    height: 28px;
-  }
-
-  .arrowIcon {
-    width: 14px;
-    height: 14px;
-  }
-
-  .desktopIcon {
-    width: 32px;
-    height: 32px;
-  }
-
-  .title {
-    font-size: 18px;
-  }
-
-  .message {
+@media (max-width: 980px) {
+  .notice {
+    position: fixed;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    right: 12px;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: min(360px, calc(100% - 24px));
+    padding: 12px 8px 12px 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    color: var(--text-primary);
     font-size: 13px;
+    line-height: 1.5;
   }
 
-  .badge {
-    font-size: 11px;
-    padding: 4px 10px;
+  .dismiss {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .dismiss:hover {
+    background: var(--hover-bg);
   }
 }

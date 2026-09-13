@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { STUDIO_URL } from '@/config/links';
+import { INDEXING_ENABLED, siteUrl } from '@/config/seo';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -8,6 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/'],
     },
-    sitemap: `${STUDIO_URL}/sitemap.xml`,
+    // Keep noindex pages crawlable so their meta robots rules can be read.
+    ...(INDEXING_ENABLED ? { sitemap: siteUrl('/sitemap.xml') } : {}),
   };
 }

@@ -72,6 +72,9 @@ export const TourProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Auto-start on first load after slight delay to allow initial DOM layout
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Keep the public welcome content readable on small screens. The tour
+    // remains available from the workspace menu when the user requests it.
+    if (window.matchMedia("(max-width: 980px)").matches) return;
 
     try {
       const completed = localStorage.getItem(TOUR_STORAGE_KEY);

@@ -4,6 +4,8 @@ import { Terminal, Globe, Rocket, Copy, CheckCircle2, Folder, ExternalLink } fro
 import { useToast } from '@/hooks/useToast';
 import Logo from '../Logo/Logo';
 import { Button } from '../ui/Button/Button';
+import Link from 'next/link';
+import { DOCS_URL } from '@/config/links';
 
 interface WelcomeCardProps {
     onImportClick?: () => void;
@@ -26,9 +28,17 @@ export default function WelcomeCard({ onImportClick }: WelcomeCardProps) {
         <div className={styles.container}>
             <div className={styles.header}>
                 <Logo horizontal />
-                <p className={styles.subtitle} style={{ marginTop: '16px' }}>
-                    The intelligent API client that bridges your backend to your frontend.
+                <h1 className={styles.title}>API Client &amp; TypeScript Code Generator</h1>
+                <p className={styles.subtitle}>
+                    Import Postman and OpenAPI collections, test endpoints, and generate
+                    the API layer for your React or Next.js app. Reex connects your API
+                    functions, TanStack Query hooks, and TypeScript interfaces to your local codebase.
                 </p>
+                <nav className={styles.resourceLinks} aria-label="Reex resources">
+                    <a href={DOCS_URL}>Documentation</a>
+                    <Link href="/sandbox">API Sandbox</Link>
+                    <Link href="/support">Help &amp; troubleshooting</Link>
+                </nav>
             </div>
 
             <div className={styles.grid}>
@@ -38,10 +48,12 @@ export default function WelcomeCard({ onImportClick }: WelcomeCardProps) {
                         <div className={styles.cardIcon}>
                             <Rocket size={18} />
                         </div>
-                        <h3 className={styles.cardTitle}>Standard API Client</h3>
+                        <h2 className={styles.cardTitle}>Import &amp; Test Collections</h2>
                     </div>
                     <p className={styles.cardDesc}>
-                        Skip the setup! Just use Reex right here in your browser as a powerful API client to test your remote endpoints. No installation required.
+                        Import Postman or OpenAPI collections, configure request parameters
+                        and authentication, and inspect responses in Preview Mode.
+                        No account or local project required.
                     </p>
                     {onImportClick && (
                         <div style={{ marginTop: 'auto' }}>
@@ -63,10 +75,12 @@ export default function WelcomeCard({ onImportClick }: WelcomeCardProps) {
                         <div className={styles.cardIcon}>
                             <Globe size={18} />
                         </div>
-                        <h3 className={styles.cardTitle}>Test Localhost APIs</h3>
+                        <h2 className={styles.cardTitle}>Test Localhost APIs</h2>
                     </div>
                     <p className={styles.cardDesc}>
-                        Testing a local backend? Run our lightweight proxy to securely route localhost requests through the web app.
+                        Run reex-proxy to test your local backend from the browser.
+                        Use API Sandbox to create and organize requests from scratch,
+                        even without an API collection.
                     </p>
                     <div className={styles.codeBox}>
                         <div className={styles.codeLines}>
@@ -88,10 +102,13 @@ export default function WelcomeCard({ onImportClick }: WelcomeCardProps) {
                         <div className={styles.cardIcon}>
                             <Terminal size={18} />
                         </div>
-                        <h3 className={styles.cardTitle}>Generate APIs to Local Project</h3>
+                        <h2 className={styles.cardTitle}>Generate React &amp; Next.js Code</h2>
                     </div>
                     <p className={styles.cardDesc}>
-                        Connect Reex to your React/Next.js project to instantly generate ready-to-use API hooks and TypeScript interfaces.
+                        Connect your project in Dev Mode to generate API functions,
+                        TanStack Query hooks, and authentication helpers. Save TypeScript
+                        interfaces from real responses, keep API definitions in sync with
+                        your code, and review collection changes before applying them.
                     </p>
                     <div className={styles.stepHeader}>
                         <span className={styles.stepTitle}>1. Install globally:</span>

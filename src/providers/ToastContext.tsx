@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useRef } from "react";
 import Toast from "@/components/Toast/Toast";
 
 interface ToastItem {
@@ -18,9 +18,11 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [toasts, setToasts] = useState<ToastItem[]>([]);
+    const nextToastId = useRef(0);
 
     const showToast = useCallback((type: "success" | "error", message: string) => {
-        const id = Date.now();
+        // Notifications can arrive in the same millisecond; never reuse an ID.
+        const id = nextToastId.current++;
         setToasts((prev) => [...prev, { id, type, message }]);
 
         setTimeout(() => {

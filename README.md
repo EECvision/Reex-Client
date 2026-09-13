@@ -32,9 +32,14 @@ Copy [.env.example](.env.example) to `.env.local` only if you need optional inte
 
 - `GOOGLE_GENERATIVE_AI_API_KEY`: enables the AI documentation assistant. Keep this key on the server.
 - `NEXT_PUBLIC_REPOSITORY_URL`: changes the repository linked from community support when hosting a fork.
+- `NEXT_PUBLIC_SITE_URL`: canonical public origin for self-hosting; defaults to `https://studio.reex-api.dev`.
+- `SEO_NOINDEX=true`: keeps staging or private deployments out of search results. Vercel preview/development deployments are automatically marked `noindex`.
+- `GOOGLE_SITE_VERIFICATION`: optional Google Search Console HTML-tag verification token.
 - `API_TARGET_DIR` and `BRIDGE_URL`: advanced server/bridge configuration.
 
 No environment file is needed for the core workspace.
+
+Set SEO variables before running `npm run build`; metadata, robots.txt, and the sitemap are prerendered. See [SEO.md](SEO.md) for the indexing policy, verification, and deployment follow-up.
 
 ## Browser storage
 

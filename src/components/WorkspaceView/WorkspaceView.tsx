@@ -126,7 +126,7 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
   };
 
   return (
-    <div data-tour="workspace-area" className={styles.workspace}>
+    <main data-tour="workspace-area" className={styles.workspace}>
       {tabs.length > 0 && onSelectTab && onCloseTab && onPinTab && (
         <TabBar
           tabs={tabs}
@@ -223,9 +223,9 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
         />
       )}
 
-      {isStandaloneMode && <WelcomeSlideIn />}
+      {isStandaloneMode && hasCollection && <WelcomeSlideIn />}
       {!isStandaloneMode && <SetupGuideModal />}
-    </div>
+    </main>
   );
 };
 

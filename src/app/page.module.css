@@ -32,13 +32,15 @@
 
 /* Loading State */
 .loadingContainer {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background-color: var(--background, #fff);
   font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  padding: 0 16px 24px;
 }
 
 .loadingContent {

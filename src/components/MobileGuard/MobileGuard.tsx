@@ -1,78 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { X } from "lucide-react";
 import styles from "./MobileGuard.module.css";
 
-const BREAKPOINT = 981;
-
 export const MobileGuard = ({ children }: { children: React.ReactNode }) => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => {
-      const isMobileUA = /Mobi|Android|iPhone|iPad|iPod/i.test(
-        navigator.userAgent,
-      );
-      setIsMobile(window.innerWidth < BREAKPOINT && isMobileUA);
-    };
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
+  const [dismissed, setDismissed] = useState(false);
 
   return (
     <>
       {children}
-      {isMobile && (
-        <div className={styles.overlay}>
-          <div className={styles.banner}>
-            <div className={styles.iconWrap}>
-              <svg
-                className={styles.icon}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <rect x="5" y="2" width="14" height="20" rx="2" />
-                <line x1="12" y1="18" x2="12.01" y2="18" />
-              </svg>
-              <svg
-                className={styles.arrowIcon}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-              <svg
-                className={styles.desktopIcon}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <rect x="2" y="3" width="20" height="14" rx="2" />
-                <path d="M8 21h8M12 17v4" />
-              </svg>
-            </div>
-            {/* <h1 className={styles.title}>Open Reex API Builder on a desktop</h1> */}
-            <p className={styles.message}>
-              Please open Reex API Builder on a desktop or laptop for the best
-              developer experience.
-            </p>
-          </div>
-        </div>
+      {!dismissed && (
+        <aside className={styles.notice} aria-label="Desktop experience tip">
+          <p>
+            For more room to edit and test APIs, try Reex on a desktop or laptop.
+          </p>
+          <button
+            type="button"
+            className={styles.dismiss}
+            aria-label="Dismiss desktop tip"
+            onClick={() => setDismissed(true)}
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        </aside>
       )}
     </>
   );

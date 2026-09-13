@@ -1,60 +1,24 @@
 import type { Metadata } from "next";
-import { STUDIO_URL } from "@/config/links";
+import { INDEXING_ENABLED, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/config/seo";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(STUDIO_URL),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Reex API Builder",
-    template: "%s | Reex API Builder",
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`,
   },
-  description:
-    "Generate API integration code for your projects by uploading collections. A comprehensive toolkit for building, testing, and managing API integrations.",
-  keywords: [
-    "API",
-    "Builder",
-    "Integration",
-    "Code Generation",
-    "Reex",
-    "reex commands",
-    "reex cli",
-    "reex start",
-    "reex reset",
-    "reex sync",
-    "reex add",
-    "npx reex-cli",
-    "npm reex-cli",
-  ],
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
   authors: [{ name: "ToolsHQ" }],
-  openGraph: {
-    title: "Reex API Builder",
-    description:
-      "Generate API integration code for your projects by uploading collections. A comprehensive toolkit for building, testing, and managing API integrations.",
-    url: STUDIO_URL,
-    siteName: "Reex API Builder",
-    images: [
-      {
-        url: `${STUDIO_URL}/og-image.png`,
-        width: 1200,
-        height: 630,
-        alt: "Reex API Builder Logo",
-      },
-    ],
-    locale: "en_US",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Reex API Builder",
-    description:
-      "Generate API integration code for your projects by uploading collections.",
-    images: [`${STUDIO_URL}/og-image.png`],
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
   },
   robots: {
-    index: true,
+    index: INDEXING_ENABLED,
     follow: true,
     googleBot: {
-      index: true,
+      index: INDEXING_ENABLED,
       follow: true,
       "max-video-preview": -1,
       "max-image-preview": "large",

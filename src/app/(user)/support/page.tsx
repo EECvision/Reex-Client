@@ -801,17 +801,19 @@ export default function SupportPage() {
               const isOpen = openFaq === faq.id;
               const feedback = faqFeedback[faq.id];
               return (
-                <div
+                <details
                   key={faq.id}
+                  open={isOpen}
                   className={`${styles.faqCard} ${
                     isOpen ? styles.faqCardOpen : ""
                   }`}
                 >
-                  <button
-                    type="button"
+                  <summary
                     className={styles.faqQuestion}
-                    onClick={() => toggleFaq(faq.id)}
-                    aria-expanded={isOpen}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      toggleFaq(faq.id);
+                    }}
                   >
                     <span className={styles.faqQuestionText}>
                       {faq.question}
@@ -822,9 +824,8 @@ export default function SupportPage() {
                         isOpen ? styles.faqChevronRotated : ""
                       }`}
                     />
-                  </button>
+                  </summary>
 
-                  {isOpen && (
                     <div className={styles.faqAnswer}>
                       {faq.answer}
 
@@ -862,8 +863,7 @@ export default function SupportPage() {
                         )}
                       </div>
                     </div>
-                  )}
-                </div>
+                </details>
               );
             })}
           </div>

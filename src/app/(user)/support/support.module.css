@@ -553,6 +553,15 @@
   background: rgba(255, 255, 255, 0.02);
 }
 
+.faqQuestion::-webkit-details-marker {
+  display: none;
+}
+
+.faqQuestion:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: -2px;
+}
+
 .faqQuestionText {
   flex: 1;
 }
