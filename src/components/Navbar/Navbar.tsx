@@ -306,85 +306,24 @@ const Navbar: React.FC<NavbarProps> = ({
 
         {hasCollection && <div className={styles.separator}></div>}
 
-        {/* Add API Dropdown */}
-        <DropdownMenu.Root
-          onOpenChange={(open) => {
-            if (open) syncUrl();
-          }}
-        >
-          <DropdownMenu.Trigger asChild>
-            <div data-tour="add-collection">
-              <Button
-                variant="ghost"
-                leftIcon={
-                  !isStandaloneMode && hasCollection ? (
-                    <RefreshCw size={16} />
-                  ) : (
-                    <Plus size={16} />
-                  )
-                }
-              >
-                {!isStandaloneMode && hasCollection
-                  ? "Update Collection"
-                  : "Add Collection"}
-              </Button>
-            </div>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Portal>
-            <DropdownMenu.Content
-              className={styles.dropdownMenu}
-              sideOffset={5}
-              align="end"
-            >
-              <DropdownMenu.Item
-                className={styles.dropdownItem}
-                onClick={() => {
-                  onImportClick();
-                }}
-              >
-                <Download size={16} />
-                Import File
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                className={styles.dropdownItem}
-                onClick={() => {
-                  if (url) {
-                    onFetchUrl(url);
-                  } else if (onOpenFetchModal) {
-                    onOpenFetchModal();
-                  }
-                }}
-              >
-                {isFetching ? (
-                  <Loader2 size={16} className={styles.spin} />
-                ) : (
-                  <Link size={16} />
-                )}
-                {url ? `Fetch from ${formatUrlDomain(url)}` : "Fetch from URL"}
-              </DropdownMenu.Item>
-              {onOpenPostmanModal && (
-                <DropdownMenu.Item
-                  className={styles.dropdownItem}
-                  onClick={() => {
-                    onOpenPostmanModal();
-                  }}
-                >
-                  <Send size={16} />
-                  Import from Postman
-                </DropdownMenu.Item>
-              )}
-              {onGenerateClick && !isStandaloneMode && (
-                <DropdownMenu.Item
-                  className={styles.dropdownItem}
-                  onClick={onGenerateClick}
-                >
-                  <Code size={16} />
-                  Generate Module
-                </DropdownMenu.Item>
-              )}
-            </DropdownMenu.Content>
-          </DropdownMenu.Portal>
-        </DropdownMenu.Root>
+        {/* Add / Update Collection Button */}
+        <div data-tour="add-collection">
+          <Button
+            variant="ghost"
+            onClick={onImportClick}
+            leftIcon={
+              !isStandaloneMode && hasCollection ? (
+                <RefreshCw size={16} />
+              ) : (
+                <Plus size={16} />
+              )
+            }
+          >
+            {!isStandaloneMode && hasCollection
+              ? "Update Collection"
+              : "Add Collection"}
+          </Button>
+        </div>
 
         {/* {hasCollection && (
           <Button
@@ -456,35 +395,21 @@ const Navbar: React.FC<NavbarProps> = ({
               <Button
                 variant="ghost"
                 onClick={() => {
-                  if (url) {
-                    onFetchUrl(url);
-                  } else if (onOpenFetchModal) {
-                    onOpenFetchModal();
-                  }
+                  onImportClick();
                   setIsMobileMenuOpen(false);
                 }}
                 leftIcon={
-                  isFetching ? (
-                    <Loader2 size={16} className={styles.spin} />
+                  !isStandaloneMode && hasCollection ? (
+                    <RefreshCw size={16} />
                   ) : (
-                    <Link size={16} />
+                    <Plus size={16} />
                   )
                 }
                 style={{ justifyContent: "flex-start", width: "100%" }}
               >
-                {url ? `Fetch from ${formatUrlDomain(url)}` : "Fetch from URL"}
-              </Button>
-
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  onImportClick();
-                  setIsMobileMenuOpen(false);
-                }}
-                leftIcon={<Download size={16} />}
-                style={{ justifyContent: "flex-start", width: "100%" }}
-              >
-                Import File
+                {!isStandaloneMode && hasCollection
+                  ? "Update Collection"
+                  : "Add Collection"}
               </Button>
 
               {onGenerateClick && !isStandaloneMode && (

@@ -8,7 +8,6 @@ import {
   type ViewPreferenceType,
 } from "@/providers/SettingsContext";
 import { collectionStorage } from "@/services/collectionStorage";
-import { ClientStorage } from "@/lib/clientStorage";
 import {
   Moon,
   Sun,
@@ -21,9 +20,6 @@ import {
   Pin,
   Eye,
   Database,
-  Download,
-  Trash2,
-  RotateCcw,
   ShieldCheck,
   Layers,
   Keyboard,
@@ -98,57 +94,7 @@ export default function SettingsPage() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
   };
 
-  const handleExportWorkspace = async () => {
-    try {
-      const collections = await collectionStorage.getCollections();
-      const exportData = {
-        version: "1.0",
-        timestamp: new Date().toISOString(),
-        settings: {
-          theme,
-          viewPreference,
-          pinTabsByDefault,
-          unwrapResponseData,
-        },
-        collections,
-      };
 
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `reex-workspace-backup-${new Date().toISOString().slice(0, 10)}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      showToast("Workspace exported successfully");
-    } catch (err) {
-      console.error("Export failed:", err);
-      showToast("Failed to export workspace");
-    }
-  };
-
-  const handleClearCache = async () => {
-    try {
-      await ClientStorage.clear("request_results");
-      showToast("Execution cache cleared");
-      refreshStorage();
-    } catch (err) {
-      console.error("Failed to clear cache:", err);
-      showToast("Failed to clear cache");
-    }
-  };
-
-  const handleResetSettings = () => {
-    setTheme("dark");
-    setViewPreference("json");
-    setPinTabsByDefault(false);
-    setUnwrapResponseData(false);
-    showToast("Preferences reset to defaults");
-  };
 
   const themesList: {
     id: ThemeType;
@@ -571,35 +517,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className={styles.storageActionsRow}>
-                <button
-                  type="button"
-                  className={styles.actionBtn}
-                  onClick={handleExportWorkspace}
-                >
-                  <Download size={15} />
-                  <span>Export Workspace (.json)</span>
-                </button>
 
-                <button
-                  type="button"
-                  className={styles.actionBtn}
-                  onClick={handleClearCache}
-                >
-                  <Trash2 size={15} />
-                  <span>Clear Run Cache</span>
-                </button>
-
-                <button
-                  type="button"
-                  className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                  onClick={handleResetSettings}
-                >
-                  <RotateCcw size={15} />
-                  <span>Reset All Preferences</span>
-                </button>
-              </div>
             </div>
           </section>
         )}
