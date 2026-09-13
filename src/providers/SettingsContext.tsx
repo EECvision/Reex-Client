@@ -11,6 +11,8 @@ interface SettingsContextType {
     setTheme: (theme: ThemeType) => void;
     toggleTheme: () => void;
     setViewPreference: (pref: ViewPreferenceType) => void;
+    pinTabsByDefault: boolean;
+    setPinTabsByDefault: (value: boolean) => void;
     unwrapResponseData: boolean;
     setUnwrapResponseData: (val: boolean) => void;
 }
@@ -20,6 +22,7 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 const THEME_KEY = 'reex_theme';
 const VIEW_PREF_KEY = 'reex_view_preference';
 const UNWRAP_DATA_KEY = 'reex_unwrap_data';
+const PIN_TABS_KEY = 'reex_pin_tabs_by_default';
 
 // Reactive local storage store helper utilizing useSyncExternalStore
 const createLocalStorageStore = <T extends string | boolean>(key: string, defaultValue: T, validator?: (val: unknown) => boolean) => {
@@ -59,11 +62,13 @@ const createLocalStorageStore = <T extends string | boolean>(key: string, defaul
 
 const themeStore = createLocalStorageStore<ThemeType>(THEME_KEY, 'light', (val) => ['light', 'dark', 'system'].includes(val as string));
 const viewPrefStore = createLocalStorageStore<ViewPreferenceType>(VIEW_PREF_KEY, 'json', (val) => ['json', 'raw', 'pretty'].includes(val as string));
+const pinTabsStore = createLocalStorageStore<boolean>(PIN_TABS_KEY, false);
 const unwrapStore = createLocalStorageStore<boolean>(UNWRAP_DATA_KEY, false);
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const theme = useSyncExternalStore(themeStore.subscribe, themeStore.getSnapshot, themeStore.getServerSnapshot);
     const viewPreference = useSyncExternalStore(viewPrefStore.subscribe, viewPrefStore.getSnapshot, viewPrefStore.getServerSnapshot);
+    const pinTabsByDefault = useSyncExternalStore(pinTabsStore.subscribe, pinTabsStore.getSnapshot, pinTabsStore.getServerSnapshot);
     const unwrapResponseData = useSyncExternalStore(unwrapStore.subscribe, unwrapStore.getSnapshot, unwrapStore.getServerSnapshot);
 
     // Apply theme to document HTML tag dynamically
@@ -102,12 +107,16 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         viewPrefStore.set(pref);
     }, []);
 
+    const setPinTabsByDefault = useCallback((value: boolean) => {
+        pinTabsStore.set(value);
+    }, []);
+
     const setUnwrapResponseData = useCallback((val: boolean) => {
         unwrapStore.set(val);
     }, []);
 
     return (
-        <SettingsContext.Provider value={{ theme, viewPreference, unwrapResponseData, setTheme, toggleTheme, setViewPreference, setUnwrapResponseData }}>
+        <SettingsContext.Provider value={{ theme, pinTabsByDefault, setPinTabsByDefault, viewPreference, unwrapResponseData, setTheme, toggleTheme, setViewPreference, setUnwrapResponseData }}>
             {children}
         </SettingsContext.Provider>
     );

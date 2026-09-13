@@ -64,7 +64,6 @@ export const metadata: Metadata = {
 
 import { ProjectProvider } from "@/providers/ProjectContext";
 import { SettingsProvider } from "@/providers/SettingsContext";
-import { AuthProvider } from "@/providers/AuthContext";
 import QueryProvider from "@/providers/QueryProvider";
 import { ToastProvider } from "@/providers/ToastContext";
 import { MobileGuard } from "@/components/MobileGuard/MobileGuard";
@@ -79,13 +78,11 @@ export default function RootLayout({
       <body className="antialiased">
         <MobileGuard>
           <SettingsProvider>
-            <AuthProvider>
-              <QueryProvider>
-                <ToastProvider>
-                  <ProjectProvider>{children}</ProjectProvider>
-                </ToastProvider>
-              </QueryProvider>
-            </AuthProvider>
+            <QueryProvider>
+              <ToastProvider>
+                <ProjectProvider>{children}</ProjectProvider>
+              </ToastProvider>
+            </QueryProvider>
           </SettingsProvider>
         </MobileGuard>
       </body>

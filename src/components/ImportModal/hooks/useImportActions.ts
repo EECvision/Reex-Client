@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
 import { api } from '../../../services/api';
-import { useSubscription } from '@/hooks/useSubscription';
 import { DiffResult, ImportStep } from '../importTypes';
 import yaml from 'js-yaml';
 import { EndpointInfo, ProjectConfig } from '@/types';
@@ -22,8 +21,8 @@ interface UseImportActionsProps {
     isStandaloneMode?: boolean;
     onManifestUpdate?: (manifest: Record<string, Record<string, EndpointInfo>> | null) => void;
     onConfigUpdate?: (config: ProjectConfig | null) => void;
-    addCollection?: (collection: StandaloneCollection) => void;
-    updateCollection?: (id: string, updates: Partial<StandaloneCollection>) => void;
+    addCollection?: (collection: StandaloneCollection) => Promise<void>;
+    updateCollection?: (id: string, updates: Partial<StandaloneCollection>) => Promise<void>;
     existingCollection?: StandaloneCollection;
     addCollectionToHistory?: (name: string, content: Record<string, unknown>) => Promise<void>;
 }
@@ -48,7 +47,6 @@ export const useImportActions = ({
     existingCollection,
     addCollectionToHistory
 }: UseImportActionsProps) => {
-    const { isPro, update: updateSession } = useSubscription();
     const [step, setStep] = useState<ImportStep>("upload");
     const [proposedClients, setProposedClients] = useState<Record<string, string> | undefined>(undefined);
     const [baseUrl, setBaseUrl] = useState<string | undefined>(undefined);
@@ -351,7 +349,7 @@ export const useImportActions = ({
 
                 if (existingCollection && updateCollection) {
                     // Update Flow
-                    updateCollection(existingCollection.id, {
+                    await updateCollection(existingCollection.id, {
                         manifest, // Use the rebuilt manifest exactly as is; do NOT shallow merge
                         modules: newModulesRecord,
                         config: {
@@ -375,7 +373,7 @@ export const useImportActions = ({
                             clients: derivedClients
                         }
                     };
-                    addCollection(newCollection);
+                    await addCollection(newCollection);
                 } else {
                     // Legacy Fallback (Should not be hit if wired correctly)
                     if (onManifestUpdate) {
@@ -432,43 +430,6 @@ export const useImportActions = ({
                 existingModules = await api.fetchProjectDefinitions(api.getBridgeUrl());
             } catch (e) {
                 console.warn("Failed to fetch existing definitions for merge:", e);
-            }
-
-            // Check and increment import count for Hobby users
-            // We do this BEFORE the actual update to prevent abuse, or concurrently? 
-            // Better do it before. If it fails (limit reached), we stop.
-            if (!isPro) {
-                try {
-                    const recordRes = await fetch('/api/user/record-import', { method: 'POST' });
-                    const recordData = await recordRes.json();
-
-                    if (!recordRes.ok) {
-                        // If forbidden or other error
-                        if (recordRes.status === 403) {
-                            throw new Error("Free limit reached: " + (recordData.error || "Upgrade to Pro for unlimited imports."));
-                        }
-                        // For other errors (db fetch fail), we might choose to be lenient or strict.
-                        // Let's be strict to prevent bypass on error.
-                        // console.error("Tracking error", recordData);
-                        // throw new Error("Failed to verify import limit.");
-                    }
-
-                    // Refresh session to get updated import count
-                    if (updateSession) {
-                        updateSession();
-                    }
-                } catch (e: unknown) {
-                const errorMessage = e instanceof Error ? e.message : String(e);
-                    // Propagate the error to stop the process
-                    if (errorMessage?.includes("Free limit reached")) {
-                        console.warn("Import limit reached:", errorMessage);
-                    } else {
-                        console.error("Limit check failed:", e);
-                    }
-                    onError(errorMessage);
-                    setStep("review");
-                    return;
-                }
             }
 
             const payload = {

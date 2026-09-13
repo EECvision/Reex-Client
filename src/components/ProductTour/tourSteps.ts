@@ -92,9 +92,9 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: "user-menu",
     target: '[data-tour="user-menu"]',
-    title: "Account & Preferences",
+    title: "Workspace & Preferences",
     description:
-      "Manage your account, toggle themes, view billing / pro status, or replay this guide anytime from the menu.",
+      "Change workspace settings, toggle themes, find support, or replay this guide anytime from the menu.",
     placement: "top",
     category: "Settings",
   },

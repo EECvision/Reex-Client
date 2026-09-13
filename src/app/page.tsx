@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 // Static imports removed in favor of ProjectContext
 import { useProject, StandaloneCollection } from "@/providers/ProjectContext";
+import { useSettings } from "@/providers/SettingsContext";
 import ImportModal from "@/components/ImportModal/ImportModal";
 import HistoryModal from "@/components/HistoryModal/HistoryModal";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal/DeleteConfirmModal";
@@ -20,6 +21,7 @@ import { EndpointInfo } from "@/types";
 import { openInCodeSandbox } from "@/utils/codesandbox/index";
 import {
   TabPointer,
+  normalizeTabPointers,
   selectEndpoint,
   doubleClickEndpoint,
 } from "@/utils/tabManagement";
@@ -47,6 +49,7 @@ const useMediaQuery = (query: string): boolean => {
 };
 
 const AppContent = () => {
+  const { pinTabsByDefault } = useSettings();
   // Prevent default browser right-click context menu globally
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => {
@@ -108,7 +111,7 @@ const AppContent = () => {
       const savedPointers = localStorage.getItem("reex_project_tabs");
       if (savedPointers) {
         try {
-          return JSON.parse(savedPointers);
+          return normalizeTabPointers(JSON.parse(savedPointers));
         } catch (e) {
           console.error("Failed to parse tab pointers", e);
         }
@@ -183,7 +186,7 @@ const AppContent = () => {
   }, [tabs, activeTabIndex]);
 
   const handleSelectEndpoint = (endpoint: EndpointInfo) => {
-    const { newPointers, newActiveKey } = selectEndpoint(tabPointers, endpoint);
+    const { newPointers, newActiveKey } = selectEndpoint(tabPointers, endpoint, pinTabsByDefault);
     setTabPointers(newPointers);
     setActiveTabKey(newActiveKey);
   };
@@ -240,7 +243,7 @@ const AppContent = () => {
   };
 
   const handleTabsDeletion = (filterFn: (pointer: TabPointer) => boolean) => {
-    const newPointers = tabPointers.filter(filterFn);
+    const newPointers = normalizeTabPointers(tabPointers).filter(filterFn);
     if (newPointers.length !== tabPointers.length) {
       setTabPointers(newPointers);
       if (!newPointers.some((p) => `${p.apiKey}__${p.fnName}` === activeTabKey)) {
@@ -341,43 +344,47 @@ const AppContent = () => {
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isSandboxOpen, setIsSandboxOpen] = useState(false);
 
-  const handleSaveAuth = (
+  const handleSaveAuth = async (
     collectionId: string,
     token: string,
     customHeaders: Record<string, string>,
   ) => {
-    if (isStandaloneMode) {
-      const targetCol = collections.find((c) => c.id === collectionId);
-      if (!targetCol) return;
+    try {
+      if (isStandaloneMode) {
+        const targetCol = collections.find((c) => c.id === collectionId);
+        if (!targetCol) return;
 
-      updateCollection(collectionId, {
-        config: {
-          ...targetCol.config,
-          auth: {
-            token,
-            customHeaders,
+        await updateCollection(collectionId, {
+          config: {
+            ...targetCol.config,
+            auth: {
+              token,
+              customHeaders,
+            },
           },
-        },
-      });
-    } else {
-      const authData = { token, customHeaders };
-      setConfig({
-        ...projectConfig,
-        auth: authData,
-      });
+        });
+      } else {
+        const authData = { token, customHeaders };
+        setConfig({
+          ...projectConfig,
+          auth: authData,
+        });
 
-      // Persist auth to localStorage for dev mode
-      if (typeof window !== "undefined") {
-        if (token || Object.keys(customHeaders).length > 0) {
-          localStorage.setItem("reex_project_auth", JSON.stringify(authData));
-        } else {
-          localStorage.removeItem("reex_project_auth");
+        // Persist auth to localStorage for dev mode
+        if (typeof window !== "undefined") {
+          if (token || Object.keys(customHeaders).length > 0) {
+            localStorage.setItem("reex_project_auth", JSON.stringify(authData));
+          } else {
+            localStorage.removeItem("reex_project_auth");
+          }
         }
       }
-    }
 
-    // Close modal on save
-    setShowAuthModal(false);
+      // Close modal on save
+      setShowAuthModal(false);
+    } catch (error) {
+      console.error("Could not save API authentication:", error);
+    }
   };
 
   const {
@@ -514,7 +521,7 @@ const AppContent = () => {
           onDeleteFunction={handleDeleteFunction}
           onDeleteCollection={openDeleteModal}
           onDownloadCollection={handleDownloadCollection}
-          onRenameCollection={(id, name) => updateCollection(id, { name })}
+          onRenameCollection={(id, name) => updateCollection(id, { name }).catch(() => {})}
           onUpdateCollection={openUpdateModal}
           onOpenSandbox={(id) => {
             const col = collections.find((c) => c.id === id);
@@ -591,7 +598,7 @@ const AppContent = () => {
                   baseURL: newUrl,
                   clients: updatedClients,
                 },
-              });
+              }).catch(() => {});
             } else {
               setConfig({
                 ...projectConfig,
@@ -676,7 +683,8 @@ const AppContent = () => {
             const isClearAll = isStandaloneMode && !collectionToDelete;
             const colId = collectionToDelete;
 
-            await handleDeleteCollection();
+            const deleted = await handleDeleteCollection();
+            if (!deleted) return;
 
             if (isClearAll || !isStandaloneMode) {
               setTabPointers([]);

@@ -131,8 +131,7 @@
 | `useCollections.ts` | Collection state management (CRUD, persistence) |
 | `useStandaloneCollections.ts` | Browser-persisted collection storage |
 | `useRecentCollections.ts` | Recent collections history |
-| `useSubscription.ts` | Subscription management |
-| `useFlutterwaveCustom.ts` | Flutterwave payment integration |
+| `collectionStorage.ts` | Browser collection persistence |
 
 ### `src/utils/`
 | File | Purpose |

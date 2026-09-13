@@ -1,234 +1,75 @@
 .container {
-    padding: 40px 16px;
-    max-width: 840px;
-    margin: 0 auto;
-    width: 100%;
-    animation: fadeIn 0.3s ease-out;
-}
-
-.content {
-    display: flex;
-    flex-direction: column;
-    gap: 32px;
+  padding: 40px 16px;
+  max-width: 840px;
+  margin: 0 auto;
+  width: 100%;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .header {
-    text-align: center;
+  text-align: center;
 }
 
 .title {
-    font-size: 32px;
-    font-weight: 700;
-    margin-bottom: 12px;
-    color: var(--text-primary);
-    letter-spacing: -0.5px;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
 }
 
 .subtitle {
-    font-size: 16px;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    margin: 0 auto;
-}
-
-.viewIssuesButton {
-    display: inline-flex;
-    align-items: center;
-    padding: 8px 16px;
-    background-color: var(--input-bg, #f8fafc);
-    color: var(--text-primary);
-    border-radius: 6px;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-    border: 1px solid var(--border-color);
-    transition: all 0.2s;
-}
-
-.viewIssuesButton:hover {
-    background-color: var(--hover-bg, #f1f5f9);
-    border-color: var(--primary-color, #3b82f6);
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 auto;
 }
 
 .card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 32px;
-}
-
-.form {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-
-.formGroup {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.label {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.input,
-.textarea {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
-    font-family: inherit;
-    border: 1.5px solid var(--border-color, #e2e8f0);
-    border-radius: 8px;
-    background-color: var(--input-bg, #fff);
-    color: var(--text-primary, #1e293b);
-    transition: all 0.2s ease;
-    outline: none;
-}
-
-.input::placeholder,
-.textarea::placeholder {
-    color: var(--text-muted, #94a3b8);
-}
-
-.input:hover,
-.textarea:hover {
-    border-color: var(--border-color, #cbd5e1);
-    background-color: var(--input-bg, #fff);
-}
-
-.input:focus,
-.textarea:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.textarea {
-    resize: vertical;
-    min-height: 120px;
-    line-height: 1.5;
-}
-
-.formFooter {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 8px;
-}
-
-.buttonIcon {
-    margin-right: 8px;
-}
-
-.spinner {
-    margin-right: 8px;
-    animation: spin 1s linear infinite;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 32px;
+  display: grid;
+  gap: 16px;
+  margin-top: 32px;
 }
 
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
+  from {
+    transform: rotate(0deg);
+  }
 
-    to {
-        transform: rotate(360deg);
-    }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.successState {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 0;
-    text-align: center;
-}
-
-.successIcon {
-    color: var(--success);
-    margin-bottom: 24px;
-}
-
-.successTitle {
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 12px;
-}
-
-.successText {
-    font-size: 16px;
-    color: var(--text-secondary);
-    margin-bottom: 32px;
-    max-width: 400px;
-}
-
-.errorMessage {
-    padding: 12px;
-    border-radius: 6px;
-    background-color: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-    font-size: 14px;
-    margin-bottom: 16px;
-    border: 1px solid rgba(239, 68, 68, 0.2);
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 640px) {
-    .container {
-        padding: 24px 16px;
-    }
+  .container {
+    padding: 24px 16px;
+  }
 
-    .title {
-        font-size: 24px;
-    }
+  .title {
+    font-size: 24px;
+  }
 
-    .card {
-        padding: 24px;
-    }
-
-    .formFooter {
-        justify-content: stretch;
-    }
-
-    .formFooter button {
-        width: 100%;
-    }
-}
-
-.whatsappFab {
-    position: fixed;
-    bottom: 32px;
-    right: 32px;
-    width: 56px;
-    height: 56px;
-    background-color: #25D366;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transition: all 0.2s ease;
-    z-index: 100;
-    text-decoration: none;
-}
-
-.whatsappFab:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-    color: white;
+  .card {
+    padding: 24px;
+    display: grid;
+    gap: 16px;
+    margin-top: 32px;
+  }
 }

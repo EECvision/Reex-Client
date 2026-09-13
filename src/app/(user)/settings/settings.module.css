@@ -1,372 +1,124 @@
 .container {
-    padding: 32px;
-    max-width: 1200px;
-    margin: 0 auto;
-    animation: fadeIn 0.3s ease-out;
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .pageTitle {
-    font-size: 32px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 48px;
-}
-
-.layout {
-    display: grid;
-    grid-template-columns: 240px 1fr;
-    gap: 64px;
-}
-
-.sidebar {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    position: sticky;
-    top: 96px;
-    /* 64px header + 32px padding */
-    align-self: flex-start;
-}
-
-.navItem {
-    text-align: left;
-    padding: 8px 12px;
-    border-radius: 6px;
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.navItem:hover {
-    background: var(--hover-bg);
-    color: var(--text-primary);
-}
-
-.active {
-    background: var(--active-bg);
-    color: var(--text-primary);
-    font-weight: 600;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 48px;
 }
 
 .content {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    overflow: hidden;
-    /* For footer rounding */
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .cardContent {
-    padding: 24px;
+  padding: 24px;
 }
 
 .cardTitle {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
 }
 
 .cardDescription {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin-bottom: 24px;
-    line-height: 1.5;
-    max-width: 600px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  line-height: 1.5;
+  max-width: 600px;
 }
 
 .input {
-    width: 100%;
-    max-width: 320px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 14px;
-    outline: none;
-    transition: box-shadow 0.2s;
+  width: 100%;
+  max-width: 320px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: box-shadow 0.2s;
 }
 
 .input:focus {
-    border-color: var(--text-primary);
+  border-color: var(--text-primary);
 }
 
 .cardFooter {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 24px;
-    border-top: 1px solid var(--border-color);
-    background: var(--bg-secondary);
-    /* Often slightly different bg */
-}
-
-.footerText {
-    font-size: 13px;
-    color: var(--text-secondary);
-}
-
-/* Theme Selection */
-.themeSelector {
-    display: flex;
-    gap: 12px;
-}
-
-.themeOption {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px 16px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.themeOptionActive {
-    border: 2px solid var(--primary-color);
-    background: var(--active-bg);
-}
-
-.themeOptionText {
-    font-size: 13px;
-    font-weight: 500;
-}
-
-/* Integrations */
-.integrationList {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.integrationRow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-}
-
-.integrationContent {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.integrationIcon {
-    width: 32px;
-    height: 32px;
-    background: #000;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    font-size: 10px;
-}
-
-.integrationName {
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.integrationDesc {
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-/* Utilities */
-.emptyState {
-    padding: 32px;
-    text-align: center;
-    color: var(--text-secondary);
-    background: var(--bg-secondary);
-    border-radius: 6px;
-    border: 1px dashed var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
 }
 
 .input:disabled {
-    background: var(--bg-secondary);
-    opacity: 0.7;
-    cursor: not-allowed;
+  background: var(--bg-secondary);
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-
-/* Invoices */
-.invoiceList {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 16px;
-}
-
-.invoiceItem {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    transition: background 0.2s;
-}
-
-.invoiceItem:hover {
-    background: var(--hover-bg);
-}
-
-.invoiceInfo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.invoiceIcon {
-    width: 32px;
-    height: 32px;
-    background: rgba(30, 64, 175, 0.2);
-    /* blue-900/20 */
-    color: var(--primary-color);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.invoiceMeta {
-    display: flex;
-    flex-direction: column;
-}
-
-.invoiceTitle {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: 4px;
-}
-
-.invoiceDate {
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-.invoiceActions {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-/* Skeleton Loading */
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
+  from {
+    transform: rotate(0deg);
+  }
 
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.loadingState {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    padding: 32px 0;
-    color: var(--text-secondary);
-    gap: 8px;
-}
-
-.loadingIcon {
-    animation: spin 1s linear infinite;
-    color: var(--primary-color);
-}
-
-.loadingText {
-    font-size: 14px;
-    font-weight: 500;
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {
-    .container {
-        padding: 16px;
-    }
+  .container {
+    padding: 16px;
+  }
 
-    .pageTitle {
-        font-size: 24px;
-        margin-bottom: 24px;
-    }
+  .pageTitle {
+    font-size: 24px;
+    margin-bottom: 24px;
+  }
 
-    .layout {
-        grid-template-columns: 1fr;
-        gap: 32px;
-    }
+  .cardContent {
+    padding: 20px;
+  }
 
-    .sidebar {
-        position: static;
-        flex-direction: row;
-        overflow-x: auto;
-        padding-bottom: 8px;
-        border-bottom: 1px solid var(--border-color);
-        margin-bottom: -8px;
-        -webkit-overflow-scrolling: touch;
-    }
+  .cardFooter {
+    padding: 16px 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
 
-    .sidebar::-webkit-scrollbar {
-        height: 0;
-    }
-
-    .navItem {
-        white-space: nowrap;
-        padding: 8px 16px;
-    }
-
-    .cardContent {
-        padding: 20px;
-    }
-
-    .cardFooter {
-        padding: 16px 20px;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-    }
-
-    .footerText {
-        margin-bottom: 4px;
-    }
-
-    .input {
-        max-width: none;
-    }
-
-    .themeSelector {
-        flex-direction: column;
-    }
+  .input {
+    max-width: none;
+  }
 }

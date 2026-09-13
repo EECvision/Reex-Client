@@ -14,36 +14,6 @@
 }
 
 /* Usage badge in header (dots + count) */
-.usageBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: 99px;
-  background-color: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.25);
-  color: #f59e0b;
-}
-
-.usageDots {
-  display: flex;
-  gap: 3px;
-  align-items: center;
-}
-
-.usageDots span {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: #f59e0b;
-  opacity: 1;
-}
-
-.usageDots span:last-child {
-  opacity: 0.35;
-}
 
 /* === Tab Bar === */
 .tabBar {
@@ -246,35 +216,6 @@
   justify-content: space-between;
   width: 100%;
   gap: 1rem;
-}
-
-.footerLeft {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8125rem;
-  color: var(--text-secondary, #64748b);
-  flex-shrink: 0;
-}
-
-.footerUsage {
-  color: var(--text-secondary, #64748b);
-}
-
-.footerDot {
-  color: var(--text-muted, #475569);
-}
-
-.footerUpgrade {
-  color: var(--primary-color, #3b82f6);
-  text-decoration: none;
-  font-weight: 500;
-  transition: opacity 0.15s;
-}
-
-.footerUpgrade:hover {
-  opacity: 0.8;
-  text-decoration: underline;
 }
 
 .footerRight {

@@ -1,4 +1,3 @@
-import { useAuth } from "@/providers/AuthContext";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   Check,
@@ -21,9 +20,8 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import React, { useCallback, useEffect, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import LoginModal from "../LoginModal/LoginModal";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
 import { Button } from "../ui/Button/Button";
 import { BaseUrlInput } from "./BaseUrlInput";
@@ -101,9 +99,6 @@ const Navbar: React.FC<NavbarProps> = ({
   );
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
-  const { isAuthenticated } = useAuth();
-  const [showLoginModal, setShowLoginModal] = useState(false);
-
   const syncUrl = useCallback(() => {
     const stored = localStorage.getItem("reex_docs_url");
     if (stored !== null && stored !== url) {
@@ -344,10 +339,6 @@ const Navbar: React.FC<NavbarProps> = ({
               <DropdownMenu.Item
                 className={styles.dropdownItem}
                 onClick={() => {
-                  if (!isAuthenticated) {
-                    setShowLoginModal(true);
-                    return;
-                  }
                   onImportClick();
                 }}
               >
@@ -357,10 +348,6 @@ const Navbar: React.FC<NavbarProps> = ({
               <DropdownMenu.Item
                 className={styles.dropdownItem}
                 onClick={() => {
-                  if (!isAuthenticated) {
-                    setShowLoginModal(true);
-                    return;
-                  }
                   if (url) {
                     onFetchUrl(url);
                   } else if (onOpenFetchModal) {
@@ -379,10 +366,6 @@ const Navbar: React.FC<NavbarProps> = ({
                 <DropdownMenu.Item
                   className={styles.dropdownItem}
                   onClick={() => {
-                    if (!isAuthenticated) {
-                      setShowLoginModal(true);
-                      return;
-                    }
                     onOpenPostmanModal();
                   }}
                 >
@@ -472,10 +455,6 @@ const Navbar: React.FC<NavbarProps> = ({
               <Button
                 variant="ghost"
                 onClick={() => {
-                  if (!isAuthenticated) {
-                    setShowLoginModal(true);
-                    return;
-                  }
                   if (url) {
                     onFetchUrl(url);
                   } else if (onOpenFetchModal) {
@@ -498,10 +477,6 @@ const Navbar: React.FC<NavbarProps> = ({
               <Button
                 variant="ghost"
                 onClick={() => {
-                  if (!isAuthenticated) {
-                    setShowLoginModal(true);
-                    return;
-                  }
                   onImportClick();
                   setIsMobileMenuOpen(false);
                 }}
@@ -546,11 +521,6 @@ const Navbar: React.FC<NavbarProps> = ({
           </>,
           document.body,
         )}
-      <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        message="You need to be signed in to import or update a collection."
-      />
     </nav>
   );
 };

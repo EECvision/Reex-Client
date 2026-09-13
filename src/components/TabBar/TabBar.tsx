@@ -59,6 +59,20 @@ const TabBar: React.FC<TabBarProps> = ({
     return () => el.removeEventListener("wheel", handleWheel);
   }, []);
 
+  useEffect(() => {
+    const handlePinShortcut = (event: KeyboardEvent) => {
+      if (
+        !(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey ||
+        event.key.toLowerCase() !== "s" || !tabs[activeTabIndex]
+      ) return;
+      event.preventDefault();
+      if (!tabs[activeTabIndex].isPinned) onPinTab(activeTabIndex);
+    };
+    // Capture the shortcut even when a request editor has keyboard focus.
+    window.addEventListener("keydown", handlePinShortcut, true);
+    return () => window.removeEventListener("keydown", handlePinShortcut, true);
+  }, [activeTabIndex, onPinTab, tabs]);
+
   if (tabs.length === 0) return null;
 
   const handleContextMenu = (e: React.MouseEvent, tabIndex: number | null = null) => {

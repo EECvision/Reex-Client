@@ -11,7 +11,7 @@ interface UseCollectionManagementProps {
     registerTaskId: (taskId: string) => void;
     isStandaloneMode?: boolean;
     setManifest?: (manifest: Record<string, Record<string, EndpointInfo>> | null) => void;
-    removeCollection?: (id: string) => void;
+    removeCollection?: (id: string) => Promise<void>;
     activeCollectionId?: string;
     setCollections?: (cols: StandaloneCollection[]) => void;
     clearAllCollections?: () => Promise<void>;
@@ -98,31 +98,30 @@ export const useCollectionManagement = ({
         }
     };
 
-    const handleDeleteCollection = async () => {
+    const handleDeleteCollection = async (): Promise<boolean> => {
         setDeleting(true);
 
         // Standalone mode: remove specific or clear all
         if (isStandaloneMode) {
-            if (collectionToDelete && removeCollection) {
-                // Delete specific
-                removeCollection(collectionToDelete);
-            } else if (!collectionToDelete) {
-                // Delete ALL (Navbar)
-                if (clearAllCollections) {
-                    await clearAllCollections();
-                } else if (setCollections) {
-                    setCollections([]);
+            try {
+                if (collectionToDelete && removeCollection) {
+                    await removeCollection(collectionToDelete);
+                } else if (!collectionToDelete) {
+                    if (clearAllCollections) await clearAllCollections();
+                    else if (setCollections) setCollections([]);
+                    showToast('success', 'All collections cleared!');
+                } else if (setManifest) {
+                    setManifest({});
                 }
-                showToast("success", "All collections cleared!");
-            } else if (setManifest) {
-                // Legacy fallback
-                setManifest({});
-                showToast("success", "Collection cleared!");
+                setShowDeleteModal(false);
+                setCollectionToDelete(null);
+                return true;
+            } catch (error) {
+                showToast('error', error instanceof Error ? error.message : 'Could not delete the collection.');
+                return false;
+            } finally {
+                setDeleting(false);
             }
-            setShowDeleteModal(false);
-            setDeleting(false);
-            setCollectionToDelete(null);
-            return;
         }
 
         try {
@@ -143,10 +142,12 @@ export const useCollectionManagement = ({
                 refreshProject(true);
             }
             // If data.taskId exists, we wait for SSE in useProjectSync
+            return true;
         } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : String(err);
             showToast("error", errorMessage || "Failed to delete collection");
             setDeleting(false);
+            return false;
         }
     };
 

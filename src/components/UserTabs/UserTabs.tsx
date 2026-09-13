@@ -9,12 +9,11 @@ export default function UserTabs() {
     const pathname = usePathname();
 
     const tabs = [
-        { name: "Overview", path: "/dashboard" }, // Renamed Dashboard to Overview for Vercel feel
-        { name: "Subscription", path: "/subscription" },
+        { name: "Workspace", path: "/" },
         { name: "Settings", path: "/settings" },
     ];
 
-    const isActive = (path: string) => pathname?.startsWith(path);
+    const isActive = (path: string) => path === '/' ? pathname === '/' : pathname?.startsWith(path);
 
     return (
         <div className={styles.container}>

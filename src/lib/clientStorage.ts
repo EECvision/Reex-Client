@@ -1,208 +1,238 @@
-const DB_NAME = 'reex_app_storage';
+const DB_NAME = "reex_app_storage";
 const DB_VERSION = 1;
-const STORE_NAME = 'collections';
+const STORE_NAME = "collections";
 
 function openDB(): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
-        if (typeof window === 'undefined') {
-            reject(new Error('IndexedDB not available'));
-            return;
-        }
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-        request.onupgradeneeded = () => {
-            const db = request.result;
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                db.createObjectStore(STORE_NAME);
-            }
-        };
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-    });
+  return new Promise((resolve, reject) => {
+    if (typeof indexedDB === "undefined") {
+      reject(
+        new Error(
+          "Browser storage is unavailable. Enable site storage to save collections.",
+        ),
+      );
+      return;
+    }
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    let blocked = false;
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains(STORE_NAME))
+        request.result.createObjectStore(STORE_NAME);
+    };
+    request.onblocked = () => {
+      blocked = true;
+      reject(
+        new Error(
+          "Close other Reex tabs and try again to unlock browser storage.",
+        ),
+      );
+    };
+    request.onsuccess = () => {
+      const db = request.result;
+      db.onversionchange = () => db.close();
+      if (blocked) db.close();
+      else resolve(db);
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function readItems<T>(value: unknown): T[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value))
+    throw new Error(
+      "Saved data could not be read. Your existing data has been kept.",
+    );
+  return value as T[];
 }
 
 export interface CachedExecutionResult {
-    id: string;
-    result?: unknown;
-    error?: string;
-    executedCurl?: string;
-    interfacePreview?: string;
-    timestamp?: number;
+  id: string;
+  result?: unknown;
+  error?: string;
+  executedCurl?: string;
+  interfacePreview?: string;
+  timestamp?: number;
 }
 
 export class ClientStorage {
-    static async get<T>(key: string): Promise<T[]> {
-        if (typeof window === 'undefined') return [];
-        try {
-            const db = await openDB();
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(STORE_NAME, 'readonly');
-                const store = tx.objectStore(STORE_NAME);
-                const request = store.get(key);
-                request.onsuccess = () => resolve(request.result || []);
-                request.onerror = () => reject(request.error);
-            });
-        } catch (error) {
-            console.error(`[ClientStorage] Error reading key "${key}":`, error);
-            return [];
-        }
+  static async get<T>(key: string): Promise<T[]> {
+    if (typeof window === "undefined") return [];
+    const db = await openDB();
+    try {
+      return await new Promise<T[]>((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readonly");
+        const request = tx.objectStore(STORE_NAME).get(key);
+        tx.oncomplete = () => {
+          try {
+            resolve(readItems<T>(request.result));
+          } catch (error) {
+            reject(error);
+          }
+        };
+        tx.onabort = () =>
+          reject(tx.error || new Error("Could not read browser storage."));
+      });
+    } finally {
+      db.close();
     }
+  }
 
-    static async save<T>(key: string, data: T[]): Promise<void> {
-        if (typeof window === 'undefined') return;
-        const db = await openDB();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            const store = tx.objectStore(STORE_NAME);
-            const request = store.put(data, key);
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-        });
+  // Read and write in one transaction so overlapping edits cannot overwrite each other.
+  // Callbacks must be synchronous to keep the IndexedDB transaction active.
+  static async mutate<T>(
+    key: string,
+    change: (items: T[]) => T[],
+  ): Promise<T[]> {
+    const db = await openDB();
+    try {
+      return await new Promise<T[]>((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.get(key);
+        let items: T[];
+        let changeError: unknown;
+        request.onsuccess = () => {
+          try {
+            items = change(readItems<T>(request.result));
+            store.put(items, key);
+          } catch (error) {
+            changeError = error;
+            tx.abort();
+          }
+        };
+        tx.oncomplete = () => resolve(items);
+        tx.onabort = () =>
+          reject(
+            changeError ||
+              tx.error ||
+              new Error("Could not save to browser storage."),
+          );
+      });
+    } finally {
+      db.close();
     }
+  }
 
-    static async add<T>(key: string, item: T): Promise<T[]> {
-        const items = await this.get<T>(key);
-        const newItems = [...items, item];
-        await this.save(key, newItems);
-        return newItems;
+  static async save<T>(key: string, data: T[]): Promise<void> {
+    await this.mutate<T>(key, () => data);
+  }
+
+  static add<T>(key: string, item: T): Promise<T[]> {
+    return this.mutate<T>(key, (items) => [...items, item]);
+  }
+
+  static update<T extends { id: string }>(
+    key: string,
+    id: string,
+    updates: Partial<T> | ((item: T) => T),
+  ): Promise<T[]> {
+    return this.mutate<T>(key, (items) => {
+      if (!items.some((item) => item.id === id))
+        throw new Error("The saved item no longer exists.");
+      return items.map((item) =>
+        item.id === id
+          ? typeof updates === "function"
+            ? updates(item)
+            : { ...item, ...updates }
+          : item,
+      );
+    });
+  }
+
+  static delete<T extends { id: string }>(
+    key: string,
+    id: string,
+  ): Promise<T[]> {
+    return this.mutate<T>(key, (items) =>
+      items.filter((item) => item.id !== id),
+    );
+  }
+
+  static upsert<T extends { id: string }>(key: string, item: T): Promise<T[]> {
+    return this.mutate<T>(key, (items) =>
+      items.some((existing) => existing.id === item.id)
+        ? items.map((existing) =>
+            existing.id === item.id ? { ...existing, ...item } : existing,
+          )
+        : [...items, item],
+    );
+  }
+
+  static async clear(key: string): Promise<void> {
+    const db = await openDB();
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        tx.objectStore(STORE_NAME).delete(key);
+        tx.oncomplete = () => resolve();
+        tx.onabort = () =>
+          reject(tx.error || new Error("Could not clear browser storage."));
+      });
+    } finally {
+      db.close();
     }
+  }
 
-    static async update<T extends { id: string }>(key: string, id: string, updates: Partial<T>): Promise<T[]> {
-        const items = await this.get<T>(key);
-        const newItems = items.map(item => item.id === id ? { ...item, ...updates } : item);
-        await this.save(key, newItems);
-        return newItems;
+  // Caches are optional and bounded independently of collection storage.
+  static async getExecutionResult(
+    requestId: string,
+  ): Promise<CachedExecutionResult | undefined> {
+    try {
+      return (await this.get<CachedExecutionResult>("request_results")).find(
+        (item) => item.id === requestId,
+      );
+    } catch (error) {
+      console.warn("[ClientStorage] Could not read cached response:", error);
     }
+  }
 
-    static async delete<T extends { id: string }>(key: string, id: string): Promise<T[]> {
-        const items = await this.get<T>(key);
-        const newItems = items.filter(item => item.id !== id);
-        await this.save(key, newItems);
-        return newItems;
+  static async saveExecutionResult(
+    requestId: string,
+    resultData: Omit<CachedExecutionResult, "id" | "timestamp">,
+  ): Promise<void> {
+    if (typeof window === "undefined") return;
+    const save = (limit: number) =>
+      this.mutate<CachedExecutionResult>("request_results", (items) =>
+        [
+          { id: requestId, ...resultData, timestamp: Date.now() },
+          ...items.filter((item) => item.id !== requestId),
+        ].slice(0, limit),
+      );
+    try {
+      try {
+        await save(20);
+      } catch (error) {
+        if (
+          !(error instanceof DOMException) ||
+          error.name !== "QuotaExceededError"
+        )
+          throw error;
+        await save(5);
+      }
+    } catch (error) {
+      console.warn("[ClientStorage] Could not cache response:", error);
     }
+  }
 
-    static async upsert<T extends { id: string }>(key: string, item: T): Promise<T[]> {
-        const items = await this.get<T>(key);
-        const index = items.findIndex(i => i.id === item.id);
-
-        let newItems;
-        if (index > -1) {
-            newItems = [...items];
-            newItems[index] = { ...newItems[index], ...item };
-        } else {
-            newItems = [...items, item];
-        }
-
-        await this.save(key, newItems);
-        return newItems;
+  static async getAssistantMessages<T>(): Promise<T[]> {
+    try {
+      return await this.get<T>("assistant_messages");
+    } catch (error) {
+      console.warn("[ClientStorage] Could not read cached messages:", error);
+      return [];
     }
+  }
 
-    static async clear(key: string): Promise<void> {
-        if (typeof window === 'undefined') return;
-        try {
-            const db = await openDB();
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(STORE_NAME, 'readwrite');
-                const store = tx.objectStore(STORE_NAME);
-                const request = store.delete(key);
-                request.onsuccess = () => resolve();
-                request.onerror = () => reject(request.error);
-            });
-        } catch (error) {
-            console.error(`[ClientStorage] Error clearing key "${key}":`, error);
-        }
+  static async saveAssistantMessages<T>(messages: T[]): Promise<void> {
+    if (typeof window === "undefined") return;
+    try {
+      await this.save("assistant_messages", messages.slice(-20));
+    } catch (error) {
+      console.warn("[ClientStorage] Could not cache messages:", error);
     }
+  }
 
-    /**
-     * Save with staged quota-exceeded recovery.
-     * If the save fails due to quota, progressively clears other keys to free space.
-     * @param key - The key to save data under
-     * @param data - The data to save
-     * @param evictionOrder - Keys to clear in order if quota is exceeded (excluding the target key)
-     * @returns true if saved successfully, false if all eviction attempts failed
-     */
-    static async saveWithRetry<T>(key: string, data: T[], evictionOrder: string[]): Promise<boolean> {
-        // Attempt 1: Try saving directly
-        try {
-            await this.save(key, data);
-            return true;
-        } catch {
-            console.warn(`[ClientStorage] Save failed for "${key}", starting eviction...`);
-        }
-
-        // Staged eviction: clear keys one by one and retry after each
-        for (const evictKey of evictionOrder) {
-            try {
-                console.warn(`[ClientStorage] Evicting "${evictKey}" to free space...`);
-                await this.clear(evictKey);
-                await this.save(key, data);
-                console.log(`[ClientStorage] ✅ Saved "${key}" after evicting "${evictKey}"`);
-                return true;
-            } catch {
-                console.warn(`[ClientStorage] Still failed after evicting "${evictKey}"`);
-            }
-        }
-
-        console.error(`[ClientStorage] ❌ Cannot save "${key}" — item may exceed total IndexedDB capacity.`);
-        return false;
-    }
-
-    // --- Execution Result Caching ---
-    static async getExecutionResult(requestId: string): Promise<CachedExecutionResult | undefined> {
-        const items = await this.get<CachedExecutionResult>('request_results');
-        return items.find(i => i.id === requestId);
-    }
-
-    static async saveExecutionResult(requestId: string, resultData: Omit<CachedExecutionResult, 'id' | 'timestamp'>): Promise<void> {
-        if (typeof window === 'undefined') return;
-        
-        try {
-            const items = await this.get<CachedExecutionResult>('request_results');
-            
-            // Remove older instance
-            let filtered = items.filter(i => i.id !== requestId);
-            
-            // Add new result to front
-            filtered.unshift({ id: requestId, ...resultData, timestamp: Date.now() });
-            
-            // Apply normal LRU Cap (20)
-            if (filtered.length > 20) {
-                filtered = filtered.slice(0, 20);
-            }
-            
-            try {
-                await this.save('request_results', filtered);
-            } catch (error) {
-                if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-                    console.warn('[ClientStorage] Quota exceeded on request_results. Trimming aggressively.');
-                    // Aggressive fallback to last 5
-                    filtered = filtered.slice(0, 5);
-                    await this.save('request_results', filtered);
-                } else {
-                    throw error;
-                }
-            }
-        } catch (e) {
-            console.error('[ClientStorage] Failed to save execution result:', e);
-        }
-    }
-
-    // --- Assistant Message Caching ---
-    static async getAssistantMessages<T>(): Promise<T[]> {
-        return this.get<T>('assistant_messages');
-    }
-
-    static async saveAssistantMessages<T>(messages: T[]): Promise<void> {
-        if (typeof window === 'undefined') return;
-        try {
-            // Apply FIFO Cap (keep latest 20 items)
-            const trimmed = messages.length > 20 ? messages.slice(-20) : messages;
-            await this.save('assistant_messages', trimmed);
-        } catch (e) {
-            console.error('[ClientStorage] Failed to save assistant messages:', e);
-        }
-    }
-
-    static async clearAssistantMessages(): Promise<void> {
-        return this.clear('assistant_messages');
-    }
+  static clearAssistantMessages(): Promise<void> {
+    return this.clear("assistant_messages");
+  }
 }

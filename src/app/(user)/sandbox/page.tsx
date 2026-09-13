@@ -12,19 +12,12 @@ import { TestApiAuthModal } from "@/components/TestApiAuthModal/TestApiAuthModal
 import { Modal } from "@/components/ui/Modal/Modal";
 import { Button } from "@/components/ui/Button/Button";
 import { Loading } from "@/components/ui/Loading/Loading";
-import { useAuth } from "@/providers/AuthContext";
-import { signOut } from "next-auth/react";
 import { useCollections } from "@/hooks/useCollections";
-import { useToast } from "@/hooks/useToast";
-
 import { useUI } from "@/providers/UIContext";
-import LoginModal from "@/components/LoginModal/LoginModal";
 import { ResizablePanel } from "@/components/ui/ResizablePanel/ResizablePanel";
 import TestApiNavbar from "@/components/TestApiNavbar/TestApiNavbar";
 
 export default function TestApiPage() {
-  const { user } = useAuth();
-  const { showToast } = useToast();
   const { isSidebarOpen, setSidebarOpen, setHasSidebar } = useUI();
 
   // Prevent default browser right-click context menu globally
@@ -48,7 +41,7 @@ export default function TestApiPage() {
     deleteRequest,
     toggleCollection,
     updateCollection,
-  } = useCollections(user?.id);
+  } = useCollections();
 
   // Active Request & Collection State
   const [activeRequest, setActiveRequest] = useState<RequestItem | null>(null);
@@ -56,7 +49,6 @@ export default function TestApiPage() {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [modalType, setModalType] = useState<
@@ -80,21 +72,6 @@ export default function TestApiPage() {
   // --- Actions ---
 
   const handleAddCollection = async () => {
-    if (!user) {
-      setShowLoginModal(true);
-      return;
-    }
-
-    // Check for stale session (User object exists but has no ID)
-    if (user && !user.id) {
-      console.warn("Stale session detected: User has no ID");
-      showToast("error", "Session incomplete. Please sign in again.");
-      // Force logout to clear stale token
-      await signOut({ redirect: false });
-      setShowLoginModal(true);
-      return;
-    }
-
     setModalType("collection");
     newItemNameSet("");
     setIsModalOpen(true);
@@ -163,10 +140,6 @@ export default function TestApiPage() {
     setIsActionLoading(true);
     try {
       if (modalType === "collection") {
-        if (!user?.id) {
-          showToast("error", "You must be logged in");
-          return;
-        }
         await createCollection(newItemName);
       } else {
         if (!targetColId) return;
@@ -174,11 +147,8 @@ export default function TestApiPage() {
           collectionId: targetColId,
           name: newItemName,
         });
-        if (result && (result as Record<string, unknown>).error) {
-          // Error handled in hook toast
-          return;
-        }
-        setActiveRequest(result as RequestItem);
+        setActiveCollectionId(targetColId);
+        setActiveRequest(result);
       }
       setIsModalOpen(false);
     } catch (error) {
@@ -301,7 +271,9 @@ export default function TestApiPage() {
           onDeleteCollection={handleDeleteCollection}
           onDeleteRequest={handleDeleteRequest}
           onToggleCollection={handleToggleCollection}
-          onRenameCollection={(id, name) => renameCollection({ id, name })}
+          onRenameCollection={(id, name) =>
+            renameCollection({ id, name }).catch(() => {})
+          }
           isOpen={isSidebarOpen}
           onToggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
           onAddCollection={handleAddCollection}
@@ -309,12 +281,15 @@ export default function TestApiPage() {
       </ResizablePanel>
 
       <div className={styles.rightPanel}>
-        <TestApiNavbar 
+        <TestApiNavbar
           onAddCollection={handleAddCollection}
           activeCollection={activeCollection}
           onBaseUrlChange={(url) => {
             if (activeCollectionId) {
-              updateCollection({ id: activeCollectionId, updates: { base_url: url } });
+              updateCollection({
+                id: activeCollectionId,
+                updates: { base_url: url },
+              }).catch(() => {});
             }
           }}
           onAuthClick={() => {
@@ -368,7 +343,6 @@ export default function TestApiPage() {
                 ? "Are you sure you want to delete this collection?"
                 : "Are you sure you want to delete this request?"}
             </p>
-
           ) : (
             <>
               <label
@@ -397,23 +371,21 @@ export default function TestApiPage() {
         </div>
       </Modal>
 
-      <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        message="Sign in to create your first API collection."
-      />
-      
       <TestApiAuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         collections={collections}
         activeCollectionId={activeCollectionId || undefined}
-        onSave={(collectionId, token, customHeaders) => {
-          updateCollection({
-            id: collectionId,
-            updates: { auth: { type: "bearer", token, customHeaders } },
-          });
-          setShowAuthModal(false);
+        onSave={async (collectionId, token, customHeaders) => {
+          try {
+            await updateCollection({
+              id: collectionId,
+              updates: { auth: { type: "bearer", token, customHeaders } },
+            });
+            setShowAuthModal(false);
+          } catch (error) {
+            console.error("Could not save API authentication:", error);
+          }
         }}
       />
 

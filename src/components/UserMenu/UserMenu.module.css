@@ -1,294 +1,184 @@
 .container {
-    position: relative;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .trigger {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .trigger:hover {
-    background: var(--hover-bg);
-    color: var(--text-primary);
+  background: var(--hover-bg);
+  color: var(--text-primary);
 }
 
 .containerExpanded {
-    width: 100%;
+  width: 100%;
 }
 
 .triggerExpanded {
-    width: 100%;
-    padding: 6px;
-    justify-content: flex-start;
-    gap: 12px;
-    height: auto;
-    border-radius: 8px;
-    text-align: left;
+  width: 100%;
+  padding: 6px;
+  justify-content: flex-start;
+  gap: 12px;
+  height: auto;
+  border-radius: 8px;
+  text-align: left;
 }
 
 .triggerUserInfo {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
 }
 
 .triggerUserName {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .triggerUserPlan {
-    font-size: 12px;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.upgradeBtn {
-    padding: 4px 12px;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-primary);
-    border: 1px solid var(--border-color, #d1d5db);
-    border-radius: 12px;
-    cursor: pointer;
-    background: transparent;
-    transition: all 0.2s;
-}
-
-.upgradeBtn:hover {
-    background: var(--hover-bg, #f3f4f6);
-}
-
-.triggerChevron {
-    color: var(--text-muted);
-}
-
-.avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: var(--primary-color);
-    color: white;
-    font-size: 14px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.avatarPlaceholder {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: var(--bg-secondary);
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.avatarWrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.2s;
-}
-
-.subscribed {
-    padding: 2px;
-    background: conic-gradient(from 0deg,
-            #60a5fa 0deg 120deg,
-            /* blue */
-            #34d399 120deg 240deg,
-            /* teal-green bridge */
-            #22c55e 240deg 360deg
-            /* green */
-        );
-}
-
-.avatarImg {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    object-fit: cover;
-    display: block;
-    background: var(--menu-bg);
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .popover {
-    position: absolute;
-    width: 280px;
-    background: var(--menu-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    z-index: 100;
-    overflow: hidden;
-    animation: scaleIn 0.15s ease-out;
+  position: absolute;
+  width: 280px;
+  background: var(--menu-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  overflow: hidden;
+  animation: scaleIn 0.15s ease-out;
 }
 
 .popoverTop {
-    bottom: 50px;
-    left: 0;
-    transform-origin: bottom left;
+  bottom: 50px;
+  left: 0;
+  transform-origin: bottom left;
 }
 
 .popoverBottom {
-    top: 50px;
-    right: 0;
-    transform-origin: top right;
-}
-
-.header {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border-light);
-}
-
-.userName {
-    display: block;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.userEmail {
-    display: block;
-    font-size: 12px;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-top: 2px;
+  top: 50px;
+  right: 0;
+  transform-origin: top right;
 }
 
 .menu {
-    padding: 4px;
+  padding: 4px;
 }
 
 .menuItem {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    border: none;
-    background: transparent;
-    color: var(--text-primary);
-    font-size: 13px;
-    text-align: left;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: background 0.15s;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.15s;
 }
 
 .menuItem:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
 }
 
 :global([data-theme="light"]) .menuItem:hover {
-    background: rgba(0, 0, 0, 0.05);
-}
-
-.menuItemDanger {
-    color: var(--error-color);
-}
-
-.menuItemDanger:hover {
-    background: var(--error-bg);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .separator {
-    height: 0;
-    border-top: 1px solid var(--border-light);
-    margin: 4px -4px;
+  height: 0;
+  border-top: 1px solid var(--border-light);
+  margin: 4px -4px;
 }
 
 @keyframes scaleIn {
-    from {
-        opacity: 0;
-        transform: scale(0.95) translateY(10px);
-    }
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
 
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
-
-/* Theme Switcher */
 .themeRow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px;
-    width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  width: 100%;
 }
 
 .themeLabel {
-    font-size: 13px;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 500;
+  font-size: 13px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
 }
 
 .themeSwitcher {
-    display: flex;
-    background: var(--bg-secondary);
-    border-radius: 20px;
-    padding: 0 2px;
-    border: 1px solid var(--border-light);
+  display: flex;
+  background: var(--bg-secondary);
+  border-radius: 20px;
+  padding: 0 2px;
+  border: 1px solid var(--border-light);
 }
 
 .themeOption {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.2s;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .themeOption:hover {
-    color: var(--text-primary);
+  color: var(--text-primary);
 }
 
 .themeOptionActive {
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }

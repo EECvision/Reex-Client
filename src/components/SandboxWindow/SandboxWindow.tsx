@@ -8,19 +8,13 @@ import EmptyState from '@/components/EmptyState/EmptyState';
 import { Modal } from '@/components/ui/Modal/Modal';
 import { Button } from '@/components/ui/Button/Button';
 import { Loading } from '@/components/ui/Loading/Loading';
-import { useAuth } from '@/providers/AuthContext';
-import { signOut } from 'next-auth/react';
 import { useCollections } from '@/hooks/useCollections';
-import { useToast } from '@/hooks/useToast';
-
-import LoginModal from '@/components/LoginModal/LoginModal';
 import { ResizablePanel } from '@/components/ui/ResizablePanel/ResizablePanel';
 import TestApiNavbar from '@/components/TestApiNavbar/TestApiNavbar';
 import { TestApiAuthModal } from '@/components/TestApiAuthModal/TestApiAuthModal';
 
 export const SandboxWindow = () => {
-  const { user } = useAuth();
-  const { showToast } = useToast();
+
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   // Collections Data via TanStack Query
@@ -35,14 +29,13 @@ export const SandboxWindow = () => {
     deleteRequest,
     toggleCollection,
     updateCollection
-  } = useCollections(user?.id);
+  } = useCollections();
 
   // Active Request State
   const [activeRequest, setActiveRequest] = useState<RequestItem | null>(null);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [modalType, setModalType] = useState<'collection' | 'request' | 'delete-collection' | 'delete-request'>('collection');
@@ -59,21 +52,6 @@ export const SandboxWindow = () => {
   // --- Actions ---
 
   const handleAddCollection = async () => {
-    if (!user) {
-      setShowLoginModal(true);
-      return;
-    }
-
-    // Check for stale session (User object exists but has no ID)
-    if (user && !user.id) {
-      console.warn('Stale session detected: User has no ID');
-      showToast('error', 'Session incomplete. Please sign in again.');
-      // Force logout to clear stale token
-      await signOut({ redirect: false });
-      setShowLoginModal(true);
-      return;
-    }
-
     setModalType('collection');
     newItemNameSet('');
     setIsModalOpen(true);
@@ -133,18 +111,10 @@ export const SandboxWindow = () => {
     setIsActionLoading(true);
     try {
       if (modalType === 'collection') {
-        if (!user?.id) {
-          showToast('error', 'You must be logged in');
-          return;
-        }
         await createCollection(newItemName);
       } else {
         if (!targetColId) return;
         const result = await createRequest({ collectionId: targetColId, name: newItemName });
-        if (result && (result as Record<string, unknown>).error) {
-          // Error handled in hook toast
-          return;
-        }
         setActiveRequest(result as RequestItem);
       }
       setIsModalOpen(false);
@@ -219,7 +189,7 @@ export const SandboxWindow = () => {
   return (
     <div className={styles.pageContainer}>
       <div
-        className={`${styles.sidebarOverlay} ${isSidebarOpen ? styles.showOverlay : ''}`}
+        className={`${styles.sidebarOverlay} ${isSidebarOpen ? styles.showOverlay : ""}`}
         onClick={() => setSidebarOpen(false)}
       />
 
@@ -241,7 +211,9 @@ export const SandboxWindow = () => {
           onDeleteCollection={handleDeleteCollection}
           onDeleteRequest={handleDeleteRequest}
           onToggleCollection={handleToggleCollection}
-          onRenameCollection={(id, name) => renameCollection({ id, name })}
+          onRenameCollection={(id, name) =>
+            renameCollection({ id, name }).catch(() => {})
+          }
           isOpen={isSidebarOpen}
           onToggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
           hideLogo={true}
@@ -250,12 +222,15 @@ export const SandboxWindow = () => {
       </ResizablePanel>
 
       <div className={styles.rightPanel}>
-        <TestApiNavbar 
+        <TestApiNavbar
           onAddCollection={handleAddCollection}
           activeCollection={activeCollection}
           onBaseUrlChange={(url) => {
             if (activeCollection?.id) {
-              updateCollection({ id: activeCollection.id, updates: { base_url: url } });
+              updateCollection({
+                id: activeCollection.id,
+                updates: { base_url: url },
+              }).catch(() => {});
             }
           }}
           onAuthClick={() => setShowAuthModal(true)}
@@ -271,7 +246,7 @@ export const SandboxWindow = () => {
             requestId={activeRequest.id}
           />
         ) : (
-          <EmptyState hasEndpoints={true} onImportClick={() => { }} />
+          <EmptyState hasEndpoints={true} onImportClick={() => {}} />
         )}
       </div>
 
@@ -282,60 +257,70 @@ export const SandboxWindow = () => {
         size="md"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>
+              Cancel
+            </Button>
             <Button
-              variant={modalType.startsWith('delete') ? 'danger' : 'primary'}
+              variant={modalType.startsWith("delete") ? "danger" : "primary"}
               onClick={handleConfirmModal}
               isLoading={isActionLoading}
-              disabled={!modalType.startsWith('delete') && !newItemName.trim()}
+              disabled={!modalType.startsWith("delete") && !newItemName.trim()}
             >
-              {modalType.startsWith('delete') ? 'Delete' : 'Create'}
+              {modalType.startsWith("delete") ? "Delete" : "Create"}
             </Button>
           </>
         }
       >
         <div>
-          {modalType.startsWith('delete') ? (
-            <p style={{ fontSize: 13, color: 'var(--text-primary)' }}>
-              {modalType === 'delete-collection'
-                ? 'Are you sure you want to delete this collection?'
-                : 'Are you sure you want to delete this request?'}
+          {modalType.startsWith("delete") ? (
+            <p style={{ fontSize: 13, color: "var(--text-primary)" }}>
+              {modalType === "delete-collection"
+                ? "Are you sure you want to delete this collection?"
+                : "Are you sure you want to delete this request?"}
             </p>
           ) : (
             <>
-              <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>
-                {modalType === 'collection' ? 'Collection Name' : 'Request Name'}
+              <label
+                style={{
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: "var(--text-secondary)",
+                }}
+              >
+                {modalType === "collection"
+                  ? "Collection Name"
+                  : "Request Name"}
               </label>
               <input
                 autoFocus
                 className={styles.modalInput}
                 value={newItemName}
                 onChange={(e) => newItemNameSet(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleConfirmModal()}
-                placeholder={modalType === 'collection' ? 'My Collection' : 'My Request'}
+                onKeyDown={(e) => e.key === "Enter" && handleConfirmModal()}
+                placeholder={
+                  modalType === "collection" ? "My Collection" : "My Request"
+                }
               />
             </>
           )}
         </div>
       </Modal>
 
-      <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        message="Sign in to create your first API collection."
-      />
-
       <TestApiAuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         collections={collections}
         activeCollectionId={activeCollection?.id || undefined}
-        onSave={(collectionId, token, customHeaders) => {
-          updateCollection({
-            id: collectionId,
-            updates: { auth: { type: "bearer", token, customHeaders } },
-          });
-          setShowAuthModal(false);
+        onSave={async (collectionId, token, customHeaders) => {
+          try {
+            await updateCollection({
+              id: collectionId,
+              updates: { auth: { type: "bearer", token, customHeaders } },
+            });
+            setShowAuthModal(false);
+          } catch (error) {
+            console.error("Could not save API authentication:", error);
+          }
         }}
       />
     </div>

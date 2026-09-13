@@ -9,8 +9,6 @@ import { EndpointInfo } from "@/types";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
 import { Lock } from "lucide-react";
 import CurlSection from "../CurlSection/CurlSection";
-import { useAuth } from "@/providers/AuthContext";
-import LoginModal from "../LoginModal/LoginModal";
 import { HistoryItem } from "@/providers/ProjectContext";
 import LocalhostBanner from "../LocalhostBanner/LocalhostBanner";
 import { isLocalhostUrl } from "@/lib/urlUtils";
@@ -123,15 +121,7 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
   };
 
   const methodColor = getMethodColor(method);
-
-  const { isAuthenticated } = useAuth();
-  const [showLogin, setShowLogin] = React.useState(false);
-
   const handleExecute = () => {
-    if (!isAuthenticated) {
-      setShowLogin(true);
-      return;
-    }
     onSubmit();
   };
 
@@ -235,12 +225,6 @@ const WorkspaceView: React.FC<WorkspaceViewProps> = ({
 
       {isStandaloneMode && <WelcomeSlideIn />}
       {!isStandaloneMode && <SetupGuideModal />}
-
-      <LoginModal
-        isOpen={showLogin}
-        onClose={() => setShowLogin(false)}
-        message="You must be signed in to execute requests."
-      />
     </div>
   );
 };

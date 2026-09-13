@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import styles from "./ImportModal.module.css";
-import { useAuth } from "@/providers/AuthContext";
 import { Button } from "../ui/Button/Button";
 import { api } from "@/services/api";
 import { Loader2, Globe, History as HistoryIcon, AlertCircle, Lock, Eye, EyeOff } from "lucide-react";
@@ -19,10 +18,6 @@ import ReviewList from "./components/ReviewList";
 import { useFileHandler } from "./hooks/useFileHandler";
 import { useDiffSelection } from "./hooks/useDiffSelection";
 import { useImportActions } from "./hooks/useImportActions";
-import { useSubscription } from "@/hooks/useSubscription";
-import LoginModal from "../LoginModal/LoginModal";
-import { LimitReachedModal } from "./components/LimitReachedModal";
-import { FREE_PROJECT_IMPORT_LIMIT } from "@/lib/constants";
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -40,8 +35,8 @@ interface ImportModalProps {
   isStandaloneMode?: boolean;
   onManifestUpdate?: (manifest: Record<string, Record<string, EndpointInfo>> | null) => void;
   onConfigUpdate?: (config: ProjectConfig | null) => void;
-  addCollection?: (collection: StandaloneCollection) => void;
-  updateCollection?: (id: string, updates: Partial<StandaloneCollection>) => void;
+  addCollection?: (collection: StandaloneCollection) => Promise<void>;
+  updateCollection?: (id: string, updates: Partial<StandaloneCollection>) => Promise<void>;
   addCollectionToHistory?: (name: string, content: Record<string, unknown>) => Promise<void>;
   targetCollectionId?: string;
   collections?: StandaloneCollection[];
@@ -79,12 +74,6 @@ const ImportModal: React.FC<ImportModalProps> = ({
 }) => {
   // Find existing collection if updating
   const existingCollection = targetCollectionId && collections ? collections.find(c => c.id === targetCollectionId) : undefined;
-
-  // Auth Check
-  const { user, isPro } = useSubscription();
-  const { isAuthenticated } = useAuth();
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showLimitModal, setShowLimitModal] = useState(false);
 
   // Tab state
   const [activeTab, setActiveTab] = useState<'file' | 'url' | 'postman'>(initialTab);
@@ -188,13 +177,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
     targetDir,
     onUpdateStarted,
     onSuccess,
-    onError: (msg) => {
-      if (msg.includes("Free limit reached") || msg.includes("Limit Exceeded")) {
-        setShowLimitModal(true);
-      } else {
-        onError(msg);
-      }
-    },
+    onError,
     setDiffs,
     setSelectedModules,
     setRemovedModules,
@@ -264,13 +247,13 @@ const ImportModal: React.FC<ImportModalProps> = ({
     if (!val.trim()) {
       return 'URL is required';
     }
-    
+
     try {
       new URL(val);
     } catch {
       return 'Please enter a valid URL';
     }
-    
+
     return '';
   };
 
@@ -328,7 +311,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ apiKey: postmanApiKey, urlOrId: postmanUrl }),
       });
-      
+
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to fetch Postman collection');
 
@@ -364,11 +347,6 @@ const ImportModal: React.FC<ImportModalProps> = ({
   };
 
   if (!isOpen) return null;
-
-  // Usage info for footer
-  const remainingImports = !isStandaloneMode && !isPro && user?.project_import_count !== undefined
-    ? FREE_PROJECT_IMPORT_LIMIT - user.project_import_count
-    : null;
 
   const footerCTA = (
     <>
@@ -406,10 +384,6 @@ const ImportModal: React.FC<ImportModalProps> = ({
               </Button>
               <Button
                 onClick={() => {
-                  if (!isAuthenticated) {
-                    setShowLoginModal(true);
-                    return;
-                  }
                   handleUpdate(diffs, selectedModules, selectedFunctions, removedModules, removedFunctions)
                 }}
                 disabled={selectedModules.size === 0 && removedModules.size === 0}
@@ -442,32 +416,12 @@ const ImportModal: React.FC<ImportModalProps> = ({
         title={
           <div className={styles.headerTitleWrapper}>
             <span>{getTitle()}</span>
-            {!isStandaloneMode && !isPro && user?.project_import_count !== undefined && step === 'upload' && (
-              <span className={styles.usageBadge}>
-                <span className={styles.usageDots}>
-                  <span />
-                  <span />
-                  <span />
-                </span>
-                {user.project_import_count}/{FREE_PROJECT_IMPORT_LIMIT} imports used
-              </span>
-            )}
+
           </div>
         }
         size="lg"
         footer={step !== "analyzing" && step !== "updating" ? (
           <div className={styles.footerBar}>
-            <div className={styles.footerLeft}>
-              {remainingImports !== null && (
-                <>
-                  <span className={styles.footerUsage}>
-                    {remainingImports} import{remainingImports !== 1 ? 's' : ''} remaining
-                  </span>
-                  <span className={styles.footerDot}>·</span>
-                  <a href="#" className={styles.footerUpgrade}>Upgrade for unlimited</a>
-                </>
-              )}
-            </div>
             <div className={styles.footerRight}>
               {footerCTA}
             </div>
@@ -699,18 +653,6 @@ const ImportModal: React.FC<ImportModalProps> = ({
       </Modal>
 
       <DiffModal diff={diffFunction} onClose={() => setDiffFunction(null)} />
-
-      <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        message="You need to be signed in to import or update a collection."
-      />
-
-      <LimitReachedModal
-        isOpen={showLimitModal}
-        onClose={() => setShowLimitModal(false)}
-        limit={FREE_PROJECT_IMPORT_LIMIT}
-      />
     </>
   );
 };

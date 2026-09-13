@@ -49,16 +49,6 @@ export interface ProjectConfig {
     };
 }
 
-export interface Invoice {
-    id: string;
-    status: string;
-    currency: string;
-    amount: string | number;
-    created_at: string;
-    transaction_id?: string;
-    plan_id?: string | number;
-}
-
 export interface OpenAPIOperation {
     tags?: string[];
     summary?: string;

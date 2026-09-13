@@ -8,11 +8,7 @@ import Logo from "../Logo/Logo";
 
 import { HistoryItem, useProject } from "../../providers/ProjectContext";
 import RecentCollectionsList from "./RecentCollectionsList";
-import { useAuth } from "@/providers/AuthContext";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import LoginModal from "../LoginModal/LoginModal";
-
 import WelcomeCard from "../WelcomeCard/WelcomeCard";
 import UserMenu from "../UserMenu/UserMenu";
 
@@ -34,16 +30,9 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   onHistoryDelete,
 }) => {
   const { isStandaloneMode } = useProject();
-  const { isAuthenticated } = useAuth();
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const router = useRouter();
 
-  // Helper to check auth before action
   const handleAction = (action: () => void) => {
-    if (isStandaloneMode && !isAuthenticated) {
-      setShowLoginModal(true);
-      return;
-    }
     action();
   };
 
@@ -147,12 +136,6 @@ const EmptyState: React.FC<EmptyStateProps> = ({
           </div> */}
         </div>
       </div>
-
-      <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        message="You need to be signed in to perform this action."
-      />
     </>
   );
 };
