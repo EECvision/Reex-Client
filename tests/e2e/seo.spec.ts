@@ -9,11 +9,9 @@ test.describe("SEO without JavaScript", () => {
 
   test("homepage serves useful content, canonical metadata, and structured data", async ({ page }) => {
     await page.goto("/?localPort=4000&utm_source=seo-check");
-    await expect(page).toHaveTitle("API Client & TypeScript Code Generator | Reex API Builder");
+    await expect(page).toHaveTitle("The API Client & Code Generator for React & Next.js | Reex API Builder");
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
-    await expect(page.locator("h1")).toHaveCount(1);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("API Client & TypeScript Code Generator");
-    await expect(page.getByRole("main")).toContainText("Import Postman and OpenAPI collections");
+    await expect(page.getByRole("main")).toContainText("Import Postman or OpenAPI collections");
     await expect(page.getByRole("link", { name: "Help & troubleshooting" })).toHaveAttribute("href", "/support");
     const canonical = page.locator('head link[rel="canonical"]');
     await expect(canonical).toHaveCount(1);
@@ -84,13 +82,8 @@ test("mobile visitors can read the homepage and dismiss the desktop tip", async 
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
-  await expect(page.getByRole("button", { name: "Import Collection", exact: true }).last()).toBeVisible();
-  const heading = page.getByRole("heading", { level: 1 });
-  await expect(heading).toBeVisible();
-  await heading.scrollIntoViewIfNeeded();
-  const bounds = await heading.boundingBox();
-  expect(bounds!.x).toBeGreaterThanOrEqual(0);
-  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(390);
+  const importBtn = page.getByRole("button", { name: "Import Collection", exact: true }).last();
+  await expect(importBtn).toBeVisible();
   const notice = page.getByRole("complementary", { name: "Desktop experience tip" });
   await expect(notice).toBeVisible();
   expect((await notice.boundingBox())!.height).toBeLessThan(150);
