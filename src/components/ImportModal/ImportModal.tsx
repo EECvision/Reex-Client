@@ -8,6 +8,7 @@ import { Modal } from "../ui/Modal/Modal";
 import { DiffResult } from "./importTypes";
 import { EndpointInfo, ProjectConfig } from "@/types";
 import { StandaloneCollection } from "@/providers/ProjectContext";
+import { SAMPLE_COLLECTION_URL } from "@/constants";
 
 // Components
 import DropZone from "./components/DropZone";
@@ -86,6 +87,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
     return "";
   });
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
+  const [isFetchingSample, setIsFetchingSample] = useState(false);
   const [fetchError, setFetchError] = useState('');
   const fetchTriggeredRef = useRef(false);
 
@@ -298,6 +300,68 @@ const ImportModal: React.FC<ImportModalProps> = ({
     }
   };
 
+  const handleFetchSampleCollection = async () => {
+    setIsFetchingSample(true);
+    try {
+      let data = await api.fetchUrl(SAMPLE_COLLECTION_URL);
+      if (data?.error) {
+        try {
+          const directRes = await fetch(SAMPLE_COLLECTION_URL);
+          if (directRes.ok) {
+            data = await directRes.json();
+          } else {
+            throw new Error(data.error);
+          }
+        } catch {
+          throw new Error(data.error);
+        }
+      }
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: 'application/json',
+      });
+      const file = new File([blob], 'sample-collection.json', { type: 'application/json' });
+      fetchTriggeredRef.current = true;
+      setFile(file);
+      setActiveTab('file');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      onError(errorMessage || 'Failed to fetch sample collection');
+    } finally {
+      setIsFetchingSample(false);
+    }
+  };
+
+  const renderHistoryOrSampleAction = () => {
+    if (onOpenHistory && hasHistory) {
+      return (
+        <div className={styles.historyActions}>
+          <Button
+            variant="ghost"
+            className={styles.historyBtn}
+            onClick={onOpenHistory}
+            leftIcon={<HistoryIcon size={14} />}
+          >
+            Import from recent collection
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.historyActions}>
+        <Button
+          variant="ghost"
+          className={styles.historyBtn}
+          onClick={handleFetchSampleCollection}
+          isLoading={isFetchingSample}
+        >
+          {isFetchingSample ? "Importing sample..." : "Import sample collection"}
+        </Button>
+      </div>
+    );
+  };
+
   const handleFetchFromPostman = async () => {
     if (!postmanUrl.trim() || !postmanApiKey.trim()) {
       setPostmanError('API Key and Collection URL/ID are required');
@@ -470,18 +534,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
                     onClearFile={resetFile}
                   />
 
-                  {onOpenHistory && hasHistory && (
-                    <div className={styles.historyActions}>
-                      <Button
-                        variant="ghost"
-                        className={styles.historyBtn}
-                        onClick={onOpenHistory}
-                        leftIcon={<HistoryIcon size={14} />}
-                      >
-                        Import from recent collection
-                      </Button>
-                    </div>
-                  )}
+                  {renderHistoryOrSampleAction()}
                 </>
               ) : activeTab === 'url' ? (
                 /* URL Tab */
@@ -521,18 +574,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
                     </div>
                   )}
 
-                  {onOpenHistory && hasHistory && (
-                    <div className={styles.historyActions}>
-                      <Button
-                        variant="ghost"
-                        className={styles.historyBtn}
-                        onClick={onOpenHistory}
-                        leftIcon={<HistoryIcon size={14} />}
-                      >
-                        Import from recent collection
-                      </Button>
-                    </div>
-                  )}
+                  {renderHistoryOrSampleAction()}
                 </div>
               ) : (
                 /* Postman Tab */
@@ -605,6 +647,8 @@ const ImportModal: React.FC<ImportModalProps> = ({
                       {postmanError}
                     </div>
                   )}
+
+                  {renderHistoryOrSampleAction()}
                 </div>
               )}
             </>
