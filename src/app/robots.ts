@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next';
+import { STUDIO_URL } from '@/config/links';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -7,6 +8,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/'],
     },
-    sitemap: 'https://reex-api-builder.toolshq.app/sitemap.xml',
+    sitemap: `${STUDIO_URL}/sitemap.xml`,
   };
 }

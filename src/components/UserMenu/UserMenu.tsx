@@ -15,6 +15,7 @@ import {
   Compass,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { DOCS_URL } from "@/config/links";
 import { useTour } from "../ProductTour";
 
 interface UserMenuProps {
@@ -110,7 +111,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
             <button
               className={styles.menuItem}
               onClick={() => {
-                window.open("/docs", "_blank", "noopener,noreferrer");
+                window.open(DOCS_URL, "_blank", "noopener,noreferrer");
                 setIsOpen(false);
               }}
             >

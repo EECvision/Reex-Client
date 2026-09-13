@@ -2261,7 +2261,7 @@ Running this command triggers a health check. Reex API Builder detects any missi
 It also generates an `api-services` directory in your project root, containing your API hooks, models, authentication guards, and providers.
 
 The application then launches and automatically opens your browser to:  
-**[https://reex-api-builder.toolshq.app/?localPort=4000](https://reex-api-builder.toolshq.app/?localPort=4000)**
+**[https://studio.reex-api.dev/?localPort=4000](https://studio.reex-api.dev/?localPort=4000)**
 
 On first launch, you will be prompted to grant **Local Network** permissions to enable communication between Reex API Builder and your local project files.
 
@@ -2476,7 +2476,7 @@ Reex API Builder defaults to Preview Mode when no project is connected. The app 
 
 Visit the web app directly to launch in Preview Mode:
 
-[https://reex-api-builder.toolshq.app/](https://reex-api-builder.toolshq.app/)
+[https://studio.reex-api.dev/](https://studio.reex-api.dev/)
 
 No setup is required — the app is ready for you to import and test collections immediately.
 
@@ -2685,7 +2685,7 @@ Click the **Copy** icon to copy the interface and paste it directly into your pr
 
 API Sandbox is available directly in the Reex API Builder web app:
 
-1. Visit [https://reex-api-builder.toolshq.app/](https://reex-api-builder.toolshq.app/)
+1. Visit [https://studio.reex-api.dev/](https://studio.reex-api.dev/)
 2. Open the **workspace switcher dropdown** in the top navigation bar and select **API Sandbox**.
 
 ### Switching from Other Modes

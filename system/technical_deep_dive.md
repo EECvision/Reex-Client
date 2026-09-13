@@ -18,7 +18,7 @@ The key differentiator: **Reex doesn't own your code**. The definitions live in 
 
 ### Tier 1 — The Hosted Cloud UI (`api-next-server`)
 
-A Next.js application deployed at `reex-api-builder.toolshq.app`. This is where the developer visually interacts with their API endpoints. It provides:
+A Next.js application deployed at `studio.reex-api.dev`. This is where the developer visually interacts with their API endpoints. It provides:
 
 - A **sidebar** listing all modules and endpoints parsed from the developer's definitions
 - A **workspace** with tabbed editor views for testing endpoints (like Postman, but for your own generated code)
@@ -389,7 +389,7 @@ The UI supports a multi-tab workspace (similar to VS Code or Postman). When the 
 
 ### 5.5 Standalone Mode
 
-When no bridge is detected (e.g., user visits `reex-api-builder.toolshq.app` directly without running `reex start`), the UI enters **Standalone Mode**:
+When no bridge is detected (e.g., user visits `studio.reex-api.dev` directly without running `reex start`), the UI enters **Standalone Mode**:
 
 - Collections can be imported from Postman JSON or OpenAPI YAML/JSON files
 - Data is persisted in the browser (localStorage/IndexedDB)
@@ -416,7 +416,7 @@ After every regeneration, the generator scans the `api-services/` root and quara
 ### CORS Configuration
 The bridge restricts cross-origin requests to a whitelist:
 ```
-https://reex-api-builder.toolshq.app
+https://studio.reex-api.dev
 http://localhost:5173
 http://localhost:3000
 http://localhost:4000

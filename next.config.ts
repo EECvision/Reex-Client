@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { DOCS_URL } from "./src/config/links";
 
 const nextConfig: NextConfig = {
   experimental: {
@@ -7,15 +8,17 @@ const nextConfig: NextConfig = {
     },
     proxyClientMaxBodySize: '50mb',
   },
-  async rewrites() {
+  async redirects() {
     return [
       {
         source: '/docs',
-        destination: 'https://reex-api-docs.vercel.app/docs',
+        destination: DOCS_URL,
+        permanent: true,
       },
       {
         source: '/docs/:path*',
-        destination: 'https://reex-api-docs.vercel.app/docs/:path*',
+        destination: `${DOCS_URL}/:path*`,
+        permanent: true,
       },
     ];
   },

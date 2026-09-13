@@ -6,6 +6,7 @@ import { X, ArrowUp, Sparkles, ExternalLink, MessageSquare, HelpCircle, Trash2 }
 import styles from "./Assistant.module.css";
 import { AssistantMessage } from "./AssistantMessage";
 import { ClientStorage } from "@/lib/clientStorage";
+import { DOCS_URL } from "@/config/links";
 
 interface AssistantProps {
   isOpen: boolean;
@@ -142,7 +143,7 @@ export const Assistant: React.FC<AssistantProps> = ({ isOpen, onClose }) => {
             </div>
             <div className={styles.headerActions}>
               <a
-                href="https://reex-api-builder.toolshq.app/docs"
+                href={DOCS_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.docsLink}

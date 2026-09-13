@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { STUDIO_URL } from "@/config/links";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://reex-api-builder.toolshq.app/"),
+  metadataBase: new URL(STUDIO_URL),
   title: {
     default: "Reex API Builder",
     template: "%s | Reex API Builder",
@@ -29,11 +30,11 @@ export const metadata: Metadata = {
     title: "Reex API Builder",
     description:
       "Generate API integration code for your projects by uploading collections. A comprehensive toolkit for building, testing, and managing API integrations.",
-    url: "https://reex-api-builder.toolshq.app/",
+    url: STUDIO_URL,
     siteName: "Reex API Builder",
     images: [
       {
-        url: "https://reex-api-builder.toolshq.app/og-image.png",
+        url: `${STUDIO_URL}/og-image.png`,
         width: 1200,
         height: 630,
         alt: "Reex API Builder Logo",
@@ -47,7 +48,7 @@ export const metadata: Metadata = {
     title: "Reex API Builder",
     description:
       "Generate API integration code for your projects by uploading collections.",
-    images: ["https://reex-api-builder.toolshq.app/og-image.png"],
+    images: [`${STUDIO_URL}/og-image.png`],
   },
   robots: {
     index: true,

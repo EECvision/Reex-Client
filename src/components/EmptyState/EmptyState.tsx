@@ -8,7 +8,7 @@ import Logo from "../Logo/Logo";
 
 import { HistoryItem, useProject } from "../../providers/ProjectContext";
 import RecentCollectionsList from "./RecentCollectionsList";
-import { useRouter } from "next/navigation";
+import { DOCS_URL } from "@/config/links";
 import WelcomeCard from "../WelcomeCard/WelcomeCard";
 import UserMenu from "../UserMenu/UserMenu";
 
@@ -30,7 +30,6 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   onHistoryDelete,
 }) => {
   const { isStandaloneMode } = useProject();
-  const router = useRouter();
 
   const handleAction = (action: () => void) => {
     action();
@@ -99,7 +98,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
                   )}
                   <Button
                     variant="secondary"
-                    onClick={() => router.push("/docs")}
+                    onClick={() => window.location.assign(DOCS_URL)}
                     className={styles.secondaryBtn}
                   >
                     <BookOpen size={16} />

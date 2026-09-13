@@ -4,6 +4,8 @@ An open-source workspace for importing API collections, generating TypeScript cl
 
 Open the app and start working. No Reex account, database, subscription, or payment configuration is required. Collections, saved requests, and recent history use IndexedDB in your browser, with no application-imposed collection, request, history, or project-import quotas.
 
+[Website](https://reex-api.dev) ? [Open Studio](https://studio.reex-api.dev) ? [Documentation](https://docs.reex-api.dev)
+
 ## Run locally
 
 Use Node.js 22 LTS or later and npm.

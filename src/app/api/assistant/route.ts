@@ -1,4 +1,5 @@
 import { streamText } from 'ai';
+import { DOCS_URL } from '@/config/links';
 import { google } from '@ai-sdk/google';
 import fs from 'fs';
 import path from 'path';
@@ -60,7 +61,7 @@ Rules:
 
 IMPORTANT — Bail Out Rule:
 If the answer cannot be found in the provided documentation, you MUST respond with:
-"I couldn't find an exact answer in the current documentation. Please check the [Reex Documentation](https://docs.reex.dev) or community forum for more help."
+"I couldn't find an exact answer in the current documentation. Please check the [Reex Documentation](${DOCS_URL}) or community forum for more help."
 
 ---DOCUMENTATION---
 ${docsContext}

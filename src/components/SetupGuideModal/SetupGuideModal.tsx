@@ -430,7 +430,7 @@ export default function SetupGuideModal() {
           >
             Ask Docs AI or{" "}
             <a
-              href="https://reex-api-builder.toolshq.app/support"
+              href="/support"
               target="_blank"
               rel="noopener noreferrer"
               className={styles.helpLink}

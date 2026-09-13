@@ -186,7 +186,7 @@
 - **Tradeoff**: No binary data support (not needed for status messages)
 
 ### Why the Operation Relay Pattern?
-- **The browser cannot access the filesystem**: The hosted UI runs on `reex-api-builder.toolshq.app`, not `localhost`
+- **The browser cannot access the filesystem**: The hosted UI runs on `studio.reex-api.dev`, not `localhost`
 - **The Next.js API routes have ts-morph**: They can compute precise AST modifications
 - **The bridge has filesystem access**: It can write the computed changes safely
 - **Result**: A clear separation of concerns — computation in the server, execution in the bridge
