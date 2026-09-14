@@ -1,38 +1,43 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 // Static imports removed in favor of ProjectContext
-import { useProject, StandaloneCollection } from "@/providers/ProjectContext";
-import { useSettings } from "@/providers/SettingsContext";
-import ImportModal from "@/components/ImportModal/ImportModal";
-import HistoryModal from "@/components/HistoryModal/HistoryModal";
+import { Assistant } from "@/components/Assistant/Assistant";
+import { AuthModal } from "@/components/AuthModal/AuthModal";
+import BackgroundNotification from "@/components/BackgroundNotification/BackgroundNotification";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal/DeleteConfirmModal";
 import GenerateModuleModal from "@/components/GenerateModuleModal/GenerateModuleModal";
+import HistoryModal from "@/components/HistoryModal/HistoryModal";
+import ImportModal from "@/components/ImportModal/ImportModal";
 import Navbar from "@/components/Navbar/Navbar";
+import PnaErrorModal from "@/components/PnaErrorModal/PnaErrorModal";
+import { ProductTour, TourProvider } from "@/components/ProductTour";
+import SandboxModal from "@/components/SandboxModal/SandboxModal";
 import SidebarController from "@/components/Sidebar/SidebarController";
 import WorkspaceView from "@/components/WorkspaceView/WorkspaceView";
-import WelcomeCard from "@/components/WelcomeCard/WelcomeCard";
-import BackgroundNotification from "@/components/BackgroundNotification/BackgroundNotification";
-import { AuthModal } from "@/components/AuthModal/AuthModal";
-import SandboxModal from "@/components/SandboxModal/SandboxModal";
-import PnaErrorModal from "@/components/PnaErrorModal/PnaErrorModal";
-import { Assistant } from "@/components/Assistant/Assistant";
-import styles from "./page.module.css";
+import { StandaloneCollection, useProject } from "@/providers/ProjectContext";
+import { useSettings } from "@/providers/SettingsContext";
 import { EndpointInfo } from "@/types";
 import { openInCodeSandbox } from "@/utils/codesandbox/index";
 import {
   TabPointer,
+  doubleClickEndpoint,
   normalizeTabPointers,
   selectEndpoint,
-  doubleClickEndpoint,
 } from "@/utils/tabManagement";
-import { TourProvider, ProductTour } from "@/components/ProductTour";
+import styles from "./page.module.css";
 
 // Hooks
-import { useToast } from "@/hooks/useToast";
-import { useProjectSync } from "@/hooks/useProjectSync";
 import { useCollectionManagement } from "@/hooks/useCollectionManagement";
 import { useEndpointExecution } from "@/hooks/useEndpointExecution";
+import { useProjectSync } from "@/hooks/useProjectSync";
+import { useToast } from "@/hooks/useToast";
 
 // Responsive viewport media query hook utilizing useSyncExternalStore
 const useMediaQuery = (query: string): boolean => {
@@ -44,8 +49,9 @@ const useMediaQuery = (query: string): boolean => {
   };
   return useSyncExternalStore(
     subscribe,
-    () => typeof window !== "undefined" ? window.matchMedia(query).matches : false, // Client snapshot
-    () => false // Server snapshot fallback
+    () =>
+      typeof window !== "undefined" ? window.matchMedia(query).matches : false, // Client snapshot
+    () => false, // Server snapshot fallback
   );
 };
 
@@ -131,12 +137,12 @@ const AppContent = () => {
   // Derive fully hydrated tabs dynamically on the fly from pointers and apiManifest
   const tabs = useMemo(() => {
     if (!apiManifest || projectLoading) return [];
-    
+
     return tabPointers
       .map((pointer) => {
         const endpointDef = apiManifest?.[pointer.apiKey]?.[pointer.fnName];
         if (!endpointDef) return null; // Automatically purges deleted endpoints from UI
-        
+
         const methodPrefix = pointer.fnName.split("_")[0].toUpperCase();
         return {
           isPinned: pointer.isPinned,
@@ -149,7 +155,7 @@ const AppContent = () => {
             requiresAuth: endpointDef.requiresAuth,
             contentType: endpointDef.contentType,
             description: endpointDef.description,
-          }
+          },
         } as Tab;
       })
       .filter((t): t is Tab => t !== null);
@@ -165,7 +171,7 @@ const AppContent = () => {
   const activeTabIndex = useMemo(() => {
     if (tabs.length === 0) return -1;
     const index = tabs.findIndex(
-      (t) => `${t.endpoint.apiKey}__${t.endpoint.fnName}` === activeTabKey
+      (t) => `${t.endpoint.apiKey}__${t.endpoint.fnName}` === activeTabKey,
     );
     return index >= 0 ? index : 0;
   }, [tabs, activeTabKey]);
@@ -180,20 +186,31 @@ const AppContent = () => {
   }, [tabPointers, activeTabKey]);
 
   const selectedEndpoint = useMemo(() => {
-    if (tabs.length === 0 || activeTabIndex < 0 || activeTabIndex >= tabs.length) {
+    if (
+      tabs.length === 0 ||
+      activeTabIndex < 0 ||
+      activeTabIndex >= tabs.length
+    ) {
       return null;
     }
     return tabs[activeTabIndex].endpoint;
   }, [tabs, activeTabIndex]);
 
   const handleSelectEndpoint = (endpoint: EndpointInfo) => {
-    const { newPointers, newActiveKey } = selectEndpoint(tabPointers, endpoint, pinTabsByDefault);
+    const { newPointers, newActiveKey } = selectEndpoint(
+      tabPointers,
+      endpoint,
+      pinTabsByDefault,
+    );
     setTabPointers(newPointers);
     setActiveTabKey(newActiveKey);
   };
 
   const handleDoubleClickEndpoint = (endpoint: EndpointInfo) => {
-    const { newPointers, newActiveKey } = doubleClickEndpoint(tabPointers, endpoint);
+    const { newPointers, newActiveKey } = doubleClickEndpoint(
+      tabPointers,
+      endpoint,
+    );
     setTabPointers(newPointers);
     setActiveTabKey(newActiveKey);
   };
@@ -216,7 +233,9 @@ const AppContent = () => {
       }
     }
 
-    setTabPointers((prev) => prev.filter((p) => `${p.apiKey}__${p.fnName}` !== keyToClose));
+    setTabPointers((prev) =>
+      prev.filter((p) => `${p.apiKey}__${p.fnName}` !== keyToClose),
+    );
     setActiveTabKey(nextKey);
   };
 
@@ -228,18 +247,30 @@ const AppContent = () => {
   const handleCloseOthers = (index: number) => {
     if (index < 0 || index >= tabs.length) return;
     const target = tabs[index];
-    setTabPointers([{ apiKey: target.endpoint.apiKey, fnName: target.endpoint.fnName, isPinned: true }]);
+    setTabPointers([
+      {
+        apiKey: target.endpoint.apiKey,
+        fnName: target.endpoint.fnName,
+        isPinned: true,
+      },
+    ]);
     setActiveTabKey(`${target.endpoint.apiKey}__${target.endpoint.fnName}`);
   };
 
   const handleCloseToRight = (index: number) => {
     if (index < 0 || index >= tabs.length) return;
     const kept = tabs.slice(0, index + 1);
-    const keptKeys = new Set(kept.map((t) => `${t.endpoint.apiKey}__${t.endpoint.fnName}`));
-    setTabPointers((prev) => prev.filter((p) => keptKeys.has(`${p.apiKey}__${p.fnName}`)));
+    const keptKeys = new Set(
+      kept.map((t) => `${t.endpoint.apiKey}__${t.endpoint.fnName}`),
+    );
+    setTabPointers((prev) =>
+      prev.filter((p) => keptKeys.has(`${p.apiKey}__${p.fnName}`)),
+    );
     if (!keptKeys.has(activeTabKey)) {
       const lastKept = kept[kept.length - 1];
-      setActiveTabKey(`${lastKept.endpoint.apiKey}__${lastKept.endpoint.fnName}`);
+      setActiveTabKey(
+        `${lastKept.endpoint.apiKey}__${lastKept.endpoint.fnName}`,
+      );
     }
   };
 
@@ -247,8 +278,14 @@ const AppContent = () => {
     const newPointers = normalizeTabPointers(tabPointers).filter(filterFn);
     if (newPointers.length !== tabPointers.length) {
       setTabPointers(newPointers);
-      if (!newPointers.some((p) => `${p.apiKey}__${p.fnName}` === activeTabKey)) {
-        setActiveTabKey(newPointers.length > 0 ? `${newPointers[0].apiKey}__${newPointers[0].fnName}` : "");
+      if (
+        !newPointers.some((p) => `${p.apiKey}__${p.fnName}` === activeTabKey)
+      ) {
+        setActiveTabKey(
+          newPointers.length > 0
+            ? `${newPointers[0].apiKey}__${newPointers[0].fnName}`
+            : "",
+        );
       }
     }
   };
@@ -258,7 +295,9 @@ const AppContent = () => {
     const target = tabs[index];
     const key = `${target.endpoint.apiKey}__${target.endpoint.fnName}`;
     setTabPointers((prev) =>
-      prev.map((p) => (`${p.apiKey}__${p.fnName}` === key ? { ...p, isPinned: true } : p))
+      prev.map((p) =>
+        `${p.apiKey}__${p.fnName}` === key ? { ...p, isPinned: true } : p,
+      ),
     );
   };
 
@@ -281,7 +320,7 @@ const AppContent = () => {
 
   const activeCollection = getActiveCollection();
   const activeConfig = isStandaloneMode
-    ? activeCollection?.config ?? null
+    ? (activeCollection?.config ?? null)
     : projectConfig;
   const activeCollectionName = isStandaloneMode
     ? activeCollection?.name || "Collection"
@@ -334,14 +373,19 @@ const AppContent = () => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 1141px)");
-  const [userToggledSidebar, setUserToggledSidebar] = useState<boolean | null>(null);
-  const isSidebarOpen = userToggledSidebar !== null ? userToggledSidebar : isDesktop;
+  const [userToggledSidebar, setUserToggledSidebar] = useState<boolean | null>(
+    null,
+  );
+  const isSidebarOpen =
+    userToggledSidebar !== null ? userToggledSidebar : isDesktop;
   const setIsSidebarOpen = (val: boolean | ((prev: boolean) => boolean)) => {
     setUserToggledSidebar(typeof val === "function" ? val(isSidebarOpen) : val);
   };
 
   const [autoAnalyzeImport, setAutoAnalyzeImport] = useState(false);
-  const [importModalTab, setImportModalTab] = useState<"file" | "url" | "postman">("file");
+  const [importModalTab, setImportModalTab] = useState<
+    "file" | "url" | "postman"
+  >("file");
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isSandboxOpen, setIsSandboxOpen] = useState(false);
 
@@ -419,8 +463,6 @@ const AppContent = () => {
     selectedEndpoint,
   });
 
-
-
   const hasEndpoints = !!(apiManifest && Object.keys(apiManifest).length > 0);
 
   const handleDownloadCollection = (id: string) => {
@@ -462,13 +504,15 @@ const AppContent = () => {
     }
 
     // Fallback: Show error
-    showToast("error", "Original collection file not found in history. Cannot download collection.");
+    showToast(
+      "error",
+      "Original collection file not found in history. Cannot download collection.",
+    );
   };
 
   if (projectLoading) {
     return (
       <main className={styles.loadingContainer}>
-        <WelcomeCard />
         <p className={styles.loadingText} role="status">
           Loading project workspace...
         </p>
@@ -483,16 +527,16 @@ const AppContent = () => {
       className={`${styles.container} ${isSidebarOpen ? styles.sidebarOpen : ""}`}
       onContextMenu={(e) => e.preventDefault()}
     >
-      {connectionError === 'pna_blocked' && (
-        <PnaErrorModal 
+      {connectionError === "pna_blocked" && (
+        <PnaErrorModal
           onSwitchToPreview={() => {
-            if (typeof window !== 'undefined') {
+            if (typeof window !== "undefined") {
               const url = new URL(window.location.href);
-              url.searchParams.delete('localPort');
-              window.history.replaceState({}, '', url.toString());
+              url.searchParams.delete("localPort");
+              window.history.replaceState({}, "", url.toString());
             }
             refreshProject(false);
-          }} 
+          }}
         />
       )}
       <BackgroundNotification
@@ -520,7 +564,9 @@ const AppContent = () => {
           onDeleteFunction={handleDeleteFunction}
           onDeleteCollection={openDeleteModal}
           onDownloadCollection={handleDownloadCollection}
-          onRenameCollection={(id, name) => updateCollection(id, { name }).catch(() => {})}
+          onRenameCollection={(id, name) =>
+            updateCollection(id, { name }).catch(() => {})
+          }
           onUpdateCollection={openUpdateModal}
           onOpenSandbox={(id) => {
             const col = collections.find((c) => c.id === id);
@@ -655,10 +701,10 @@ const AppContent = () => {
         )}
 
         {showHistoryModal && (
-         <HistoryModal
-           key={showHistoryModal ? "history-opened" : "history-closed"}
-           isOpen={showHistoryModal}
-           onClose={() => setShowHistoryModal(false)}
+          <HistoryModal
+            key={showHistoryModal ? "history-opened" : "history-closed"}
+            isOpen={showHistoryModal}
+            onClose={() => setShowHistoryModal(false)}
             items={recentCollections}
             onItemClick={(item) => {
               const blob = new Blob([JSON.stringify(item.content, null, 2)], {
@@ -716,13 +762,16 @@ const AppContent = () => {
           onConfirm={async () => {
             const info = deleteItemInfo;
             await confirmDeleteItem();
-            
+
             if (info) {
               handleTabsDeletion((t) => {
                 if (info.type === "module") {
                   return t.apiKey !== info.moduleName;
                 } else {
-                  return !(t.apiKey === info.moduleName && t.fnName === info.functionName);
+                  return !(
+                    t.apiKey === info.moduleName &&
+                    t.fnName === info.functionName
+                  );
                 }
               });
             }
@@ -824,7 +873,9 @@ const AppContent = () => {
           activeTabIndex={activeTabIndex}
           onSelectTab={(index) => {
             if (tabs[index]) {
-              setActiveTabKey(`${tabs[index].endpoint.apiKey}__${tabs[index].endpoint.fnName}`);
+              setActiveTabKey(
+                `${tabs[index].endpoint.apiKey}__${tabs[index].endpoint.fnName}`,
+              );
             }
           }}
           onCloseTab={handleCloseTab}
