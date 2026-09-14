@@ -9,6 +9,7 @@ import { DiffResult } from "./importTypes";
 import { EndpointInfo, ProjectConfig } from "@/types";
 import { StandaloneCollection } from "@/providers/ProjectContext";
 import { SAMPLE_COLLECTION_URL } from "@/constants";
+import { useTour } from "../ProductTour";
 
 // Components
 import DropZone from "./components/DropZone";
@@ -73,6 +74,8 @@ const ImportModal: React.FC<ImportModalProps> = ({
   autoAnalyze = false,
   initialTab = 'file'
 }) => {
+  const { startTourAfterImport } = useTour();
+
   // Find existing collection if updating
   const existingCollection = targetCollectionId && collections ? collections.find(c => c.id === targetCollectionId) : undefined;
 
@@ -408,6 +411,10 @@ const ImportModal: React.FC<ImportModalProps> = ({
     if (step === "analyzing" || step === "updating") return;
     handleReset();
     onClose();
+    // Wait until the successful import is dismissed so the workspace is visible.
+    if (step === "success") {
+      startTourAfterImport();
+    }
   };
 
   if (!isOpen) return null;

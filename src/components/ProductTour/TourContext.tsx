@@ -16,6 +16,7 @@ interface TourContextType {
   currentStep: TourStep | null;
   totalSteps: number;
   startTour: (stepIndex?: number) => void;
+  startTourAfterImport: () => void;
   closeTour: () => void;
   nextStep: () => void;
   prevStep: () => void;
@@ -69,20 +70,15 @@ export const TourProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  // Auto-start on first load after slight delay to allow initial DOM layout
-  useEffect(() => {
+  const startTourAfterImport = useCallback(() => {
     if (typeof window === "undefined") return;
-    // Keep the public welcome content readable on small screens. The tour
-    // remains available from the workspace menu when the user requests it.
+    // On small screens, keep the tour available through the workspace menu.
     if (window.matchMedia("(max-width: 980px)").matches) return;
 
     try {
       const completed = localStorage.getItem(TOUR_STORAGE_KEY);
       if (!completed) {
-        const timer = setTimeout(() => {
-          startTour(0);
-        }, 700);
-        return () => clearTimeout(timer);
+        startTour(0);
       }
     } catch {
       // Storage unavailable
@@ -115,6 +111,7 @@ export const TourProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         currentStep,
         totalSteps,
         startTour,
+        startTourAfterImport,
         closeTour,
         nextStep,
         prevStep,
@@ -135,6 +132,7 @@ export const useTour = () => {
       currentStep: null,
       totalSteps: 0,
       startTour: () => {},
+      startTourAfterImport: () => {},
       closeTour: () => {},
       nextStep: () => {},
       prevStep: () => {},
