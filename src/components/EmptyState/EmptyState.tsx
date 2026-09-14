@@ -10,7 +10,6 @@ import { HistoryItem, useProject } from "../../providers/ProjectContext";
 import RecentCollectionsList from "./RecentCollectionsList";
 import { DOCS_URL } from "@/config/links";
 import WelcomeCard from "../WelcomeCard/WelcomeCard";
-import UserMenu from "../UserMenu/UserMenu";
 
 interface EmptyStateProps {
   hasEndpoints: boolean;
@@ -121,18 +120,6 @@ const EmptyState: React.FC<EmptyStateProps> = ({
                 )}
             </>
           )}
-        </div>
-
-        <div className={styles.footerCredits}>
-          <div className={styles.footerLeft}>
-            <UserMenu placement="top" />
-          </div>
-          {/* <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-            Built by <a href="https://github.com/EECvision" target="_blank" rel="noopener noreferrer" className={styles.devLink}>EECvision</a>
-          </div> */}
-          {/* <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
-            Powered by <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>ToolsHQ</span>
-          </div> */}
         </div>
       </div>
     </>

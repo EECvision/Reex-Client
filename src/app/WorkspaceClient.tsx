@@ -539,79 +539,81 @@ const AppContent = () => {
       )}
 
       <div className={styles.mainWrapper}>
-        <Navbar
-          selectedEndpoint={selectedEndpoint}
-          onImportClick={() => {
-            resetImportTask();
-            setAutoAnalyzeImport(false);
-            setImportModalTab("file");
-            setShowImportModal(true);
-          }}
-          hasCollection={hasEndpoints}
-          onDeleteClick={() => openDeleteModal()} // No arg = Delete All
-          onFetchUrl={(url) => {
-            resetImportTask();
-            setAutoAnalyzeImport(true);
-            handleFetchUrl(url);
-          }}
-          onOpenFetchModal={() => {
-            resetImportTask();
-            setAutoAnalyzeImport(false);
-            setImportModalTab("url");
-            setShowImportModal(true);
-          }}
-          onOpenPostmanModal={() => {
-            resetImportTask();
-            setAutoAnalyzeImport(false);
-            setImportModalTab("postman");
-            setShowImportModal(true);
-          }}
-          isFetching={fetchingUrl}
-          onGenerateClick={() => setShowGenerateModal(true)}
-          baseURL={activeConfig?.baseURL}
-          projectPath={projectPath}
-          collectionName={activeCollectionName}
-          onAuthClick={() => setShowAuthModal(true)}
-          isStandaloneMode={isStandaloneMode}
-          manualStandaloneMode={manualStandaloneMode}
-          onToggleStandaloneMode={toggleStandaloneMode}
-          hasAuthConfigured={hasAuthConfigured}
-          onBaseUrlChange={(newUrl) => {
-            const oldBase = activeConfig?.baseURL || "";
-            const updatedClients = { ...(activeConfig?.clients || {}) };
+        {hasEndpoints && (
+          <Navbar
+            selectedEndpoint={selectedEndpoint}
+            onImportClick={() => {
+              resetImportTask();
+              setAutoAnalyzeImport(false);
+              setImportModalTab("file");
+              setShowImportModal(true);
+            }}
+            hasCollection={hasEndpoints}
+            onDeleteClick={() => openDeleteModal()} // No arg = Delete All
+            onFetchUrl={(url) => {
+              resetImportTask();
+              setAutoAnalyzeImport(true);
+              handleFetchUrl(url);
+            }}
+            onOpenFetchModal={() => {
+              resetImportTask();
+              setAutoAnalyzeImport(false);
+              setImportModalTab("url");
+              setShowImportModal(true);
+            }}
+            onOpenPostmanModal={() => {
+              resetImportTask();
+              setAutoAnalyzeImport(false);
+              setImportModalTab("postman");
+              setShowImportModal(true);
+            }}
+            isFetching={fetchingUrl}
+            onGenerateClick={() => setShowGenerateModal(true)}
+            baseURL={activeConfig?.baseURL}
+            projectPath={projectPath}
+            collectionName={activeCollectionName}
+            onAuthClick={() => setShowAuthModal(true)}
+            isStandaloneMode={isStandaloneMode}
+            manualStandaloneMode={manualStandaloneMode}
+            onToggleStandaloneMode={toggleStandaloneMode}
+            hasAuthConfigured={hasAuthConfigured}
+            onBaseUrlChange={(newUrl) => {
+              const oldBase = activeConfig?.baseURL || "";
+              const updatedClients = { ...(activeConfig?.clients || {}) };
 
-            Object.keys(updatedClients).forEach((key) => {
-              const clientUrl = updatedClients[key];
-              if (oldBase && clientUrl.startsWith(oldBase)) {
-                updatedClients[key] =
-                  newUrl + clientUrl.substring(oldBase.length);
+              Object.keys(updatedClients).forEach((key) => {
+                const clientUrl = updatedClients[key];
+                if (oldBase && clientUrl.startsWith(oldBase)) {
+                  updatedClients[key] =
+                    newUrl + clientUrl.substring(oldBase.length);
+                } else {
+                  updatedClients[key] = newUrl;
+                }
+              });
+
+              if (isStandaloneMode && activeCollection) {
+                updateCollection(activeCollection.id, {
+                  config: {
+                    ...activeCollection.config,
+                    baseURL: newUrl,
+                    clients: updatedClients,
+                  },
+                }).catch(() => {});
               } else {
-                updatedClients[key] = newUrl;
-              }
-            });
-
-            if (isStandaloneMode && activeCollection) {
-              updateCollection(activeCollection.id, {
-                config: {
-                  ...activeCollection.config,
+                setConfig({
+                  ...projectConfig,
                   baseURL: newUrl,
                   clients: updatedClients,
-                },
-              }).catch(() => {});
-            } else {
-              setConfig({
-                ...projectConfig,
-                baseURL: newUrl,
-                clients: updatedClients,
-              });
-            }
-          }}
-          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-          isSidebarOpen={isSidebarOpen}
-          onAssistantClick={() => setIsAssistantOpen(true)}
-          isAssistantOpen={isAssistantOpen}
-          onSandboxClick={() => setIsSandboxOpen(true)}
-        />
+                });
+              }
+            }}
+            onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+            isSidebarOpen={isSidebarOpen}
+            onAssistantClick={() => setIsAssistantOpen(true)}
+            isAssistantOpen={isAssistantOpen}
+            onSandboxClick={() => setIsSandboxOpen(true)}
+          />
+        )}
 
         {showImportModal && (
           <ImportModal
