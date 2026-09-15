@@ -1,12 +1,22 @@
 "use client";
 
+import { DOCS_URL } from "@/config/links";
+import { useToast } from "@/hooks/useToast";
+import { ClientStorage } from "@/lib/clientStorage";
+import { Message, useChat } from "ai/react";
+import {
+  ArrowUp,
+  ExternalLink,
+  HelpCircle,
+  MessageSquare,
+  Sparkles,
+  Trash2,
+  X,
+} from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
-import { useChat, Message } from "ai/react";
-import { X, ArrowUp, Sparkles, ExternalLink, MessageSquare, HelpCircle, Trash2 } from "lucide-react";
+import DeleteConfirmModal from "../DeleteConfirmModal/DeleteConfirmModal";
 import styles from "./Assistant.module.css";
 import { AssistantMessage } from "./AssistantMessage";
-import { ClientStorage } from "@/lib/clientStorage";
-import { DOCS_URL } from "@/config/links";
 
 interface AssistantProps {
   isOpen: boolean;
@@ -29,6 +39,9 @@ const SUGGESTED_QUESTIONS = [
 export const Assistant: React.FC<AssistantProps> = ({ isOpen, onClose }) => {
   const [chatError, setChatError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"chat" | "faq">("chat");
+  const [showClearModal, setShowClearModal] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const { showToast } = useToast();
 
   const {
     messages,
@@ -38,7 +51,7 @@ export const Assistant: React.FC<AssistantProps> = ({ isOpen, onClose }) => {
     isLoading,
     append,
     setMessages,
-
+    stop,
   } = useChat({
     api: "/api/assistant",
     onResponse: async (response) => {
@@ -59,40 +72,89 @@ export const Assistant: React.FC<AssistantProps> = ({ isOpen, onClose }) => {
   });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatBodyRef = useRef<HTMLDivElement>(null);
+  const isHydratedRef = useRef(false);
+  const prevMessagesCountRef = useRef(0);
 
   // Hydrate stored messages from IndexedDB on mount
   useEffect(() => {
     ClientStorage.getAssistantMessages<Message>().then((saved) => {
       if (saved && saved.length > 0) {
         setMessages(saved);
+        prevMessagesCountRef.current = saved.length;
       }
+      setTimeout(() => {
+        isHydratedRef.current = true;
+      }, 50);
     });
   }, [setMessages]);
 
   // Save messages to IndexedDB (FIFO cap 20) whenever messages change
   useEffect(() => {
-    if (messages.length > 0 && !isLoading) {
+    if (messages.length > 0 && !isLoading && !isClearing) {
       ClientStorage.saveAssistantMessages(messages);
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, isClearing]);
 
-  // Auto-scroll to bottom
+  // Always scroll to top when opening the chat
   useEffect(() => {
-    if (messagesEndRef.current && activeTab === "chat") {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    if (isOpen) {
+      const resetScrollToTop = () => {
+        if (chatBodyRef.current) {
+          chatBodyRef.current.scrollTop = 0;
+        }
+      };
+
+      resetScrollToTop();
+      const raf = requestAnimationFrame(resetScrollToTop);
+      const t1 = setTimeout(resetScrollToTop, 50);
+      const t2 = setTimeout(resetScrollToTop, 300);
+
+      return () => {
+        cancelAnimationFrame(raf);
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
     }
-  }, [messages, isLoading, activeTab]);
+  }, [isOpen]);
+
+  // Scroll to top when switching to chat tab
+  useEffect(() => {
+    if (isOpen && activeTab === "chat" && !isLoading) {
+      if (chatBodyRef.current) {
+        chatBodyRef.current.scrollTop = 0;
+      }
+    }
+  }, [isOpen, activeTab, isLoading]);
+
+  // Auto-scroll to bottom only when new messages are added or AI is streaming
+  useEffect(() => {
+    if (!isHydratedRef.current) {
+      return;
+    }
+
+    const hasNewMessages = messages.length > prevMessagesCountRef.current;
+    prevMessagesCountRef.current = messages.length;
+
+    if ((hasNewMessages || isLoading) && activeTab === "chat" && isOpen) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isLoading, activeTab, isOpen]);
 
   // Handle escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
+        if (showClearModal) {
+          setShowClearModal(false);
+          return;
+        }
         onClose();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, showClearModal]);
 
   const handleSuggestionClick = (question: string) => {
     if (chatError) setChatError(null);
@@ -106,8 +168,24 @@ export const Assistant: React.FC<AssistantProps> = ({ isOpen, onClose }) => {
   };
 
   const handleClearHistory = async () => {
-    setMessages([]);
-    await ClientStorage.clearAssistantMessages();
+    setIsClearing(true);
+    try {
+      stop();
+      setMessages([]);
+      setChatError(null);
+      prevMessagesCountRef.current = 0;
+      if (chatBodyRef.current) {
+        chatBodyRef.current.scrollTop = 0;
+      }
+      await ClientStorage.clearAssistantMessages();
+      showToast("success", "Chat history cleared");
+      setShowClearModal(false);
+    } catch (error) {
+      console.error("Failed to clear chat history:", error);
+      showToast("error", "Failed to clear chat history. Please try again.");
+    } finally {
+      setIsClearing(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -150,14 +228,21 @@ export const Assistant: React.FC<AssistantProps> = ({ isOpen, onClose }) => {
               >
                 Docs <ExternalLink size={14} />
               </a>
-              {messages.length > 0 && (
+              {activeTab === "chat" && (
                 <button
-                  className={styles.closeButton}
-                  onClick={handleClearHistory}
-                  title="Clear chat history"
+                  type="button"
+                  className={styles.clearButton}
+                  onClick={() => setShowClearModal(true)}
+                  disabled={messages.length === 0 || isClearing}
+                  title={
+                    messages.length === 0
+                      ? "No messages to clear"
+                      : "Clear chat history"
+                  }
                   aria-label="Clear chat history"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={14} />
+                  <span>Clear</span>
                 </button>
               )}
               <button
@@ -189,26 +274,18 @@ export const Assistant: React.FC<AssistantProps> = ({ isOpen, onClose }) => {
             </button>
           </div>
 
-          <div className={styles.body}>
+          <div className={styles.body} ref={chatBodyRef}>
             {activeTab === "faq" ? (
-              <div className={styles.faqSection}>
-                <div className={styles.faqHeader}>
-                  <h3 className={styles.faqTitle}>Frequently Asked Questions</h3>
-                  <p className={styles.faqSubtitle}>
-                    Click any question below to ask the AI assistant.
-                  </p>
-                </div>
-                <div className={styles.suggestions}>
-                  {SUGGESTED_QUESTIONS.map((q) => (
-                    <button
-                      key={q}
-                      className={styles.suggestionCard}
-                      onClick={() => handleSuggestionClick(q)}
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
+              <div className={styles.suggestions}>
+                {SUGGESTED_QUESTIONS.map((q) => (
+                  <button
+                    key={q}
+                    className={styles.suggestionCard}
+                    onClick={() => handleSuggestionClick(q)}
+                  >
+                    {q}
+                  </button>
+                ))}
               </div>
             ) : messages.length === 0 ? (
               <>
@@ -298,8 +375,17 @@ export const Assistant: React.FC<AssistantProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
       </div>
+      <DeleteConfirmModal
+        isOpen={showClearModal}
+        onClose={() => {
+          if (!isClearing) setShowClearModal(false);
+        }}
+        onConfirm={handleClearHistory}
+        deleting={isClearing}
+        title="Clear Chat History"
+        message="Are you sure you want to clear your conversation history? This action cannot be undone."
+        confirmText="Clear Chat"
+      />
     </>
   );
 };
-
-
