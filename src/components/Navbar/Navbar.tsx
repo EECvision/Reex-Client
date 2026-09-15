@@ -4,17 +4,13 @@ import {
   Check,
   ChevronsUpDown,
   Code,
-  Download,
   ExternalLink,
-  Link,
-  Loader2,
   Lock,
   Menu,
   MonitorPlay,
   Pencil,
   Plus,
   RefreshCw,
-  Send,
   TestTube,
   Trash2,
   X,
@@ -58,14 +54,9 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({
-
   onImportClick,
   hasCollection,
   onDeleteClick,
-  onFetchUrl,
-  onOpenFetchModal,
-  onOpenPostmanModal,
-  isFetching,
   onGenerateClick,
   baseURL,
   projectPath,
@@ -124,15 +115,6 @@ const Navbar: React.FC<NavbarProps> = ({
       return `${parts[parts.length - 1]}`;
     }
     return path;
-  };
-
-  const formatUrlDomain = (urlStr: string) => {
-    try {
-      const parsed = new URL(urlStr);
-      return parsed.hostname;
-    } catch {
-      return "URL";
-    }
   };
 
   // We don't have direct access to isAuthActive here anymore, but could pass it as a prop

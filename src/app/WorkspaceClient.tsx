@@ -20,6 +20,7 @@ import PnaErrorModal from "@/components/PnaErrorModal/PnaErrorModal";
 import { ProductTour, TourProvider } from "@/components/ProductTour";
 import SandboxModal from "@/components/SandboxModal/SandboxModal";
 import SidebarController from "@/components/Sidebar/SidebarController";
+import WorkspaceLoading from "@/components/WorkspaceLoading/WorkspaceLoading";
 import WorkspaceView from "@/components/WorkspaceView/WorkspaceView";
 import { StandaloneCollection, useProject } from "@/providers/ProjectContext";
 import { useSettings } from "@/providers/SettingsContext";
@@ -511,13 +512,7 @@ const AppContent = () => {
   };
 
   if (projectLoading) {
-    return (
-      <main className={styles.loadingContainer}>
-        <p className={styles.loadingText} role="status">
-          Loading project workspace...
-        </p>
-      </main>
-    );
+    return <WorkspaceLoading />;
   }
 
   // Note: projectError is no longer blocking - standalone mode handles missing bridge

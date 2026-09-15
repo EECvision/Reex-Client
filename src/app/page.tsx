@@ -2,7 +2,7 @@ import { homeStructuredData, pageMetadata, SITE_DESCRIPTION } from "@/config/seo
 import WorkspaceClient from "./WorkspaceClient";
 
 export const metadata = pageMetadata({
-  title: "The API Client & Code Generator for React & Next.js",
+  title: "React API Integration",
   description: SITE_DESCRIPTION,
   path: "/",
 });

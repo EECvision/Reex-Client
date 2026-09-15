@@ -12,6 +12,7 @@
     "build:docs": "npx tsx src/scripts/build-docs-context.ts",
     "sync-templates": "node scripts/sync-templates.js",
     "test:run": "vitest run",
+    "check:seo:workspace": "node scripts/check-workspace-seo.mjs",
     "test:e2e": "playwright test",
     "typecheck": "next typegen && tsc --noEmit"
   },

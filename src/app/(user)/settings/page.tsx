@@ -16,7 +16,6 @@ import {
   FileText,
   Sparkles,
   Check,
-  CheckCircle2,
   Pin,
   Eye,
   Database,
@@ -40,7 +39,6 @@ export default function SettingsPage() {
   } = useSettings();
 
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [storageInfo, setStorageInfo] = useState<{
     usedBytes: number;
     totalBytes: number;
@@ -50,16 +48,6 @@ export default function SettingsPage() {
     totalBytes: 0,
     collectionCount: 0,
   });
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-  };
-
-  useEffect(() => {
-    if (!toastMessage) return;
-    const timer = setTimeout(() => setToastMessage(null), 3000);
-    return () => clearTimeout(timer);
-  }, [toastMessage]);
 
   const refreshStorage = () => {
     if (typeof window === "undefined") return;
@@ -575,14 +563,6 @@ export default function SettingsPage() {
           </section>
         )}
       </div>
-
-      {/* Floating Status Toast */}
-      {toastMessage && (
-        <div className={styles.toastNotice} role="status">
-          <CheckCircle2 size={16} color="#10b981" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
     </main>
   );
 }

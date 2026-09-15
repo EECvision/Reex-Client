@@ -1,5 +1,7 @@
-export const STUDIO_URL = "https://studio.reex-api.dev";
-export const DOCS_URL = "https://docs.reex-api.dev";
+import brand from "../../seo/brand.json";
+
+export const STUDIO_URL = brand.origins.studio;
+export const DOCS_URL = brand.origins.docs;
 
 export const REPOSITORY_URL = (
   process.env.NEXT_PUBLIC_REPOSITORY_URL ||

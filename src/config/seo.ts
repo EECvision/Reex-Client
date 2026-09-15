@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import brand from "../../seo/brand.json";
 import { STUDIO_URL } from "./links";
 
 // Set these at build time: metadata routes and public pages are prerendered.
@@ -6,9 +7,9 @@ export const SITE_URL = new URL(
   process.env.NEXT_PUBLIC_SITE_URL || STUDIO_URL,
 ).origin;
 
-export const SITE_NAME = "Reex API Builder";
+export const SITE_NAME = brand.sites.studio.name;
 export const SITE_DESCRIPTION =
-  "Turn Postman and OpenAPI collections into TypeScript API clients and TanStack Query hooks for React and Next.js. Test endpoints and sync code with Reex.";
+  `${brand.productName} is ${brand.positioning.replace(/^The /, "the ")}. Use ${SITE_NAME} to test endpoints and generate production-ready typed API services, TanStack Query hooks, and auth providers.`;
 
 export const INDEXING_ENABLED =
   process.env.SEO_NOINDEX !== "true" &&
@@ -33,7 +34,7 @@ export function pageMetadata({
   index?: boolean;
 }): Metadata {
   const canIndex = INDEXING_ENABLED && index;
-  const fullTitle = `${title} | ${SITE_NAME}`;
+  const fullTitle = path === "/" ? `${SITE_NAME} | ${title}` : `${title} | ${SITE_NAME}`;
   const image = {
     url: siteUrl("/og-image.png"),
     width: 1200,
@@ -81,8 +82,10 @@ export const homeStructuredData = {
       "@type": "WebSite",
       "@id": siteUrl("/#website"),
       name: SITE_NAME,
+      alternateName: brand.sites.studio.alternateNames,
       url: siteUrl("/"),
       inLanguage: "en",
+      about: { "@id": brand.entities.product },
     },
     {
       "@type": "WebApplication",
@@ -103,7 +106,8 @@ export const homeStructuredData = {
         "Sync API definitions between the UI and local project",
         "Review collection changes before applying updates",
       ],
-      isPartOf: { "@id": siteUrl("/#website") },
+      isPartOf: { "@id": brand.entities.product },
+      mainEntityOfPage: { "@id": siteUrl("/#website") },
     },
   ],
 };
