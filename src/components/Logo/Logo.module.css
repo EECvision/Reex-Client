@@ -11,3 +11,26 @@
     width: 32px;
     height: auto;
 }
+
+.logoContainer {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.logoLight {
+    display: none !important;
+}
+
+.logoDark {
+    display: block !important;
+}
+
+:global([data-theme="light"]) .logoLight {
+    display: block !important;
+}
+
+:global([data-theme="light"]) .logoDark {
+    display: none !important;
+}
