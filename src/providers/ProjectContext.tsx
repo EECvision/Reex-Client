@@ -30,9 +30,9 @@ interface ProjectContextType {
   toggleStandaloneMode: () => Promise<void>;
   refreshProject: (silent?: boolean) => Promise<void>;
   // State setters for standalone mode
-  setManifest: (
-    manifest: Record<string, Record<string, EndpointInfo>> | null,
-  ) => void;
+  setManifest: React.Dispatch<
+    React.SetStateAction<Record<string, Record<string, EndpointInfo>> | null>
+  >;
   setConfig: (config: ProjectConfig | null) => void;
   setModules: (modules: Record<string, boolean>) => void;
   // Multiple Collections Support
@@ -244,8 +244,14 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({
     [manualStandaloneMode],
   );
 
+  const hasLoadedRef = React.useRef(false);
+
   useEffect(() => {
-    fetchProjectData();
+    // Perform initial load with visual loading state; subsequent mode toggles refresh silently in the background
+    const silent = hasLoadedRef.current;
+    fetchProjectData(silent).then(() => {
+      hasLoadedRef.current = true;
+    });
   }, [fetchProjectData]); // Re-run when manual mode changes
 
   const addCollection = async (col: StandaloneCollection) => {

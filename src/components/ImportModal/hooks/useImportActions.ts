@@ -477,37 +477,18 @@ export const useImportActions = ({
             }
 
             // 2. Execute File Operations (Definitions)
-            // Manual handling to ensure definitions are written AFTER config update
             const bridgeUrl = api.getBridgeUrl();
 
+            let changedModules: string[] = [];
             if (operations && Array.isArray(operations)) {
-                for (const op of operations) {
-                    try {
-                        if (op.type === 'write') {
-                            await fetch(`${bridgeUrl}/api/fs/write`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ filePath: op.filePath, content: op.content })
-                            });
-                        } else if (op.type === 'delete') {
-                            await fetch(`${bridgeUrl}/api/fs/delete`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ filePath: op.filePath })
-                            });
-                        }
-                    } catch (e) {
-                        console.error(`Operation failed: ${op.type} ${op.filePath}`, e);
-                        // Continue? Yes, partial success is better than full stop
-                    }
-                }
-            }
+                changedModules = operations
+                    .map((op: { filePath: string }) => {
+                        const match = op.filePath.match(/definitions[\\/](.+?)\.ts$/);
+                        return match ? match[1] : null;
+                    })
+                    .filter((m: string | null): m is string => Boolean(m && m !== 'index'));
 
-            // 3. Sync/Prune Clients (Post-Update)
-            try {
-                await api.syncProjectClients();
-            } catch (e) {
-                console.warn("Client sync/prune failed:", e);
+                await api.batchOperations(operations, bridgeUrl);
             }
 
             if (res.data?.collectionName || collectionName) {
@@ -515,6 +496,11 @@ export const useImportActions = ({
             }
 
             setStep("success");
+
+            // 3. Sync/Regenerate in background with known changed modules (non-blocking)
+            api.syncProjectClients(changedModules.length > 0 ? changedModules : undefined).catch((e) => {
+                console.warn("Incremental sync failed:", e);
+            });
             // if (onSuccess) onSuccess("Collection updated successfully!");
 
         } catch (err) {

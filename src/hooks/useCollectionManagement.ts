@@ -10,7 +10,9 @@ interface UseCollectionManagementProps {
     refreshProject: (force?: boolean) => void;
     registerTaskId: (taskId: string) => void;
     isStandaloneMode?: boolean;
-    setManifest?: (manifest: Record<string, Record<string, EndpointInfo>> | null) => void;
+    setManifest?: React.Dispatch<
+        React.SetStateAction<Record<string, Record<string, EndpointInfo>> | null>
+    >;
     removeCollection?: (id: string) => Promise<void>;
     activeCollectionId?: string;
     setCollections?: (cols: StandaloneCollection[]) => void;
@@ -165,43 +167,54 @@ export const useCollectionManagement = ({
 
     const confirmDeleteItem = async () => {
         if (!deleteItemInfo) return;
-        setDeletingItem(true);
+        const item = { ...deleteItemInfo };
 
-        // Standalone mode: update local manifest state
-        if (isStandaloneMode && setManifest) {
-            // We need to get current manifest from context, but we don't have direct access
-            // The parent component should handle this via refreshProject or manifest update
-            // For now, show success and close modal - the parent can handle the actual deletion
-            showToast("success", `${deleteItemInfo.type === "module" ? "Module" : "Function"} removed`);
-            setShowDeleteItemModal(false);
-            setDeleteItemInfo(null);
-            setDeletingItem(false);
-            // Trigger a "fake" refresh that will cause parent to update
+        // 1. Optimistic UI update: immediately remove from manifest
+        if (setManifest) {
+            setManifest((prev) => {
+                if (!prev) return prev;
+                const next = { ...prev };
+                if (item.type === "module") {
+                    delete next[item.moduleName];
+                } else if (item.type === "function" && item.functionName && next[item.moduleName]) {
+                    const modCopy = { ...next[item.moduleName] };
+                    delete modCopy[item.functionName];
+                    next[item.moduleName] = modCopy;
+                }
+                return next;
+            });
+        }
+
+        // Close modal, reset deleting state, and show success toast immediately
+        setShowDeleteItemModal(false);
+        setDeleteItemInfo(null);
+        setDeletingItem(false);
+        showToast("success", `${item.type === "module" ? "Module" : "Function"} deleted`);
+
+        // Standalone mode: trigger silent refresh
+        if (isStandaloneMode) {
             refreshProject(true);
             return;
         }
 
+        // Dev mode: background deletion
         try {
             const taskId = Date.now().toString();
             registerTaskId(taskId);
 
-            const data = await api.deleteItem(deleteItemInfo, projectPath, api.getBridgeUrl(), taskId);
+            const data = await api.deleteItem(item, projectPath, api.getBridgeUrl(), taskId);
 
             if (!data.success) {
                 throw new Error(data.error || "Deletion failed");
             }
 
             if (!data.taskId) {
-                showToast("success", data.message || "Item deleted");
-                setShowDeleteItemModal(false);
-                setDeleteItemInfo(null);
-                setDeletingItem(false);
                 refreshProject(true);
             }
         } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
+            const errorMessage = err instanceof Error ? err.message : String(err);
             showToast("error", errorMessage || "Failed to delete item");
-            setDeletingItem(false);
+            refreshProject(true);
         }
     };
 

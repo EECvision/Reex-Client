@@ -40,11 +40,50 @@ export const BridgeService = {
         return res.json();
     },
 
-    syncProjectClients: async () => {
+    batchOperations: async (
+        operations: Array<{ type: 'write' | 'delete'; filePath: string; content?: string }>,
+        bridgeUrl?: string
+    ) => {
+        const url = bridgeUrl || getLocalUrl();
+        try {
+            const res = await fetch(`${url}/api/fs/batch`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ operations })
+            });
+            if (res.ok) {
+                return res.json();
+            }
+        } catch (e) {
+            console.warn("[FS] Batch write failed, falling back to parallel requests:", e);
+        }
+
+        // Fallback: parallel requests via Promise.all
+        await Promise.all(
+            operations.map(op => {
+                if (op.type === 'delete') {
+                    return fetch(`${url}/api/fs/delete`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filePath: op.filePath })
+                    });
+                }
+                return fetch(`${url}/api/fs/write`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filePath: op.filePath, content: op.content })
+                });
+            })
+        );
+        return { success: true };
+    },
+
+    syncProjectClients: async (changedModules?: string[]) => {
         const url = getLocalUrl();
         const res = await fetch(`${url}/api/project/config/sync`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ changedModules: changedModules || null })
         });
         return res.json();
     },

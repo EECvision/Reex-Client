@@ -175,7 +175,7 @@ export const useProjectSync = ({ showToast, refreshProject, onImportTaskComplete
                     projectUpdatedTimerRef.current = setTimeout(() => {
                         showToast("success", "Project synced");
                         refreshProject(true);
-                    }, 500);
+                    }, 50);
                 } else if (data.type === "project:sync-start") {
                     const serverId = data.id ? parseInt(data.id) : Date.now();
                     setBackgroundTasks((prev) => {
