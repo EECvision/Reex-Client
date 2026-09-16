@@ -4,6 +4,7 @@ import styles from "./AuthModal.module.css";
 import { Button } from "../ui/Button/Button";
 import { Modal } from "../ui/Modal/Modal";
 import { StandaloneCollection } from "@/providers/ProjectContext";
+import { useToast } from "@/hooks/useToast";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   activeCollectionId,
   onSave,
 }) => {
+  const { showToast } = useToast();
   const [selectedId, setSelectedId] = useState<string>("");
   const [draftToken, setDraftToken] = useState("");
   const [draftHeaders, setDraftHeaders] = useState<
@@ -101,6 +103,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       }
     });
     onSave(selectedId, draftToken, headersObj);
+    showToast("success", "Authorization settings saved");
   };
 
 

@@ -28,55 +28,81 @@
 .workspaceSwitcherTrigger {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 6px 12px;
+  gap: 10px;
+  padding: 5px 10px 5px 8px;
   border-radius: 8px;
-  border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.2s;
   user-select: none;
-  background-color: transparent;
   flex: 0 0 auto;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.workspaceSwitcherTrigger:hover,
-.workspaceSwitcherTrigger[data-state="open"] {
-  background-color: var(--hover-bg, #f3f4f6);
-  border-color: var(--border-color, #e5e7eb);
+/* Preview Mode Trigger */
+.previewTrigger {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(14, 165, 233, 0.03) 100%), var(--card-bg, #252526);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.previewTrigger:hover,
+.previewTrigger[data-state="open"] {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.14) 0%, rgba(14, 165, 233, 0.06) 100%), var(--card-bg, #252526);
+  border-color: rgba(56, 189, 248, 0.65);
+}
+
+/* Dev Mode Trigger */
+.devTrigger {
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.08) 0%, rgba(34, 197, 94, 0.03) 100%), var(--card-bg, #252526);
+  border: 1px solid rgba(74, 222, 128, 0.35);
+}
+
+.devTrigger:hover,
+.devTrigger[data-state="open"] {
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.14) 0%, rgba(34, 197, 94, 0.06) 100%), var(--card-bg, #252526);
+  border-color: rgba(74, 222, 128, 0.65);
 }
 
 .workspaceIconWrapper {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 6px;
-  background: var(--card-bg, #fff);
-  border: 1px solid var(--border-color, #e5e7eb);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+}
+
+.previewIconWrapper {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+}
+
+.devIconWrapper {
+  background: rgba(74, 222, 128, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  color: #4ade80;
 }
 
 .workspaceTextColumn {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  gap: 1px;
 }
 
 .workspaceTitle {
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-primary, #111827);
+  color: var(--text-primary, #cccccc);
   line-height: 1.2;
 }
 
 .workspaceSub {
   font-size: 11px;
-  color: var(--text-secondary, #6b7280);
+  color: var(--text-secondary, #9ca3af);
   line-height: 1.2;
-  margin-top: 2px;
-  max-width: 150px;
+  max-width: 160px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -84,7 +110,19 @@
 
 .workspaceChevron {
   color: #9ca3af;
-  margin-left: 8px;
+  margin-left: 6px;
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.previewTrigger:hover .workspaceChevron,
+.previewTrigger[data-state="open"] .workspaceChevron {
+  color: #38bdf8;
+}
+
+.devTrigger:hover .workspaceChevron,
+.devTrigger[data-state="open"] .workspaceChevron {
+  color: #4ade80;
 }
 
 /* Workspace Dropdown Styles */

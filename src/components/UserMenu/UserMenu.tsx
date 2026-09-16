@@ -80,7 +80,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
         aria-label="Workspace menu"
         aria-expanded={isOpen}
       >
-        <Settings size={20} />
+        <Settings size={18} className={styles.triggerIcon} />
         {expanded && (
           <>
             <span className={styles.triggerUserInfo}>
@@ -89,7 +89,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
                 Saved in this browser
               </span>
             </span>
-            <ChevronsUpDown size={16} />
+            <ChevronsUpDown size={14} className={styles.triggerChevron} />
           </>
         )}
       </button>

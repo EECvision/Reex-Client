@@ -1,6 +1,5 @@
 import React from "react";
 import styles from "./BackgroundNotification.module.css";
-import { Button } from "../ui/Button/Button";
 
 export interface BackgroundTask {
     id: number;
@@ -10,12 +9,11 @@ export interface BackgroundTask {
 
 interface BackgroundNotificationProps {
     tasks: BackgroundTask[];
-    onDismiss: (id: number) => void;
+    onDismiss?: (id: number) => void;
 }
 
 const BackgroundNotification: React.FC<BackgroundNotificationProps> = ({
     tasks,
-    onDismiss,
 }) => {
     if (tasks.length === 0) return null;
 
@@ -23,19 +21,13 @@ const BackgroundNotification: React.FC<BackgroundNotificationProps> = ({
         <div className={styles.container}>
             {tasks.map((task) => (
                 <div key={task.id} className={styles.notification}>
-                    <div className={styles.spinner}></div>
+                    <div className={styles.spinner} />
                     <div className={styles.content}>
                         <div className={styles.title}>{task.title}</div>
-                        <div className={styles.message}>{task.message}</div>
+                        {task.message && (
+                            <div className={styles.message}>{task.message}</div>
+                        )}
                     </div>
-                    <Button
-                        onClick={() => onDismiss(task.id)}
-                        className={styles.closeButton}
-                        variant="ghost"
-                        size="sm"
-                    >
-                        ×
-                    </Button>
                 </div>
             ))}
         </div>

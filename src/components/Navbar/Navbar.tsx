@@ -21,6 +21,7 @@ import { createPortal } from "react-dom";
 import { BadgeGroup } from "../ui/BadgeGroup/BadgeGroup";
 import { Button } from "../ui/Button/Button";
 import { BaseUrlInput } from "./BaseUrlInput";
+import { ConnectProjectModal } from "../ConnectProjectModal/ConnectProjectModal";
 import styles from "./Navbar.module.css";
 
 interface NavbarProps {
@@ -90,6 +91,7 @@ const Navbar: React.FC<NavbarProps> = ({
   );
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [showConnectModal, setShowConnectModal] = React.useState(false);
   const syncUrl = useCallback(() => {
     const stored = localStorage.getItem("reex_docs_url");
     if (stored !== null && stored !== url) {
@@ -128,10 +130,16 @@ const Navbar: React.FC<NavbarProps> = ({
           <DropdownMenu.Trigger asChild>
             <div
               data-tour="workspace-mode"
-              className={styles.workspaceSwitcherTrigger}
+              className={`${styles.workspaceSwitcherTrigger} ${
+                isStandaloneMode ? styles.previewTrigger : styles.devTrigger
+              }`}
               title={isStandaloneMode ? "Preview Mode" : projectPath}
             >
-              <div className={styles.workspaceIconWrapper}>
+              <div
+                className={`${styles.workspaceIconWrapper} ${
+                  isStandaloneMode ? styles.previewIconWrapper : styles.devIconWrapper
+                }`}
+              >
                 {isStandaloneMode ? (
                   <MonitorPlay size={16} />
                 ) : (
@@ -160,10 +168,12 @@ const Navbar: React.FC<NavbarProps> = ({
             >
               <DropdownMenu.Item
                 className={styles.workspaceOption}
-                disabled={!projectPath}
                 onClick={() => {
-                  if (isStandaloneMode && onToggleStandaloneMode)
+                  if (!projectPath) {
+                    setShowConnectModal(true);
+                  } else if (isStandaloneMode && onToggleStandaloneMode) {
                     onToggleStandaloneMode();
+                  }
                 }}
               >
                 <div className={styles.workspaceOptionIcon}>
@@ -429,6 +439,11 @@ const Navbar: React.FC<NavbarProps> = ({
           </>,
           document.body,
         )}
+
+      <ConnectProjectModal
+        isOpen={showConnectModal}
+        onClose={() => setShowConnectModal(false)}
+      />
     </nav>
   );
 };
