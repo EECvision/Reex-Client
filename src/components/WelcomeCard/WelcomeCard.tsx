@@ -4,12 +4,10 @@ import {
   BookOpen,
   CheckCircle2,
   Code,
-  Compass,
   Copy,
   Folder,
   HelpCircle,
   MonitorPlay,
-  TestTube,
 } from "lucide-react";
 import Link from "next/link";
 import React from "react";
@@ -23,7 +21,6 @@ interface WelcomeCardProps {
 
 export default function WelcomeCard({ onImportClick }: WelcomeCardProps) {
   const { showToast } = useToast();
-  const [copiedProxy, setCopiedProxy] = React.useState(false);
   const [copiedCliInstall, setCopiedCliInstall] = React.useState(false);
   const [copiedCliStart, setCopiedCliStart] = React.useState(false);
 
@@ -56,10 +53,6 @@ export default function WelcomeCard({ onImportClick }: WelcomeCardProps) {
             <BookOpen size={14} />
             <span>Documentation</span>
           </a>
-          <Link href="/sandbox" className={styles.navLink}>
-            <Compass size={14} />
-            <span>API Sandbox</span>
-          </Link>
           <Link href="/support" className={styles.navLink}>
             <HelpCircle size={14} />
             <span>Help &amp; troubleshooting</span>
@@ -67,27 +60,25 @@ export default function WelcomeCard({ onImportClick }: WelcomeCardProps) {
         </nav>
       </div>
 
-      {/* Clean Action Rows (Linear / VS Code Style) */}
-      <div className={styles.actionList}>
-        {/* Row 1: Preview Mode */}
-        <div className={styles.actionRow}>
-          <div className={styles.rowLeft}>
-            <div className={`${styles.rowIcon} ${styles.iconPreview}`}>
+      {/* 2-Column Action Grid (Preview Mode & Dev Mode side-by-side) */}
+      <div className={styles.cardGrid}>
+        {/* Card 1: Preview Mode */}
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div className={`${styles.cardIcon} ${styles.iconPreview}`}>
               <MonitorPlay size={18} />
             </div>
-            <div className={styles.rowInfo}>
-              <div className={styles.rowTitleWrap}>
-                <h2 className={styles.rowTitle}>Preview Mode</h2>
-                <span className={styles.rowSubtitle}>Standard API client</span>
-              </div>
-              <p className={styles.rowDesc}>
-                Import Postman or OpenAPI collections to test endpoints in your
-                browser.
-              </p>
+            <div className={styles.cardTitleWrap}>
+              <h2 className={styles.cardTitle}>Preview Mode</h2>
+              <span className={styles.cardSubtitle}>Standard API client</span>
             </div>
           </div>
-          {onImportClick && (
-            <div className={styles.rowRight}>
+          <p className={styles.cardDesc}>
+            Import Postman or OpenAPI collections to test endpoints in your
+            browser.
+          </p>
+          <div className={styles.cardAction}>
+            {onImportClick && (
               <Button
                 variant="primary"
                 onClick={onImportClick}
@@ -96,66 +87,28 @@ export default function WelcomeCard({ onImportClick }: WelcomeCardProps) {
               >
                 Import Collection
               </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Row 2: API Sandbox */}
-        <div className={styles.actionRow}>
-          <div className={styles.rowLeft}>
-            <div className={`${styles.rowIcon} ${styles.iconSandbox}`}>
-              <TestTube size={18} />
-            </div>
-            <div className={styles.rowInfo}>
-              <div className={styles.rowTitleWrap}>
-                <h2 className={styles.rowTitle}>API Sandbox</h2>
-                <span className={styles.rowSubtitle}>Build and test APIs</span>
-              </div>
-              <p className={styles.rowDesc}>
-                Test localhost endpoints and prototype requests from scratch.
-              </p>
-            </div>
-          </div>
-          <div className={styles.rowRight}>
-            <div className={styles.codeBox}>
-              <span className={styles.codePrompt}>$</span>
-              <span className={styles.codeLine}>npx reex-proxy</span>
-              <button
-                className={styles.copyBtn}
-                onClick={() => handleCopy("npx reex-proxy", setCopiedProxy)}
-                title="Copy command"
-                aria-label="Copy npx reex-proxy"
-              >
-                {copiedProxy ? (
-                  <CheckCircle2 size={13} className={styles.copiedIcon} />
-                ) : (
-                  <Copy size={13} />
-                )}
-              </button>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Row 3: Dev Mode */}
-        <div className={styles.actionRow}>
-          <div className={styles.rowLeft}>
-            <div className={`${styles.rowIcon} ${styles.iconDev}`}>
+        {/* Card 2: Dev Mode */}
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div className={`${styles.cardIcon} ${styles.iconDev}`}>
               <Code size={18} />
             </div>
-            <div className={styles.rowInfo}>
-              <div className={styles.rowTitleWrap}>
-                <h2 className={styles.rowTitle}>Dev Mode</h2>
-                <span className={styles.rowSubtitle}>
-                  Connected to local codebase
-                </span>
-              </div>
-              <p className={styles.rowDesc}>
-                Generate typed API hooks and interfaces directly into your
-                project.
-              </p>
+            <div className={styles.cardTitleWrap}>
+              <h2 className={styles.cardTitle}>Dev Mode</h2>
+              <span className={styles.cardSubtitle}>
+                Connected to local codebase
+              </span>
             </div>
           </div>
-          <div className={styles.rowRight}>
+          <p className={styles.cardDesc}>
+            Generate typed API hooks and interfaces directly into your
+            project.
+          </p>
+          <div className={styles.cardAction}>
             <div className={styles.cmdGroup}>
               <div className={styles.codeBox}>
                 <span className={styles.codePrompt}>$</span>
