@@ -9,7 +9,7 @@ test.describe("SEO without JavaScript", () => {
 
   test("homepage serves canonical metadata and structured data", async ({ page }) => {
     await page.goto("/?localPort=4000&utm_source=seo-check");
-    await expect(page).toHaveTitle("Reex API Studio | React API Integration");
+    await expect(page).toHaveTitle("Reex API Studio | Interactive Workspace & React Query Generator");
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
     const canonical = page.locator('head link[rel="canonical"]');
     await expect(canonical).toHaveCount(1);
